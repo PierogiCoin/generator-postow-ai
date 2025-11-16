@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generator postów AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "react-router-dom": "https://esm.sh/react-router-dom@6.25.1?external=react",
+    "html-to-image": "https://esm.sh/html-to-image@1.11.11",
+    "@google/genai": "https://esm.sh/@google/genai@1.24.0",
+    "i18next": "https://esm.sh/i18next@23.12.2",
+    "react-i18next": "https://esm.sh/react-i18next@14.1.2?external=react",
+    "i18next-browser-languagedetector": "https://esm.sh/i18next-browser-languagedetector@8.0.0",
+    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
+    "react-dom/": "https://esm.sh/react-dom@18.3.1/",
+    "react/": "https://esm.sh/react@18.3.1/",
+    "zustand": "https://esm.sh/zustand@4.5.4",
+    "zustand/middleware": "https://esm.sh/zustand@4.5.4/middleware",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.44.4",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
+    "cors": "https://aistudiocdn.com/cors@^2.8.5",
+    "dotenv/": "https://aistudiocdn.com/dotenv@^17.2.3/"
+  }
+}
+</script>
+<style>
+    :root {
+      --text-secondary: #64748b; /* slate-500 */
+      --grid-stroke: #e2e8f0; /* slate-200 */
+      --tooltip-bg: #f8fafc; /* slate-50 */
+      --tooltip-border: #e2e8f0; /* slate-200 */
+      --tooltip-text: #0f172a; /* slate-900 */
+    }
+    html.dark {
+      --text-secondary: #94a3b8; /* slate-400 */
+      --grid-stroke: #334155; /* slate-700 */
+      --tooltip-bg: #1e293b; /* slate-800 */
+      --tooltip-border: #334155; /* slate-700 */
+      --tooltip-text: #f8fafc; /* slate-50 */
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+        background-color: #f8fafc;
+        background: linear-gradient(-45deg, #fff1f2, #fff7ed, #f0f9ff, #f5f3ff);
+        background-size: 400% 400%;
+        animation: gradient-animation 25s ease infinite;
+    }
+    .dark body {
+        background-color: #020617;
+        background: linear-gradient(-45deg, #0f172a, #0c1e3e, #1e1b4b, #281c53);
+        background-size: 400% 400%;
+        animation: gradient-animation 25s ease infinite;
+    }
+    
+    @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slide-in-from-bottom {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-out forwards;
+    }
+    .animate-fade-in-down {
+      animation: fadeInDown 0.5s ease-out forwards;
+    }
+    .animate-fade-in-up {
+      animation: fadeInUp 0.5s ease-out forwards;
+    }
+    .animate-slide-in {
+      animation: slide-in-from-bottom 0.4s ease-out both;
+    }
+
+    /* General transition for smoother UI */
+    button, a, input, select, textarea {
+        transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, -webkit-backdrop-filter;
+        transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+        transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-backdrop-filter;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 200ms;
+    }
+
+    /* Button press effect */
+    button:active, [role="button"]:active {
+        transform: scale(0.98);
+    }
+
+    /* Improve date/time picker icon visibility in dark mode */
+    .calendar-picker-indicator {
+      filter: invert(0);
+    }
+    html.dark .calendar-picker-indicator {
+      filter: invert(1);
+    }
+  </style>
+</head>
+  <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

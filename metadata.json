@@ -1,0 +1,13 @@
+{
+  "name": "Generator postów AI do mediów społecznościowych",
+  "description": "Agent oparty na sztucznej inteligencji do generowania angażujących postów i reklam w mediach społecznościowych, takich jak Facebook, Instagram, TikTok i X. Wystarczy podać temat, grupę docelową i ton, a AI stworzy dla Ciebie idealną treść.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ],
+  "requiredEnvironmentVariables": [
+    "API_KEY",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY"
+  ]
+}

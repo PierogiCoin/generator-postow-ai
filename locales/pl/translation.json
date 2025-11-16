@@ -1,0 +1,572 @@
+{
+  "common": {
+    "loading": "Ładowanie...",
+    "save": "Zapisz",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "cancel": "Anuluj",
+    "confirm": "Potwierdź",
+    "close": "Zamknij",
+    "clear": "Wyczyść",
+    "submit": "Wyślij",
+    "generate": "Generuj",
+    "generating": "Generowanie...",
+    "retry": "Spróbuj ponownie",
+    "upgrade": "Ulepsz",
+    "newPost": "-- Nowy post --",
+    "noDescription": "Brak opisu"
+  },
+  "header": {
+    "title": "AI Content Pro",
+    "nav": {
+      "dashboard": "Pulpit",
+      "create": "Utwórz",
+      "generator": "Generator",
+      "trends": "Trendy",
+      "analyzer": "Analizator",
+      "calendar": "Kalendarz",
+      "analytics": "Analityka",
+      "storyboard": "Storyboard",
+      "newPost": "Nowy Post",
+      "newCampaign": "Nowa Kampania",
+      "newStoryboard": "Nowy Storyboard",
+      "strategist": "Strategista",
+      "more": "Więcej"
+    },
+    "calendarDisabledTooltip": "Wygeneruj plan kampanii, aby aktywować kalendarz",
+    "calendarTooltip": "Kalendarz treści",
+    "analyticsDisabledTooltip": "Wygeneruj posty, aby aktywować analitykę",
+    "analyticsTooltip": "Analityka i optymalizacja",
+    "strategistDisabledTooltip": "Ulepsz plan do Pro, aby odblokować Strategistę AI",
+    "strategistTooltip": "Strategista AI",
+    "login": "Zaloguj się",
+    "signup": "Zarejestruj się"
+  },
+  "userMenu": {
+    "loggedInAs": "Zalogowano jako",
+    "myAccount": "Moje konto",
+    "logout": "Wyloguj",
+    "logoutConfirm": "Czy na pewno chcesz się wylogować?"
+  },
+  "teamSwitcher": {
+    "personalSpace": "Przestrzeń osobista",
+    "selectWorkspace": "Wybierz przestrzeń"
+  },
+  "form": {
+    "template": {
+      "label": "Szablon",
+      "tooltip": "Wybierz istniejący szablon, aby szybko wypełnić formularz. Możesz również zapisać bieżące ustawienia jako nowy szablon do przyszłego użytku.",
+      "browse": "Przeglądaj szablony",
+      "saveNew": "Zapisz jako nowy szablon"
+    },
+    "topic": {
+      "label": "Temat lub główny przekaz",
+      "placeholder": "np. Wprowadzamy nowy, ekologiczny model butów...",
+      "tooltip": "Wprowadź główny temat, produkt lub wiadomość, którą chcesz przekazać. Im więcej szczegółów podasz (np. korzyści, cechy), tym lepszy będzie wynik.",
+      "assistantTooltip": "Uzyskaj sugestie AI, aby ulepszyć temat"
+    },
+    "videoTranscript": {
+      "label": "Transkrypcja lub tekst do wideo",
+      "tooltip": "Wklej tutaj tekst, który ma być użyty jako narracja lub napisy w generowanym wideo. AI użyje go do stworzenia scen.",
+      "placeholder": "Wprowadź tekst, który ma pojawić się w wideo lub być jego podstawą."
+    },
+    "videoTopicPlaceholder": "Krótkie, dynamiczne wideo o [Twój produkt/temat]",
+    "videoTranscriptPlaceholderDefault": "Scena 1: Zbliżenie na [Twój produkt].\nScena 2: Ktoś używa [Twój produkt] i wygląda na zadowolonego.\nScena 3: Ostateczne ujęcie z logo produktu i wezwaniem do działania.",
+    "campaignGoal": {
+      "label": "Cel kampanii",
+      "tooltip": "Określ główny cel Twojej kampanii, np. 'Wypromowanie nowego, ekologicznego modelu butów', 'Zwiększenie zapisów na newsletter'.",
+      "placeholder": "np. Wypromowanie nowego produktu"
+    },
+    "campaignDuration": {
+      "label": "Czas trwania kampanii (w dniach)",
+      "tooltip": "Określ, przez ile dni ma trwać kampania. AI wygeneruje plan postów na ten okres (minimum 3, maksimum 30 dni)."
+    },
+    "audience": {
+      "label": "Grupa docelowa",
+      "tooltip": "Opisz swoją idealną grupę odbiorców, np. 'Młodzi profesjonaliści zainteresowani zrównoważonym rozwojem', 'Miłośnicy fitnessu szukający zdrowych przekąsek'.",
+      "placeholder": "np. Młodzi profesjonaliści, miłośnicy fitnessu"
+    },
+    "keywords": {
+      "label": "Słowa kluczowe (oddzielone przecinkami)",
+      "placeholder": "np. zrównoważony rozwój, innowacja, technologia",
+      "tooltip": "Podaj słowa kluczowe, na których AI powinna się skupić. Pomaga to w precyzyjnym targetowaniu tematu i optymalizacji SEO."
+    },
+    "tone": {
+      "label": "Ton wypowiedzi",
+      "tooltip": "Wybierz ton, który najlepiej pasuje do Twojej marki i przekazu. Wpłynie to na styl i słownictwo wygenerowanego tekstu."
+    },
+    "platform": {
+      "label": "Platforma",
+      "label_plural": "Platformy kampanii",
+      "tooltip": "Wybierz platformę(y) docelową(e). AI dostosuje format, długość i styl treści do specyfiki każdej z nich."
+    },
+    "visualStyle": {
+      "label": "Styl wizualny",
+      "tooltip": "Określ styl obrazu, który ma zostać wygenerowany. 'Dopasowany do platformy' spróbuje użyć stylu popularnego na wybranej platformie."
+    },
+    "contentType": {
+      "label": "Typ treści",
+      "tooltip": "'Post' to standardowa treść organiczna. 'Reklama' wygeneruje treść z nagłówkiem i wezwaniem do działania (CTA), zoptymalizowaną pod kątem płatnych promocji."
+    },
+    "aiModel": {
+      "label": "Model AI",
+      "tooltip": "'Flash' jest szybszy, idealny do prostszych zadań. 'Pro' (funkcja premium) jest bardziej zaawansowany i generuje bardziej kreatywne, złożone treści."
+    },
+     "aspectRatio": {
+      "label": "Proporcje obrazu",
+      "tooltip": "Wybierz proporcje dla generowanego obrazu.",
+      "tooltipVideo": "Wybierz proporcje dla generowanego wideo (poziome lub pionowe).",
+      "landscape": "Poziomy",
+      "portrait": "Pionowy",
+      "square": "Kwadrat",
+      "standard": "Standardowy",
+      "photo": "Zdjęcie"
+    },
+    "imageForVideo": {
+      "label": "Obraz początkowy dla wideo",
+      "tooltip": "Prześlij obraz, który będzie pierwszą klatką Twojego wideo. AI ożywi go."
+    },
+    "suggestions": {
+      "loading": "Sugerowanie...",
+      "label": "Sugestie:"
+    },
+    "buttons": {
+      "saveDraft": "Zapisz szkic",
+      "draftSaved": "Szkic zapisany",
+      "generate": "Generuj"
+    }
+  },
+  "calendar": {
+    "plannerTitle": "Inteligentny Asystent Planowania",
+    "plannerSubtitle": "Opisz swój cel, a AI stworzy dla Ciebie strategiczny plan treści na kalendarz.",
+    "goalLabel": "Jaki jest Twój główny cel?",
+    "goalPlaceholder": "np. Wypromuj nową letnią kolekcję sukienek",
+    "durationLabel": "Na ile dni?",
+    "generatePlan": "Wygeneruj Plan",
+    "generatingPlan": "Generowanie Planu...",
+    "clearPlan": "Wyczyść Plan",
+    "planError": "Nie udało się wygenerować planu. Spróbuj ponownie.",
+    "suggestion": "Sugestia AI",
+    "useIdea": "Użyj pomysłu",
+    "planActive": "Aktywny jest plan strategiczny wygenerowany przez AI. To są sugestie, które możesz wygenerować.",
+    "clearStrategicPlan": "Wyczyść Plan Strategiczny"
+  },
+  "topicAssistant": {
+    "title": "Asystent Tematu",
+    "subtitle": "Uzyskaj pomoc od AI, aby dopracować temat swojego posta.",
+    "currentTopic": "Obecny temat:",
+    "yourRequest": "Twoja prośba:",
+    "requestPlaceholder": "np. uczyń go bardziej chwytliwym, zaproponuj 3 warianty",
+    "generate": "Generuj sugestie",
+    "generating": "Generowanie...",
+    "suggestions": "Sugestie",
+    "use": "Użyj"
+  },
+  "generatorView": {
+    "viewingHistory": "Przeglądasz zapisany element.",
+    "backToGenerator": "Wróć do generatora",
+    "viewingBanner": "Przeglądasz post z dnia {{date}}"
+  },
+  "generationTypes": {
+    "PostWithImage": "Post + Obraz",
+    "Video": "Wideo z tekstem",
+    "Idea": "Burza mózgów",
+    "Campaign": "Kampania AI"
+  },
+  "enums": {
+    "Tone": {
+      "Professional": "Profesjonalny",
+      "Casual": "Codzienny",
+      "Witty": "Dowcipny",
+      "Inspirational": "Inspirujący",
+      "Persuasive": "Przekonujący"
+    },
+    "ContentType": {
+      "Post": "Post",
+      "Advertisement": "Reklama"
+    },
+    "VisualStyle": {
+      "PlatformSpecific": "Dopasowany do platformy",
+      "Photorealistic": "Fotorealistyczny",
+      "Cartoonish": "Kreskówkowy",
+      "Minimalist": "Minimalistyczny",
+      "Vintage": "Vintage"
+    },
+    "AIModel": {
+      "Flash": "Flash (szybki)",
+      "Pro": "Pro (zaawansowany)"
+    }
+  },
+  "sidebar": {
+    "title": "Panel Boczny",
+    "tabs": {
+      "history": "Historia",
+      "drafts": "Szkice",
+      "favorites": "Ulubione",
+      "scheduled": "Zaplanowane",
+      "stats": "Statystyki",
+      "subscription": "Subskrypcja"
+    },
+    "historySection": {
+      "title": "Historia",
+      "clear": "Wyczyść",
+      "empty": "Twoje kampanie pojawią się tutaj.",
+      "author": "Autor: {{name}}",
+      "status": "Status: {{status}}",
+      "inspiration": "Inspiracja",
+      "showDetails": "Pokaż szczegóły",
+      "postText": "Tekst posta",
+      "noText": "Brak tekstu.",
+      "noAnalyses": "Brak dodatkowych analiz dla tego elementu."
+    },
+    "draftsSection": {
+      "title": "Szkice",
+      "empty": "Twoje zapisane szkice pojawią się tutaj.",
+      "useDraft": "Użyj szkicu"
+    },
+    "statuses": {
+      "draft": "Szkic",
+      "pending_approval": "Oczekuje na akceptację",
+      "approved": "Zatwierdzony",
+      "rejected": "Wymaga poprawek"
+    }
+  },
+  "resultCard": {
+    "ready": {
+      "title": "Gotowy na magię AI?",
+      "subtitle": "Twoje wygenerowane treści pojawią się tutaj."
+    },
+    "generating": "Generowanie w toku...",
+    "generatingVideo": "Generowanie wideo...",
+    "generatingDetails": "Generowanie szczegółów posta...",
+    "pleaseWait": "Proszę czekać, AI tworzy magię.",
+    "postText": "Tekst posta",
+    "hashtags": "Hashtagi",
+    "adHeadline": "Nagłówek reklamy",
+    "cta": "Wezwanie do działania (CTA)",
+    "buttons": {
+      "favorite": "Ulubione",
+      "schedule": "Zaplanuj",
+      "repurpose": "Przetwórz",
+      "repurposing": "Przetwarzanie...",
+      "predict": "Prognozuj",
+      "analyzing": "Analizowanie...",
+      "assistant": "Asystent",
+      "export": "Eksportuj",
+      "copyText": "Kopiuj tekst",
+      "copied": "Skopiowano!"
+    },
+    "liveAssistant": {
+      "stopSession": "Zakończ sesję",
+      "user": "użytkownik",
+      "model": "model"
+    },
+    "copy": {
+      "label": "Kopiuj do schowka",
+      "copied": "Skopiowano!"
+    },
+    "revertAI": "Cofnij ostatnią akcję AI",
+    "improveWithAI": "Ulepsz z AI",
+    "improving": "Ulepszanie...",
+    "generateImprovement": "Generuj ulepszenie",
+    "improvePlaceholder": "np. 'dodaj więcej emoji', 'skróć o połowę'",
+    "videoGenerationSteps": {
+      "script": "Tworzenie scenariusza wideo...",
+      "init": "Inicjowanie generowania wideo...",
+      "prompt": "Analizowanie monitu...",
+      "gpu": "Alokowanie zasobów GPU...",
+      "render": "Rozpoczynanie procesu renderowania...",
+      "frames_start": "Generowanie klatek początkowych...",
+      "compose": "Komponowanie sceny...",
+      "style": "Stosowanie stylu wizualnego...",
+      "frames_mid": "Renderowanie klatek pośrednich...",
+      "details": "Dodawanie szczegółów i tekstur...",
+      "finalize": "Finalizowanie sekwencji wideo...",
+      "checks": "Prawie gotowe, przeprowadzanie ostatecznych sprawdzeń...",
+      "success": "Wideo wygenerowane pomyślnie!"
+    }
+  },
+  "home": {
+    "hero": {
+      "title_part1": "Zdominuj media społecznościowe. Twórz treści, które",
+      "title_part2": "konwertują 10x szybciej.",
+      "subtitle": "AI Content Pro to Twój inteligentny asystent. Generuj angażujące posty, planuj kampanie i optymalizuj strategię w oparciu o dane.",
+      "cta": "Zacznij tworzyć za darmo",
+      "sub_cta": "Dołącz do 5,000+ marketerów i twórców. Bez karty kredytowej."
+    }
+  },
+  "langSwitcher": {
+    "changeLanguage": "Zmień język"
+  },
+  "assistant": {
+    "greeting": "Witaj! Jak mogę Ci pomóc z tym tekstem? Mów śmiało lub pisz polecenia."
+  },
+  "progress": {
+    "streaming_text": "Streamowanie tekstu...",
+    "generating_details": "Generowanie szczegółów posta...",
+    "analyzing_content": "Analizowanie treści...",
+    "finalizing": "Finalizowanie..."
+  },
+  "brandVoice": {
+    "learned_style_name": "Styl Nauczony z Ulubionych"
+  },
+  "favorites": {
+    "learnStyle": {
+      "button": "Naucz AI swojego stylu",
+      "analyzing": "Analizowanie...",
+      "tooltip": {
+        "disabled": "Dodaj co najmniej 3 posty do ulubionych, aby odblokować",
+        "enabled": "Analizuj ulubione, aby zdefiniować Głos Marki"
+      },
+      "status": {
+        "disabled": "Dodaj jeszcze {{count}} post(y), aby AI mogła się uczyć.",
+        "enabled": "AI przeanalizuje Twoje ulubione posty i zdefiniuje Głos Marki."
+      }
+    }
+  },
+  "brandVoiceManager": {
+    "title": "Zarządzaj Głosami Marki",
+    "editTitle": "Edytuj profil",
+    "newTitle": "Nowy profil",
+    "profileNameLabel": "Nazwa profilu",
+    "profileNamePlaceholder": "np. Mój Główny Styl",
+    "brandNameLabel": "Nazwa marki / firmy",
+    "brandNamePlaceholder": "np. AI Content Pro",
+    "descriptionLabel": "Opis marki (kim jesteście)",
+    "descriptionPlaceholder": "np. Tworzymy narzędzia AI dla marketerów...",
+    "keywordsLabel": "Słowa kluczowe (oddzielone przecinkami)",
+    "keywordsPlaceholder": "np. AI, marketing, social media, produktywność",
+    "avoidLabel": "Czego unikać (ton, słowa)",
+    "avoidPlaceholder": "np. zbyt formalnego języka, skomplikowanego żargonu",
+    "dosLabel": "Przykłady do naśladowania (Dos)",
+    "dosPlaceholder": "Wpisz zdanie, które oddaje styl Twojej marki...",
+    "addExample": "+ Dodaj przykład",
+    "dontsLabel": "Przykłady do unikania (Don'ts)",
+    "dontsPlaceholder": "Wpisz zdanie, które jest w złym stylu...",
+    "deleteExample": "Usuń przykład",
+    "addNewProfile": "Dodaj nowy profil",
+    "learnFromFavorites": "Naucz AI stylu z ulubionych",
+    "analyzing": "Analizowanie...",
+    "ready": "Gotowe",
+    "deleteConfirm": "Czy na pewno chcesz usunąć ten profil?",
+    "noProfiles": "Nie utworzono jeszcze żadnych profili.",
+    "active": "Aktywny",
+    "activate": "Aktywuj"
+  },
+  "analysisModal": {
+    "title": "Analiza AI",
+    "contentLabel": "Analizowana treść",
+    "promptLabel": "Twoje polecenie",
+    "promptPlaceholderImage": "np. Opisz kompozycję tego obrazu, zasugeruj poprawki.",
+    "promptPlaceholderText": "np. Jaki jest sentyment tego tekstu? Zaproponuj 3 inne nagłówki.",
+    "submit": "Uruchom analizę",
+    "analyzing": "Analizowanie...",
+    "resultTitle": "Wynik analizy"
+  },
+  "visualStudio": {
+    "title": "Wizualne Studio AI",
+    "subtitle": "Edytuj obraz za pomocą poleceń tekstowych lub dostosuj go ręcznie.",
+    "history": "Historia (Edycje AI)",
+    "editWithAI": "Edytuj z AI",
+    "promptPlaceholder": "np. 'dodaj psu okulary przeciwsłoneczne', 'zmień tło na plażę'",
+    "generateEdit": "Generuj edycję",
+    "undo": "Cofnij",
+    "redo": "Ponów",
+    "manualAdjust": "Dostosuj Ręcznie",
+    "reset": "Resetuj",
+    "brightness": "Jasność",
+    "contrast": "Kontrast",
+    "sepia": "Sepia",
+    "grayscale": "Skala szarości",
+    "rotateLeft": "Obróć",
+    "rotateRight": "Obróć",
+    "flipHorizontal": "Poziomo",
+    "flipVertical": "Pionowo",
+    "apply": "Zastosuj zmiany",
+    "errorInit": "Nie można zainicjować edytora obrazów.",
+    "errorLoad": "Nie można załadować obrazu do edycji. Może to być spowodowane polityką CORS. Spróbuj użyć innego obrazu.",
+    "editing": "Edytowanie..."
+  },
+  "notifications": {
+    "title": "Powiadomienia",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "empty": "Brak nowych powiadomień.",
+    "clearAll": "Wyczyść wszystko",
+    "label": "Powiadomienia ({{count}} nieprzeczytanych)",
+    "toast": {
+      "title": "Powiadomienie"
+    },
+    "time": {
+      "seconds": "{{count}}s temu",
+      "minutes": "{{count}}m temu",
+      "hours": "{{count}}h temu"
+    }
+  },
+  "errors": {
+    "api_not_available": "API AI jest niedostępne. Sprawdź swój klucz API lub zaloguj się.",
+    "limit_reached": "Osiągnięto limit użycia dla Twojego planu.",
+    "generation_failed": "Generowanie nie powiodło się.",
+    "regeneration_failed": "Ulepszanie treści nie powiodło się.",
+    "ai_action_failed": "Akcja AI nie powiodła się.",
+    "variation_failed": "Generowanie wariacji nie powiodło się.",
+    "assistant_action_failed": "Akcja asystenta nie powiodła się.",
+    "repurpose_failed": "Przetwarzanie treści nie powiodło się.",
+    "analysis_failed": "Analiza nie powiodła się.",
+    "apiKeyInvalid": {
+      "title": "Problem z kluczem API",
+      "details": "Twój klucz API jest nieprawidłowy lub nie ma uprawnień. Sprawdź ustawienia klucza w Google AI Studio."
+    },
+    "safetyBlock": {
+      "title": "Treść zablokowana",
+      "details": "Wygenerowana treść została zablokowana ze względów bezpieczeństwa. Spróbuj zmodyfikować swój prompt."
+    },
+    "rateLimit": {
+      "title": "Przekroczono limit zapytań",
+      "details": "Wysyłasz zbyt wiele zapytań. Spróbuj ponownie za chwilę."
+    },
+    "videoKeyRequired": {
+      "title": "Wymagany klucz API do wideo",
+      "details": "Generowanie wideo wymaga wybrania klucza API z włączonymi płatnościami. Wybierz klucz, aby kontynuować."
+    },
+    "unknownError": "Wystąpił nieznany błąd. Spróbuj odświeżyć stronę."
+  },
+  "videoKeyModal": {
+    "title": "Wymagany Klucz API",
+    "description": "Generowanie wideo Veo wymaga wybrania klucza API, dla którego włączono płatności. Więcej informacji znajdziesz w <1>dokumentacji płatności</1>.",
+    "button": "Wybierz Klucz API"
+  },
+    "dashboard": {
+    "trendingTopics": "Gorące tematy",
+    "trendsForNiche": "Trendy dla niszy:",
+    "save": "Zapisz",
+    "fetchingTrends": "Wyszukiwanie trendów...",
+    "noTrends": "Nie znaleziono trendów. Spróbuj innej niszy.",
+    "createPost": "Stwórz",
+    "weeklySummary": {
+        "title": "Podsumowanie tygodnia",
+        "start": "Zacznij tworzyć więcej treści, aby zobaczyć podsumowanie tygodnia!",
+        "summary": "W tym tygodniu najczęściej tworzyłeś treści na {{platform}} w tonie {{tone}}. Tak trzymaj!"
+    }
+  },
+  "persona": {
+    "generate": "Wygeneruj Personę",
+    "generating": "Generowanie...",
+    "demographics": "Demografia",
+    "goals": "Główne cele",
+    "painPoints": "\"Pain Points\"",
+    "communicationTips": "Wskazówki komunikacyjne"
+  },
+  "insights": {
+      "active": "Aktywne wnioski AI",
+      "description": "Generowanie jest wspomagane przez {{count}} wniosków.",
+      "clear": "Wyczyść wnioski",
+      "apply": "Zastosuj wnioski w przyszłych generacjach"
+  },
+  "quickCommand": {
+    "scheduled": "Post zaplanowany na {{platform}} na {{time}}.",
+    "published": "Post opublikowany na {{platform}}."
+  },
+  "storyboard": {
+    "title": "Kreator Storyboardu AI",
+    "subtitle": "Ożyw swoje pomysły. Opisz temat, a AI wygeneruje kompletny scenariusz wideo.",
+    "topicLabel": "Wprowadź temat wideo",
+    "topicPlaceholder": "np. 30-sekundowa reklama nowej marki kawy",
+    "generateScenes": "Generuj Sceny",
+    "generatingScenes": "Generowanie scen...",
+    "sceneHeader": "Scena {{number}}",
+    "visualDescription": "Opis wizualny",
+    "narration": "Narracja",
+    "generateVideo": "Generuj Wideo",
+    "generatingVideo": "Generowanie wideo...",
+    "playNarration": "Odtwórz narrację",
+    "playingNarration": "...",
+    "videoReady": "Wideo gotowe",
+    "combinedVideo": "Połączona historia"
+  },
+    "commandPalette": {
+    "title": "Paleta Komend",
+    "placeholder": "Wpisz komendę lub szukaj...",
+    "noResults": "Nie znaleziono wyników",
+    "commands": {
+      "newPost": "Nowy Post",
+      "goToDashboard": "Przejdź do Pulpitu",
+      "goToGenerator": "Przejdź do Generatora",
+      "goToTrends": "Przejdź do Trendów",
+      "goToCalendar": "Przejdź do Kalendarza",
+      "goToAnalytics": "Przejdź do Analityki",
+      "goToAccount": "Przejdź do Mojego Konta",
+      "toggleTheme": "Zmień motyw",
+      "logout": "Wyloguj"
+    }
+  },
+  "achievements": {
+    "title": "Osiągnięcia",
+    "unlocked": "Odblokowano!",
+    "locked": "Zablokowane",
+    "firstPost": {
+        "name": "Pierwszy Krok",
+        "description": "Wygeneruj swoją pierwszą treść."
+    },
+    "creativeStreak": {
+        "name": "Seria Kreatywności",
+        "description": "Wygeneruj 5 treści."
+    },
+    "campaignMaster": {
+        "name": "Mistrz Kampanii",
+        "description": "Zaplanuj swoją pierwszą kampanię z AI."
+    },
+    "powerUser": {
+        "name": "Power User",
+        "description": "Wygeneruj 25 treści."
+    },
+    "visionary": {
+        "name": "Wizjoner",
+        "description": "Wygeneruj ponad 100 treści."
+    }
+  },
+  "strategist": {
+    "title": "Strategista AI",
+    "subtitle": "Uzyskaj kompleksowy audyt strategiczny dla treści Twojej marki.",
+    "form": {
+      "goalLabel": "Główny cel biznesowy na następny kwartał",
+      "goalPlaceholder": "np. Zwiększenie świadomości marki, napędzenie sprzedaży produktu X",
+      "audienceLabel": "Opisz swoją grupę docelową",
+      "audiencePlaceholder": "np. Milenialsi zorientowani technologicznie, właściciele małych firm",
+      "competitorsLabel": "Adresy URL konkurencji w mediach społecznościowych (opcjonalnie, jeden na linię)",
+      "competitorsPlaceholder": "https://instagram.com/konkurent1\nhttps://linkedin.com/company/konkurent2",
+      "submit": "Rozpocznij Analizę Strategiczną"
+    },
+    "loading": {
+      "title": "AI przeprowadza audyt strategiczny...",
+      "subtitle": "To może potrwać minutę. Analizujemy dane rynkowe i historię Twoich treści, aby zbudować najlepszą strategię.",
+      "steps": [
+        "Analizowanie historii Twoich treści...",
+        "Badanie aktualnych trendów rynkowych...",
+        "Ocena otoczenia konkurencyjnego...",
+        "Formułowanie głównych filarów treści...",
+        "Dopracowywanie persony Twoich odbiorców...",
+        "Budowanie 30-dniowego planu działania..."
+      ]
+    },
+    "report": {
+      "title": "Raport Audytu Strategicznego",
+      "summary": "Podsumowanie",
+      "pillars": "Filary Treści",
+      "persona": "Dopracowana Persona Odbiorcy",
+      "swot": "Analiza SWOT",
+      "strengths": "Mocne strony",
+      "weaknesses": "Słabe strony",
+      "opportunities": "Szanse",
+      "threats": "Zagrożenia",
+      "competitors": "Przegląd Konkurencji",
+      "plan": "30-dniowy Plan Działania",
+      "importPlan": "Zaimportuj Plan do Kalendarza",
+      "planImported": "Plan zaimportowany!"
+    },
+    "locked": {
+      "title": "Odblokuj Strategistę AI",
+      "description": "Przejdź na plan Pro, aby uzyskać kompleksowy audyt strategiczny, 30-dniowy plan treści i wgląd w konkurencję.",
+      "upgradeButton": "Ulepsz do Pro"
+    }
+  }
+}
