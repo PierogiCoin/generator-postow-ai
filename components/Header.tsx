@@ -57,12 +57,12 @@ const BottomNavItem: React.FC<{ to: string, icon: React.FC<any>, label: string }
 const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void, onOpenMoreMenu: () => void }> = ({ onOpenCreateMenu, onOpenMoreMenu }) => {
     const { t } = useTranslation();
     return (
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-t border-slate-200 dark:border-slate-800 z-40">
-            <nav className="grid grid-cols-5 items-stretch h-full">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 h-16 glass border-t border-slate-200/50 dark:border-slate-700/50 z-40 shadow-lg">
+            <nav className="grid grid-cols-5 items-stretch h-full px-2">
                 <BottomNavItem to="/dashboard" icon={LayoutGridIcon} label={t('header.nav.dashboard')} />
                 <BottomNavItem to="/trends" icon={TrendingUpIcon} label={t('header.nav.trends')} />
                 <div className="flex items-center justify-center">
-                    <button onClick={onOpenCreateMenu} className="w-14 h-14 -mt-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full text-white shadow-lg flex items-center justify-center transform transition-transform active:scale-95">
+                    <button onClick={onOpenCreateMenu} className="w-14 h-14 -mt-7 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-full text-white shadow-xl flex items-center justify-center transform transition-all active:scale-90 hover:shadow-2xl hover:rotate-12 animate-pulse-glow">
                         <SparklesIcon className="w-7 h-7" />
                     </button>
                 </div>
@@ -78,20 +78,24 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void, onOpenMoreMenu: () 
 
 const MobileCreateMenu: React.FC<{ createNavItems: any[], onClose: () => void }> = ({ createNavItems, onClose }) => {
     return (
-        <div className="fixed inset-0 bg-black/40 z-40 sm:hidden" onClick={onClose}>
-            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-2 animate-slide-in">
-                {createNavItems.map(({ id, to, label, icon: Icon, state }) => (
-                     <NavLink
-                        key={id}
-                        to={to}
-                        state={state}
-                        onClick={onClose}
-                        className="flex w-full items-center gap-4 px-4 py-3 text-base text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
-                    >
-                        <Icon className="w-6 h-6"/>
-                        <span className="font-semibold">{label}</span>
-                    </NavLink>
-                ))}
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 sm:hidden" onClick={onClose}>
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-80 max-w-[90vw] glass rounded-2xl shadow-2xl p-3 animate-slide-in">
+                <div className="grid grid-cols-2 gap-2">
+                    {createNavItems.map(({ id, to, label, icon: Icon, state }) => (
+                         <NavLink
+                            key={id}
+                            to={to}
+                            state={state}
+                            onClick={onClose}
+                            className="flex flex-col items-center justify-center gap-3 p-4 text-slate-700 dark:text-slate-300 hover:bg-gradient-to-br hover:from-purple-100 hover:to-blue-100 dark:hover:from-purple-900/30 dark:hover:to-blue-900/30 rounded-xl transition-all hover:scale-105 active:scale-95"
+                        >
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg">
+                                <Icon className="w-6 h-6"/>
+                            </div>
+                            <span className="font-semibold text-sm text-center">{label}</span>
+                        </NavLink>
+                    ))}
+                </div>
             </div>
         </div>
     );
@@ -182,12 +186,14 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-slate-900 dark:to-slate-800 shadow-md sticky top-0 z-40">
+      <header className="glass sticky top-0 z-40 border-b border-white/20 dark:border-slate-700/50">
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-2" aria-label="Strona główna">
-              <SparklesIcon className="w-7 h-7 text-white" />
-              <h1 className="hidden sm:block text-xl lg:text-2xl font-bold text-white tracking-tight">
+            <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-2 group" aria-label="Strona główna">
+              <div className="bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl p-1.5 shadow-lg group-hover:scale-110 transition-transform">
+                <SparklesIcon className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="hidden sm:block text-xl lg:text-2xl font-bold gradient-text tracking-tight">
                 {t('header.title')}
               </h1>
             </NavLink>

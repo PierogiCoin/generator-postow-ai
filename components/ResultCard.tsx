@@ -257,6 +257,10 @@ const ResultActions: React.FC<{ result: GenerationResult; formData: FormData; on
                 <LayersIcon className="w-4 h-4" />
                 {isRepurposing ? 'Przetwarzanie...' : 'Przetwórz'}
             </button>
+            <button onClick={() => appHandlers.handleOpenVideoStoryModal(result)} className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg">
+                <FilmIcon className="w-4 h-4" />
+                Video Story
+            </button>
             <button onClick={appHandlers.handlePredictPerformance} disabled={isPredictingPerformance} className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md transition-colors bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 disabled:opacity-50">
                 <TrendingUpIcon className="w-4 h-4" />
                 {isPredictingPerformance ? 'Analizowanie...' : 'Prognozuj'}

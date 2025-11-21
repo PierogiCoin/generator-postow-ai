@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 
@@ -11,6 +11,8 @@ import { SignUpModal } from './components/SignUpModal';
 import { RepurposeModal } from './components/RepurposeModal';
 import { BrandVoiceManagerModal } from './components/BrandVoiceManagerModal';
 import { AnalysisModal } from './components/AnalysisModal';
+import { VideoStoryModal } from './components/VideoStoryModal';
+import { MultiPlatformOptimizer, PlatformOptimization } from './components/MultiPlatformOptimizer';
 // Chatbot will be handled via backend; do not initialize client-side AI here
 // import { Chatbot } from './components/Chatbot';
 import { NotificationSystem } from './components/NotificationSystem';
@@ -26,6 +28,7 @@ import { useUIStore } from './stores/uiStore';
 import { useGenerationStore } from './stores/generationStore';
 import { useDataStore } from './stores/dataStore';
 import type { GenerationResult } from './types';
+import { NotificationType } from './types';
 
 // 1. Ochrona Ścieżek
 export const ProtectedRoute = () => {
@@ -58,12 +61,14 @@ export const App: React.FC = () => {
   const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
 
   // Zustand Stores for state management
-  const { isPricingModalOpen, authModal, isBrandVoiceManagerOpen, isAnalysisModalOpen, isVeoKeyModalNeeded, isCommandPaletteOpen, setAuthModal, setIsPricingModalOpen, setIsBrandVoiceManagerOpen, setIsVeoKeyModalNeeded, setIsCommandPaletteOpen } = useUIStore();
-  const { result, isRepurposeModalOpen, repurposedContent, isRepurposing, repurposeError, lastFormData } = useGenerationStore();
+  const { isPricingModalOpen, authModal, isBrandVoiceManagerOpen, isAnalysisModalOpen, isVeoKeyModalNeeded, isCommandPaletteOpen, isVideoStoryModalOpen, videoStoryPost, setAuthModal, setIsPricingModalOpen, setIsBrandVoiceManagerOpen, setIsVeoKeyModalNeeded, setIsCommandPaletteOpen } = useUIStore();
+  const { result, isRepurposeModalOpen, repurposedContent, isRepurposing, repurposeError, lastFormData, isGeneratingVideoStory } = useGenerationStore();
   const { brandVoiceProfiles, activeBrandVoiceId, isLearningStyle, itemToSchedule } = useDataStore();
 
   // Local state for complex objects passed to modals
   const itemToRepurpose = useRef<GenerationResult | null>(null);
+  const [generatedVideo, setGeneratedVideo] = useState<{ url: string; thumbnail: string; duration: number } | undefined>();
+  const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<PlatformOptimization[] | null>(null);
 
   // Obsługa skrótu klawiszowego dla Palety Komend
   useEffect(() => {
@@ -82,6 +87,48 @@ export const App: React.FC = () => {
     itemToRepurpose.current = item;
     handlers.handleOpenRepurposeModal();
   }
+
+  const handleGenerateVideoStory = async (style: any) => {
+    if (!videoStoryPost || !user) return;
+    
+    const { startVideoStoryGeneration, videoStorySuccess, videoStoryFailure } = useGenerationStore.getState();
+    
+    try {
+      startVideoStoryGeneration();
+      const { generateVideoStory } = await import('./services/videoStoryService');
+      const videoData = await generateVideoStory(videoStoryPost, style, user.id);
+      setGeneratedVideo(videoData);
+      videoStorySuccess();
+      notificationSystem.addToast('Video story wygenerowane pomyślnie!', NotificationType.Success);
+    } catch (error: any) {
+      videoStoryFailure();
+      notificationSystem.addToast(error.message || 'Błąd generowania video', NotificationType.Error);
+    }
+  };
+
+  const handleOptimizeMultiPlatform = async (platforms: any[]) => {
+    if (!result || !user) return;
+    
+    const { startMultiPlatformOptimization, multiPlatformSuccess, multiPlatformFailure } = useGenerationStore.getState();
+    
+    try {
+      startMultiPlatformOptimization();
+      const { optimizeForPlatforms } = await import('./services/multiPlatformService');
+      const optimizations = await optimizeForPlatforms({
+        originalText: result.postText,
+        originalPlatform: result.platform,
+        targetPlatforms: platforms,
+        tone: result.metadata.tone,
+        hashtags: result.hashtags
+      }, user.id);
+      setMultiPlatformOptimizations(optimizations);
+      multiPlatformSuccess();
+      notificationSystem.addToast('Zoptymalizowano dla wybranych platform!', NotificationType.Success);
+    } catch (error: any) {
+      multiPlatformFailure();
+      notificationSystem.addToast(error.message || 'Błąd optymalizacji', NotificationType.Error);
+    }
+  };
     
   // --- WIDOK GŁÓWNY ---
     
@@ -183,6 +230,14 @@ export const App: React.FC = () => {
         result={handlers.analysisResult}
         isLoading={handlers.isPerformingAnalysis}
         error={handlers.analysisError}
+      />
+      <VideoStoryModal
+        isOpen={isVideoStoryModalOpen}
+        onClose={handlers.handleCloseVideoStoryModal}
+        post={videoStoryPost}
+        onGenerate={handleGenerateVideoStory}
+        isGenerating={isGeneratingVideoStory}
+        generatedVideo={generatedVideo}
       />
     </div>
   );

@@ -27,13 +27,13 @@ import type { StrategicIdea } from '../types';
 import { useDataStore } from '../stores/dataStore';
 
 const StatCard: React.FC<{ icon: React.FC<any>, label: string, value: number | string, color: string }> = ({ icon: Icon, label, value, color }) => (
-    <div className="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 flex items-center gap-4">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${color}`}>
-            <Icon className="w-6 h-6 text-white" />
+    <div className="glass p-6 rounded-2xl flex items-center gap-4 card-hover animate-scale-in">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${color} shadow-lg`}>
+            <Icon className="w-7 h-7 text-white" />
         </div>
         <div>
-            <p className="text-3xl font-bold text-slate-900 dark:text-white">{value}</p>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+            <p className="text-4xl font-bold gradient-text">{value}</p>
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1">{label}</p>
         </div>
     </div>
 );

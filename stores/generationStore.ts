@@ -28,6 +28,8 @@ type GenerationState = {
   isAssistantSpeaking: boolean;
   assistantTranscript: { speaker: 'user' | 'model'; text: string }[];
   liveTranscript: { user: string; model: string };
+  isGeneratingVideoStory: boolean;
+  isOptimizingMultiPlatform: boolean;
 
   // Actions
   startGeneration: (formData: FormData) => void;
@@ -73,6 +75,12 @@ type GenerationState = {
   startSEOAnalysis: () => void;
   seoAnalysisSuccess: (analysis: SEOAnalysisResult | null) => void;
   seoAnalysisFailure: () => void;
+  startVideoStoryGeneration: () => void;
+  videoStorySuccess: () => void;
+  videoStoryFailure: () => void;
+  startMultiPlatformOptimization: () => void;
+  multiPlatformSuccess: () => void;
+  multiPlatformFailure: () => void;
 };
 
 const initialGenerationState = {
@@ -102,6 +110,8 @@ const initialGenerationState = {
   isAssistantSpeaking: false,
   assistantTranscript: [],
   liveTranscript: { user: '', model: '' },
+  isGeneratingVideoStory: false,
+  isOptimizingMultiPlatform: false,
 };
 
 export const useGenerationStore = create<GenerationState>((set, get) => ({
@@ -169,4 +179,10 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   startSEOAnalysis: () => set({ isAnalyzingSEO: true, seoAnalysis: null }),
   seoAnalysisSuccess: (analysis) => set({ isAnalyzingSEO: false, seoAnalysis: analysis }),
   seoAnalysisFailure: () => set({ isAnalyzingSEO: false }),
+  startVideoStoryGeneration: () => set({ isGeneratingVideoStory: true }),
+  videoStorySuccess: () => set({ isGeneratingVideoStory: false }),
+  videoStoryFailure: () => set({ isGeneratingVideoStory: false }),
+  startMultiPlatformOptimization: () => set({ isOptimizingMultiPlatform: true }),
+  multiPlatformSuccess: () => set({ isOptimizingMultiPlatform: false }),
+  multiPlatformFailure: () => set({ isOptimizingMultiPlatform: false }),
 }));

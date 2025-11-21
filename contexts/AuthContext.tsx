@@ -21,7 +21,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 const mockTeams: Team[] = [
     { 
-      id: 'team-1', 
+      id: '00000000-0000-0000-0000-000000000001', 
       name: 'Agencja Kreatywna', 
       members: [
         { id: 'test-user-123', name: 'Ty', email: 'test@example.com', role: 'manager' },
@@ -29,7 +29,7 @@ const mockTeams: Team[] = [
       ]
     },
     { 
-      id: 'team-2', 
+      id: '00000000-0000-0000-0000-000000000002', 
       name: 'E-commerce Glow', 
       members: [
         { id: 'test-user-123', name: 'Ty', email: 'test@example.com', role: 'member' },
@@ -91,7 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           supabase.from('favorites').select('*').order('timestamp', { ascending: false }),
           supabase.from('templates').select('*'),
           supabase.from('drafts').select('*').order('timestamp', { ascending: false }),
-          supabase.from('scheduled_posts').select('*').order('schedule_timestamp', { ascending: true }),
+          supabase.from('scheduled_posts').select('*').order('scheduled_at', { ascending: true }),
           supabase.from('brand_voice_profiles').select('*'),
         ]);
 

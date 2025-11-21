@@ -17,6 +17,7 @@ import { FavoritesList } from './FavoritesList';
 import { ScheduledPostsList } from './ScheduledPostsList';
 import { StatsDashboard } from './StatsDashboard';
 import { SubscriptionStatus } from './SubscriptionStatus';
+import { MultiPlatformOptimizer } from './MultiPlatformOptimizer';
 import { ClockIcon } from './icons/ClockIcon';
 import { StarIcon } from './icons/StarIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
@@ -50,8 +51,10 @@ export const GeneratorView: React.FC = () => {
         inspiration, selectInspiration, clearHistory, removeFavorite, clearFavorites,
         saveTemplate, deleteTemplate, removeDraft
     } = useDataStore();
-    const { result, isLoading } = useGenerationStore();
+    const { result, isLoading, isOptimizingMultiPlatform } = useGenerationStore();
     const { setIsPricingModalOpen } = useUIStore();
+    
+    const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<any>(null);
     
     // Handlers
     const notificationSystem = useNotifications();
@@ -217,8 +220,31 @@ export const GeneratorView: React.FC = () => {
                         )}
                         <InputForm prefillData={prefillData} onPrefillConsumed={onPrefillConsumed} />
                     </div>
-                    <div className={`transition-opacity duration-500 ${isResultVisible ? 'lg:order-2' : 'lg:order-2'}`}>
+                    <div className={`transition-opacity duration-500 ${isResultVisible ? 'lg:order-2' : 'lg:order-2'} space-y-6`}>
                         <ResultCard historyResult={('result' in (inspiration || {})) ? (inspiration as CampaignHistoryItem).result : null} />
+                        
+                        {result && !isLoading && (
+                            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
+                                <MultiPlatformOptimizer
+                                    originalText={result.postText}
+                                    originalPlatform={result.platform}
+                                    tone={result.metadata.tone}
+                                    onOptimize={async (platforms) => {
+                                        if (!user) return [];
+                                        const { optimizeForPlatforms } = await import('../services/multiPlatformService');
+                                        return optimizeForPlatforms({
+                                            originalText: result.postText,
+                                            originalPlatform: result.platform,
+                                            targetPlatforms: platforms,
+                                            tone: result.metadata.tone,
+                                            hashtags: result.hashtags
+                                        }, user.id);
+                                    }}
+                                    isOptimizing={isOptimizingMultiPlatform}
+                                    optimizations={multiPlatformOptimizations}
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

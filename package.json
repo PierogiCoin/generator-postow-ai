@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:full": "concurrently -k \"pnpm exec tsx --env-file=.env server/index.ts\" \"vite\"",
+    "dev:full": "concurrently -k \"cd server && pnpm exec tsx --env-file=.env index.ts\" \"vite\"",
     "build": "vite build",
     "preview": "vite preview"
   },

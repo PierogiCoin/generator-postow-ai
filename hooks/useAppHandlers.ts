@@ -479,6 +479,14 @@ export const useAppHandlers = (addToast: (message: string, type: NotificationTyp
     }, [user, dataActions]);
 
 
+    const handleOpenVideoStoryModal = useCallback((result: GenerationResult) => {
+        uiActions.setVideoStoryModal(true, result);
+    }, [uiActions]);
+
+    const handleCloseVideoStoryModal = useCallback(() => {
+        uiActions.setVideoStoryModal(false, null);
+    }, [uiActions]);
+
     return {
         handleGenerate,
         handleGenerateCalendarPlan,
@@ -520,5 +528,7 @@ export const useAppHandlers = (addToast: (message: string, type: NotificationTyp
         handleApplyAudio,
         handleOpenScheduleModal,
         handleRunStrategicAudit,
+        handleOpenVideoStoryModal,
+        handleCloseVideoStoryModal,
     };
 };

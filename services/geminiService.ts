@@ -150,24 +150,56 @@ export async function* generateSocialMediaContentStream(
     const uid = userId || 'default-user'; 
     const model = formData.model === 'Pro' ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
 
-    let systemInstruction = `You are an expert social media manager. Generate a post based on the user's request.
-    - Topic: ${formData.topic}
-    - Platform: ${formData.platform}
-    - Target Audience: ${formData.audience}
-    - Tone: ${formData.tone}
-    - Keywords: ${formData.keywords || 'not specified'}
-    - Type: ${formData.contentType}`;
+    let systemInstruction = `You are a PROFESSIONAL social media content strategist with 10+ years of experience creating viral, engaging content.
+
+🎯 MISSION: Create a HIGH-QUALITY, PROFESSIONAL ${formData.platform} post that will captivate the audience and drive engagement.
+
+📋 POST REQUIREMENTS:
+- Topic: ${formData.topic}
+- Platform: ${formData.platform}
+- Target Audience: ${formData.audience}
+- Tone: ${formData.tone}
+- Keywords: ${formData.keywords || 'not specified'}
+- Content Type: ${formData.contentType}
+
+✨ QUALITY STANDARDS:
+1. Hook: Start with a POWERFUL attention-grabbing opening (first 10 words are crucial!)
+2. Value: Provide SPECIFIC, actionable insights (no generic fluff)
+3. Structure: Use clear formatting with line breaks, emojis (2-4), and bullet points where appropriate
+4. Engagement: Include a COMPELLING call-to-action or thought-provoking question
+5. Length: ${formData.platform === 'Twitter' ? '280 characters max' : formData.platform === 'LinkedIn' ? '1300-2000 characters optimal' : 'Platform-appropriate length'}
+6. Authenticity: Sound human, not robotic. Use conversational language.
+
+📱 PLATFORM-SPECIFIC RULES:
+${formData.platform === 'LinkedIn' 
+    ? '- Professional but personable tone\n- Start with a hook, not "I am excited to..."\n- Use storytelling or data-driven insights\n- 3-5 short paragraphs max\n- End with question to spark conversation' 
+    : formData.platform === 'Twitter'
+    ? '- Concise and punchy (280 chars)\n- Start strong - no filler words\n- Use 1-2 emojis strategically\n- Make it quotable and shareable'
+    : formData.platform === 'Instagram'
+    ? '- Visually descriptive language\n- First line is critical (only 125 chars show before "more")\n- Use 2-4 emojis\n- Space out text for readability\n- Call-to-action in caption'
+    : '- Engaging and authentic\n- Clear structure\n- Appropriate length for platform'}
+
+🚫 AVOID:
+- Generic phrases like "In today's fast-paced world..."
+- Starting with "I'm excited to share..."
+- Overused buzzwords
+- Too many emojis (max 4)
+- All caps (except for emphasis)
+- Obvious sales pitches`;
 
     if (brandVoice) {
-        systemInstruction += `\n\nAdhere to the following brand voice:
-        - Brand Name: ${brandVoice.brandName}
-        - Description: ${brandVoice.description}
-        - Keywords to include: ${brandVoice.keywords}
-        - Things to avoid: ${brandVoice.avoid}`;
+        systemInstruction += `\n\n🎨 BRAND VOICE (Must follow strictly):
+- Brand: ${brandVoice.brandName}
+- Voice Description: ${brandVoice.description}
+- MUST include keywords: ${brandVoice.keywords}
+- NEVER use: ${brandVoice.avoid}
+- Maintain consistency with brand personality`;
     }
     
     if (insights && insights.length > 0) {
-        systemInstruction += `\n\nIMPORTANT: Apply these learned insights from past successful posts to improve the content:\n${insights.map(i => `- ${i.text}`).join('\n')}`;
+        systemInstruction += `\n\n📊 PROVEN SUCCESS INSIGHTS (Apply these patterns):
+${insights.map(i => `✓ ${i.text}`).join('\n')}
+Use these insights to maximize engagement!`;
     }
     
     // ZMIANA KLUCZOWA: fetch bezpośrednio do endpointu
@@ -279,7 +311,51 @@ export const generatePostDetails = async (
     }
 
     if (formData.generationType === GenerationType.PostWithImage || formData.generationType === GenerationType.ABTest) {
-        const imagePrompt = `Create a visually appealing image for a ${formData.platform} post. The post is about: "${formData.topic}". The style should be ${formData.visualStyle}. The tone is ${formData.tone}. Main text: "${postText.substring(0, 200)}".`;
+        // 🎨 PROFESSIONAL IMAGE PROMPT ENGINEERING
+        const visualStyleDescriptions = {
+            Professional: 'clean, modern corporate aesthetic with professional color palette, high-end business photography style, sophisticated composition',
+            Minimalist: 'ultra-minimalist design, lots of negative space, single focal point, monochromatic or limited color palette, zen-like simplicity',
+            Bold: 'vibrant bold colors, high contrast, dramatic lighting, eye-catching composition, modern and energetic',
+            Vintage: 'retro aesthetic, muted vintage colors, film grain texture, nostalgic feel, classic typography style',
+            Modern: 'contemporary sleek design, gradient colors, geometric shapes, tech-forward aesthetic, clean lines',
+            Playful: 'fun and energetic, bright cheerful colors, whimsical elements, friendly and approachable, dynamic composition'
+        };
+
+        const platformImageSpecs = {
+            Instagram: 'Instagram-optimized: vibrant colors, mobile-first composition, story-worthy aesthetic',
+            Facebook: 'Facebook-optimized: clear focal point, works at multiple sizes, eye-catching for feed',
+            LinkedIn: 'LinkedIn-optimized: professional, clean, business-appropriate, trustworthy aesthetic',
+            Twitter: 'Twitter-optimized: high contrast, readable at small sizes, attention-grabbing',
+            YouTube: 'YouTube thumbnail-style: bold text overlay space, high contrast, clickable aesthetic',
+            TikTok: 'TikTok-style: vertical format, dynamic, youth-oriented, trend-forward aesthetic'
+        };
+
+        const imagePrompt = `Create a PROFESSIONAL, HIGH-QUALITY image for a ${formData.platform} social media post.
+
+🎯 SUBJECT: ${formData.topic}
+
+🎨 VISUAL STYLE: ${visualStyleDescriptions[formData.visualStyle] || formData.visualStyle}
+
+📱 PLATFORM OPTIMIZATION: ${platformImageSpecs[formData.platform] || 'Social media optimized'}
+
+✨ REQUIREMENTS:
+- ${formData.tone} mood and atmosphere
+- Professional photography or illustration quality
+- No text overlays (unless critical to design)
+- Composition: Rule of thirds, balanced elements
+- Color psychology: Colors that evoke ${formData.tone} emotion
+- Visual metaphor related to: "${postText.substring(0, 100)}"
+- Brand-safe, commercially appropriate
+- High resolution, crisp details
+
+🚫 AVOID:
+- Generic stock photo look
+- Cluttered composition
+- Low-quality or pixelated elements
+- Cliché imagery (handshakes, lightbulbs, etc.)
+- Text that could be unreadable
+
+Create an image that will STOP the scroll and perfectly complement the message.`;
         
         // ZMIANA KLUCZOWA: callApi teraz używa /api/ endpointu poprawnie
         const imageResponse = await callApi('generate-images', { 
@@ -289,6 +365,7 @@ export const generatePostDetails = async (
               numberOfImages: 1,
               outputMimeType: 'image/jpeg',
               aspectRatio: formData.aspectRatio || '1:1',
+              safetyFilterLevel: 'BLOCK_MEDIUM_AND_ABOVE',
             },
         }, userId);
 
@@ -328,9 +405,36 @@ export const generatePostDetails = async (
 // --- 4. Pozostałe funkcje (wszystkie z exportem i WZMOCNIONYM PARSOWANIEM) ---
 
 export const suggestHashtags = async (postText: string, platform: Platform, userId: string): Promise<string[]> => {
+    const platformGuidelines = {
+        LinkedIn: 'Use 3-5 professional hashtags. Mix broad (#Marketing) and specific (#B2BSaaS). Avoid overly trendy hashtags.',
+        Twitter: 'Use 1-2 hashtags max. Must be trending or highly relevant. Keep them short.',
+        Instagram: 'Use 8-15 hashtags. Mix popular (100K-1M posts), medium (10K-100K), and niche (<10K) hashtags.',
+        Facebook: 'Use 2-3 hashtags max. Focus on branded or community hashtags.',
+        YouTube: 'Use 3-5 highly searchable hashtags. Focus on discovery keywords.',
+        TikTok: 'Use 4-6 trending hashtags. Include challenge/trend hashtags.'
+    };
+
     const response = await generateContent({
         model: 'gemini-2.5-flash',
-        contents: `Suggest 5 relevant hashtags for this ${platform} post. Return a JSON array of strings. Post: "${postText}"`,
+        contents: `You are a PROFESSIONAL hashtag strategist. Analyze this ${platform} post and suggest STRATEGIC hashtags for MAXIMUM reach and engagement.
+
+POST CONTENT:
+"${postText}"
+
+PLATFORM: ${platform}
+GUIDELINES: ${platformGuidelines[platform] || 'Use relevant, searchable hashtags'}
+
+📊 HASHTAG STRATEGY:
+- Mix of high-traffic and niche hashtags
+- Must be directly relevant to content
+- No banned or spammy hashtags
+- Use proper capitalization (#SocialMediaMarketing, not #socialmediamarketing)
+- Platform-specific best practices
+
+Return ONLY a JSON array of hashtag strings (including the # symbol).
+Example: ["#MarketingTips", "#SocialMediaGrowth", "#ContentStrategy"]
+
+${platform === 'Instagram' ? 'IMPORTANT: Return 10-15 hashtags for Instagram' : platform === 'Twitter' ? 'IMPORTANT: Return maximum 2 hashtags for Twitter' : ''}`,
         config: { responseMimeType: 'application/json' }
     }, userId);
     if (response.promptFeedback?.blockReason || response.candidates?.[0]?.finishReason === 'SAFETY') {

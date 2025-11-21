@@ -1,6 +1,9 @@
 import { create } from 'zustand';
+import type { GenerationResult } from '../types';
 
 type UIState = {
+  isVideoStoryModalOpen: boolean;
+  videoStoryPost: GenerationResult | null;
   isPricingModalOpen: boolean;
   authModal: 'login' | 'signup' | null;
   isBrandVoiceManagerOpen: boolean;
@@ -14,6 +17,7 @@ type UIState = {
   setIsAnalysisModalOpen: (isOpen: boolean) => void;
   setIsVeoKeyModalNeeded: (isNeeded: boolean) => void;
   setIsCommandPaletteOpen: (isOpen: boolean) => void;
+  setVideoStoryModal: (isOpen: boolean, post?: GenerationResult | null) => void;
 };
 
 export const useUIStore = create<UIState>((set) => ({
@@ -23,6 +27,8 @@ export const useUIStore = create<UIState>((set) => ({
   isAnalysisModalOpen: false,
   isVeoKeyModalNeeded: false,
   isCommandPaletteOpen: false,
+  isVideoStoryModalOpen: false,
+  videoStoryPost: null,
 
   setIsPricingModalOpen: (isOpen) => set({ isPricingModalOpen: isOpen }),
   setAuthModal: (modal) => set({ authModal: modal }),
@@ -30,4 +36,5 @@ export const useUIStore = create<UIState>((set) => ({
   setIsAnalysisModalOpen: (isOpen) => set({ isAnalysisModalOpen: isOpen }),
   setIsVeoKeyModalNeeded: (isNeeded) => set({ isVeoKeyModalNeeded: isNeeded }),
   setIsCommandPaletteOpen: (isOpen) => set({ isCommandPaletteOpen: isOpen }),
+  setVideoStoryModal: (isOpen, post = null) => set({ isVideoStoryModalOpen: isOpen, videoStoryPost: post }),
 }));

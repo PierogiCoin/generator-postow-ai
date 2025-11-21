@@ -19,50 +19,51 @@ const HeroSection: React.FC<{ onNavigateToApp: () => void }> = ({ onNavigateToAp
   const { t } = useTranslation();
 
   return (
-    <section className="text-center pt-16 md:pt-24 pb-16">
-      <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight leading-tight">
-        {t('home.hero.title_part1')}
-        <span className="block bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-blue-500 mt-2">
-          {t('home.hero.title_part2')}
-        </span>
-      </h1>
-      <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-500 dark:text-gray-400">
+    <section className="text-center pt-16 md:pt-24 pb-16 px-4">
+      <div className="animate-fade-in-down">
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+          {t('home.hero.title_part1')}
+          <span className="block gradient-text mt-2 animate-float">
+            {t('home.hero.title_part2')}
+          </span>
+        </h1>
+      </div>
+      <p className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-slate-600 dark:text-slate-300 animate-fade-in-up">
         {t('home.hero.subtitle')}
       </p>
-      <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
+      <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4 animate-fade-in">
         <button
           onClick={onNavigateToApp}
-          className="flex items-center gap-2 px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-md hover:opacity-90 transition-opacity shadow-lg transform hover:scale-105"
+          className="flex items-center gap-3 px-8 py-4 text-lg font-bold text-white bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 rounded-2xl shadow-xl transform hover:scale-105 hover:shadow-2xl transition-all active:scale-95 card-hover"
         >
-          <SparklesIcon className="w-6 h-6" />
+          <SparklesIcon className="w-6 h-6 animate-pulse" />
           {t('home.hero.cta')}
         </button>
       </div>
-      <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{t('home.hero.sub_cta')}</p>
+      <p className="mt-4 text-sm text-slate-500 dark:text-slate-400 animate-fade-in">{t('home.hero.sub_cta')}</p>
       
-      <div className="mt-16 max-w-4xl mx-auto">
-          <div className="relative rounded-xl shadow-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900/50 p-2">
-              <div className="aspect-video rounded-lg bg-white dark:bg-gray-800 overflow-hidden">
-                  {/* Fake UI mockup */}
+      <div className="mt-16 max-w-5xl mx-auto animate-scale-in">
+          <div className="relative rounded-3xl shadow-2xl glass p-3 card-hover">
+              <div className="aspect-video rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 overflow-hidden border border-slate-200/50 dark:border-slate-700/50">
                   <div className="h-full w-full flex">
-                      <div className="w-1/3 p-4 border-r border-gray-200 dark:border-gray-700">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
-                          <div className="space-y-2">
-                              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="w-1/3 p-4 border-r border-slate-200 dark:border-slate-700">
+                          <div className="h-4 bg-gradient-to-r from-purple-200 to-blue-200 dark:from-purple-900/50 dark:to-blue-900/50 rounded-full w-3/4 mb-4 shimmer"></div>
+                          <div className="space-y-3">
+                              <div className="h-10 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shimmer"></div>
+                              <div className="h-10 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl w-5/6 shimmer"></div>
+                              <div className="h-10 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-xl shimmer"></div>
                           </div>
                       </div>
                       <div className="w-2/3 p-4">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-4"></div>
-                          <div className="aspect-square bg-gradient-to-br from-purple-100 to-blue-200 dark:from-purple-900/50 dark:to-blue-900/50 rounded-lg flex items-center justify-center">
-                              <SparklesIcon className="w-12 h-12 text-blue-400 opacity-50"/>
+                          <div className="h-4 bg-gradient-to-r from-purple-200 to-blue-200 dark:from-purple-900/50 dark:to-blue-900/50 rounded-full w-1/2 mb-4 shimmer"></div>
+                          <div className="aspect-square bg-gradient-to-br from-purple-100 via-pink-100 to-blue-200 dark:from-purple-900/50 dark:via-pink-900/50 dark:to-blue-900/50 rounded-2xl flex items-center justify-center shadow-inner">
+                              <SparklesIcon className="w-16 h-16 text-purple-500 dark:text-purple-400 opacity-50 animate-float"/>
                           </div>
                       </div>
                   </div>
               </div>
-               <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white shadow-lg">
-                  <SparklesIcon className="w-8 h-8"/>
+               <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-gradient-to-br from-purple-500 via-pink-500 to-blue-500 rounded-2xl flex items-center justify-center text-white shadow-2xl animate-float rotate-12">
+                  <SparklesIcon className="w-10 h-10"/>
               </div>
           </div>
       </div>
