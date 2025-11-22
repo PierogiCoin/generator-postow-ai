@@ -64,8 +64,9 @@ const corsOptions: cors.CorsOptions = {
       const isGitHubDev = /\.app\.github\.dev$/.test(host);
       const isLocalhost = host === 'localhost' || host === '127.0.0.1';
       const isLocalNetworkIP = /^192\.168\.\d+\.\d+$/.test(host);
+      const isRailway = /\.up\.railway\.app$/.test(host);
 
-      if (isGitHubDev || isLocalhost || isLocalNetworkIP) {
+      if (isGitHubDev || isLocalhost || isLocalNetworkIP || isRailway) {
         return callback(null, true);
       }
       return callback(new Error(`Not allowed by CORS: ${origin}`), false);

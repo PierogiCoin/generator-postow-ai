@@ -48,7 +48,13 @@ const _initializeSupabase = async (): Promise<SupabaseClient> => {
       console.warn('Wykryto prawdopodobny klucz service_role. Nie wystawiaj go na froncie.');
     }
 
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } });
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, { 
+      auth: { 
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+      } 
+    });
     return supabaseInstance;
   } catch (err) {
     supabasePromise = null;
