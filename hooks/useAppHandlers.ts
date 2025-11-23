@@ -19,6 +19,9 @@ import { USAGE_LIMITS } from '../constants';
 import type { FormData, AppError, GenerationResult, ScheduledPost, FavoritePost, BrandVoiceProfile, CampaignHistoryItem, NewCampaignPayload, CustomTemplate, AIAssistantAction, Draft } from '../types';
 import { GenerationType, NotificationType } from '../types';
 
+// UX/UI improvements
+import { showSuccess, showError, showWarning, showInfo } from '../utils/errorHandler';
+
 
 export const useAppHandlers = (addToast: (message: string, type: NotificationType, duration?: number) => void, addNotification: (message: string, type: NotificationType, link?: string) => void) => {
     const { t } = useTranslation();
@@ -52,6 +55,8 @@ export const useAppHandlers = (addToast: (message: string, type: NotificationTyp
             errorPayload = { message: t(defaultMessageKey), details: errorMessage, type: 'unknown' };
         }
         
+        // Use new toast system with better UX
+        showError(error, errorPayload.message);
         addToast(errorPayload.message, NotificationType.Error);
         return errorPayload;
     }, [t, addToast, uiActions]);
@@ -194,6 +199,9 @@ export const useAppHandlers = (addToast: (message: string, type: NotificationTyp
             
             await dataActions.addGenerationStat(formData);
             genActions.generationSuccess(finalResult);
+            
+            // Show success toast with new UX
+            showSuccess('Treść wygenerowana pomyślnie!', 'Możesz ją teraz edytować lub zapisać');
             addToast('Treść wygenerowana pomyślnie!', NotificationType.Success);
 
         } catch (error: any) {

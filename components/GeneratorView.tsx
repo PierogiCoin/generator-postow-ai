@@ -18,6 +18,9 @@ import { ScheduledPostsList } from './ScheduledPostsList';
 import { StatsDashboard } from './StatsDashboard';
 import { SubscriptionStatus } from './SubscriptionStatus';
 import { MultiPlatformOptimizer } from './MultiPlatformOptimizer';
+// UX/UI Components
+import { LoadingOverlay, SkeletonCard } from './ui/LoadingStates';
+import { showSuccess, showError, showWarning } from '../utils/errorHandler';
 import { ClockIcon } from './icons/ClockIcon';
 import { StarIcon } from './icons/StarIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
@@ -203,6 +206,13 @@ export const GeneratorView: React.FC = () => {
                 </div>
              </aside>
 
+            {/* Loading Overlay */}
+            {isLoading && (
+                <LoadingOverlay 
+                    message="Generowanie treści..." 
+                />
+            )}
+
             <div className="flex-grow transition-all duration-300">
                  <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`fixed top-24 left-4 z-50 p-2 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 transition-transform duration-300 ${isSidebarOpen ? 'transform translate-x-[368px]' : ''} lg:hidden`}>
                     {isSidebarOpen ? <ArrowLeftIcon className="w-6 h-6 text-slate-600 dark:text-slate-400" /> : <SidebarIcon className="w-6 h-6 text-slate-600 dark:text-slate-400" />}
@@ -221,7 +231,11 @@ export const GeneratorView: React.FC = () => {
                         <InputForm prefillData={prefillData} onPrefillConsumed={onPrefillConsumed} />
                     </div>
                     <div className={`transition-opacity duration-500 ${isResultVisible ? 'lg:order-2' : 'lg:order-2'} space-y-6`}>
-                        <ResultCard historyResult={('result' in (inspiration || {})) ? (inspiration as CampaignHistoryItem).result : null} />
+                        {isLoading ? (
+                            <SkeletonCard />
+                        ) : (
+                            <ResultCard historyResult={('result' in (inspiration || {})) ? (inspiration as CampaignHistoryItem).result : null} />
+                        )}
                         
                         {result && !isLoading && (
                             <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
