@@ -1,7 +1,13 @@
 #!/bin/sh
 
-# Replace PORT variable in nginx config
-envsubst '${PORT}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf
+# Set default PORT if not provided
+export PORT=${PORT:-80}
+
+# Replace PORT variable in nginx config template
+envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+
+# Test nginx configuration
+nginx -t
 
 # Start nginx
-nginx -g 'daemon off;'
+exec nginx -g 'daemon off;'

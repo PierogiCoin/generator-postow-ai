@@ -24,8 +24,11 @@ FROM nginx:alpine
 # Copy built files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
 # Copy nginx config template for SPA routing
-COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Copy startup script
 COPY start-nginx.sh /start-nginx.sh
