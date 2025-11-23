@@ -1,0 +1,142 @@
+import React from 'react';
+
+// Skeleton loader for text content
+export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({ 
+  lines = 3, 
+  className = '' 
+}) => {
+  return (
+    <div className={`space-y-3 ${className}`}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <div
+          key={i}
+          className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"
+          style={{ width: `${100 - (i * 10)}%` }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Skeleton loader for cards
+export const SkeletonCard: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return (
+    <div className={`bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 ${className}`}>
+      <div className="h-6 bg-slate-200 dark:bg-slate-700 rounded w-1/3 mb-4 animate-pulse" />
+      <SkeletonText lines={4} />
+      <div className="mt-6 h-10 bg-slate-200 dark:bg-slate-700 rounded w-full animate-pulse" />
+    </div>
+  );
+};
+
+// Loading spinner
+export const Spinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }> = ({ 
+  size = 'md', 
+  className = '' 
+}) => {
+  const sizeClasses = {
+    sm: 'w-4 h-4 border-2',
+    md: 'w-8 h-8 border-3',
+    lg: 'w-12 h-12 border-4',
+  };
+
+  return (
+    <div
+      className={`${sizeClasses[size]} border-purple-600 border-t-transparent rounded-full animate-spin ${className}`}
+      role="status"
+      aria-label="Loading"
+    />
+  );
+};
+
+// Progress bar with percentage
+export const ProgressBar: React.FC<{ 
+  progress: number; 
+  label?: string;
+  showPercentage?: boolean;
+  className?: string;
+}> = ({ 
+  progress, 
+  label, 
+  showPercentage = true,
+  className = '' 
+}) => {
+  return (
+    <div className={`w-full ${className}`}>
+      {label && (
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            {label}
+          </span>
+          {showPercentage && (
+            <span className="text-sm font-semibold text-purple-600 dark:text-purple-400">
+              {Math.round(progress)}%
+            </span>
+          )}
+        </div>
+      )}
+      <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-purple-600 to-pink-600 rounded-full transition-all duration-300 ease-out"
+          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// Pulsating dots animation
+export const PulsatingDots: React.FC<{ className?: string }> = ({ className = '' }) => {
+  return (
+    <div className={`flex space-x-2 ${className}`}>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"
+          style={{ animationDelay: `${i * 0.15}s` }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Full screen loading overlay
+export const LoadingOverlay: React.FC<{ 
+  message?: string;
+  progress?: number;
+}> = ({ message = 'Generowanie...', progress }) => {
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+        <div className="flex flex-col items-center space-y-6">
+          <Spinner size="lg" />
+          <div className="text-center space-y-2">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {message}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Proszę czekać, to może zająć kilka sekund...
+            </p>
+          </div>
+          {progress !== undefined && (
+            <ProgressBar 
+              progress={progress} 
+              showPercentage 
+              className="w-full"
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Inline loading state for buttons
+export const ButtonLoading: React.FC<{ label?: string }> = ({ label = 'Ładowanie...' }) => {
+  return (
+    <span className="flex items-center space-x-2">
+      <Spinner size="sm" />
+      <span>{label}</span>
+    </span>
+  );
+};

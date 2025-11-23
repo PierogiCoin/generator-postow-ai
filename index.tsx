@@ -25,6 +25,7 @@ import { AIStrategistView } from './components/AIStrategistView';
 // Import providers
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './components/ui/Toast';
 // PAMIĘTAJ: To musi być zaimportowane!
 import { initializeSupabase } from './services/supabaseClient'; 
 
@@ -131,6 +132,7 @@ async function startApp() {
             <ThemeProvider>
               {/* <AuthProvider> teraz ma pewność, że Supabase jest gotowe */}
               <AuthProvider>
+                <ToastProvider />
                 <AppRouter />
               </AuthProvider>
             </ThemeProvider>
