@@ -24,9 +24,14 @@ FROM nginx:alpine
 # Copy built files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx config for SPA routing
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx config template for SPA routing
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
-EXPOSE 80
+# Copy startup script
+COPY start-nginx.sh /start-nginx.sh
+RUN chmod +x /start-nginx.sh
 
-CMD ["nginx", "-g", "daemon off;"]
+# Railway assigns a random PORT, expose it dynamically
+EXPOSE ${PORT:-80}
+
+CMD ["/start-nginx.sh"]
