@@ -33,7 +33,10 @@ const resolveApiBaseUrl = () => {
             return 'http://localhost:3001'; // BEZ /api
         }
 
-        return `${protocol}//${hostname}:3001`; // BEZ /api
+        // Railway/production - nie dodawaj portu!
+        // VITE_API_BASE_URL powinien być ustawiony w env
+        console.warn('⚠️  VITE_API_BASE_URL nie jest ustawiony - fallback nie zadziała w production!');
+        return 'http://localhost:3001'; // Fallback tylko dla local dev
     }
 
     return 'http://localhost:3001'; // BEZ /api
