@@ -31,6 +31,10 @@ import { useUIStore } from '../stores/uiStore';
 import { useAppHandlers } from '../hooks/useAppHandlers';
 import { useAuth } from '../contexts/AuthContext';
 
+// Security
+import { useRateLimiter } from '../hooks/useRateLimiter';
+import { validateTopic, validateKeywords, sanitizeText } from '../utils/security';
+
 
 interface InputFormProps {
   prefillData: Partial<FormData> | null;
