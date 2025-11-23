@@ -21,12 +21,10 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       
-      // 🟢 USUNIĘTO: Usunięto próby wstrzyknięcia kluczy GEMINI_API_KEY!
       define: {
-        // Możesz wstrzyknąć zmienne Vite, ale jest to opcjonalne, 
-        // jeśli używasz import.meta.env w kodzie.
-        'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL),
-        // Zachowaj tylko zmienne frontendowe (VITE_...)
+        'import.meta.env.VITE_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL || process.env.VITE_API_BASE_URL),
+        'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL),
+        'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY),
       },
       
       // 🟢 DODANO: Konfiguracja ścieżki bazowej dla produkcyjnego budowania
