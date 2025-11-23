@@ -27,7 +27,10 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/ui/Toast';
 // PAMIĘTAJ: To musi być zaimportowane!
-import { initializeSupabase } from './services/supabaseClient'; 
+import { initializeSupabase } from './services/supabaseClient';
+
+// Import styles
+import './styles/mobile.css'; 
 
 
 const AppRouter: React.FC = () => {
