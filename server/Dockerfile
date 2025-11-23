@@ -4,14 +4,14 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from server directory
+COPY server/package*.json ./
 
 # Install dependencies (include tsx for running TypeScript)
 RUN npm install
 
-# Copy application code
-COPY . .
+# Copy application code from server directory
+COPY server/ .
 
 # Expose port
 EXPOSE 3001
