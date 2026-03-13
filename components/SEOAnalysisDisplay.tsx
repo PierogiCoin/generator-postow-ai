@@ -5,19 +5,20 @@ import { CheckIcon } from './icons/CheckIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
 
 interface SEOAnalysisDisplayProps {
-  result: SEOAnalysisResult | null;
-  isLoading: boolean;
+    result: SEOAnalysisResult | null;
+    isLoading: boolean;
 }
 
-const SEOScoreCircle: React.FC<{ score: number }> = ({ score }) => {
+const SEOScoreCircle: React.FC<{ score?: number }> = ({ score }) => {
+    const safeScore = Number(score) || 0;
     const radius = 22;
     const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (score / 100) * circumference;
+    const offset = circumference - (safeScore / 100) * circumference;
 
     let colorClass = 'stroke-yellow-500';
-    if (score >= 80) {
+    if (safeScore >= 80) {
         colorClass = 'stroke-green-500';
-    } else if (score < 50) {
+    } else if (safeScore < 50) {
         colorClass = 'stroke-red-500';
     }
 
@@ -66,12 +67,12 @@ export const SEOAnalysisDisplay: React.FC<SEOAnalysisDisplayProps> = ({ result, 
             </div>
         );
     }
-    
+
     if (!result) return null;
 
     return (
         <div className="mt-2">
-             <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-400 flex items-center gap-2 mb-3">
+            <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-400 flex items-center gap-2 mb-3">
                 <SearchIcon className="w-4 h-4" />
                 Analiza SEO
             </h3>
@@ -79,7 +80,7 @@ export const SEOAnalysisDisplay: React.FC<SEOAnalysisDisplayProps> = ({ result, 
                 <div className="flex items-center gap-4">
                     <SEOScoreCircle score={result.score} />
                     <div className="flex-grow space-y-2">
-                         <div>
+                        <div>
                             <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-300">Główne słowo kluczowe</h4>
                             <div className="mt-1">
                                 <button onClick={() => handleCopy(result.mainKeyword)} className="group relative inline-flex items-center gap-2 px-3 py-1 text-sm font-bold bg-blue-200 dark:bg-blue-800 text-blue-800 dark:text-blue-200 rounded-full transition-colors hover:bg-blue-300 dark:hover:bg-blue-700">
@@ -87,10 +88,10 @@ export const SEOAnalysisDisplay: React.FC<SEOAnalysisDisplayProps> = ({ result, 
                                 </button>
                             </div>
                         </div>
-                         <div>
+                        <div>
                             <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-300">Słowa drugorzędne</h4>
                             <div className="flex flex-wrap gap-1 mt-1">
-                                {result.secondaryKeywords.map(keyword => (
+                                {(result.secondaryKeywords || []).map(keyword => (
                                     <button key={keyword} onClick={() => handleCopy(keyword)} className="group relative px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full transition-colors hover:bg-gray-300 dark:hover:bg-gray-600">
                                         <span>{keyword}</span>
                                     </button>
@@ -102,7 +103,7 @@ export const SEOAnalysisDisplay: React.FC<SEOAnalysisDisplayProps> = ({ result, 
                 <div>
                     <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-300">Sugestie</h4>
                     <ul className="mt-1 space-y-1">
-                        {result.suggestions.map((suggestion, index) => (
+                        {(result.suggestions || []).map((suggestion, index) => (
                             <li key={index} className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300">
                                 <CheckIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                                 <span>{suggestion}</span>

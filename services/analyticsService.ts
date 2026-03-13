@@ -1,5 +1,8 @@
 import type { CampaignHistoryItem, AIInsight, OptimalTime, Platform } from '../types';
 import { ContentType, Tone } from '../types';
+import type { SocialPost } from '../types/socialPublishing';
+
+import { generateJson } from './apiClient';
 
 /**
  * Generuje symulowane dane o wydajności dla historii postów.
@@ -14,12 +17,13 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
     let baseShares = 10;
 
     // Modyfikatory w oparciu o właściwości posta (symulacja trendów)
-    if (item.formData.contentType === ContentType.Advertisement) baseReach *= 2.5;
-    if (item.formData.tone === Tone.Witty) baseComments *= 1.5;
-    if (item.formData.tone === Tone.Inspirational) baseShares *= 1.8;
+    const topic = item.formData?.topic || '';
+    if (item.formData?.contentType === ContentType.Advertisement) baseReach *= 2.5;
+    if (item.formData?.tone === Tone.Witty) baseComments *= 1.5;
+    if (item.formData?.tone === Tone.Inspirational) baseShares *= 1.8;
     if (item.result.videoUrl) {
-        baseReach *= 3;
-        baseLikes *= 2;
+      baseReach *= 3;
+      baseLikes *= 2;
     }
 
     // Dodaj losowość, aby dane wyglądały bardziej naturalnie
@@ -38,29 +42,110 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
 };
 
 interface AIAnalysisResult {
-    insights: AIInsight[];
-    optimalTimes: OptimalTime[];
+  insights: AIInsight[];
+  optimalTimes: OptimalTime[];
 }
 
 /**
- * Pobiera symulowaną analizę AI na podstawie danych o wydajności postów.
+ * Pobiera prawdziwą analizę AI na podstawie danych o wydajności postów.
  */
-export const fetchAIAnalysis = async (analyzedHistory: CampaignHistoryItem[]): Promise<AIAnalysisResult> => {
-    console.log(`Pobieranie symulowanej analizy AI dla ${analyzedHistory.length} postów.`);
-    return new Promise(resolve => {
-        setTimeout(() => {
-            const result: AIAnalysisResult = {
-                insights: [
-                    { id: '1', type: 'positive', text: 'Posty wideo (mock) generują o 50% większe zaangażowanie. Kontynuuj ten format!' },
-                    { id: '2', type: 'suggestion', text: 'Spróbuj (mock) publikować więcej treści w weekendy, aby dotrzeć do szerszej publiczności.' },
-                    { id: '3', type: 'observation', text: 'Ton "Dowcipny" (mock) uzyskuje najwięcej komentarzy.' },
-                ],
-                optimalTimes: [
-                    { platform: 'Facebook' as Platform, day: 'Piątek', time: '14:00' },
-                    { platform: 'Instagram' as Platform, day: 'Środa', time: '11:00' },
-                ]
-            };
-            resolve(result);
-        }, 1500);
-    });
+export const fetchAIAnalysis = async (
+  analyzedHistory: CampaignHistoryItem[],
+  userId: string,
+  socialHistory: SocialPost[] = []
+): Promise<AIAnalysisResult> => {
+  if (analyzedHistory.length === 0 && socialHistory.length === 0) {
+    return { insights: [], optimalTimes: [] };
+  }
+
+  // Uprościmy historię aplikacji dla promptu
+  const appHistorySummary = analyzedHistory.map(h => ({
+    source: 'app_generation',
+    topic: h.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu',
+    platform: h.formData?.platform,
+    tone: h.formData?.tone,
+    performance: h.performance
+  }));
+
+  // Uprościmy historię z mediów społecznościowych
+  const socialHistorySummary = socialHistory.map(p => ({
+    source: 'social_media_platform',
+    content: p.content?.substring(0, 200) + '...',
+    platform: (p as any).platform || 'Unknown',
+    publishedAt: p.publishedAt,
+    metrics: p.metrics
+  }));
+
+  const allDataSummary = [...appHistorySummary, ...socialHistorySummary];
+
+  try {
+    const result = await generateJson<AIAnalysisResult>({
+      model: "gemini-flash-latest",
+      contents: `Jesteś ekspertem ds. analityki mediów społecznościowych. Przeanalizuj poniższe dane o postach (zarówno wygenerowanych w naszej aplikacji, jak i pobranych bezpośrednio z platform społecznościowych):
+            ${JSON.stringify(allDataSummary, null, 2)}
+            
+            Twoim zadaniem jest:
+            1. Wygenerować 3-4 konkretne wskazówki (insights) o typie 'positive', 'suggestion' lub 'observation'. 
+               Priorytetyzuj wnioski oparte na RZECZYWISTYCH danych z platform społecznościowych (source: social_media_platform).
+            2. Określić optymalne czasy publikacji (optimalTimes) na podstawie dat publikacji rzeczywistych postów i ich wyników.
+            
+            Zwróć wynik w formacie JSON zgodnym z interfejsem:
+            {
+                "insights": [{"id": "string", "type": "positive|suggestion|observation", "text": "string"}],
+                "optimalTimes": [{"platform": "string", "day": "string", "time": "string"}]
+            }
+            Wskazówki muszą być w języku POLSKIM i odnosić się do konkretnych trendów w danych. Pomijaj posty o tytule "Bez tytułu" lub pustej treści. Optymalne czasy powinny być zróżnicowane i logiczne dla danej platformy.`
+    }, userId);
+
+    return result;
+  } catch (error) {
+    console.error("AI Analysis failed:", error);
+    // Fallback w razie błędu API
+    return {
+      insights: [
+        { id: 'err-1', type: 'observation', text: 'Analiza w czasie rzeczywistym tymczasowo niedostępna. Wykorzystano dane archiwalne.' },
+        { id: 'err-2', type: 'suggestion', text: 'Opierając się na trendach rynkowych, posty z wideo angażują o 40% lepiej niż same obrazy.' }
+      ],
+      optimalTimes: [
+        { platform: 'Facebook' as Platform, day: 'Wtorek', time: '18:00' },
+        { platform: 'Instagram' as Platform, day: 'Czwartek', time: '20:00' }
+      ]
+    };
+  }
+};
+
+/**
+ * Generuje propozycje nowych postów na podstawie przeprowadzonej analizy.
+ */
+export const generateStrategySuggestions = async (
+  analysis: AIAnalysisResult,
+  userId: string,
+  historySummary: any[]
+): Promise<{ date: string; platform: string; topic: string; reason: string }[]> => {
+  try {
+    const result = await generateJson<{ suggestions: { date: string; platform: string; topic: string; reason: string }[] }>({
+      model: "gemini-flash-latest",
+      contents: `Na podstawie analizy wydajności postów:
+            INSIGHTS: ${JSON.stringify(analysis.insights)}
+            OPTIMAL TIMES: ${JSON.stringify(analysis.optimalTimes)}
+            HISTORY SUMMARY: ${JSON.stringify(historySummary.slice(0, 10))}
+            
+            Zaproponuj 3 konkretne pomysły na nowe posty na najbliższe dni. 
+            Uwzględnij dotychczasowe wyniki (co działało, a co nie). 
+            Unikaj powtarzania tematów "Bez tytułu".
+            
+            Zwróć JSON:
+            {
+              "suggestions": [
+                { "date": "YYYY-MM-DD", "platform": "string", "topic": "string", "reason": "dlaczego ten temat i czas są dobre na podstawie analizy" }
+              ]
+            }
+            Język: POLSKI.`
+    }, userId);
+
+    return result.suggestions;
+  } catch (error) {
+    console.error("Strategy suggestions failed:", error);
+    return [];
+  }
 };

@@ -1,7 +1,7 @@
 import type { GenerationResult } from '../types';
 import type { VideoStoryStyle } from '../components/VideoStoryModal';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export interface VideoStoryRequest {
   postText: string;
@@ -56,7 +56,7 @@ export const getVideoStoryPrompt = (
   platform: string
 ): string => {
   const extractedContent = postText.substring(0, 500);
-  
+
   const stylePrompts: Record<VideoStoryStyle, string> = {
     'instagram-story': `Create a PROFESSIONAL Instagram Story video (9:16 vertical format).
 
@@ -83,7 +83,7 @@ CONTENT: ${extractedContent}
 - Readable text at mobile size
 - Visual rhythm that keeps attention
 - Professional polish throughout`,
-    
+
     'tiktok-vertical': `Create a VIRAL-WORTHY TikTok video (9:16 vertical format).
 
 CONTENT: ${extractedContent}
@@ -110,7 +110,7 @@ CONTENT: ${extractedContent}
 - Trendy effects and filters
 - Gen-Z friendly aesthetics
 - Shareable, duet-worthy content`,
-    
+
     'animated-quote': `Create an ELEGANT animated quote video (1:1 square format).
 
 QUOTE TEXT: ${extractedContent}
@@ -134,7 +134,7 @@ QUOTE TEXT: ${extractedContent}
 - 2-7s: Quote animates in, word by word
 - 7-10s: Full quote visible, subtle breathing animation
 - Timeless, shareable aesthetic`,
-    
+
     'kinetic-typography': `Create a DYNAMIC kinetic typography video (16:9 landscape format).
 
 TEXT CONTENT: ${extractedContent}
@@ -161,7 +161,7 @@ TEXT CONTENT: ${extractedContent}
 - Layer depth and parallax
 - Energetic but readable
 - Professional broadcast quality`,
-    
+
     'carousel-slides': `Create a PROFESSIONAL carousel-style video (1:1 square format).
 
 CONTENT BREAKDOWN: ${extractedContent}
@@ -201,7 +201,7 @@ export const getVideoStoryAspectRatio = (style: VideoStoryStyle): string => {
     'kinetic-typography': '16:9',
     'carousel-slides': '1:1'
   };
-  
+
   return aspectRatios[style];
 };
 
@@ -213,6 +213,6 @@ export const getVideoStoryDuration = (style: VideoStoryStyle): number => {
     'kinetic-typography': 20,
     'carousel-slides': 25
   };
-  
+
   return durations[style];
 };

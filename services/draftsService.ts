@@ -19,20 +19,14 @@ export const saveDraft = async (draft: any): Promise<Draft> => {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User not logged in");
-  
-  const { data: profile } = await supabase.from('profiles').select('current_team_id').single();
 
+  // Note: team_id might be null or fetched from profile
   const newDraft = {
-    // 🛠️ POPRAWKA: Mapowanie pól z CamelCase (z TS) na snake_case (dla Postgres/Supabase)
-    title: draft.title,
-    content: draft.content,
-    // Kluczowa poprawka, aby uniknąć błędu 'formData' column does not exist:
-    form_data: (draft as any).formData, // Używamy 'form_data' dla bazy danych
-    
     user_id: user.id,
-    team_id: profile?.current_team_id || null
+    form_data: draft.formData || draft,
+    timestamp: new Date().toISOString()
   };
-  
+
   const { data, error } = await supabase
     .from('drafts')
     .insert(newDraft)
@@ -43,7 +37,15 @@ export const saveDraft = async (draft: any): Promise<Draft> => {
     console.error("Error saving draft:", error);
     throw new Error("Failed to save draft");
   }
-  return data;
+
+  // Map back to Draft type (CamelCase)
+  return {
+    id: data.id,
+    formData: data.form_data,
+    timestamp: new Date(data.timestamp).getTime(),
+    userId: data.user_id,
+    teamId: data.team_id
+  };
 };
 
 export const deleteDraft = async (draftId: string): Promise<void> => {

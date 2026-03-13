@@ -1,243 +1,45 @@
 <!DOCTYPE html>
 <html lang="pl">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
-    <!-- Content Security Policy -->
-    <meta http-equiv="Content-Security-Policy" content="
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://esm.sh https://aistudiocdn.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://aistudiocdn.com;
+      script-src-elem 'self' 'unsafe-inline' https://esm.sh https://aistudiocdn.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https: blob:;
-      connect-src 'self' https://*.supabase.co https://*.railway.app https://generativelanguage.googleapis.com wss://*.supabase.co;
+      connect-src 'self' data: http://localhost:3001 http://127.0.0.1:3001 ws://localhost:3000 https://*.supabase.co https://*.railway.app https://generativelanguage.googleapis.com wss://*.supabase.co;
       frame-src 'none';
       object-src 'none';
       base-uri 'self';
       form-action 'self';
     ">
-    
-    <title>Generator postów AI</title>
-    
-    <!-- Mobile Optimization -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#8b5cf6">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-  <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.3.1",
-    "react-dom": "https://esm.sh/react-dom@18.3.1",
-    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
-    "react-router-dom": "https://esm.sh/react-router-dom@6.25.1?external=react",
-    "html-to-image": "https://esm.sh/html-to-image@1.11.11",
-    "@google/genai": "https://esm.sh/@google/genai@1.24.0",
-    "i18next": "https://esm.sh/i18next@23.12.2",
-    "react-i18next": "https://esm.sh/react-i18next@14.1.2?external=react",
-    "i18next-browser-languagedetector": "https://esm.sh/i18next-browser-languagedetector@8.0.0",
-    "recharts": "https://esm.sh/recharts@2.12.7?external=react,react-dom",
-    "react-dom/": "https://esm.sh/react-dom@18.3.1/",
-    "react/": "https://esm.sh/react@18.3.1/",
-    "zustand": "https://esm.sh/zustand@4.5.4",
-    "zustand/middleware": "https://esm.sh/zustand@4.5.4/middleware",
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.44.4",
-    "express": "https://aistudiocdn.com/express@^5.1.0",
-    "cors": "https://aistudiocdn.com/cors@^2.8.5",
-    "dotenv/": "https://aistudiocdn.com/dotenv@^17.2.3/"
-  }
-}
-</script>
-<style>
-    :root {
-      --text-secondary: #64748b;
-      --grid-stroke: #e2e8f0;
-      --tooltip-bg: #f8fafc;
-      --tooltip-border: #e2e8f0;
-      --tooltip-text: #0f172a;
-      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --gradient-tertiary: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-      --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.16);
-    }
-    html.dark {
-      --text-secondary: #94a3b8;
-      --grid-stroke: #334155;
-      --tooltip-bg: #1e293b;
-      --tooltip-border: #334155;
-      --tooltip-text: #f8fafc;
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-      --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
-    }
-    
-    * {
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    body {
-      font-family: 'Inter', sans-serif;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
 
-    body {
-      background-color: #f8fafc;
-      background: radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 70%, rgba(255, 119, 119, 0.08) 0%, transparent 50%),
-                  radial-gradient(circle at 50% 50%, rgba(79, 172, 254, 0.05) 0%, transparent 70%),
-                  linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-      background-attachment: fixed;
-    }
-    .dark body {
-      background-color: #020617;
-      background: radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.08) 0%, transparent 70%),
-                  linear-gradient(180deg, #020617 0%, #0f172a 100%);
-      background-attachment: fixed;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes fadeInDown {
-      from { opacity: 0; transform: translateY(-20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes scaleIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-    @keyframes pulse-glow {
-      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
-      50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
-    }
-    @keyframes shimmer {
-      0% { background-position: -1000px 0; }
-      100% { background-position: 1000px 0; }
-    }
-    @keyframes slide-in-from-bottom {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+  <title>Generator postów AI</title>
 
-    .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
-    .animate-fade-in-down { animation: fadeInDown 0.6s ease-out forwards; }
-    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
-    .animate-slide-in-left { animation: slideInLeft 0.6s ease-out forwards; }
-    .animate-slide-in-right { animation: slideInRight 0.6s ease-out forwards; }
-    .animate-scale-in { animation: scaleIn 0.5s ease-out forwards; }
-    .animate-float { animation: float 3s ease-in-out infinite; }
-    .animate-slide-in { animation: slide-in-from-bottom 0.4s ease-out both; }
+  <!-- Mobile Optimization -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#8b5cf6">
 
-    .glass {
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    .dark .glass {
-      background: rgba(15, 23, 42, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    button, a, input, select, textarea {
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    button:active, [role="button"]:active {
-      transform: scale(0.96);
-    }
-
-    button:not(:disabled):hover {
-      transform: translateY(-2px);
-    }
-
-    .card-hover {
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .card-hover:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: var(--shadow-xl);
-    }
-
-    .gradient-text {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    ::-webkit-scrollbar { width: 10px; height: 10px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 10px;
-      border: 2px solid transparent;
-      background-clip: padding-box;
-    }
-    ::-webkit-scrollbar-thumb:hover { background: linear-gradient(135deg, #764ba2 0%, #667eea 100%); background-clip: padding-box; }
-
-    .shimmer {
-      background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
-      background-size: 1000px 100%;
-      animation: shimmer 2s infinite;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-      border-color: #667eea;
-    }
-
-    .calendar-picker-indicator { filter: invert(0); }
-    html.dark .calendar-picker-indicator { filter: invert(1); }
-
-    @media (max-width: 640px) {
-      body { font-size: 14px; }
-      h1 { font-size: 1.875rem !important; }
-      h2 { font-size: 1.5rem !important; }
-    }
-
-    @media (hover: none) and (pointer: coarse) {
-      button:active, [role="button"]:active {
-        transform: scale(0.94);
-        opacity: 0.9;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 </head>
-  <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
+
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
 </html>

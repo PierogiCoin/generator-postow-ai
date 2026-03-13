@@ -20,7 +20,7 @@ const TemplateCard: React.FC<{
   onEdit: () => void;
   onDelete: () => void;
 }> = ({ template, onSelect, onEdit, onDelete }) => {
-  const platform = template.formData.platform;
+  const platform = template.formData?.platform || 'Facebook';
   const config = platformConfig[platform] || platformConfig[Object.keys(platformConfig)[0]];
   const Icon = config.icon;
 
@@ -31,10 +31,10 @@ const TemplateCard: React.FC<{
           <div className={`w-10 h-10 rounded-md ${config.selectedBgColor} flex items-center justify-center shrink-0`}>
             <Icon className={`w-5 h-5 ${config.iconColor}`} />
           </div>
-          <div>
-            <h4 className="font-semibold text-slate-800 dark:text-white">{template.name}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2" title={template.formData.topic.replace(/<[^>]*>?/gm, '')}>
-              {template.formData.topic.replace(/<[^>]*>?/gm, '') || 'Brak tematu'}
+          <div className="min-w-0">
+            <h4 className="font-semibold text-slate-800 dark:text-white truncate">{template.name}</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2" title={template.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}>
+              {template.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Brak tematu'}
             </p>
           </div>
         </div>

@@ -18,7 +18,7 @@ export function formatErrorMessage(error: unknown): string {
 
   if (typeof error === 'object' && error !== null) {
     const apiError = error as any;
-    
+
     // Google API quota error
     if (apiError.message?.includes('quota') || apiError.message?.includes('429')) {
       return 'Przekroczono limit API. Spróbuj ponownie za chwilę lub użyj innego modelu.';
@@ -70,7 +70,7 @@ export function showError(error: unknown, customMessage?: string) {
     duration: 5000,
     action: {
       label: 'Zamknij',
-      onClick: () => {},
+      onClick: () => { },
     },
   });
 }
@@ -118,5 +118,6 @@ export async function toastPromise<T>(
     error?: string | ((error: any) => string);
   }
 ): Promise<T> {
-  return toast.promise(promise, messages);
+  toast.promise(promise, messages);
+  return promise;
 }

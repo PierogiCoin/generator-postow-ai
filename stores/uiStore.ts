@@ -9,7 +9,10 @@ type UIState = {
   isBrandVoiceManagerOpen: boolean;
   isAnalysisModalOpen: boolean;
   isVeoKeyModalNeeded: boolean;
+  isSocialConnectionsModalOpen: boolean;
   isCommandPaletteOpen: boolean;
+  isPublishingModalOpen: boolean;
+  publishingPlatform: string;
 
   setIsPricingModalOpen: (isOpen: boolean) => void;
   setAuthModal: (modal: 'login' | 'signup' | null) => void;
@@ -17,6 +20,8 @@ type UIState = {
   setIsAnalysisModalOpen: (isOpen: boolean) => void;
   setIsVeoKeyModalNeeded: (isNeeded: boolean) => void;
   setIsCommandPaletteOpen: (isOpen: boolean) => void;
+  setIsSocialConnectionsModalOpen: (isOpen: boolean) => void;
+  setIsPublishingModalOpen: (isOpen: boolean, platform?: string) => void;
   setVideoStoryModal: (isOpen: boolean, post?: GenerationResult | null) => void;
 };
 
@@ -28,6 +33,9 @@ export const useUIStore = create<UIState>((set) => ({
   isVeoKeyModalNeeded: false,
   isCommandPaletteOpen: false,
   isVideoStoryModalOpen: false,
+  isSocialConnectionsModalOpen: false,
+  isPublishingModalOpen: false,
+  publishingPlatform: '',
   videoStoryPost: null,
 
   setIsPricingModalOpen: (isOpen) => set({ isPricingModalOpen: isOpen }),
@@ -36,5 +44,7 @@ export const useUIStore = create<UIState>((set) => ({
   setIsAnalysisModalOpen: (isOpen) => set({ isAnalysisModalOpen: isOpen }),
   setIsVeoKeyModalNeeded: (isNeeded) => set({ isVeoKeyModalNeeded: isNeeded }),
   setIsCommandPaletteOpen: (isOpen) => set({ isCommandPaletteOpen: isOpen }),
+  setIsSocialConnectionsModalOpen: (isOpen) => set({ isSocialConnectionsModalOpen: isOpen }),
+  setIsPublishingModalOpen: (isOpen, platform = '') => set({ isPublishingModalOpen: isOpen, publishingPlatform: platform }),
   setVideoStoryModal: (isOpen, post = null) => set({ isVideoStoryModalOpen: isOpen, videoStoryPost: post }),
 }));

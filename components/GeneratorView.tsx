@@ -13,6 +13,7 @@ import { useNotifications } from '../hooks/useNotifications';
 // Components
 import { InputForm } from './InputForm';
 import { ResultCard } from './ResultCard';
+import { StrategyAssistant } from './StrategyAssistant';
 import { FavoritesList } from './FavoritesList';
 import { ScheduledPostsList } from './ScheduledPostsList';
 import { StatsDashboard } from './StatsDashboard';
@@ -35,6 +36,8 @@ import { DocumentPlusIcon } from './icons/DocumentPlusIcon';
 import { TrashIcon } from './icons/TrashIcon';
 import { ArrowUturnLeftIcon } from './icons/ArrowUturnLeftIcon';
 import { PreviewPopover } from './PreviewPopover';
+import { SparklesIcon } from './icons/SparklesIcon';
+import { ModernButton } from './ui/ModernButton';
 
 
 // FIX: Add missing 'ScheduledPost' type to fix 'Cannot find name' errors.
@@ -49,16 +52,16 @@ export const GeneratorView: React.FC = () => {
     const { user, userPlan } = useAuth();
 
     // Zustand stores for state
-    const { 
+    const {
         history, drafts, favorites, scheduledPosts, stats, isLearningStyle,
         inspiration, selectInspiration, clearHistory, removeFavorite, clearFavorites,
         saveTemplate, deleteTemplate, removeDraft
     } = useDataStore();
     const { result, isLoading, isOptimizingMultiPlatform } = useGenerationStore();
     const { setIsPricingModalOpen } = useUIStore();
-    
+
     const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<any>(null);
-    
+
     // Handlers
     const notificationSystem = useNotifications();
     const appHandlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
@@ -68,7 +71,7 @@ export const GeneratorView: React.FC = () => {
     const [prefillData, setPrefillData] = useState<Partial<FormData> | null>(null);
     const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('history');
     const [popover, setPopover] = useState<{ item: CampaignHistoryItem | Draft | ScheduledPost, rect: DOMRect } | null>(null);
-    
+
     useEffect(() => {
         const handleResize = () => setIsSidebarOpen(window.innerWidth > 1024);
         window.addEventListener('resize', handleResize);
@@ -81,15 +84,15 @@ export const GeneratorView: React.FC = () => {
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
-    
+
     useEffect(() => {
         if (inspiration?.formData) {
             setPrefillData(inspiration.formData);
         }
     }, [inspiration]);
-    
+
     const onPrefillConsumed = () => setPrefillData(null);
-    
+
     const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, item: CampaignHistoryItem | Draft | ScheduledPost) => {
         const rect = e.currentTarget.getBoundingClientRect();
         setPopover({ item, rect });
@@ -119,48 +122,69 @@ export const GeneratorView: React.FC = () => {
         switch (activeSidebarTab) {
             case 'history':
                 return (
-                    <section>
-                      <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">{t('sidebar.historySection.title')}</h2>
-                        {history.length > 0 && (
-                          <button onClick={clearHistory} className="text-sm text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors">{t('sidebar.historySection.clear')}</button>
-                        )}
-                      </div>
-                      {history.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400">{t('sidebar.historySection.empty')}</p> : (
-                        <div className="space-y-2 max-h-96 overflow-y-auto pr-2 -mr-2">
-                            {history.map((item, index) => {
-                                const isSelected = inspiration?.id === item.id;
-                                return (
-                                    <div key={item.id} style={{ animationDelay: `${index * 50}ms` }} onMouseEnter={(e) => handleMouseEnter(e, item)} onMouseLeave={handleMouseLeave} onClick={() => selectInspiration(item)} className={`p-3 rounded-lg border-2 transition-all cursor-pointer animate-slide-in ${isSelected ? 'bg-slate-200/80 dark:bg-slate-700/50 border-blue-500 shadow-inner' : 'bg-white dark:bg-slate-900/50 border-slate-300 dark:border-slate-700 hover:border-blue-400/50'}`}>
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-3 min-w-0 flex-grow">
-                                                 {item.result.imageUrl ? <img src={item.result.imageUrl} alt="" className="w-10 h-10 rounded-md object-cover flex-shrink-0 bg-slate-700" loading="lazy"/> : item.result.videoUrl ? <div className="w-10 h-10 rounded-md bg-red-200 dark:bg-red-900/50 flex items-center justify-center flex-shrink-0"><VideoIcon className="w-5 h-5 text-red-600 dark:text-red-400" /></div> : <div className="w-10 h-10 rounded-md bg-slate-700 flex items-center justify-center flex-shrink-0"><PostIcon className="w-5 h-5 text-slate-500" /></div>}
-                                                <div className="min-w-0">
-                                                    <div className="font-semibold text-sm text-slate-900 dark:text-white truncate" title={item.formData.topic.replace(/<[^>]*>?/gm, '')}>{item.formData.topic.replace(/<[^>]*>?/gm, '')}</div>
-                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{item.formData.platform} &bull; {new Date(item.timestamp).toLocaleDateString()}</p>
+                    <section className="space-y-4">
+                        <div className="flex justify-between items-center mb-2">
+                            <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('sidebar.historySection.title')}</h2>
+                            {history.length > 0 && (
+                                <button onClick={clearHistory} className="text-xs font-bold text-slate-500 hover:text-red-500 transition-colors uppercase tracking-widest">{t('sidebar.historySection.clear')}</button>
+                            )}
+                        </div>
+                        {history.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.historySection.empty')}</p> : (
+                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                                {history.map((item, index) => {
+                                    const isSelected = inspiration?.id === item.id;
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            style={{ animationDelay: `${index * 50}ms` }}
+                                            onMouseEnter={(e) => handleMouseEnter(e, item)}
+                                            onMouseLeave={handleMouseLeave}
+                                            onClick={() => selectInspiration(item)}
+                                            className={`group p-4 rounded-2xl border-2 transition-all cursor-pointer animate-fade-in-up hover:scale-[1.02] active:scale-[0.98] ${isSelected ? 'bg-blue-600 border-blue-600 shadow-lg shadow-blue-500/30' : 'bg-white/40 dark:bg-slate-900/40 border-white/10 dark:border-slate-800 hover:border-blue-400/30 hover:bg-white/60 dark:hover:bg-slate-900/60'}`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="relative">
+                                                    {item.result.imageUrl
+                                                        ? <img src={item.result.imageUrl} alt="" className="w-12 h-12 rounded-xl object-cover ring-2 ring-white/10" loading="lazy" />
+                                                        : item.result.videoUrl
+                                                            ? <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center"><VideoIcon className="w-6 h-6 text-red-500" /></div>
+                                                            : <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center"><PostIcon className="w-6 h-6 text-slate-400" /></div>
+                                                    }
+                                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center ${isSelected ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
+                                                        <SparklesIcon className="w-3 h-3" />
+                                                    </div>
+                                                </div>
+                                                <div className="min-w-0 flex-grow">
+                                                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-white' : 'text-slate-900 dark:text-white'}`} title={item.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}>
+                                                        {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('common.untitled')}
+                                                    </div>
+                                                    <p className={`text-[10px] font-black uppercase tracking-widest mt-1 opacity-70 ${isSelected ? 'text-blue-100' : 'text-slate-500 dark:text-slate-400'}`}>
+                                                        {item.formData?.platform || '---'} &bull; {new Date(item.timestamp).toLocaleDateString()}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                      )}
+                                    );
+                                })}
+                            </div>
+                        )}
                     </section>
                 );
             case 'drafts':
                 return (
-                    <section>
-                        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100 mb-4">{t('sidebar.draftsSection.title')}</h2>
-                        {drafts.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400">{t('sidebar.draftsSection.empty')}</p> : (
-                            <div className="space-y-2 max-h-96 overflow-y-auto pr-2 -mr-2">
+                    <section className="space-y-4">
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">{t('sidebar.draftsSection.title')}</h2>
+                        {drafts.length === 0 ? <p className="text-sm text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.draftsSection.empty')}</p> : (
+                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
                                 {drafts.map((draft, index) => (
-                                    <div key={draft.id} style={{ animationDelay: `${index * 50}ms` }} onMouseEnter={(e) => handleMouseEnter(e, draft)} onMouseLeave={handleMouseLeave} className="p-3 rounded-lg bg-white dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 flex justify-between items-center animate-slide-in">
+                                    <div key={draft.id} style={{ animationDelay: `${index * 50}ms` }} onMouseEnter={(e) => handleMouseEnter(e, draft)} onMouseLeave={handleMouseLeave} className="group p-4 rounded-2xl bg-white/40 dark:bg-slate-900/40 border border-white/10 dark:border-slate-800 flex justify-between items-center animate-fade-in-up hover:border-blue-400/30 transition-all">
                                         <div className="min-w-0 flex-grow" onClick={() => selectInspiration(draft as any)} style={{ cursor: 'pointer' }}>
-                                            <div className="font-semibold text-sm text-slate-900 dark:text-white truncate" title={draft.formData.topic.replace(/<[^>]*>?/gm, '')}>{draft.formData.topic.replace(/<[^>]*>?/gm, '')}</div>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(draft.timestamp).toLocaleDateString()}</p>
+                                            <div className="font-bold text-sm text-slate-900 dark:text-white truncate" title={draft.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}>
+                                                {draft.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('common.untitled')}
+                                            </div>
+                                            <p className="text-[10px] font-black uppercase tracking-widest mt-1 text-slate-500 dark:text-slate-400">{new Date(draft.timestamp).toLocaleDateString()}</p>
                                         </div>
-                                        <button onClick={() => removeDraft(draft.id)} className="p-2 text-slate-400 hover:text-red-500 rounded-full"><TrashIcon className="w-4 h-4"/></button>
+                                        <button onClick={() => removeDraft(draft.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"><TrashIcon className="w-4 h-4" /></button>
                                     </div>
                                 ))}
                             </div>
@@ -178,95 +202,129 @@ export const GeneratorView: React.FC = () => {
             default: return null;
         }
     };
-    
+
     const isResultVisible = !!result || !!inspiration;
 
     return (
-        <div className="flex gap-8 h-full">
-             <aside className={`fixed lg:relative inset-y-0 left-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg border-r border-slate-200 dark:border-slate-800 transform transition-all duration-300 ease-in-out lg:transform-none lg:rounded-2xl lg:border lg:dark:border-slate-800 ${isSidebarOpen ? 'translate-x-0 w-96' : '-translate-x-full w-96 lg:w-0'}`}>
-                <div className={`h-full flex flex-col overflow-hidden transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100 delay-150' : 'opacity-0'}`}>
-                    <div className="p-4 flex-shrink-0 flex items-center justify-between">
-                         <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('sidebar.title')}</h3>
-                         <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"><XMarkIcon className="w-6 h-6"/></button>
+        <div className="flex flex-col lg:flex-row gap-8 min-h-[calc(100vh-140px)]">
+            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-500 ease-in-out ${isSidebarOpen ? 'translate-x-0 w-[400px]' : '-translate-x-full w-0'}`}>
+                <div className={`h-full flex flex-col glass rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className="p-8 pb-4 flex-shrink-0 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
+                                <SidebarIcon className="w-6 h-6 text-indigo-500" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tighter">{t('sidebar.title')}</h3>
+                        </div>
+                        <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500"><XMarkIcon className="w-6 h-6" /></button>
                     </div>
-                    <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-800/60 p-4">
-                        <div className="flex space-x-1 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-xl">
-                             {sidebarTabs.map(tab => (
-                                <button key={tab.id} onClick={() => setActiveSidebarTab(tab.id as SidebarTab)} className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-all duration-200 flex items-center justify-center gap-2 ${activeSidebarTab === tab.id ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-sm font-semibold' : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-900/50 font-medium'}`}>
-                                    <tab.icon className="w-5 h-5" /><span>{tab.label}</span>
+
+                    <div className="px-6 py-4 flex-shrink-0">
+                        <div className="grid grid-cols-3 gap-2 p-1.5 bg-slate-950/20 rounded-2xl border border-white/5">
+                            {sidebarTabs.map(tab => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveSidebarTab(tab.id as SidebarTab)}
+                                    title={tab.label}
+                                    className={`relative p-3 rounded-xl transition-all duration-300 flex items-center justify-center group ${activeSidebarTab === tab.id ? 'bg-white shadow-xl text-blue-600 border border-white/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                                >
+                                    <tab.icon className={`w-5 h-5 transition-transform duration-300 ${activeSidebarTab === tab.id ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                    {activeSidebarTab === tab.id && (
+                                        <span className="absolute -bottom-1 w-1 h-1 bg-blue-600 rounded-full" />
+                                    )}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <div className="p-6 overflow-y-auto flex-grow border-t border-slate-200 dark:border-slate-800/60">
-                        <div key={activeSidebarTab} className="animate-fade-in" style={{ animationDuration: '300ms' }}>
+
+                    <div className="p-8 pt-4 overflow-y-auto flex-grow custom-scrollbar">
+                        <div key={activeSidebarTab} className="animate-fade-in">
                             {renderActiveTabContent()}
                         </div>
                     </div>
                 </div>
-             </aside>
+            </aside>
 
-            {/* Loading Overlay */}
+            {/* Loading Overlay with Backdrop Blur */}
             {isLoading && (
-                <LoadingOverlay 
-                    message="Generowanie treści..." 
+                <LoadingOverlay
+                    message="Wstukiwanie pomysłów..."
                 />
             )}
 
-            <div className="flex-grow transition-all duration-300">
-                 <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`fixed top-24 left-4 z-50 p-2 bg-white dark:bg-slate-800 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 transition-transform duration-300 ${isSidebarOpen ? 'transform translate-x-[368px]' : ''} lg:hidden`}>
-                    {isSidebarOpen ? <ArrowLeftIcon className="w-6 h-6 text-slate-600 dark:text-slate-400" /> : <SidebarIcon className="w-6 h-6 text-slate-600 dark:text-slate-400" />}
-                 </button>
+            <div className="flex-grow">
+                {!isSidebarOpen && (
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="fixed bottom-24 left-8 z-[60] w-14 h-14 bg-white/90 dark:bg-slate-900/90 glass border border-white/20 rounded-2xl shadow-2xl flex items-center justify-center text-slate-600 hover:text-blue-600 hover:scale-110 transition-all group animate-bounce-slow"
+                    >
+                        <SidebarIcon className="w-7 h-7" />
+                        <div className="absolute left-full ml-4 px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Otwórz panel boczny
+                        </div>
+                    </button>
+                )}
 
-                 <div className={`grid gap-8 w-full max-w-7xl mx-auto transition-all duration-700 ease-in-out ${isResultVisible ? 'lg:grid-cols-[minmax(0,_4fr),minmax(0,_5fr)]' : 'grid-cols-1'}`}>
-                    <div className={`transition-opacity duration-500 ${isResultVisible ? 'lg:order-1' : 'lg:order-1'}`}>
+                <div className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${isResultVisible ? 'grid gap-12 lg:grid-cols-[1fr,1.2fr]' : 'flex justify-center'}`}>
+                    <div className={`w-full transition-all duration-700 ${isResultVisible ? '' : 'max-w-3xl'}`}>
+                        <div className="mb-6">
+                            <StrategyAssistant />
+                        </div>
                         {inspiration && (
-                            <div className="mb-4 flex justify-between items-center p-3 bg-blue-100 dark:bg-blue-900/50 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">{t('generatorView.viewingHistory')}</p>
-                                <button onClick={handleReturnToGenerator} className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded-md hover:bg-blue-500 transition">
-                                    <ArrowUturnLeftIcon className="w-4 h-4"/> {t('generatorView.backToGenerator')}
-                                </button>
+                            <div className="mb-6 flex justify-between items-center p-4 bg-blue-600/10 backdrop-blur-md border border-blue-500/30 rounded-3xl animate-fade-in-down">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-blue-500 rounded-xl text-white">
+                                        <ClockIcon className="w-5 h-5" />
+                                    </div>
+                                    <p className="text-sm font-black uppercase tracking-tight text-blue-800 dark:text-blue-300">{t('generatorView.viewingHistory')}</p>
+                                </div>
+                                <ModernButton onClick={handleReturnToGenerator} variant="secondary" size="sm">
+                                    <ArrowUturnLeftIcon className="w-4 h-4 mr-2" /> {t('generatorView.backToGenerator')}
+                                </ModernButton>
                             </div>
                         )}
                         <InputForm prefillData={prefillData} onPrefillConsumed={onPrefillConsumed} />
                     </div>
-                    <div className={`transition-opacity duration-500 ${isResultVisible ? 'lg:order-2' : 'lg:order-2'} space-y-6`}>
-                        {isLoading ? (
-                            <SkeletonCard />
-                        ) : (
-                            <ResultCard historyResult={('result' in (inspiration || {})) ? (inspiration as CampaignHistoryItem).result : null} />
-                        )}
-                        
-                        {result && !isLoading && (
-                            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 border border-slate-200 dark:border-slate-700">
-                                <MultiPlatformOptimizer
-                                    originalText={result.postText}
-                                    originalPlatform={result.platform}
-                                    tone={result.metadata.tone}
-                                    onOptimize={async (platforms) => {
-                                        if (!user) return [];
-                                        const { optimizeForPlatforms } = await import('../services/multiPlatformService');
-                                        return optimizeForPlatforms({
-                                            originalText: result.postText,
-                                            originalPlatform: result.platform,
-                                            targetPlatforms: platforms,
-                                            tone: result.metadata.tone,
-                                            hashtags: result.hashtags
-                                        }, user.id);
-                                    }}
-                                    isOptimizing={isOptimizingMultiPlatform}
-                                    optimizations={multiPlatformOptimizations}
-                                />
-                            </div>
-                        )}
-                    </div>
+
+                    {isResultVisible && (
+                        <div className="space-y-8 animate-fade-in-right">
+                            {isLoading ? (
+                                <SkeletonCard />
+                            ) : (
+                                <ResultCard historyResult={('result' in (inspiration || {})) ? (inspiration as CampaignHistoryItem).result : null} />
+                            )}
+
+                            {result && !isLoading && (
+                                <div className="glass rounded-[2rem] border border-white/10 shadow-2xl p-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                                    <MultiPlatformOptimizer
+                                        originalText={result.postText}
+                                        originalPlatform={result.platform}
+                                        tone={result.metadata.tone}
+                                        onOptimize={async (platforms) => {
+                                            if (!user) return [];
+                                            const { optimizeForPlatforms } = await import('../services/multiPlatformService');
+                                            return optimizeForPlatforms({
+                                                originalText: result.postText,
+                                                originalPlatform: result.platform,
+                                                targetPlatforms: platforms,
+                                                tone: result.metadata.tone,
+                                                hashtags: result.hashtags
+                                            }, user.id);
+                                        }}
+                                        isOptimizing={isOptimizingMultiPlatform}
+                                        optimizations={multiPlatformOptimizations}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
             {popover && (
-                <PreviewPopover 
-                    result={('result' in popover.item) ? (popover.item as CampaignHistoryItem | ScheduledPost).result : { id: popover.item.id, type: popover.item.formData.generationType, platform: popover.item.formData.platform, postText: popover.item.formData.topic, hashtags: [], imageUrl: null, videoUrl: null, adHeadline: null, callToAction: null, metadata: { tone: popover.item.formData.tone, audience: popover.item.formData.audience }, approvalStatus: 'draft', comments: [], authorId: popover.item.userId } as GenerationResult}
+                <PreviewPopover
+                    result={('result' in popover.item) ? (popover.item as CampaignHistoryItem | ScheduledPost).result : { id: popover.item.id, type: popover.item.formData?.generationType, platform: popover.item.formData?.platform, postText: popover.item.formData?.topic || '', hashtags: [], imageUrl: null, videoUrl: null, adHeadline: null, callToAction: null, metadata: { tone: popover.item.formData?.tone, audience: popover.item.formData?.audience }, approvalStatus: 'draft', comments: [], authorId: popover.item.userId } as GenerationResult}
                     formData={popover.item.formData}
-                    position={{ top: popover.rect.top + popover.rect.height / 2, left: popover.rect.right + 10 }}
+                    position={{ top: popover.rect.top + popover.rect.height / 2, left: popover.rect.right + 20 }}
                 />
             )}
         </div>

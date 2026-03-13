@@ -2,7 +2,7 @@
 
 ## Overview
 
-The server implements three-tier rate limiting to prevent abuse, control costs, and ensure fair usage across all users.
+The server implements four-tier rate limiting to prevent abuse, control costs, and ensure fair usage across all users.
 
 ## Rate Limit Tiers
 
@@ -17,13 +17,18 @@ The server implements three-tier rate limiting to prevent abuse, control costs, 
 - **Max requests**: 50
 - **Applies to**:
   - `/api/generate-content`
-  - `/api/generate-content-stream`
   - `/api/generate`
   - `/api/optimize-multi-platform`
   - `/api/generate-ab-variants`
 - **Message**: "Too many text generation requests. Please slow down."
 
-### 3. Expensive Operations Limiter
+### 3. Streaming Limiter (SSE)
+- **Window**: 5 minutes
+- **Max requests**: 20
+- **Applies to**: `/api/generate-content-stream`
+- **Message**: "Too many streaming requests. Please slow down."
+
+### 4. Expensive Operations Limiter
 - **Window**: 1 hour
 - **Max requests**: 20
 - **Applies to**:
@@ -32,7 +37,9 @@ The server implements three-tier rate limiting to prevent abuse, control costs, 
 - **Message**: "Generation limit reached. Please wait before creating more content."
 - **⭐ Premium bypass**: Users with `x-user-tier: premium` or `enterprise` header skip this limit
 
-## Rate Limit Headers
+## Rate Limit Headers & Identity
+
+- Key generation uses the `x-user-id` header when present; otherwise falls back to IP. Set `x-user-id` on the client so users behind the same proxy don't share one bucket.
 
 Every API response includes rate limit information in headers:
 

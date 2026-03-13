@@ -1,7 +1,7 @@
 import { Platform, Tone } from '../types';
 import type { PlatformOptimization } from '../components/MultiPlatformOptimizer';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export interface MultiPlatformRequest {
   originalText: string;
@@ -42,7 +42,7 @@ export const getPlatformCharacterLimit = (platform: Platform): number => {
     [Platform.TikTok]: 2200,
     [Platform.YouTube]: 5000
   };
-  
+
   return limits[platform];
 };
 
@@ -55,7 +55,7 @@ export const getPlatformHashtagCount = (platform: Platform): { min: number; max:
     [Platform.TikTok]: { min: 3, max: 5 },
     [Platform.YouTube]: { min: 3, max: 15 }
   };
-  
+
   return counts[platform];
 };
 
@@ -104,7 +104,7 @@ export const getPlatformBestPractices = (platform: Platform): string[] => {
       'Linki do social mediów i strony'
     ]
   };
-  
+
   return practices[platform];
 };
 
@@ -114,12 +114,12 @@ export const predictEngagement = (
   hashtags: string[]
 ): { score: number; prediction: string } => {
   let score = 50;
-  
+
   const charLimit = getPlatformCharacterLimit(platform);
   const textLength = text.length;
   const hashtagCount = hashtags.length;
   const hashtagRange = getPlatformHashtagCount(platform);
-  
+
   // Character count optimization
   if (platform === Platform.X) {
     if (textLength >= 240 && textLength <= 280) score += 15;
@@ -129,29 +129,29 @@ export const predictEngagement = (
   } else if (platform === Platform.Instagram) {
     if (textLength >= 500 && textLength <= 1500) score += 10;
   }
-  
+
   // Hashtag optimization
   if (hashtagCount >= hashtagRange.min && hashtagCount <= hashtagRange.max) {
     score += 10;
   } else if (hashtagCount > hashtagRange.max) {
     score -= 5;
   }
-  
+
   // Content analysis
   const hasQuestion = /\?/.test(text);
   const hasEmoji = /[\u{1F300}-\u{1F9FF}]/u.test(text);
   const hasCTA = /(kliknij|zobacz|sprawdź|dowiedz się|link|bio|komentarz)/i.test(text);
-  
+
   if (hasQuestion) score += 8;
   if (hasEmoji) score += 7;
   if (hasCTA) score += 10;
-  
+
   // Line breaks (good for readability)
   const lineBreaks = (text.match(/\n/g) || []).length;
   if (lineBreaks >= 2 && lineBreaks <= 5) score += 5;
-  
+
   score = Math.min(Math.max(score, 0), 100);
-  
+
   let prediction = '';
   if (score >= 80) {
     prediction = 'Doskonały potencjał! Post ma wszystkie elementy wysokiego zaangażowania.';
@@ -162,7 +162,7 @@ export const predictEngagement = (
   } else {
     prediction = 'Niski potencjał. Post wymaga optymalizacji (długość, hashtagi, CTA).';
   }
-  
+
   return { score, prediction };
 };
 

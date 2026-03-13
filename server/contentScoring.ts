@@ -41,8 +41,8 @@ export async function scoreContent(
     targetAudience?: string;
   }
 ): Promise<ContentScore> {
-  
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
 
   const prompt = `
 You are a professional social media content analyst. Analyze this content and provide a detailed quality score.
@@ -101,7 +101,7 @@ Return ONLY valid JSON, no markdown.
   try {
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
-    
+
     // Usuń markdown code blocks jeśli są
     const jsonText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '');
     const analysis = JSON.parse(jsonText);
@@ -146,7 +146,7 @@ function getFallbackScore(content: string, platform: string): ContentScore {
   const hasCTA = /\b(klik|sprawdź|zobacz|download|kupić|dołącz|zapisz|link)\b/i.test(content);
 
   let score = 50; // Bazowy
-  
+
   // Długość
   if (platform === 'TikTok' && length < 150) score += 10;
   if (platform === 'LinkedIn' && length > 200 && length < 600) score += 10;
@@ -154,10 +154,10 @@ function getFallbackScore(content: string, platform: string): ContentScore {
 
   // Emoji
   if (hasEmojis) score += 5;
-  
+
   // Hashtagi
   if (hasHashtags) score += 5;
-  
+
   // Pytanie (engagement)
   if (hasQuestion) score += 10;
 
@@ -236,13 +236,13 @@ export async function compareWithBenchmark(
   // TODO: Integracja z bazą danych viral content
   // Na razie mock
   const yourScore = (await scoreContent(content, platform)).overall;
-  
+
   return {
     yourScore,
     averageScore: 65,
     topPerformers: 85,
-    position: yourScore >= 85 ? 'top_10' : 
-              yourScore >= 75 ? 'top_25' :
-              yourScore >= 50 ? 'average' : 'bottom_25'
+    position: yourScore >= 85 ? 'top_10' :
+      yourScore >= 75 ? 'top_25' :
+        yourScore >= 50 ? 'average' : 'bottom_25'
   };
 }

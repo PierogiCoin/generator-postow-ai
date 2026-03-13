@@ -4,6 +4,8 @@ import { getTopicSuggestions } from '../services/geminiService';
 import { useAuth } from '../contexts/AuthContext';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { CheckIcon } from './icons/CheckIcon';
+import { ModernButton } from './ui/ModernButton';
+import { ModernInput } from './ui/ModernInput';
 
 interface TopicAssistantModalProps {
   isOpen: boolean;
@@ -31,8 +33,8 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
     setError(null);
     setSuggestions([]);
     try {
-  if (!user) throw new Error('Musisz być zalogowany, aby używać asystenta tematów.');
-  const result = await getTopicSuggestions(currentTopic, userPrompt, user.id);
+      if (!user) throw new Error('Musisz być zalogowany, aby używać asystenta tematów.');
+      const result = await getTopicSuggestions(currentTopic, userPrompt, user.id);
       setSuggestions(result);
     } catch (e: any) {
       setError(e.message || 'Failed to get suggestions.');
@@ -45,94 +47,121 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
     onApplySuggestion(suggestion);
     onClose();
   };
-  
+
   if (!isOpen) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity animate-fade-in"
-      style={{ animationDuration: '0.3s' }}
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-50 transition-opacity"
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-2xl m-4 transform transition-all"
+        className="bg-white/80 dark:bg-slate-900/80 border border-white/20 dark:border-slate-700/50 rounded-3xl shadow-2xl p-6 md:p-10 w-full max-w-2xl m-4 transform transition-all glass animate-scale-in overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <SparklesIcon className="w-6 h-6 text-blue-500" />
-          {t('topicAssistant.title')}
-        </h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 mb-6">
-          {t('topicAssistant.subtitle')}
-        </p>
+        {/* Background Decorative Blobs */}
+        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t('topicAssistant.currentTopic')}
-            </label>
-            <div className="mt-1 p-3 bg-gray-100 dark:bg-gray-900/50 rounded-md text-sm text-gray-700 dark:text-gray-300 min-h-[4rem]" dangerouslySetInnerHTML={{ __html: currentTopic || '...' }} />
-          </div>
+        <div className="relative z-10">
+          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3 mb-2">
+            <div className="p-2 bg-blue-500/10 rounded-xl">
+              <SparklesIcon className="w-8 h-8 text-blue-500 animate-pulse" />
+            </div>
+            <span className="gradient-text">{t('topicAssistant.title')}</span>
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-sm md:text-base">
+            {t('topicAssistant.subtitle')}
+          </p>
 
-          <div>
-            <label htmlFor="assistant-prompt" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              {t('topicAssistant.yourRequest')}
-            </label>
-            <div className="mt-1 flex gap-2">
-              <input
-                id="assistant-prompt"
-                type="text"
-                value={userPrompt}
-                onChange={(e) => setUserPrompt(e.target.value)}
-                placeholder={t('topicAssistant.requestPlaceholder')}
-                className="flex-grow w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500"
+          <div className="space-y-8">
+            <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 ml-1">
+                {t('topicAssistant.currentTopic')}
+              </label>
+              <div
+                className="p-5 bg-white/50 dark:bg-slate-950/50 rounded-2xl text-slate-700 dark:text-slate-300 min-h-[4rem] border border-slate-200/50 dark:border-slate-800 shadow-inner italic leading-relaxed text-sm"
+                dangerouslySetInnerHTML={{ __html: currentTopic || '...' }}
               />
-              <button
-                onClick={handleGenerate}
-                disabled={isLoading || !userPrompt.trim()}
-                className="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-              >
-                {isLoading ? t('topicAssistant.generating') : t('topicAssistant.generate')}
-              </button>
             </div>
-          </div>
-          
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          
-          {(isLoading || suggestions.length > 0) && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-base font-semibold text-gray-800 dark:text-white mb-2">{t('topicAssistant.suggestions')}</h3>
-                {isLoading ? (
-                    <div className="space-y-2 animate-pulse">
-                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-                        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-                    </div>
-                ) : suggestions.length > 0 ? (
-                    <div className="space-y-3">
-                        {suggestions.map((s, i) => (
-                            <div key={i} className="group flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <p className="flex-grow text-sm text-gray-700 dark:text-gray-300">{s}</p>
-                                <button onClick={() => handleApply(s)} className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-green-700 bg-green-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-300">
-                                    <CheckIcon className="w-3 h-3"/>
-                                    {t('topicAssistant.use')}
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    !isLoading && <p className="text-sm text-gray-500">{t('topicAssistant.noSuggestions')}</p>
-                )}
-            </div>
-          )}
-        </div>
 
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition"
-          >
-            {t('common.close')}
-          </button>
+            <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <ModernInput
+                  type="text"
+                  value={userPrompt}
+                  onChange={(e: any) => setUserPrompt(e.target.value)}
+                  placeholder={t('topicAssistant.requestPlaceholder')}
+                  className="flex-grow"
+                  fullWidth
+                />
+                <ModernButton
+                  onClick={handleGenerate}
+                  disabled={isLoading || !userPrompt.trim()}
+                  loading={isLoading}
+                  icon={<SparklesIcon className="w-5 h-5" />}
+                  className="sm:w-auto w-full whitespace-nowrap px-8"
+                  variant="gradient"
+                  size="lg"
+                >
+                  {isLoading ? t('topicAssistant.generating') : t('topicAssistant.generate')}
+                </ModernButton>
+              </div>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm font-medium">
+                {error}
+              </div>
+            )}
+
+            {(isLoading || suggestions.length > 0) && (
+              <div className="pt-8 border-t border-slate-200/50 dark:border-slate-700/30 animate-fade-in">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-4 ml-1">
+                  {t('topicAssistant.suggestions')}
+                </h3>
+
+                {isLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="h-14 bg-slate-100 dark:bg-slate-800/50 rounded-2xl shimmer border border-slate-200/50 dark:border-slate-700/30" />
+                    ))}
+                  </div>
+                ) : suggestions.length > 0 ? (
+                  <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                    {suggestions.map((s, i) => (
+                      <div
+                        key={i}
+                        className="group flex items-center gap-4 p-4 bg-white/40 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 animate-fade-in-up shadow-sm hover:shadow-md cursor-pointer"
+                        style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'both' }}
+                        onClick={() => handleApply(s)}
+                      >
+                        <div className="w-8 h-8 flex-shrink-0 bg-blue-500/10 rounded-full flex items-center justify-center group-hover:bg-blue-500 transition-colors">
+                          <CheckIcon className="w-4 h-4 text-blue-500 group-hover:text-white" />
+                        </div>
+                        <p className="flex-grow text-sm font-medium text-slate-700 dark:text-slate-300 leading-snug">{s}</p>
+                        <div className="text-xs font-bold text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                          {t('topicAssistant.use')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  !isLoading && <p className="text-sm text-slate-500 italic px-2">{t('topicAssistant.noSuggestions')}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end mt-10 border-t border-slate-200/50 dark:border-slate-700/30 pt-6">
+            <ModernButton
+              onClick={onClose}
+              variant="ghost"
+              size="md"
+            >
+              {t('common.close')}
+            </ModernButton>
+          </div>
         </div>
       </div>
     </div>

@@ -2,7 +2,8 @@ export enum SocialPlatform {
   LinkedIn = 'linkedin',
   Twitter = 'twitter',
   Instagram = 'instagram',
-  Facebook = 'facebook'
+  Facebook = 'facebook',
+  TikTok = 'tiktok'
 }
 
 export interface SocialConnection {
@@ -19,6 +20,21 @@ export interface SocialConnection {
   isActive: boolean;
   connectedAt: Date;
   lastSyncAt?: Date;
+}
+
+export interface SocialPost {
+  id: string;
+  platformPostId: string;
+  content: string;
+  mediaUrls?: string[];
+  publishedAt: Date;
+  url: string;
+  metrics?: {
+    likes?: number;
+    comments?: number;
+    shares?: number;
+    views?: number;
+  };
 }
 
 export interface PublishRequest {

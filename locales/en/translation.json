@@ -14,7 +14,8 @@
     "retry": "Retry",
     "upgrade": "Upgrade",
     "newPost": "-- New Post --",
-    "noDescription": "No description"
+    "noDescription": "No description",
+    "untitled": "Untitled"
   },
   "header": {
     "title": "AI Content Pro",
@@ -171,7 +172,16 @@
     "PostWithImage": "Post + Image",
     "Video": "Video with text",
     "Idea": "Brainstorm",
-    "Campaign": "AI Campaign"
+    "Campaign": "AI Campaign",
+    "SeriesFollowUp": "Series Follow-up"
+  },
+  "repurposeAs": {
+    "PostWithImage": "Repurpose as Post",
+    "Video": "Repurpose as Video",
+    "Idea": "New ideas from this",
+    "Campaign": "Create Campaign",
+    "ABTest": "A/B Variants",
+    "SeriesFollowUp": "Create Follow-up"
   },
   "enums": {
     "Tone": {
@@ -442,9 +452,9 @@
     "fetchingTrends": "Fetching trends...",
     "noTrends": "No trends found. Try another niche.",
     "weeklySummary": {
-        "title": "Weekly Summary",
-        "start": "Start creating content to see your weekly summary!",
-        "summary": "This week, you've mostly created content for {{platform}} in a {{tone}} tone. Keep up the great work!"
+      "title": "Weekly Summary",
+      "start": "Start creating content to see your weekly summary!",
+      "summary": "This week, you've mostly created content for {{platform}} in a {{tone}} tone. Keep up the great work!"
     }
   },
   "persona": {
@@ -503,24 +513,24 @@
     "unlocked": "Unlocked!",
     "locked": "Locked",
     "firstPost": {
-        "name": "First Step",
-        "description": "Generate your very first piece of content."
+      "name": "First Step",
+      "description": "Generate your very first piece of content."
     },
     "creativeStreak": {
-        "name": "Creative Streak",
-        "description": "Generate 5 pieces of content."
+      "name": "Creative Streak",
+      "description": "Generate 5 pieces of content."
     },
     "campaignMaster": {
-        "name": "Campaign Master",
-        "description": "Plan your first AI-powered campaign."
+      "name": "Campaign Master",
+      "description": "Plan your first AI-powered campaign."
     },
     "powerUser": {
-        "name": "Power User",
-        "description": "Generate 25 pieces of content."
+      "name": "Power User",
+      "description": "Generate 25 pieces of content."
     },
     "visionary": {
-        "name": "Visionary",
-        "description": "Generate over 100 pieces of content."
+      "name": "Visionary",
+      "description": "Generate over 100 pieces of content."
     }
   },
   "strategist": {

@@ -30,6 +30,8 @@ type GenerationState = {
   liveTranscript: { user: string; model: string };
   isGeneratingVideoStory: boolean;
   isOptimizingMultiPlatform: boolean;
+  hookVariations: string[];
+  isSuggestingHooks: boolean;
 
   // Actions
   startGeneration: (formData: FormData) => void;
@@ -63,7 +65,7 @@ type GenerationState = {
   clearRepurposeContent: () => void;
   startPrediction: () => void;
   predictionSuccess: (prediction: PerformancePrediction | null) => void;
-  predictionFailure: () => void;
+  predictionFailure: (error?: AppError) => void;
   toggleLiveAssistant: () => void;
   setIsAssistantSpeaking: (isSpeaking: boolean) => void;
   setAssistantTranscript: (transcript: { speaker: 'user' | 'model'; text: string }[]) => void;
@@ -81,6 +83,9 @@ type GenerationState = {
   startMultiPlatformOptimization: () => void;
   multiPlatformSuccess: () => void;
   multiPlatformFailure: () => void;
+  startHookSuggestions: () => void;
+  hookSuggestionsSuccess: (hooks: string[]) => void;
+  applyHook: (newHook: string) => void;
 };
 
 const initialGenerationState = {
@@ -112,6 +117,8 @@ const initialGenerationState = {
   liveTranscript: { user: '', model: '' },
   isGeneratingVideoStory: false,
   isOptimizingMultiPlatform: false,
+  hookVariations: [],
+  isSuggestingHooks: false,
 };
 
 export const useGenerationStore = create<GenerationState>((set, get) => ({
@@ -167,7 +174,7 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   clearRepurposeContent: () => set({ repurposedContent: null, repurposeError: null }),
   startPrediction: () => set({ isPredictingPerformance: true, performancePrediction: null }),
   predictionSuccess: (prediction) => set({ isPredictingPerformance: false, performancePrediction: prediction }),
-  predictionFailure: () => set({ isPredictingPerformance: false, performancePrediction: null }),
+  predictionFailure: (error) => set({ isPredictingPerformance: false, performancePrediction: null }),
   toggleLiveAssistant: () => set(state => ({ isLiveAssistantActive: !state.isLiveAssistantActive, assistantTranscript: [], liveTranscript: { user: '', model: '' } })),
   setIsAssistantSpeaking: (isSpeaking) => set({ isAssistantSpeaking: isSpeaking }),
   setAssistantTranscript: (transcript) => set({ assistantTranscript: transcript }),
@@ -185,4 +192,19 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   startMultiPlatformOptimization: () => set({ isOptimizingMultiPlatform: true }),
   multiPlatformSuccess: () => set({ isOptimizingMultiPlatform: false }),
   multiPlatformFailure: () => set({ isOptimizingMultiPlatform: false }),
+  startHookSuggestions: () => set({ isSuggestingHooks: true, hookVariations: [] }),
+  hookSuggestionsSuccess: (hooks) => set({ isSuggestingHooks: false, hookVariations: hooks }),
+  applyHook: (newHook) => set(state => {
+    if (!state.result) return {};
+    const text = state.result.postText;
+    const sentenceEndMatch = text.match(/[.!?](\s|$)/);
+    let newText = text;
+    if (sentenceEndMatch) {
+       const index = sentenceEndMatch.index! + 1;
+       newText = newHook + text.substring(index);
+    } else {
+       newText = newHook + "\n\n" + text;
+    }
+    return { result: { ...state.result, postText: newText } };
+  }),
 }));

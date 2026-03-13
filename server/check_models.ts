@@ -7,8 +7,8 @@ dotenv.config();
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 if (!geminiApiKey) {
-    console.error("Brak klucza GEMINI_API_KEY w pliku .env. Upewnij się, że klucz jest poprawny.");
-    process.exit(1);
+  console.error("Brak klucza GEMINI_API_KEY w pliku .env. Upewnij się, że klucz jest poprawny.");
+  process.exit(1);
 }
 
 // 🟢 KLUCZOWA POPRAWKA: Prawidłowe utworzenie instancji (które już było, ale musimy być pewni, że działa)
@@ -16,16 +16,16 @@ const ai = new GoogleGenerativeAI(geminiApiKey);
 
 async function listAvailableImagenModels() {
   console.log("Łączenie z Google API w celu pobrania listy modeli...");
-  
+
   try {
     // 🟢 Wywołanie metody listModels() na instancji 'ai' jest POPRAWNE. 
     // Jeśli nadal nie działa, to wskazuje na niekompletną instalację/konfigurację.
-    const response = await ai.listModels(); 
-    
+    const response = await (ai as any).listModels();
+
     // Filtrowanie modeli związanych z generowaniem obrazów
-    const imagenModels = response.models.filter(model => 
-        (model.name.includes('imagen') || model.name.includes('vision') || model.name.includes('veo')) && 
-        model.supportedGenerationMethods.includes('generateContent')
+    const imagenModels = response.models.filter(model =>
+      (model.name.includes('imagen') || model.name.includes('vision') || model.name.includes('veo')) &&
+      model.supportedGenerationMethods.includes('generateContent')
     );
 
     if (imagenModels.length > 0) {
@@ -39,7 +39,7 @@ async function listAvailableImagenModels() {
     } else {
       console.log("\n⚠️ NIE ZNALEZIONO DOSTĘPNYCH MODELI IMAGEN. (Pamiętaj o Aktywacji Płatności w Google Cloud!)");
     }
-    
+
   } catch (error: any) {
     // ❌ Jeśli teraz wystąpi błąd, to najprawdopodobniej problem z kluczem API, który nie jest 'valid' (np. bo jest blokowany przez płatności)
     console.error("\n❌ WYSTĄPIŁ BŁĄD PODCZAS POBIERANIA LISTY MODELI:");

@@ -1,8 +1,10 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { AIAssistantAction, FormData } from '../../types';
+import { StreamingText } from '../ui/StreamingText';
 import { AIAssistantToolbar } from './AIAssistantToolbar';
 
 // Import ikon dla paska narzędzi formatowania
+// ... (rest of imports)
 import { BoldIcon } from '../icons/BoldIcon';
 import { ItalicIcon } from '../icons/ItalicIcon';
 import { ListOlIcon } from '../icons/ListOlIcon';
@@ -24,6 +26,7 @@ interface InteractiveEditorProps {
   lite?: boolean;
   inline?: boolean;
   className?: string;
+  streaming?: boolean;
 }
 
 // Sub-komponent dla przycisku paska narzędzi
@@ -38,11 +41,10 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({ onClick, isActive, label,
   <button
     type="button"
     onMouseDown={(e) => { e.preventDefault(); onClick(); }} // onMouseDown, aby uniknąć utraty focusa
-    className={`p-2 rounded-md transition-colors ${
-      isActive
-        ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
-        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
-    }`}
+    className={`p-2 rounded-md transition-colors ${isActive
+      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
+      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+      }`}
     aria-label={label}
     title={label}
     aria-pressed={isActive}
@@ -60,6 +62,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
   lite = false,
   inline = false,
   className = '',
+  streaming = false,
 }) => {
   const editorRef = useRef<HTMLElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -74,7 +77,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     // This check ensures navigator is available and runs only on the client-side.
     setIsMac(typeof window !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(window.navigator.platform));
   }, []);
-  
+
   const modifierKey = isMac ? '⌘' : 'Ctrl';
 
   const getSelectionParent = (tagName: string): Node | null => {
@@ -87,10 +90,10 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
       node = node.parentNode!;
     }
     while (node && node !== editorRef.current) {
-        if (node.nodeName === tagName.toUpperCase()) {
-            return node;
-        }
-        node = node.parentNode!;
+      if (node.nodeName === tagName.toUpperCase()) {
+        return node;
+      }
+      node = node.parentNode!;
     }
     return null;
   };
@@ -111,34 +114,34 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     formats.insertUnorderedList = document.queryCommandState('insertUnorderedList');
     formats.insertOrderedList = document.queryCommandState('insertOrderedList');
     formats.link = !!getSelectionParent('A');
-    
+
     const blockType = document.queryCommandValue('formatBlock').toLowerCase();
     formats.blockquote = blockType === 'blockquote';
     formats.pre = blockType === 'pre';
     formats.h1 = blockType === 'h1';
     formats.h2 = blockType === 'h2';
-    
+
     setActiveFormats(formats);
   }, []);
-  
+
   // Efekt do synchronizacji zawartości edytora z propem `value`
   useEffect(() => {
     if (editorRef.current && value !== editorRef.current.innerHTML) {
       editorRef.current.innerHTML = value;
     }
   }, [value]);
-  
+
   // Callback do pokazywania/ukrywania pływającego paska narzędzi AI
   const handleSelection = useCallback(() => {
     if (isLoading || typeof window === 'undefined') return;
 
     const selection = window.getSelection();
-    
+
     if (!editorRef.current || !selection || selection.isCollapsed || !editorRef.current.contains(selection.anchorNode)) {
       if (toolbarState !== null) setToolbarState(null);
       return;
     }
-    
+
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
 
@@ -146,21 +149,21 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
       lastSelection.current = { text: selectedText, range };
       const rect = range.getBoundingClientRect();
       const editorRect = editorRef.current.getBoundingClientRect();
-      
+
       let top, left;
 
-      if(inline) {
+      if (inline) {
         // For inline elements, position relative to viewport and adjust later
-        top = rect.top - 50; 
+        top = rect.top - 50;
         left = rect.left + rect.width / 2;
       } else {
         // For block elements, position relative to the editor container
-        top = rect.top - editorRect.top - 50; 
+        top = rect.top - editorRect.top - 50;
         left = rect.left - editorRect.left + rect.width / 2;
       }
-      
+
       setToolbarState({
-        top: Math.max(0, top), 
+        top: Math.max(0, top),
         left,
         selectedText,
       });
@@ -174,19 +177,19 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     const editorNode = editorRef.current;
 
     const handleAllUpdates = () => {
-        handleSelection();
-        if(!lite) {
-            updateFormattingToolbar();
-        }
+      handleSelection();
+      if (!lite) {
+        updateFormattingToolbar();
+      }
     };
 
     document.addEventListener('selectionchange', handleAllUpdates);
     document.addEventListener('mouseup', handleSelection);
-    
+
     if (editorNode) {
-        editorNode.addEventListener('keyup', handleAllUpdates);
-        editorNode.addEventListener('click', handleAllUpdates);
-        editorNode.addEventListener('focus', handleAllUpdates);
+      editorNode.addEventListener('keyup', handleAllUpdates);
+      editorNode.addEventListener('click', handleAllUpdates);
+      editorNode.addEventListener('focus', handleAllUpdates);
     }
 
     return () => {
@@ -203,7 +206,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
   // Efekt do obsługi kliknięć na zewnątrz w celu ukrycia pływającego paska narzędzi
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isLoading) return; 
+      if (isLoading) return;
 
       if (
         toolbarState &&
@@ -213,7 +216,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
         setToolbarState(null);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -224,18 +227,20 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
   const handleEditorChange = (e: React.FormEvent<HTMLDivElement>) => {
     onChange(e.currentTarget.innerHTML);
   };
-  
-  const handleAIAction = (action: AIAssistantAction) => {
+
+  const handleAIAction = (action: AIAssistantAction, customPrompt?: string) => {
     if (!lastSelection.current) return;
     const { text, range } = lastSelection.current;
-    
+
     const selection = window.getSelection();
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    onAction(action, text, editorRef.current?.innerHTML || value, formData);
+    // If it's a custom action, we might want to pass the prompt in context
+    // Currently onAction signature doesn't take extra args, but we can pass it via cast or update signature
+    (onAction as any)(action, text, editorRef.current?.innerHTML || value, formData, customPrompt);
   };
-  
+
   const handleFormat = (command: string, value?: string) => {
     document.execCommand(command, false, value);
     editorRef.current?.focus();
@@ -246,21 +251,21 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     const currentBlock = document.queryCommandValue('formatBlock').toLowerCase();
     handleFormat('formatBlock', currentBlock === tag ? 'p' : tag);
   }
-  
+
   const handleLink = () => {
     const linkNode = getSelectionParent('A');
     if (linkNode) {
-        document.execCommand('unlink', false);
+      document.execCommand('unlink', false);
     } else {
-        const selection = window.getSelection();
-        if (!selection || selection.isCollapsed) {
-            alert('Najpierw zaznacz tekst, aby utworzyć link.');
-            return;
-        }
-        const url = window.prompt('Wprowadź adres URL:', 'https://');
-        if (url) {
-            document.execCommand('createLink', false, url);
-        }
+      const selection = window.getSelection();
+      if (!selection || selection.isCollapsed) {
+        alert('Najpierw zaznacz tekst, aby utworzyć link.');
+        return;
+      }
+      const url = window.prompt('Wprowadź adres URL:', 'https://');
+      if (url) {
+        document.execCommand('createLink', false, url);
+      }
     }
     editorRef.current?.focus();
     updateFormattingToolbar();
@@ -278,102 +283,108 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.metaKey || e.ctrlKey) {
-        let command: string | null = null;
-        let value: string | undefined = undefined;
-        
-        switch (e.key.toLowerCase()) {
-            case 'b':
-                command = 'bold';
-                break;
-            case 'i':
-                command = 'italic';
-                break;
-            case 'u':
-                command = 'underline';
-                break;
-            case 'x':
-                if (e.shiftKey) {
-                    command = 'strikeThrough';
-                }
-                break;
-            case 'c':
-                if (e.shiftKey) {
-                    e.preventDefault();
-                    handleCodeBlock();
-                    return;
-                }
-                break;
-            case 'k': // Common shortcut for link
-                e.preventDefault();
-                handleLink();
-                return;
-            // Ctrl+Shift+7 for Numbered List
-            // Ctrl+Shift+8 for Bulleted List
-            case '7':
-                if (e.shiftKey) {
-                    command = 'insertOrderedList';
-                }
-                break;
-            case '8':
-                if (e.shiftKey) {
-                    command = 'insertUnorderedList';
-                }
-                break;
-            case '1':
-                command = 'formatBlock';
-                value = 'h1';
-                break;
-            case '2':
-                command = 'formatBlock';
-                value = 'h2';
-                break;
-        }
+      let command: string | null = null;
+      let value: string | undefined = undefined;
 
-        if (command) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          command = 'bold';
+          break;
+        case 'i':
+          command = 'italic';
+          break;
+        case 'u':
+          command = 'underline';
+          break;
+        case 'x':
+          if (e.shiftKey) {
+            command = 'strikeThrough';
+          }
+          break;
+        case 'c':
+          if (e.shiftKey) {
             e.preventDefault();
-            if (command === 'formatBlock' && value) {
-                handleHeading(value as 'h1'|'h2');
-            } else {
-                handleFormat(command);
-            }
+            handleCodeBlock();
+            return;
+          }
+          break;
+        case 'k': // Common shortcut for link
+          e.preventDefault();
+          handleLink();
+          return;
+        // Ctrl+Shift+7 for Numbered List
+        // Ctrl+Shift+8 for Bulleted List
+        case '7':
+          if (e.shiftKey) {
+            command = 'insertOrderedList';
+          }
+          break;
+        case '8':
+          if (e.shiftKey) {
+            command = 'insertUnorderedList';
+          }
+          break;
+        case '1':
+          command = 'formatBlock';
+          value = 'h1';
+          break;
+        case '2':
+          command = 'formatBlock';
+          value = 'h2';
+          break;
+      }
+
+      if (command) {
+        e.preventDefault();
+        if (command === 'formatBlock' && value) {
+          handleHeading(value as 'h1' | 'h2');
+        } else {
+          handleFormat(command);
         }
+      }
     }
   };
 
   const EditableElement = inline ? 'span' : 'div';
   const WrapperElement = inline ? 'span' : 'div';
-  
-  const editableContent = (
-      <EditableElement
-        ref={editorRef as any}
-        contentEditable={!isLoading}
-        suppressContentEditableWarning
-        onInput={handleEditorChange}
-        onKeyDown={handleKeyDown}
-        className={`focus:outline-none interactive-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
-        dangerouslySetInnerHTML={{ __html: value }}
-      />
+
+  const editableContent = streaming ? (
+    <StreamingText
+      text={value.replace(/<[^>]*>/g, '')} // Remove HTML tags for streaming display
+      className={className}
+      speed={30}
+    />
+  ) : (
+    <EditableElement
+      ref={editorRef as any}
+      contentEditable={!isLoading}
+      suppressContentEditableWarning
+      onInput={handleEditorChange}
+      onKeyDown={handleKeyDown}
+      className={`focus:outline-none interactive-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
+      dangerouslySetInnerHTML={{ __html: value }}
+    />
   );
-  
+
   return (
     <WrapperElement className={`relative ${inline ? 'inline' : 'block'}`}>
       {toolbarState && (
         <div
           ref={toolbarRef}
           className="absolute z-10 transition-opacity animate-fade-in"
-          style={{ 
-              animationDuration: '150ms',
-              position: inline ? 'fixed' : 'absolute',
-              top: `${toolbarState.top}px`, 
-              left: `${toolbarState.left}px`,
-              transform: 'translateX(-50%)' 
+          style={{
+            animationDuration: '150ms',
+            position: inline ? 'fixed' : 'absolute',
+            top: `${toolbarState.top}px`,
+            left: `${toolbarState.left}px`,
+            transform: 'translateX(-50%)'
           }}
         >
           <AIAssistantToolbar onAction={handleAIAction} isLoading={isLoading} />
         </div>
       )}
-      
-       <style>{`
+
+      <style>{`
             .interactive-editor h1 { font-size: 1.5em; font-weight: bold; margin: 0.67em 0; }
             .interactive-editor h2 { font-size: 1.25em; font-weight: bold; margin: 0.83em 0; }
             .interactive-editor ul, .interactive-editor ol {
@@ -430,52 +441,52 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
                 text-decoration: line-through;
             }
         `}</style>
-      
+
       {lite ? (
-          editableContent
+        editableContent
       ) : (
-          <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
-            <div className="p-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-1 flex-wrap">
-                <ToolbarButton onClick={() => handleFormat('bold')} isActive={activeFormats.bold} label={`Pogrubienie (${modifierKey}+B)`}>
-                <BoldIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => handleFormat('italic')} isActive={activeFormats.italic} label={`Kursywa (${modifierKey}+I)`}>
-                <ItalicIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => handleFormat('underline')} isActive={activeFormats.underline} label={`Podkreślenie (${modifierKey}+U)`}>
-                    <UnderlineIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => handleFormat('strikeThrough')} isActive={activeFormats.strikeThrough} label={`Przekreślenie (${modifierKey}+Shift+X)`}>
-                    <StrikethroughIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={handleLink} isActive={!!activeFormats.link} label={`Wstaw link (${modifierKey}+K)`}>
-                <LinkIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                <ToolbarButton onClick={() => handleHeading('h1')} isActive={activeFormats.h1} label={`Nagłówek 1 (${modifierKey}+1)`}>
-                    <Heading1Icon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => handleHeading('h2')} isActive={activeFormats.h2} label={`Nagłówek 2 (${modifierKey}+2)`}>
-                    <Heading2Icon className="w-5 h-5" />
-                </ToolbarButton>
-                <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
-                <ToolbarButton onClick={() => handleFormat('insertUnorderedList')} isActive={activeFormats.insertUnorderedList} label={`Lista punktowana (${modifierKey}+Shift+8)`}>
-                <ListUlIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={() => handleFormat('insertOrderedList')} isActive={activeFormats.insertOrderedList} label={`Lista numerowana (${modifierKey}+Shift+7)`}>
-                <ListOlIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={handleBlockquote} isActive={!!activeFormats.blockquote} label="Cytat blokowy">
-                <BlockquoteIcon className="w-5 h-5" />
-                </ToolbarButton>
-                <ToolbarButton onClick={handleCodeBlock} isActive={!!activeFormats.pre} label={`Blok kodu (${modifierKey}+Shift+C)`}>
-                    <CodeIcon className="w-5 h-5" />
-                </ToolbarButton>
-            </div>
-             <div className="p-3 min-h-[8rem]">
-                {editableContent}
-            </div>
+        <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
+          <div className="p-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-1 flex-wrap">
+            <ToolbarButton onClick={() => handleFormat('bold')} isActive={activeFormats.bold} label={`Pogrubienie (${modifierKey}+B)`}>
+              <BoldIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat('italic')} isActive={activeFormats.italic} label={`Kursywa (${modifierKey}+I)`}>
+              <ItalicIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat('underline')} isActive={activeFormats.underline} label={`Podkreślenie (${modifierKey}+U)`}>
+              <UnderlineIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat('strikeThrough')} isActive={activeFormats.strikeThrough} label={`Przekreślenie (${modifierKey}+Shift+X)`}>
+              <StrikethroughIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={handleLink} isActive={!!activeFormats.link} label={`Wstaw link (${modifierKey}+K)`}>
+              <LinkIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+            <ToolbarButton onClick={() => handleHeading('h1')} isActive={activeFormats.h1} label={`Nagłówek 1 (${modifierKey}+1)`}>
+              <Heading1Icon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleHeading('h2')} isActive={activeFormats.h2} label={`Nagłówek 2 (${modifierKey}+2)`}>
+              <Heading2Icon className="w-5 h-5" />
+            </ToolbarButton>
+            <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1"></div>
+            <ToolbarButton onClick={() => handleFormat('insertUnorderedList')} isActive={activeFormats.insertUnorderedList} label={`Lista punktowana (${modifierKey}+Shift+8)`}>
+              <ListUlIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={() => handleFormat('insertOrderedList')} isActive={activeFormats.insertOrderedList} label={`Lista numerowana (${modifierKey}+Shift+7)`}>
+              <ListOlIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={handleBlockquote} isActive={!!activeFormats.blockquote} label="Cytat blokowy">
+              <BlockquoteIcon className="w-5 h-5" />
+            </ToolbarButton>
+            <ToolbarButton onClick={handleCodeBlock} isActive={!!activeFormats.pre} label={`Blok kodu (${modifierKey}+Shift+C)`}>
+              <CodeIcon className="w-5 h-5" />
+            </ToolbarButton>
           </div>
+          <div className="p-3 min-h-[8rem]">
+            {editableContent}
+          </div>
+        </div>
       )}
     </WrapperElement>
   );

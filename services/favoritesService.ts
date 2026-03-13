@@ -11,15 +11,28 @@ export const fetchFavorites = async (): Promise<FavoritePost[]> => {
     console.error('Error fetching favorites:', error);
     throw new Error('Failed to fetch favorites');
   }
-  return data || [];
+
+  return (data || []).map(f => ({
+    id: f.id,
+    userId: f.user_id,
+    formData: f.form_data,
+    result: f.result,
+    timestamp: new Date(f.timestamp).getTime(),
+    teamId: f.team_id
+  }));
 };
 
 export const addFavorite = async (favorite: Omit<FavoritePost, 'id' | 'userId'>): Promise<FavoritePost> => {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User must be logged in to add a favorite.");
-  
-  const favoriteWithUser = { ...favorite, user_id: user.id };
+
+  const favoriteWithUser = {
+    user_id: user.id,
+    form_data: favorite.formData,
+    result: favorite.result,
+    team_id: favorite.teamId
+  };
 
   const { data, error } = await supabase
     .from('favorites')
@@ -31,7 +44,15 @@ export const addFavorite = async (favorite: Omit<FavoritePost, 'id' | 'userId'>)
     console.error('Error adding favorite:', error);
     throw new Error('Failed to add favorite');
   }
-  return data;
+
+  return {
+    id: data.id,
+    userId: data.user_id,
+    formData: data.form_data,
+    result: data.result,
+    timestamp: new Date(data.timestamp).getTime(),
+    teamId: data.team_id
+  };
 };
 
 export const removeFavorite = async (favoriteId: string): Promise<void> => {
@@ -40,7 +61,7 @@ export const removeFavorite = async (favoriteId: string): Promise<void> => {
     .from('favorites')
     .delete()
     .eq('id', favoriteId);
-    
+
   if (error) {
     console.error('Error removing favorite:', error);
     throw new Error('Failed to remove favorite');
@@ -52,7 +73,7 @@ export const clearFavorites = async (): Promise<void> => {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User must be logged in to clear favorites.");
-  
+
   const { error } = await supabase
     .from('favorites')
     .delete()

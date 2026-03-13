@@ -12,11 +12,11 @@ import type { Platform, Tone } from '../types';
 
 const PROFESSIONAL_HOOKS = {
   LinkedIn: [
-    'Here's what nobody tells you about {topic}:',
-    'I made a mistake that cost me {consequence}. Here's what I learned:',
-    '99% of people get {topic} wrong. Here's why:',
+    "Here's what nobody tells you about {topic}:",
+    "I made a mistake that cost me {consequence}. Here's what I learned:",
+    "99% of people get {topic} wrong. Here's why:",
     'After {timeframe}, I finally figured out {insight}:',
-    'The truth about {topic}? It's not what you think.',
+    "The truth about {topic}? It's not what you think.",
     '{number} lessons from {experience}:',
     'Stop doing {common_mistake}. Do this instead:',
   ],
@@ -25,11 +25,11 @@ const PROFESSIONAL_HOOKS = {
     'Unpopular opinion:',
     'Thread: {topic} 🧵',
     'Real talk about {topic}:',
-    'Everyone is doing {topic} wrong. Here's why:',
+    "Everyone is doing {topic} wrong. Here's why:",
   ],
   Instagram: [
     'POV: {situation}',
-    'Let's talk about {topic}',
+    "Let's talk about {topic}",
     '{emotion} story time:',
     'The truth about {topic} that nobody shares:',
     'Save this for later 📌',
@@ -54,7 +54,7 @@ export const generateProfessionalPost = async (
   audience: string,
   userId: string
 ): Promise<{ text: string; structure: string }> => {
-  
+
   const prompt = `You are an ELITE social media copywriter. Generate a HIGH-CONVERTING ${platform} post.
 
 🎯 TOPIC: ${topic}
@@ -91,7 +91,7 @@ FORMATTING:
 - Line breaks for readability
 - 2-3 emojis total (strategic placement)
 - NO hashtags in body (add separately)
-` : platform === 'Twitter' ? `
+` : platform === 'X' ? `
 TWITTER POST STRUCTURE:
 1. HOOK (First 10 words): Grab attention immediately
 2. VALUE: Deliver insight quickly
@@ -143,7 +143,7 @@ FORMATTING:
 Generate the post NOW. Make it scroll-stopping!`;
 
   const response = await generateContent({
-    model: 'gemini-2.5-pro',
+    model: 'gemini-pro-latest',
     contents: prompt
   }, userId);
 
@@ -190,7 +190,7 @@ LINKEDIN: 3-5 hashtags
 - Focus on professional, industry-specific
 - Mix broad (#Marketing) and specific (#B2BSaaS)
 - Avoid overly trendy
-` : platform === 'Twitter' ? `
+` : platform === 'X' ? `
 TWITTER: 1-2 hashtags MAX
 - Only if trending or highly relevant
 - Don't waste character count
@@ -215,7 +215,7 @@ Return JSON:
 }`;
 
   const response = await generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-flash-latest',
     contents: prompt,
     config: { responseMimeType: 'application/json' }
   }, userId);
@@ -290,7 +290,7 @@ Return JSON:
 }`;
 
   const response = await generateContent({
-    model: 'gemini-2.5-pro',
+    model: 'gemini-pro-latest',
     contents: prompt,
     config: { responseMimeType: 'application/json' }
   }, userId);
@@ -335,8 +335,8 @@ TONE: ${tone}
 
 STRUCTURE (Timing is critical):
 - 0-3s: HOOK (Must grab attention IMMEDIATELY)
-- 3-${duration-5}s: VALUE (Core content, visual storytelling)
-- ${duration-5}-${duration}s: CTA (Clear call-to-action)
+- 3-${duration - 5}s: VALUE (Core content, visual storytelling)
+- ${duration - 5}-${duration}s: CTA (Clear call-to-action)
 
 SCENES:
 Break down into ${Math.ceil(duration / 5)} scenes
@@ -374,7 +374,7 @@ Return JSON:
 }`;
 
   const response = await generateContent({
-    model: 'gemini-2.5-pro',
+    model: 'gemini-pro-latest',
     contents: prompt,
     config: { responseMimeType: 'application/json' }
   }, userId);
@@ -443,7 +443,7 @@ Return JSON:
 }`;
 
   const response = await generateContent({
-    model: 'gemini-2.5-pro',
+    model: 'gemini-pro-latest',
     contents: prompt,
     config: { responseMimeType: 'application/json' }
   }, userId);

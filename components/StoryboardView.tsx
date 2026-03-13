@@ -10,6 +10,10 @@ import { FilmIcon } from './icons/FilmIcon';
 import { VideoPlayer } from './VideoPlayer';
 import { SpeakerWaveIcon } from './icons/SpeakerWaveIcon';
 
+import { ModernButton } from './ui/ModernButton';
+import { ModernCard } from './ui/ModernCard';
+import { ModernInput } from './ui/ModernInput';
+
 // Audio Context for playing TTS narration
 const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
 const outputNode = outputAudioContext.createGain();
@@ -17,179 +21,257 @@ outputNode.connect(outputAudioContext.destination);
 let currentAudioSource: AudioBufferSourceNode | null = null;
 
 const SceneCard: React.FC<{
-  scene: Scene;
-  onGenerateVideo: (scene: Scene) => void;
-  onPlayNarration: (scene: Scene) => void;
-  videoUrl?: string;
-  isGeneratingVideo?: boolean;
-  isGeneratingAudio?: boolean;
-}> = ({ scene, onGenerateVideo, onPlayNarration, videoUrl, isGeneratingVideo, isGeneratingAudio }) => {
+    scene: Scene;
+    index: number;
+    onGenerateVideo: (scene: Scene) => void;
+    onPlayNarration: (scene: Scene) => void;
+    videoUrl?: string;
+    isGeneratingVideo?: boolean;
+    isGeneratingAudio?: boolean;
+}> = ({ scene, index, onGenerateVideo, onPlayNarration, videoUrl, isGeneratingVideo, isGeneratingAudio }) => {
     const { t } = useTranslation();
     return (
-        <div className="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700/50 space-y-4">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t('storyboard.sceneHeader', { number: scene.sceneNumber })}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <h4 className="font-semibold text-sm text-slate-500 dark:text-slate-400 mb-2">{t('storyboard.visualDescription')}</h4>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-md">{scene.visualDescription}</p>
+        <div
+            className="animate-fade-in-up"
+            style={{ animationDelay: `${index * 0.15}s`, animationFillMode: 'both' }}
+        >
+            <ModernCard hover glass padding="lg" className="relative overflow-hidden group">
+                {/* Scene Badge */}
+                <div className="absolute top-0 right-0 p-4">
+                    <span className="px-3 py-1 bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-black uppercase tracking-widest rounded-full border border-blue-500/20">
+                        {t('storyboard.sceneHeader', { number: scene.sceneNumber })}
+                    </span>
                 </div>
-                <div>
-                    <h4 className="font-semibold text-sm text-slate-500 dark:text-slate-400 mb-2">{t('storyboard.narration')}</h4>
-                    <p className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-md italic">"{scene.narrationText}"</p>
-                </div>
-            </div>
-             <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-200 dark:border-slate-700/50">
-                <div className="md:w-1/2">
-                    {videoUrl ? (
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+                    <div className="space-y-4">
                         <div>
-                            <p className="text-sm font-semibold text-green-600 dark:text-green-400 mb-2">{t('storyboard.videoReady')}</p>
-                            <div className="aspect-video rounded-lg overflow-hidden border border-slate-300 dark:border-slate-600">
+                            <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                                <span className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                                {t('storyboard.visualDescription')}
+                            </h4>
+                            <div className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-950/50 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800 leading-relaxed min-h-[100px]">
+                                {scene.visualDescription}
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                            <ModernButton
+                                onClick={() => onPlayNarration(scene)}
+                                disabled={isGeneratingAudio}
+                                loading={isGeneratingAudio}
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs font-bold"
+                                icon={<SpeakerWaveIcon className="w-4 h-4" />}
+                            >
+                                {isGeneratingAudio ? t('storyboard.playingNarration') : t('storyboard.playNarration')}
+                            </ModernButton>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div>
+                            <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                                <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" />
+                                {t('storyboard.narration')}
+                            </h4>
+                            <div className="text-sm text-slate-700 dark:text-slate-300 bg-slate-50/50 dark:bg-slate-950/50 p-5 rounded-2xl border border-slate-200/50 dark:border-slate-800 italic leading-relaxed min-h-[100px]">
+                                "{scene.narrationText}"
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-slate-200/50 dark:border-slate-800/50">
+                    {videoUrl ? (
+                        <div className="animate-fade-in">
+                            <div className="flex items-center justify-between mb-4">
+                                <p className="text-sm font-bold text-green-600 dark:text-green-400 flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                    {t('storyboard.videoReady')}
+                                </p>
+                            </div>
+                            <div className="aspect-video rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-xl group/player relative">
                                 <VideoPlayer src={videoUrl} />
                             </div>
                         </div>
                     ) : (
-                        <button onClick={() => onGenerateVideo(scene)} disabled={isGeneratingVideo} className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition disabled:opacity-50">
-                            {isGeneratingVideo ? t('storyboard.generatingVideo') : t('storyboard.generateVideo')}
-                        </button>
+                        <div className="max-w-md mx-auto">
+                            <ModernButton
+                                onClick={() => onGenerateVideo(scene)}
+                                disabled={isGeneratingVideo}
+                                loading={isGeneratingVideo}
+                                variant="gradient"
+                                fullWidth
+                                size="lg"
+                                icon={<FilmIcon className="w-5 h-5" />}
+                            >
+                                {isGeneratingVideo ? t('storyboard.generatingVideo') : t('storyboard.generateVideo')}
+                            </ModernButton>
+                            {isGeneratingVideo && (
+                                <p className="text-[10px] text-center text-slate-400 mt-3 animate-pulse font-medium uppercase tracking-tighter">
+                                    AI is crafting your visual scene... this might take a minute
+                                </p>
+                            )}
+                        </div>
                     )}
                 </div>
-                <div className="md:w-1/2">
-                     <button onClick={() => onPlayNarration(scene)} disabled={isGeneratingAudio} className="w-full flex items-center justify-center gap-2 bg-purple-600 text-white font-bold py-2 px-4 rounded-md hover:bg-purple-700 transition disabled:opacity-50">
-                        <SpeakerWaveIcon className="w-5 h-5" />
-                        {isGeneratingAudio ? t('storyboard.playingNarration') : t('storyboard.playNarration')}
-                    </button>
-                </div>
-            </div>
+            </ModernCard>
         </div>
     );
 };
 
 export const StoryboardView: React.FC = () => {
-  const { user } = useAuth();
-  const { addToast } = useNotifications();
-  const { t } = useTranslation();
-  const [topic, setTopic] = useState('');
-  const [scenes, setScenes] = useState<Scene[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [videoStates, setVideoStates] = useState<Record<number, { isLoading: boolean; url: string | null }>>({});
-  const [audioStates, setAudioStates] = useState<Record<number, { isLoading: boolean }>>({});
+    const { user } = useAuth();
+    const { addToast } = useNotifications();
+    const { t } = useTranslation();
+    const [topic, setTopic] = useState('');
+    const [scenes, setScenes] = useState<Scene[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [videoStates, setVideoStates] = useState<Record<number, { isLoading: boolean; url: string | null }>>({});
+    const [audioStates, setAudioStates] = useState<Record<number, { isLoading: boolean }>>({});
 
-  const handleGenerateScenes = async () => {
-    if (!topic.trim() || !user) return;
-    setIsLoading(true);
-    setError(null);
-    setScenes([]);
+    const handleGenerateScenes = async () => {
+        if (!topic.trim() || !user) return;
+        setIsLoading(true);
+        setError(null);
+        setScenes([]);
         try {
             const result = await generateStoryboard(topic, user.id);
-      setScenes(result);
-    } catch (e: any) {
-      setError(e.message || 'Failed to generate storyboard.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+            setScenes(result);
+        } catch (e: any) {
+            setError(e.message || 'Failed to generate storyboard.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
-  const handleGenerateVideo = useCallback(async (scene: Scene) => {
-    setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: true, url: null } }));
-    try {
-                if (!user) throw new Error('Musisz być zalogowany, aby generować wideo.');
-                let operation = await generateVideoFromText(scene.visualDescription, '16:9', user.id);
-                while (!operation.done) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-                        operation = await getVideoOperationStatus(operation, user.id);
+    const handleGenerateVideo = useCallback(async (scene: Scene) => {
+        setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: true, url: null } }));
+        try {
+            if (!user) throw new Error('Musisz być zalogowany, aby generować wideo.');
+            let operation = await generateVideoFromText(scene.visualDescription, '16:9', user.id);
+            while (!operation.done) {
+                await new Promise(resolve => setTimeout(resolve, 5000)); // Reduced interval for better feel
+                operation = await getVideoOperationStatus(operation, user.id);
+            }
+
+            const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+            if (!downloadLink) throw new Error("Video generation finished, but no download link was provided.");
+
+            const videoResponse = await fetch(`${downloadLink}&key=${import.meta.env.VITE_GEMINI_API_KEY}`);
+            if (!videoResponse.ok) throw new Error("Failed to download the generated video.");
+
+            const videoBlob = await videoResponse.blob();
+            const videoUrl = URL.createObjectURL(videoBlob);
+
+            setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false, url: videoUrl } }));
+
+        } catch (e: any) {
+            setError(e.message);
+            setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false, url: null } }));
+        }
+    }, [user]);
+
+    const handlePlayNarration = useCallback(async (scene: Scene) => {
+        if (currentAudioSource) {
+            currentAudioSource.stop();
+            currentAudioSource = null;
         }
 
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-        if (!downloadLink) throw new Error("Video generation finished, but no download link was provided.");
-        
-    const videoResponse = await fetch(`${downloadLink}&key=${import.meta.env.VITE_GEMINI_API_KEY}`);
-        if (!videoResponse.ok) throw new Error("Failed to download the generated video.");
+        setAudioStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: true } }));
+        try {
+            if (!user) throw new Error('Musisz być zalogowany, aby generować narrację.');
+            const base64Audio = await generateSpeech(scene.narrationText, user.id);
+            if (!base64Audio) return;
 
-        const videoBlob = await videoResponse.blob();
-        const videoUrl = URL.createObjectURL(videoBlob);
+            const audioBuffer = await decodeAudioData(decode(base64Audio as string), outputAudioContext, 24000, 1);
 
-        setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false, url: videoUrl } }));
+            const source = outputAudioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(outputNode);
+            source.start();
+            currentAudioSource = source;
+            source.onended = () => {
+                if (currentAudioSource === source) {
+                    currentAudioSource = null;
+                }
+            };
 
-    } catch (e: any) {
-        setError(e.message);
-        setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false, url: null } }));
-    }
-  }, []);
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setAudioStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false } }));
+        }
+    }, [user]);
 
-  const handlePlayNarration = useCallback(async (scene: Scene) => {
-    if (currentAudioSource) {
-        currentAudioSource.stop();
-        currentAudioSource = null;
-    }
+    return (
+        <div className="max-w-6xl mx-auto px-4 py-8 space-y-12 min-h-screen">
+            <header className="text-center space-y-4 animate-fade-in-down">
+                <div className="inline-flex p-4 bg-blue-500/10 dark:bg-blue-500/20 rounded-3xl mb-2">
+                    <FilmIcon className="w-12 h-12 text-blue-500 animate-float" />
+                </div>
+                <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+                    {t('storyboard.title')} <span className="gradient-text">{t('storyboard.ai')}</span>
+                </h1>
+                <p className="max-w-2xl mx-auto text-slate-500 dark:text-slate-400 text-lg">
+                    {t('storyboard.subtitle')}
+                </p>
+            </header>
 
-    setAudioStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: true } }));
-    try {
-        if (!user) throw new Error('Musisz być zalogowany, aby generować narrację.');
-        const base64Audio = await generateSpeech(scene.narrationText, user.id);
-        const audioBuffer = await decodeAudioData(decode(base64Audio), outputAudioContext, 24000, 1);
-        
-        const source = outputAudioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(outputNode);
-        source.start();
-        currentAudioSource = source;
-        source.onended = () => {
-            if (currentAudioSource === source) {
-                currentAudioSource = null;
-            }
-        };
+            <ModernCard glass padding="lg" className="border-white/20 dark:border-slate-800 animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                <div className="flex flex-col md:flex-row gap-4">
+                    <ModernInput
+                        type="text"
+                        value={topic}
+                        onChange={(e: any) => setTopic(e.target.value)}
+                        placeholder={t('storyboard.topicPlaceholder')}
+                        className="flex-grow text-lg"
+                        fullWidth
+                    />
+                    <ModernButton
+                        onClick={handleGenerateScenes}
+                        disabled={isLoading || !topic.trim()}
+                        loading={isLoading}
+                        icon={<SparklesIcon className="w-6 h-6" />}
+                        size="lg"
+                        className="md:w-auto w-full px-10"
+                        variant="gradient"
+                    >
+                        {isLoading ? t('storyboard.generatingScenes') : t('storyboard.generateScenes')}
+                    </ModernButton>
+                </div>
+                {error && (
+                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 text-sm font-bold flex items-center gap-2 animate-shake">
+                        <span className="w-2 h-2 bg-red-500 rounded-full" />
+                        {error}
+                    </div>
+                )}
+            </ModernCard>
 
-    } catch (e: any) {
-        setError(e.message);
-    } finally {
-        setAudioStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false } }));
-    }
-  }, []);
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-        <div className="text-center">
-            <FilmIcon className="w-16 h-16 mx-auto text-blue-500 mb-4" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('storyboard.title')}</h1>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">{t('storyboard.subtitle')}</p>
-        </div>
-        <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg">
-            <label htmlFor="topic-input" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('storyboard.topicLabel')}</label>
-            <div className="flex flex-col sm:flex-row gap-4">
-                <input
-                    type="text"
-                    id="topic-input"
-                    value={topic}
-                    onChange={e => setTopic(e.target.value)}
-                    placeholder={t('storyboard.topicPlaceholder')}
-                    className="flex-grow w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                />
-                <button
-                    onClick={handleGenerateScenes}
-                    disabled={isLoading || !topic.trim()}
-                    className="flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-6 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                    <SparklesIcon className="w-5 h-5" />
-                    {isLoading ? t('storyboard.generatingScenes') : t('storyboard.generateScenes')}
-                </button>
+            <div className="grid grid-cols-1 gap-6 pb-20">
+                {scenes.map((scene, idx) => (
+                    <SceneCard
+                        key={scene.sceneNumber}
+                        scene={scene}
+                        index={idx}
+                        onGenerateVideo={handleGenerateVideo}
+                        onPlayNarration={handlePlayNarration}
+                        videoUrl={videoStates[scene.sceneNumber]?.url || undefined}
+                        isGeneratingVideo={videoStates[scene.sceneNumber]?.isLoading || false}
+                        isGeneratingAudio={audioStates[scene.sceneNumber]?.isLoading || false}
+                    />
+                ))}
             </div>
-            {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
-        </div>
 
-        <div className="space-y-6">
-            {scenes.map(scene => (
-                <SceneCard
-                    key={scene.sceneNumber}
-                    scene={scene}
-                    onGenerateVideo={handleGenerateVideo}
-                    onPlayNarration={handlePlayNarration}
-                    videoUrl={videoStates[scene.sceneNumber]?.url || undefined}
-                    isGeneratingVideo={videoStates[scene.sceneNumber]?.isLoading || false}
-                    isGeneratingAudio={audioStates[scene.sceneNumber]?.isLoading || false}
-                />
-            ))}
+            {scenes.length === 0 && !isLoading && (
+                <div className="text-center py-20 opacity-20 animate-fade-in grayscale">
+                    <FilmIcon className="w-32 h-32 mx-auto mb-4" />
+                    <p className="text-2xl font-black uppercase tracking-widest">{t('storyboard.emptyState') || 'Nothing here yet'}</p>
+                </div>
+            )}
         </div>
-    </div>
-  );
+    );
 };

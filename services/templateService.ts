@@ -11,7 +11,13 @@ export const fetchTemplates = async (): Promise<CustomTemplate[]> => {
     console.error('Error fetching templates:', error);
     throw new Error('Failed to fetch templates');
   }
-  return data || [];
+
+  return (data || []).map(t => ({
+    id: t.id,
+    name: t.name,
+    formData: t.form_data,
+    teamId: t.team_id
+  }));
 };
 
 export const saveTemplate = async (template: CustomTemplate): Promise<CustomTemplate> => {
@@ -19,11 +25,17 @@ export const saveTemplate = async (template: CustomTemplate): Promise<CustomTemp
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User must be logged in to save a template.");
 
-  const templateWithUser = { ...template, user_id: user.id };
+  const templateToSave = {
+    id: template.id,
+    name: template.name,
+    form_data: template.formData,
+    team_id: template.teamId,
+    user_id: user.id
+  };
 
   const { data, error } = await supabase
     .from('templates')
-    .upsert(templateWithUser)
+    .upsert(templateToSave)
     .select()
     .single();
 
@@ -31,7 +43,13 @@ export const saveTemplate = async (template: CustomTemplate): Promise<CustomTemp
     console.error('Error saving template:', error);
     throw new Error('Failed to save template');
   }
-  return data;
+
+  return {
+    id: data.id,
+    name: data.name,
+    formData: data.form_data,
+    teamId: data.team_id
+  };
 };
 
 // updateTemplate is covered by saveTemplate's upsert logic
@@ -43,7 +61,7 @@ export const deleteTemplate = async (templateId: string): Promise<void> => {
     .from('templates')
     .delete()
     .eq('id', templateId);
-    
+
   if (error) {
     console.error('Error deleting template:', error);
     throw new Error('Failed to delete template');

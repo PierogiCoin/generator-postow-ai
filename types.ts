@@ -1,67 +1,78 @@
-import type React from 'react';
+import type React from "react";
 
 export enum Platform {
-  Facebook = 'Facebook',
-  Instagram = 'Instagram',
-  TikTok = 'TikTok',
-  X = 'X',
-  LinkedIn = 'LinkedIn',
-  YouTube = 'YouTube',
+  Facebook = "Facebook",
+  Instagram = "Instagram",
+  TikTok = "TikTok",
+  X = "X",
+  LinkedIn = "LinkedIn",
+  YouTube = "YouTube",
 }
 
 export enum Tone {
-  Professional = 'Professional',
-  Casual = 'Casual',
-  Witty = 'Witty',
-  Inspirational = 'Inspirational',
-  Persuasive = 'Persuasive',
+  Professional = "Professional",
+  Casual = "Casual",
+  Witty = "Witty",
+  Inspirational = "Inspirational",
+  Persuasive = "Persuasive",
+}
+
+export enum ToneArchetype {
+  Expert = "Expert",
+  Friend = "Friend",
+  Innovator = "Innovator",
+  Rebel = "Rebel",
+  Sage = "Sage",
+  Entertainer = "Entertainer",
 }
 
 export enum ContentType {
-  Post = 'Post',
-  Advertisement = 'Advertisement',
+  Post = "Post",
+  Advertisement = "Advertisement",
 }
 
 export enum VisualStyle {
-  PlatformSpecific = 'PlatformSpecific',
-  Photorealistic = 'Photorealistic',
-  Cartoonish = 'Cartoonish',
-  Minimalist = 'Minimalist',
-  Vintage = 'Vintage',
+  PlatformSpecific = "PlatformSpecific",
+  Photorealistic = "Photorealistic",
+  Cartoonish = "Cartoonish",
+  Minimalist = "Minimalist",
+  Vintage = "Vintage",
 }
 
 export enum GenerationType {
-  PostWithImage = 'PostWithImage',
-  Video = 'Video',
-  Idea = 'Idea',
-  Campaign = 'Campaign',
-  ABTest = 'ABTest',
+  PostWithImage = "PostWithImage",
+  Video = "Video",
+  Idea = "Idea",
+  Campaign = "Campaign",
+  ABTest = "ABTest",
+  SeriesFollowUp = "SeriesFollowUp",
+  Omnichannel = "Omnichannel",
 }
 
 export enum SortKey {
-  Date = 'date',
-  Topic = 'topic',
+  Date = "date",
+  Topic = "topic",
 }
 
 export enum SortDirection {
-  Asc = 'asc',
-  Desc = 'desc',
+  Asc = "asc",
+  Desc = "desc",
 }
 
 export enum AIModel {
-  Flash = 'Flash',
-  Pro = 'Pro',
+  Flash = "Flash",
+  Pro = "Pro",
 }
 
 export enum UserPlan {
-    Free = 'free',
-    Creator = 'creator',
-    Pro = 'pro',
-    Agency = 'agency',
-    Business = 'business',
+  Free = "free",
+  Creator = "creator",
+  Pro = "pro",
+  Agency = "agency",
+  Business = "business",
 }
 
-export type TeamMemberRole = 'manager' | 'member';
+export type TeamMemberRole = "manager" | "member";
 
 export interface TeamMember {
   id: string;
@@ -88,7 +99,7 @@ export interface User {
 
 export interface AppError {
   message: string;
-  type?: 'api' | 'limit' | 'unknown';
+  type?: "api" | "limit" | "unknown";
   status?: number;
   details?: string;
 }
@@ -107,17 +118,25 @@ export interface FormData {
   keywords?: string;
   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
   imageForVideo?: { base64: string, mimeType: string };
+  repurposeFrom?: string;
+  repurposeImageFrom?: string;
 
   // Campaign specific fields
   campaignGoal?: string;
   campaignDuration?: number; // in days
   campaignPlatforms?: Platform[];
+
+  // Branding assets
+  useMascot?: boolean | "auto";
+  includeLogo?: boolean;
+  learnedInsights?: AIInsight[];
+  selectedPlatforms?: Platform[];
 }
 
 export interface IdeaResult {
-    postIdeas: { title: string; description: string }[];
-    viralHooks: string[];
-    ctaIdeas: string[];
+  postIdeas: { title: string; description: string }[];
+  viralHooks: string[];
+  ctaIdeas: string[];
 }
 
 export interface VideoScript {
@@ -138,15 +157,18 @@ export interface GenerationResult {
   videoUrl?: string | null;
   videoTitle?: string | null;
   videoDescription?: string | null;
+  suggestedPostingTime?: string | null;
+  visualStrategyTips?: string | null;
   ideas?: IdeaResult | null;
   videoScript?: VideoScript | null;
   audioDescription?: string | null;
   campaignPlan?: CampaignPlan | null;
+  omnichannelPosts?: OmnichannelPost[] | null;
   metadata: {
-      tone: Tone;
-      audience: string;
-      keywords?: string;
-      prompt: string;
+    tone: Tone;
+    audience: string;
+    keywords?: string;
+    prompt: string;
   };
   approvalStatus: PostApprovalStatus;
   comments: Comment[];
@@ -167,16 +189,23 @@ export interface PostPerformanceData {
 export interface AIInsight {
   id: string;
   text: string;
-  type: 'positive' | 'suggestion' | 'observation';
+  type: "positive" | "suggestion" | "observation";
+  category?: "context" | "vibe" | "style" | "performance_tip";
 }
 
 export interface OptimalTime {
-    platform: Platform;
-    day: string;
-    time: string;
+  platform: Platform;
+  day: string;
+  time: string;
 }
 
-export type PostApprovalStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected';
+export interface OmnichannelPost {
+  platform: Platform;
+  postText: string;
+  hashtags: string[];
+}
+
+export type PostApprovalStatus = "draft" | "pending_approval" | "approved" | "rejected";
 
 export interface Comment {
   id: string;
@@ -237,6 +266,9 @@ export interface ScheduledPost {
   status: PostStatus;
   approvalStatus: PostApprovalStatus;
   comments: Comment[];
+  dueDate?: number | null;
+  scheduledPlatforms?: Platform[]; // NEW
+  scheduledFormats?: GenerationType[]; // NEW
 }
 
 export interface CustomTemplate {
@@ -263,7 +295,7 @@ export interface UsageStats {
 }
 
 export interface SentimentAnalysisResult {
-  sentiment: 'Pozytywny' | 'Neutralny' | 'Negatywny';
+  sentiment: "Pozytywny" | "Neutralny" | "Negatywny";
   score: number;
 }
 
@@ -275,16 +307,16 @@ export interface SEOAnalysisResult {
 }
 
 export interface PredictionTip {
-    text: string;
-    isMet: boolean;
+  text: string;
+  isMet: boolean;
 }
 
 export interface PerformancePrediction {
-    reach: { score: number; label: string };
-    engagement: { score: number; label: string };
-    virality: { score: number; label: string };
-    tips: PredictionTip[];
-    insights: AIInsight[];
+  reach: { score: number; label: string };
+  engagement: { score: number; label: string };
+  virality: { score: number; label: string };
+  tips: PredictionTip[];
+  insights: AIInsight[];
 }
 
 export interface BrandVoiceSettings {
@@ -292,8 +324,18 @@ export interface BrandVoiceSettings {
   description: string;
   keywords: string;
   avoid: string;
+  archetype?: ToneArchetype;
   examplesToFollow?: string[];
   examplesToAvoid?: string[];
+  visualStyle?: string;
+  successPatterns?: string[];
+
+  // Branding Assets
+  logoUrl?: string;
+  mascotUrl?: string;
+  mascotName?: string;
+  mascotDescription?: string;
+  includeMascotInGeneration?: boolean;
 }
 
 export type BrandVoiceData = BrandVoiceSettings;
@@ -326,17 +368,17 @@ export interface PaymentHistoryItem {
   date: string;
   amount: number;
   plan: string;
-  status: 'Zapłacono' | 'Nie powiodło się' | 'W toku';
+  status: "Zapłacono" | "Nie powiodło się" | "W toku";
 }
 
 export interface StyleSuggestionResult {
-    suggestedTones: Tone[];
-    suggestedVisualStyles: VisualStyle[];
+  suggestedTones: Tone[];
+  suggestedVisualStyles: VisualStyle[];
 }
 
-export type PostStatus = 'draft' | 'scheduled' | 'published';
+export type PostStatus = "draft" | "scheduled" | "published";
 
-export type AIAssistantAction = 'rewrite' | 'shorten' | 'lengthen' | 'add-emoji' | 'change_tone' | 'summarize' | 'expand_keywords' | 'suggest_hashtags';
+export type AIAssistantAction = "rewrite" | "shorten" | "lengthen" | "add-emoji" | "change_tone" | "summarize" | "expand_keywords" | "suggest_hashtags" | "custom";
 
 export type RepurposedContentItem = { title: string; text: string; visualIdea?: string };
 export type RepurposedContent = Partial<Record<Platform, string | RepurposedContentItem[]>>;
@@ -352,15 +394,15 @@ export interface Trend {
   quotes: string[];
 }
 
-export type AppView = 'home' | 'generator' | 'calendar' | 'analytics' | 'account' | 'trends';
+export type AppView = "home" | "generator" | "calendar" | "analytics" | "account" | "trends";
 
 export enum NotificationType {
-  Success = 'success',
-  Error = 'error',
-  Info = 'info',
-  Comment = 'comment',
-  Status = 'status',
-  Achievement = 'achievement',
+  Success = "success",
+  Error = "error",
+  Info = "info",
+  Comment = "comment",
+  Status = "status",
+  Achievement = "achievement",
 }
 
 export interface Notification {
@@ -373,21 +415,21 @@ export interface Notification {
 }
 
 export interface AudiencePersona {
-    name: string;
-    age: number;
-    location: string;
-    jobTitle: string;
-    demographics: string;
-    goals: string[];
-    painPoints: string[];
-    communicationTips: string;
+  name: string;
+  age: number;
+  location: string;
+  jobTitle: string;
+  demographics: string;
+  goals: string[];
+  painPoints: string[];
+  communicationTips: string;
 }
 
 // Type for Video Storyboard
 export interface Scene {
-    sceneNumber: number;
-    visualDescription: string;
-    narrationText: string;
+  sceneNumber: number;
+  visualDescription: string;
+  narrationText: string;
 }
 
 export type AlternativeIdea = {
@@ -408,19 +450,21 @@ export interface CalendarSuggestion {
 export interface IntelligentCalendarPlanItem {
   id: string;
   date: string; // YYYY-MM-DD
+  time?: string; // HH:mm
   platform: Platform;
   topic: string;
   format: GenerationType;
   strategy: string;
+  suggestedTone?: Tone;
 }
 
 // Types for Gamification
 export enum AchievementId {
-  FirstPost = 'firstPost',
-  CreativeStreak = 'creativeStreak',
-  CampaignMaster = 'campaignMaster',
-  PowerUser = 'powerUser',
-  Visionary = 'visionary',
+  FirstPost = "firstPost",
+  CreativeStreak = "creativeStreak",
+  CampaignMaster = "campaignMaster",
+  PowerUser = "powerUser",
+  Visionary = "visionary",
 }
 
 export interface Achievement {
@@ -431,45 +475,45 @@ export interface Achievement {
 }
 
 // Types for Strategic Assistant
-export type StrategicIdeaType = 'Trending' | 'Content Gap' | 'Evergreen';
+export type StrategicIdeaType = "Trending" | "Content Gap" | "Evergreen";
 
 export interface GroundingSource {
-    uri: string;
-    title: string;
+  uri: string;
+  title: string;
 }
 
 export interface StrategicIdea {
-    title: string;
-    type: StrategicIdeaType;
-    strategy: string;
-    sources: GroundingSource[];
+  title: string;
+  type: StrategicIdeaType;
+  strategy: string;
+  sources: GroundingSource[];
 }
 
 
 // Types for AI Strategist / Auditor
 export interface ContentPillar {
-    pillar: string;
-    description: string;
-    postIdeas: string[];
+  pillar: string;
+  description: string;
+  postIdeas: string[];
 }
 
 export interface SWOTAnalysis {
-    strengths: string[];
-    weaknesses: string[];
-    opportunities: string[];
-    threats: string[];
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
 }
 
 export interface CompetitiveSnapshot {
-    competitor: string;
-    analysis: string;
+  competitor: string;
+  analysis: string;
 }
 
 export interface StrategicAuditReport {
-    summary: string;
-    contentPillars: ContentPillar[];
-    refinedPersona: AudiencePersona;
-    swot: SWOTAnalysis;
-    competitiveSnapshot: CompetitiveSnapshot[];
-    actionablePlan: IntelligentCalendarPlanItem[];
+  summary: string;
+  contentPillars: ContentPillar[];
+  refinedPersona: AudiencePersona;
+  swot: SWOTAnalysis;
+  competitiveSnapshot: CompetitiveSnapshot[];
+  actionablePlan: IntelligentCalendarPlanItem[];
 }

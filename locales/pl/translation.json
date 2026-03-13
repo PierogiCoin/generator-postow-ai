@@ -14,7 +14,8 @@
     "retry": "Spróbuj ponownie",
     "upgrade": "Ulepsz",
     "newPost": "-- Nowy post --",
-    "noDescription": "Brak opisu"
+    "noDescription": "Brak opisu",
+    "untitled": "Bez tytułu"
   },
   "header": {
     "title": "AI Content Pro",
@@ -31,6 +32,7 @@
       "newCampaign": "Nowa Kampania",
       "newStoryboard": "Nowy Storyboard",
       "strategist": "Strategista",
+      "brandVoice": "Głos Marki",
       "more": "Więcej"
     },
     "calendarDisabledTooltip": "Wygeneruj plan kampanii, aby aktywować kalendarz",
@@ -45,6 +47,8 @@
   "userMenu": {
     "loggedInAs": "Zalogowano jako",
     "myAccount": "Moje konto",
+    "brandVoice": "Głosy Marki",
+    "socialMedia": "Social Media",
     "logout": "Wyloguj",
     "logoutConfirm": "Czy na pewno chcesz się wylogować?"
   },
@@ -112,7 +116,7 @@
       "label": "Model AI",
       "tooltip": "'Flash' jest szybszy, idealny do prostszych zadań. 'Pro' (funkcja premium) jest bardziej zaawansowany i generuje bardziej kreatywne, złożone treści."
     },
-     "aspectRatio": {
+    "aspectRatio": {
       "label": "Proporcje obrazu",
       "tooltip": "Wybierz proporcje dla generowanego obrazu.",
       "tooltipVideo": "Wybierz proporcje dla generowanego wideo (poziome lub pionowe).",
@@ -171,7 +175,17 @@
     "PostWithImage": "Post + Obraz",
     "Video": "Wideo z tekstem",
     "Idea": "Burza mózgów",
-    "Campaign": "Kampania AI"
+    "Campaign": "Kampania AI",
+    "SeriesFollowUp": "Kontynuacja Serii",
+    "RepurposeAs": "Przetwórz jako..."
+  },
+  "repurposeAs": {
+    "PostWithImage": "Przetwórz jako Post",
+    "Video": "Przetwórz jako Wideo",
+    "Idea": "Nowe pomysły z tego",
+    "Campaign": "Stwórz kampanię",
+    "ABTest": "Warianty A/B",
+    "SeriesFollowUp": "Stwórz Kontynuację"
   },
   "enums": {
     "Tone": {
@@ -435,7 +449,7 @@
     "description": "Generowanie wideo Veo wymaga wybrania klucza API, dla którego włączono płatności. Więcej informacji znajdziesz w <1>dokumentacji płatności</1>.",
     "button": "Wybierz Klucz API"
   },
-    "dashboard": {
+  "dashboard": {
     "trendingTopics": "Gorące tematy",
     "trendsForNiche": "Trendy dla niszy:",
     "save": "Zapisz",
@@ -443,9 +457,9 @@
     "noTrends": "Nie znaleziono trendów. Spróbuj innej niszy.",
     "createPost": "Stwórz",
     "weeklySummary": {
-        "title": "Podsumowanie tygodnia",
-        "start": "Zacznij tworzyć więcej treści, aby zobaczyć podsumowanie tygodnia!",
-        "summary": "W tym tygodniu najczęściej tworzyłeś treści na {{platform}} w tonie {{tone}}. Tak trzymaj!"
+      "title": "Podsumowanie tygodnia",
+      "start": "Zacznij tworzyć więcej treści, aby zobaczyć podsumowanie tygodnia!",
+      "summary": "W tym tygodniu najczęściej tworzyłeś treści na {{platform}} w tonie {{tone}}. Tak trzymaj!"
     }
   },
   "persona": {
@@ -457,10 +471,10 @@
     "communicationTips": "Wskazówki komunikacyjne"
   },
   "insights": {
-      "active": "Aktywne wnioski AI",
-      "description": "Generowanie jest wspomagane przez {{count}} wniosków.",
-      "clear": "Wyczyść wnioski",
-      "apply": "Zastosuj wnioski w przyszłych generacjach"
+    "active": "Aktywne wnioski AI",
+    "description": "Generowanie jest wspomagane przez {{count}} wniosków.",
+    "clear": "Wyczyść wnioski",
+    "apply": "Zastosuj wnioski w przyszłych generacjach"
   },
   "quickCommand": {
     "scheduled": "Post zaplanowany na {{platform}} na {{time}}.",
@@ -483,7 +497,7 @@
     "videoReady": "Wideo gotowe",
     "combinedVideo": "Połączona historia"
   },
-    "commandPalette": {
+  "commandPalette": {
     "title": "Paleta Komend",
     "placeholder": "Wpisz komendę lub szukaj...",
     "noResults": "Nie znaleziono wyników",
@@ -504,24 +518,24 @@
     "unlocked": "Odblokowano!",
     "locked": "Zablokowane",
     "firstPost": {
-        "name": "Pierwszy Krok",
-        "description": "Wygeneruj swoją pierwszą treść."
+      "name": "Pierwszy Krok",
+      "description": "Wygeneruj swoją pierwszą treść."
     },
     "creativeStreak": {
-        "name": "Seria Kreatywności",
-        "description": "Wygeneruj 5 treści."
+      "name": "Seria Kreatywności",
+      "description": "Wygeneruj 5 treści."
     },
     "campaignMaster": {
-        "name": "Mistrz Kampanii",
-        "description": "Zaplanuj swoją pierwszą kampanię z AI."
+      "name": "Mistrz Kampanii",
+      "description": "Zaplanuj swoją pierwszą kampanię z AI."
     },
     "powerUser": {
-        "name": "Power User",
-        "description": "Wygeneruj 25 treści."
+      "name": "Power User",
+      "description": "Wygeneruj 25 treści."
     },
     "visionary": {
-        "name": "Wizjoner",
-        "description": "Wygeneruj ponad 100 treści."
+      "name": "Wizjoner",
+      "description": "Wygeneruj ponad 100 treści."
     }
   },
   "strategist": {
@@ -534,6 +548,17 @@
       "audiencePlaceholder": "np. Milenialsi zorientowani technologicznie, właściciele małych firm",
       "competitorsLabel": "Adresy URL konkurencji w mediach społecznościowych (opcjonalnie, jeden na linię)",
       "competitorsPlaceholder": "https://instagram.com/konkurent1\nhttps://linkedin.com/company/konkurent2",
+      "brandProfileLabel": "Wybrany Profil Marki",
+      "brandProfilePlaceholder": "-- Wybierz profil (opcjonalnie) --",
+      "frequencyLabel": "Częstotliwość publikacji",
+      "formatsLabel": "Preferowane Formaty",
+      "formatPost": "Grafiki / Posty",
+      "formatVideo": "Wideo / Reels",
+      "formatIdea": "Tylko pomysły (tekst)",
+      "freqDaily": "Codziennie",
+      "freq3perWeek": "3 razy w tygodniu",
+      "freq2perWeek": "2 razy w tygodniu",
+      "freqWeekly": "Raz w tygodniu",
       "submit": "Rozpocznij Analizę Strategiczną"
     },
     "loading": {
@@ -559,9 +584,12 @@
       "opportunities": "Szanse",
       "threats": "Zagrożenia",
       "competitors": "Przegląd Konkurencji",
-      "plan": "30-dniowy Plan Działania",
+      "plan": "Strategiczny Plan Treści",
       "importPlan": "Zaimportuj Plan do Kalendarza",
-      "planImported": "Plan zaimportowany!"
+      "planImported": "Plan zaimportowany!",
+      "dayHour": "Dzień i Godzina",
+      "tone": "Sugerowany Ton",
+      "generatePost": "Generuj ten post"
     },
     "locked": {
       "title": "Odblokuj Strategistę AI",

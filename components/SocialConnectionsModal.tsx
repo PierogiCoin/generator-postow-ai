@@ -10,6 +10,7 @@ interface SocialConnectionsModalProps {
   onConnect: (platform: SocialPlatform) => Promise<void>;
   onDisconnect: (connectionId: string) => Promise<void>;
   onRefresh: () => Promise<void>;
+  onViewHistory: (connection: SocialConnection) => void;
 }
 
 const PLATFORM_CONFIG = {
@@ -40,6 +41,13 @@ const PLATFORM_CONFIG = {
     color: 'bg-blue-500',
     textColor: 'text-blue-500',
     description: 'Share with your network'
+  },
+  tiktok: {
+    name: 'TikTok',
+    icon: '🎵',
+    color: 'bg-black',
+    textColor: 'text-black dark:text-white',
+    description: 'Share trending videos'
   }
 };
 
@@ -49,7 +57,8 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
   connections,
   onConnect,
   onDisconnect,
-  onRefresh
+  onRefresh,
+  onViewHistory
 }) => {
   const { t } = useTranslation();
   const [connectingPlatform, setConnectingPlatform] = useState<SocialPlatform | null>(null);
@@ -161,9 +170,15 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                   </div>
 
                   {/* Actions */}
-                  <div>
+                  <div className="flex items-center gap-3">
                     {isConnected ? (
-                      <div className="flex items-center gap-2">
+                      <>
+                        <button
+                          onClick={() => onViewHistory(connection!)}
+                          className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition"
+                        >
+                          {t('socialConnections.history', 'History')}
+                        </button>
                         <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium">
                           <Check className="w-4 h-4" />
                           <span>{t('socialConnections.connected', 'Connected')}</span>
@@ -179,7 +194,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                             t('socialConnections.disconnect', 'Disconnect')
                           )}
                         </button>
-                      </div>
+                      </>
                     ) : (
                       <button
                         onClick={() => handleConnect(platform)}

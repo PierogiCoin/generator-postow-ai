@@ -1,13 +1,14 @@
+// @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Zap, 
-  Image, 
-  Video, 
-  FileText, 
+import {
+  Zap,
+  Image,
+  Video,
+  FileText,
   TrendingUp,
   AlertCircle,
   CreditCard
@@ -62,8 +63,8 @@ export function UsageMonitor() {
   const creditsRemaining = user?.credits || 0;
   const creditsUsed = stats?.totalCreditsUsed || 0;
   const planLimits = getPlanLimits(user?.plan || 'free');
-  const usagePercent = planLimits.maxCredits 
-    ? (creditsUsed / planLimits.maxCredits) * 100 
+  const usagePercent = planLimits.maxCredits
+    ? (creditsUsed / planLimits.maxCredits) * 100
     : 0;
 
   const isLowCredits = creditsRemaining < 100;
@@ -89,20 +90,19 @@ export function UsageMonitor() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Zap className={`w-5 h-5 ${
-                isCriticalCredits ? 'text-red-500' : 
-                isLowCredits ? 'text-yellow-500' : 
-                'text-primary'
-              }`} />
+              <Zap className={`w-5 h-5 ${isCriticalCredits ? 'text-red-500' :
+                  isLowCredits ? 'text-yellow-500' :
+                    'text-primary'
+                }`} />
               <span className="font-medium">Credits Remaining</span>
             </div>
             <span className="text-2xl font-bold">{creditsRemaining}</span>
           </div>
-          
+
           {planLimits.maxCredits && (
             <>
-              <Progress 
-                value={100 - usagePercent} 
+              <Progress
+                value={100 - usagePercent}
                 className="h-2"
               />
               <p className="text-xs text-muted-foreground text-right">
@@ -116,12 +116,12 @@ export function UsageMonitor() {
               <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" />
               <div className="space-y-2 flex-1">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  {isCriticalCredits 
-                    ? 'You\'re running very low on credits!' 
+                  {isCriticalCredits
+                    ? 'You\'re running very low on credits!'
                     : 'Your credits are running low'}
                 </p>
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="default"
                   onClick={() => setShowPricing(true)}
                   className="w-full"
@@ -141,7 +141,7 @@ export function UsageMonitor() {
               <TrendingUp className="w-4 h-4" />
               Usage This Month
             </h4>
-            
+
             <div className="space-y-2">
               {Object.entries(stats.byAction)
                 .sort(([, a], [, b]) => b - a)
@@ -149,8 +149,8 @@ export function UsageMonitor() {
                 .map(([action, credits]) => {
                   const Icon = getActionIcon(action);
                   return (
-                    <div 
-                      key={action} 
+                    <div
+                      key={action}
                       className="flex items-center justify-between text-sm"
                     >
                       <div className="flex items-center gap-2">

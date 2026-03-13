@@ -1,54 +1,82 @@
 import React, { useState, useEffect } from 'react';
-import type { GenerationResult, FormData, ScheduledPost } from '../types';
+import { GenerationResult, FormData, ScheduledPost, Platform, GenerationType } from '../types'; // Użyj importu bez 'type'
+import { platformConfig } from '../config/platformConfig';
+import { CalendarIcon } from './icons/CalendarIcon';
+import { ClockIcon } from './icons/ClockIcon';
+import { CheckIcon } from './icons/CheckIcon';
+import { ModernButton } from './ui/ModernButton';
+import { XMarkIcon } from './icons/XMarkIcon';
 
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (scheduleTimestamp: number) => void;
+  onConfirm: (scheduleTimestamp: number, selectedPlatforms: Platform[], selectedFormats: GenerationType[]) => void;
   itemToSchedule: (Partial<ScheduledPost> & { formData: FormData; result: GenerationResult; }) | null;
 }
 
 const getTodayString = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
-    const day = today.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, onConfirm, itemToSchedule }) => {
   const [date, setDate] = useState(getTodayString());
   const [time, setTime] = useState('09:00');
   const [error, setError] = useState('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
+  const [selectedFormats, setSelectedFormats] = useState<GenerationType[]>([]);
 
   useEffect(() => {
     if (isOpen) {
-      if (itemToSchedule && itemToSchedule.scheduleTimestamp) {
+      if (itemToSchedule) {
+        // If editing an existing scheduled item
         const d = new Date(itemToSchedule.scheduleTimestamp);
         const dateString = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
         const timeString = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
         setDate(dateString);
         setTime(timeString);
+        setSelectedPlatforms(itemToSchedule.formData.campaignPlatforms || [itemToSchedule.formData.platform]);
+        setSelectedFormats([itemToSchedule.formData.generationType]);
       } else {
-        // Reset to default when opening for a new post
+        // Default for new scheduling
         setDate(getTodayString());
         setTime('09:00');
+        setSelectedPlatforms([itemToSchedule?.formData.platform || Platform.Facebook]); // Default to post's platform or Facebook
+        setSelectedFormats([itemToSchedule?.formData.generationType || GenerationType.PostWithImage]); // Default to post's type or PostWithImage
       }
       setError('');
     }
   }, [isOpen, itemToSchedule]);
 
+  const handlePlatformToggle = (platform: Platform) => {
+    setSelectedPlatforms(prev => 
+      prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
+    );
+  };
+
+  const handleFormatToggle = (format: GenerationType) => {
+    setSelectedFormats(prev => 
+      prev.includes(format) ? prev.filter(f => f !== format) : [...prev, format]
+    );
+  };
+
   const handleSubmit = () => {
+    if (selectedPlatforms.length === 0 || selectedFormats.length === 0) {
+      setError('Wybierz przynajmniej jedną platformę i format.');
+      return;
+    }
+
     const scheduleDateTime = new Date(`${date}T${time}`);
     if (isNaN(scheduleDateTime.getTime())) {
       setError('Nieprawidłowa data lub godzina.');
       return;
     }
-    
-    // Ujednolicona i uproszczona walidacja czasu
+
     const now = new Date();
-    // Porównaj do początku bieżącej minuty, aby uniknąć drobnych problemów z synchronizacją
-    now.setSeconds(0, 0); 
+    now.setSeconds(0, 0);
 
     if (scheduleDateTime < now) {
       setError('Nie można planować postów w przeszłości.');
@@ -56,30 +84,47 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
     }
 
     setError('');
-    onConfirm(scheduleDateTime.getTime());
+    onConfirm(scheduleDateTime.getTime(), selectedPlatforms, selectedFormats);
   };
 
   if (!isOpen) return null;
 
+  const allPlatforms: Platform[] = Object.values(Platform);
+  const allFormats: GenerationType[] = [
+    GenerationType.PostWithImage, GenerationType.Video, GenerationType.Idea
+  ];
+
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity animate-fade-in"
       style={{ animationDuration: '0.3s' }}
       onClick={onClose}
     >
-      <div 
-        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-md m-4 transform transition-all"
+      <div
+        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-xl m-4 transform transition-all flex flex-col gap-6"
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-xl font-semibold text-blue-600 dark:text-blue-300 mb-2">Zaplanuj post</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-black text-blue-600 dark:text-blue-300">Zaplanuj publikację</h2>
+          <button onClick={onClose} className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"><XMarkIcon className="w-5 h-5" /></button>
+        </div>
+
         {itemToSchedule && (
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">
-                Planujesz publikację dla: <strong className="text-slate-600 dark:text-slate-300" dangerouslySetInnerHTML={{ __html: itemToSchedule.formData.topic }}></strong>
-            </p>
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+            <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">Planujesz na podstawie:</p>
+            <strong className="text-slate-800 dark:text-white font-semibold text-base" dangerouslySetInnerHTML={{ __html: itemToSchedule.formData?.topic || 'Bez tytułu' }}></strong>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">{itemToSchedule.formData.platform}</span>
+              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">{itemToSchedule.formData.generationType}</span>
+            </div>
+          </div>
         )}
-        <div className="space-y-4">
+
+        <div className="space-y-6">
           <div>
-            <label htmlFor="schedule-date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+              <CalendarIcon className="w-4 h-4" /> Data publikacji
+            </label>
             <input
               type="date"
               id="schedule-date"
@@ -91,7 +136,9 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
             />
           </div>
           <div>
-            <label htmlFor="schedule-time" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Godzina</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+              <ClockIcon className="w-4 h-4" /> Godzina publikacji
+            </label>
             <input
               type="time"
               id="schedule-time"
@@ -101,21 +148,65 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
               style={{ colorScheme: 'dark' }}
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Docelowe Platformy (wiele)</label>
+            <div className="flex flex-wrap gap-2">
+              {allPlatforms.map(platform => {
+                const config = platformConfig[platform];
+                const Icon = config.icon;
+                const isSelected = selectedPlatforms.includes(platform);
+                return (
+                  <button
+                    key={platform}
+                    type="button"
+                    onClick={() => handlePlatformToggle(platform)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected ? config.color.replace('bg-', 'bg-') + ' text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                  >
+                    <Icon className="w-4 h-4" /> {platform}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Formaty treści (wiele)</label>
+            <div className="flex flex-wrap gap-2">
+              {allFormats.map(format => {
+                const config = platformConfig[format as Platform] || { icon: CalendarIcon, color: "bg-gray-500", iconColor: "text-gray-500" }; // Fallback
+                const Icon = config.icon;
+                const isSelected = selectedFormats.includes(format);
+                return (
+                  <button
+                    key={format}
+                    type="button"
+                    onClick={() => handleFormatToggle(format)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                  >
+                    <Icon className="w-4 h-4" /> {format === GenerationType.PostWithImage ? 'Post ze zdjęciem' : format === GenerationType.Video ? 'Video' : 'Pomysł'}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
         </div>
         {error && <p className="text-red-500 dark:text-red-400 text-sm mt-4">{error}</p>}
         <div className="flex justify-end gap-4 mt-6">
-          <button 
+          <ModernButton
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-200 dark:bg-slate-700 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 transition"
+            variant="secondary"
           >
             Anuluj
-          </button>
-          <button
+          </ModernButton>
+          <ModernButton
             onClick={handleSubmit}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-500 transition"
+            variant="primary"
+            icon={<CheckIcon className="w-5 h-5" />}
           >
-            Potwierdź
-          </button>
+            Potwierdź harmonogram
+          </ModernButton>
         </div>
       </div>
     </div>

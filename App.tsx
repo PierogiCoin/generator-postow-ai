@@ -10,11 +10,19 @@ import { LoginModal } from './components/LoginModal';
 import { SignUpModal } from './components/SignUpModal';
 import { RepurposeModal } from './components/RepurposeModal';
 import { BrandVoiceManagerModal } from './components/BrandVoiceManagerModal';
+import { VisualStudioModal } from './components/VisualStudioModal';
+import { PhoneMockup } from './components/PhoneMockup';
+import { PublishingProgressModal } from './components/PublishingProgressModal';
 import { AnalysisModal } from './components/AnalysisModal';
 import { VideoStoryModal } from './components/VideoStoryModal';
 import { MultiPlatformOptimizer, PlatformOptimization } from './components/MultiPlatformOptimizer';
-// Chatbot will be handled via backend; do not initialize client-side AI here
-// import { Chatbot } from './components/Chatbot';
+import { FilmIcon } from './components/icons/FilmIcon';
+import { ModernButton } from './components/ui/ModernButton';
+import { SocialConnectionsModal } from './components/SocialConnectionsModal';
+import { SocialHistoryModal } from './components/SocialHistoryModal';
+import { socialConnectionsService } from './services/socialConnectionsService';
+import { SocialConnection, SocialPlatform } from './types/socialPublishing';
+import { Chatbot } from './components/Chatbot';
 import { NotificationSystem } from './components/NotificationSystem';
 import { CommandPalette } from './components/CommandPalette';
 
@@ -37,7 +45,7 @@ export const ProtectedRoute = () => {
 
   useEffect(() => {
     if (!user && authModal === null) {
-    setAuthModal('login');
+      setAuthModal('login');
     }
   }, [user, authModal, setAuthModal]);
 
@@ -50,25 +58,46 @@ export const ProtectedRoute = () => {
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
-    
-  // Auth Context
-  const { user } = useAuth(); 
-    
-  // System powiadomień
-  const notificationSystem = useNotifications();
+  const { user } = useAuth();
 
-  // Custom hook for business logic
-  const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
+  // Zustand Stores - Selectors first for stability
+  const {
+    isPricingModalOpen,
+    authModal,
+    isBrandVoiceManagerOpen,
+    isAnalysisModalOpen,
+    isVeoKeyModalNeeded,
+    isCommandPaletteOpen,
+    isVideoStoryModalOpen,
+    isSocialConnectionsModalOpen,
+    isPublishingModalOpen,
+    publishingPlatform,
+    videoStoryPost,
+    setAuthModal,
+    setIsPricingModalOpen,
+    setIsBrandVoiceManagerOpen,
+    setIsVeoKeyModalNeeded,
+    setIsCommandPaletteOpen,
+    setIsSocialConnectionsModalOpen,
+    setIsPublishingModalOpen
+  } = useUIStore();
 
-  // Zustand Stores for state management
-  const { isPricingModalOpen, authModal, isBrandVoiceManagerOpen, isAnalysisModalOpen, isVeoKeyModalNeeded, isCommandPaletteOpen, isVideoStoryModalOpen, videoStoryPost, setAuthModal, setIsPricingModalOpen, setIsBrandVoiceManagerOpen, setIsVeoKeyModalNeeded, setIsCommandPaletteOpen } = useUIStore();
   const { result, isRepurposeModalOpen, repurposedContent, isRepurposing, repurposeError, lastFormData, isGeneratingVideoStory } = useGenerationStore();
   const { brandVoiceProfiles, activeBrandVoiceId, isLearningStyle, itemToSchedule } = useDataStore();
 
-  // Local state for complex objects passed to modals
+  // Notification System
+  const notificationSystem = useNotifications();
+
+  // Business Logic Handlers
+  const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
+
+  // Local refs and state
   const itemToRepurpose = useRef<GenerationResult | null>(null);
   const [generatedVideo, setGeneratedVideo] = useState<{ url: string; thumbnail: string; duration: number } | undefined>();
   const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<PlatformOptimization[] | null>(null);
+  const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
+  const [connectionForHistory, setConnectionForHistory] = useState<SocialConnection | null>(null);
+  const [isSocialHistoryOpen, setIsSocialHistoryOpen] = useState(false);
 
   // Obsługa skrótu klawiszowego dla Palety Komend
   useEffect(() => {
@@ -90,9 +119,9 @@ export const App: React.FC = () => {
 
   const handleGenerateVideoStory = async (style: any) => {
     if (!videoStoryPost || !user) return;
-    
+
     const { startVideoStoryGeneration, videoStorySuccess, videoStoryFailure } = useGenerationStore.getState();
-    
+
     try {
       startVideoStoryGeneration();
       const { generateVideoStory } = await import('./services/videoStoryService');
@@ -108,9 +137,9 @@ export const App: React.FC = () => {
 
   const handleOptimizeMultiPlatform = async (platforms: any[]) => {
     if (!result || !user) return;
-    
+
     const { startMultiPlatformOptimization, multiPlatformSuccess, multiPlatformFailure } = useGenerationStore.getState();
-    
+
     try {
       startMultiPlatformOptimization();
       const { optimizeForPlatforms } = await import('./services/multiPlatformService');
@@ -129,17 +158,61 @@ export const App: React.FC = () => {
       notificationSystem.addToast(error.message || 'Błąd optymalizacji', NotificationType.Error);
     }
   };
-    
+
+  // --- SOCIAL MEDIA HANDLERS ---
+
+  const loadSocialConnections = async () => {
+    if (!user) return;
+    try {
+      const connections = await socialConnectionsService.getConnections(user.id);
+      setSocialConnections(connections);
+    } catch (error) {
+      console.error('Failed to load social connections:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user && isSocialConnectionsModalOpen) {
+      loadSocialConnections();
+    }
+  }, [user, isSocialConnectionsModalOpen]);
+
+  const handleConnectSocial = async (platform: SocialPlatform) => {
+    try {
+      if (!user) throw new Error('Zaloguj się aby połączyć knto');
+      const authUrl = await socialConnectionsService.getAuthUrl(platform, user.id);
+      window.location.href = authUrl;
+    } catch (error: any) {
+      notificationSystem.addToast(error.message || 'Błąd połączenia', NotificationType.Error);
+    }
+  };
+
+  const handleDisconnectSocial = async (connectionId: string) => {
+    if (!user) return;
+    try {
+      await socialConnectionsService.disconnectConnection(connectionId, user.id);
+      notificationSystem.addToast('Konto rozłączone', NotificationType.Success);
+      loadSocialConnections();
+    } catch (error: any) {
+      notificationSystem.addToast(error.message || 'Błąd rozłączania', NotificationType.Error);
+    }
+  };
+
+  const handleViewSocialHistory = (connection: SocialConnection) => {
+    setConnectionForHistory(connection);
+    setIsSocialHistoryOpen(true);
+  };
+
   // --- WIDOK GŁÓWNY ---
-    
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Header 
-        onUpgradeClick={() => setIsPricingModalOpen(true)} 
-        onLoginClick={() => setAuthModal('login')} 
-        onSignUpClick={() => setAuthModal('signup')} 
+      <Header
+        onUpgradeClick={() => setIsPricingModalOpen(true)}
+        onLoginClick={() => setAuthModal('login')}
+        onSignUpClick={() => setAuthModal('signup')}
         isCalendarEnabled={true}
-        notificationSystem={<NotificationSystem 
+        notificationSystem={<NotificationSystem
           notifications={notificationSystem.notifications}
           toasts={notificationSystem.toasts}
           unreadCount={notificationSystem.unreadCount}
@@ -149,7 +222,7 @@ export const App: React.FC = () => {
           onRemoveToast={notificationSystem.removeToast}
         />}
       />
-            
+
       <main className="flex-grow p-4 lg:p-8 pt-24 max-w-full pb-20 sm:pb-4">
         {/* Outlet renders HomeView, DashboardView, GeneratorView, etc. */}
         <Outlet />
@@ -158,41 +231,58 @@ export const App: React.FC = () => {
       {isCommandPaletteOpen && <CommandPalette onClose={() => setIsCommandPaletteOpen(false)} />}
 
       {isVeoKeyModalNeeded && (
-         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-md m-4">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t('videoKeyModal.title')}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] animate-fade-in">
+          <div className="bg-white/90 dark:bg-slate-900/90 border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 w-full max-w-md m-4 glass animate-scale-in relative overflow-hidden">
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl" />
+
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
+              <div className="p-2 bg-blue-500/10 rounded-lg">
+                <FilmIcon className="w-6 h-6 text-blue-500" />
+              </div>
+              {t('videoKeyModal.title')}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 leading-relaxed">
               <Trans i18nKey="videoKeyModal.description">
                 Generowanie wideo Veo wymaga wybrania klucza API, dla którego włączono płatności.
-                Więcej informacji znajdziesz w <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">dokumentacji płatności</a>.
+                Więcej informacji znajdziesz w <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-500 font-bold hover:underline">dokumentacji płatności</a>.
               </Trans>
             </p>
-            <div className="mt-6 flex justify-end gap-4">
-              <button onClick={async () => {
-                // this flow is specific to aistudio integration; leave as noop for now
-                setIsVeoKeyModalNeeded(false);
-                if (lastFormData) {
-                  handlers.handleGenerate(lastFormData);
-                }
-              }} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-500 transition">
+            <div className="mt-8 flex justify-end">
+              <ModernButton
+                onClick={async () => {
+                  setIsVeoKeyModalNeeded(false);
+                  if (lastFormData) {
+                    handlers.handleGenerate(lastFormData);
+                  }
+                }}
+                variant="gradient"
+                size="md"
+                className="px-8"
+              >
                 {t('videoKeyModal.button')}
-              </button>
+              </ModernButton>
             </div>
           </div>
         </div>
       )}
 
       {/* Modals */}
+      <PublishingProgressModal
+        isOpen={isPublishingModalOpen}
+        onClose={() => setIsPublishingModalOpen(false)}
+        platform={publishingPlatform}
+      />
+
       <PricingModal isOpen={isPricingModalOpen} onClose={() => setIsPricingModalOpen(false)} onSubscriptionSuccess={handlers.handleClearStats} />
       {authModal === 'login' && <LoginModal isOpen={true} onClose={() => setAuthModal(null)} onSwitchToSignUp={() => setAuthModal('signup')} />}
       {authModal === 'signup' && <SignUpModal isOpen={true} onClose={() => setAuthModal(null)} onSwitchToLogin={() => setAuthModal('login')} />}
-      <ScheduleModal 
-        isOpen={!!itemToSchedule} 
-        onClose={handlers.handleCloseScheduleModal} 
-        onConfirm={handlers.handleConfirmSchedule} 
-        itemToSchedule={itemToSchedule} 
+      <ScheduleModal
+        isOpen={!!itemToSchedule}
+        onClose={handlers.handleCloseScheduleModal}
+        onConfirm={handlers.handleConfirmSchedule}
+        itemToSchedule={itemToSchedule}
       />
-      <RepurposeModal 
+      <RepurposeModal
         isOpen={isRepurposeModalOpen}
         onClose={handlers.handleCloseRepurposeModal}
         repurposedContent={repurposedContent}
@@ -202,8 +292,8 @@ export const App: React.FC = () => {
         onUse={(content) => {
           const currentResult = useGenerationStore.getState().result;
           if (currentResult) {
-            const newText = typeof content === 'string' 
-              ? content 
+            const newText = typeof content === 'string'
+              ? content
               : `${content.title}\n\n${content.text}${content.visualIdea ? `\n\n[Pomysł na wizualizację: ${content.visualIdea}]` : ''}`;
             const updatedResult = { ...currentResult, postText: newText };
             handlers.handleSetResult(updatedResult);
@@ -211,7 +301,7 @@ export const App: React.FC = () => {
           handlers.handleCloseRepurposeModal();
         }}
       />
-       <BrandVoiceManagerModal
+      <BrandVoiceManagerModal
         isOpen={isBrandVoiceManagerOpen}
         onClose={() => setIsBrandVoiceManagerOpen(false)}
         profiles={brandVoiceProfiles}
@@ -220,6 +310,7 @@ export const App: React.FC = () => {
         onSetActive={handlers.handleSetActiveBrandVoice}
         activeId={activeBrandVoiceId}
         onLearnFromFavorites={handlers.handleLearnFromFavorites}
+        onLearnFromHistory={handlers.handleLearnFromHistory}
         isLearningStyle={isLearningStyle}
       />
       <AnalysisModal
@@ -239,6 +330,31 @@ export const App: React.FC = () => {
         isGenerating={isGeneratingVideoStory}
         generatedVideo={generatedVideo}
       />
+      <VisualStudioModal
+        isOpen={false} // Assuming this will be controlled by a state variable not provided in the diff
+        onClose={() => { }} // Placeholder
+      />
+
+      <SocialConnectionsModal
+        isOpen={isSocialConnectionsModalOpen}
+        onClose={() => setIsSocialConnectionsModalOpen(false)}
+        connections={socialConnections}
+        onConnect={handleConnectSocial}
+        onDisconnect={handleDisconnectSocial}
+        onRefresh={loadSocialConnections}
+        onViewHistory={handleViewSocialHistory}
+      />
+
+      <Chatbot />
+
+      {user && (
+        <SocialHistoryModal
+          isOpen={isSocialHistoryOpen}
+          onClose={() => setIsSocialHistoryOpen(false)}
+          connection={connectionForHistory}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };
