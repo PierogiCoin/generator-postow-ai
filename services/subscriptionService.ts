@@ -16,7 +16,6 @@ class SubscriptionError extends Error {
  */
 export const subscribeToPlan = async (userId: string, newPlan: UserPlan): Promise<User> => {
     const supabase = getSupabase();
-    console.log(`Subscribing user ${userId} to plan ${newPlan} via Supabase.`);
     
     try {
         const { data, error } = await supabase
@@ -48,7 +47,6 @@ export const subscribeToPlan = async (userId: string, newPlan: UserPlan): Promis
         };
 
     } catch (error) {
-        console.error("Error during subscription:", error);
         if (error instanceof SubscriptionError) {
             throw error;
         }

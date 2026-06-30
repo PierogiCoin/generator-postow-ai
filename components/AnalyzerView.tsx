@@ -73,8 +73,9 @@ export const AnalyzerView: React.FC = () => {
                 throw new Error("Invalid state for analysis.");
             }
             setResult(analysisResult);
-        } catch (e: any) {
-            setError(e.message || "An error occurred during analysis.");
+        } catch (e: unknown) {
+            const errorMessage = e instanceof Error ? e.message : "An error occurred during analysis.";
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }

@@ -1,5 +1,6 @@
 import { TwitterApi } from 'twitter-api-v2';
 import axios from 'axios';
+import logger from './logger.js';
 
 // ============================================
 // LINKEDIN API
@@ -128,7 +129,7 @@ export class LinkedInPublisher {
         publishedAt: new Date(post.createdAt || Date.now())
       }));
     } catch (error: any) {
-      console.error('LinkedIn getPosts error (trying fallback):', error.response?.data || error.message);
+      logger.error('LinkedIn getPosts error (trying fallback):', { data: error.response?.data, message: error.message });
 
       // Fallback do ugcPosts jeśli /posts nie działa (starsze uprawnienia)
       try {
@@ -257,7 +258,7 @@ export class TwitterPublisher {
         views: tweet.public_metrics?.impression_count,
       }));
     } catch (error) {
-      console.error('Twitter getPosts error:', error);
+      logger.error('Twitter getPosts error:', error);
       return [];
     }
   }
@@ -288,18 +289,26 @@ export class FacebookPublisher {
 
 
   static async exchangeCodeForToken(appId: string, appSecret: string, code: string, redirectUri: string): Promise<{ accessToken: string }> {
-    const response = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
-      params: {
-        client_id: appId,
-        client_secret: appSecret,
-        redirect_uri: redirectUri,
-        code
-      }
-    });
+    try {
+      const response = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
+        params: {
+          client_id: appId,
+          client_secret: appSecret,
+          redirect_uri: redirectUri,
+          code
+        }
+      });
 
-    return {
-      accessToken: response.data.access_token
-    };
+      if (response.data?.error) {
+        throw new Error(`Facebook OAuth error: ${response.data.error.message}`);
+      }
+
+      return {
+        accessToken: response.data.access_token
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to exchange Facebook code for token: ${error.message}`);
+    }
   }
 
   async getUserProfile(): Promise<{ id: string; name: string; picture?: string }> {
@@ -318,17 +327,25 @@ export class FacebookPublisher {
   }
 
   async getPages(): Promise<Array<{ id: string; name: string; accessToken: string }>> {
-    const response = await axios.get('https://graph.facebook.com/me/accounts', {
-      params: {
-        access_token: this.accessToken
-      }
-    });
+    try {
+      const response = await axios.get('https://graph.facebook.com/me/accounts', {
+        params: {
+          access_token: this.accessToken
+        }
+      });
 
-    return response.data.data.map((page: any) => ({
-      id: page.id,
-      name: page.name,
-      accessToken: page.access_token
-    }));
+      if (response.data?.error) {
+        throw new Error(`Facebook API error: ${response.data.error.message}`);
+      }
+
+      return (response.data.data || []).map((page: any) => ({
+        id: page.id,
+        name: page.name,
+        accessToken: page.access_token
+      }));
+    } catch (error: any) {
+      throw new Error(`Failed to fetch Facebook pages: ${error.message}`);
+    }
   }
 
   async publishPost(pageId: string, pageAccessToken: string, content: string, imageUrl?: string): Promise<{ id: string; url: string }> {
@@ -363,8 +380,8 @@ export class FacebookPublisher {
       const response = await axios.get(`https://graph.facebook.com/v18.0/${pageId}/feed`, {
         params: {
           access_token: pageAccessToken,
-          fields: 'id,message,created_time,full_picture,likes.summary(true),comments.summary(true),shares',
-          limit: 20
+          fields: 'id,message,created_time,full_picture,likes.summary(true),comments.summary(true),shares,story',
+          limit: 50
         }
       });
 
@@ -409,7 +426,7 @@ export class FacebookPublisher {
         .filter(r => r.status === 'fulfilled')
         .map(r => (r as PromiseFulfilledResult<any>).value);
     } catch (error) {
-      console.error('Facebook getPosts error:', error);
+      logger.error('Facebook getPosts error:', error);
       return [];
     }
   }
@@ -472,39 +489,52 @@ export class InstagramPublisher {
       }
       return null;
     } catch (e) {
-      console.error('findFirstInstagramAccount error:', e);
+      logger.error('findFirstInstagramAccount error:', e);
       return null;
     }
   }
 
   async publishPost(igAccountId: string, imageUrl: string, caption: string): Promise<{ id: string; url: string }> {
-    // Step 1: Create media container
-    const containerResponse = await axios.post(
-      `https://graph.facebook.com/v18.0/${igAccountId}/media`,
-      {
-        image_url: imageUrl,
-        caption,
-        access_token: this.accessToken
+    try {
+      // Step 1: Create media container
+      const containerResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igAccountId}/media`,
+        {
+          image_url: imageUrl,
+          caption,
+          access_token: this.accessToken
+        }
+      );
+
+      if (containerResponse.data?.error) {
+        throw new Error(`Instagram media container error: ${containerResponse.data.error.message}`);
       }
-    );
 
-    const containerId = containerResponse.data.id;
+      const containerId = containerResponse.data.id;
+      if (!containerId) throw new Error('Instagram: no container ID returned');
 
-    // Step 2: Publish the container
-    const publishResponse = await axios.post(
-      `https://graph.facebook.com/v18.0/${igAccountId}/media_publish`,
-      {
-        creation_id: containerId,
-        access_token: this.accessToken
+      // Step 2: Publish the container
+      const publishResponse = await axios.post(
+        `https://graph.facebook.com/v18.0/${igAccountId}/media_publish`,
+        {
+          creation_id: containerId,
+          access_token: this.accessToken
+        }
+      );
+
+      if (publishResponse.data?.error) {
+        throw new Error(`Instagram publish error: ${publishResponse.data.error.message}`);
       }
-    );
 
-    const mediaId = publishResponse.data.id;
+      const mediaId = publishResponse.data.id;
 
-    return {
-      id: mediaId,
-      url: `https://instagram.com/p/${mediaId}`
-    };
+      return {
+        id: mediaId,
+        url: `https://instagram.com/p/${mediaId}`
+      };
+    } catch (error: any) {
+      throw new Error(`Failed to publish Instagram post: ${error.message}`);
+    }
   }
 
   async getPosts(igAccountId: string): Promise<Array<{
@@ -515,8 +545,8 @@ export class InstagramPublisher {
       const response = await axios.get(`https://graph.facebook.com/v18.0/${igAccountId}/media`, {
         params: {
           access_token: this.accessToken,
-          fields: 'id,caption,timestamp,media_url,permalink,like_count,comments_count,media_type',
-          limit: 20
+          fields: 'id,caption,timestamp,media_url,permalink,like_count,comments_count,media_type,ig_media_type',
+          limit: 50
         }
       });
 
@@ -559,7 +589,7 @@ export class InstagramPublisher {
         .filter(r => r.status === 'fulfilled')
         .map(r => (r as PromiseFulfilledResult<any>).value);
     } catch (error) {
-      console.error('Instagram getPosts error:', error);
+      logger.error('Instagram getPosts error:', error);
       return [];
     }
   }

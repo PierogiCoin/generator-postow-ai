@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
     X, Heart, MessageCircle, Share2, Eye, TrendingUp,
-    Loader2, ExternalLink, Image as ImageIcon, RefreshCw, BarChart2
+    Loader2, ExternalLink, Image as ImageIcon, RefreshCw, BarChart2, Sparkles, ChevronDown, ChevronUp
 } from 'lucide-react';
-import { API_BASE_URL } from '../services/apiClient';
+import { generatePostMortem } from '../services/postMortemService';
+import type { PostMortemReport } from '../services/postMortemService';
+import { getApiBaseUrl } from '../services/apiClient';
 import type { SocialConnection } from '../types/socialPublishing';
 
 interface PostMetric {
@@ -63,14 +65,18 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
     const [posts, setPosts] = useState<PostMetric[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [mortemLoadingId, setMortemLoadingId] = useState<string | null>(null);
+    const [mortems, setMortems] = useState<Record<string, PostMortemReport>>({});
+    const [expandedMortem, setExpandedMortem] = useState<string | null>(null);
 
-    const fetchPosts = async () => {
+    const fetchPosts = useCallback(async (signal?: AbortSignal) => {
         if (!connection || !userId) return;
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/social/history/${connection.id}`, {
-                headers: { 'x-user-id': userId }
+            const res = await fetch(`${getApiBaseUrl()}/api/social/history/${connection.id}`, {
+                headers: { 'x-user-id': userId },
+                signal,
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
@@ -78,18 +84,45 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
             }
             const data = await res.json();
             setPosts(data.posts || []);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name === 'AbortError') return;
+            setError(err instanceof Error ? err.message : 'Unknown error');
         } finally {
             setLoading(false);
         }
-    };
+    }, [connection, userId]);
 
     useEffect(() => {
-        if (isOpen && connection) {
-            fetchPosts();
+        if (!isOpen || !connection) return;
+        const controller = new AbortController();
+        fetchPosts(controller.signal);
+        return () => controller.abort();
+    }, [isOpen, connection, fetchPosts]);
+
+    const handlePostMortem = useCallback(async (post: PostMetric) => {
+        if (!userId || mortemLoadingId) return;
+        if (mortems[post.id]) {
+            setExpandedMortem(prev => prev === post.id ? null : post.id);
+            return;
         }
-    }, [isOpen, connection]);
+        setMortemLoadingId(post.id);
+        setExpandedMortem(post.id);
+        try {
+            const report = await generatePostMortem(
+                post.content,
+                connection?.platform || 'unknown',
+                new Date(post.publishedAt).toISOString(),
+                { likes: post.likes, comments: post.comments, shares: post.shares, views: post.views, reach: post.reach },
+                userId,
+                post.id
+            );
+            setMortems(prev => ({ ...prev, [post.id]: report }));
+        } catch (e: any) {
+            setExpandedMortem(null);
+        } finally {
+            setMortemLoadingId(null);
+        }
+    }, [userId, connection, mortems, mortemLoadingId]);
 
     if (!isOpen || !connection) return null;
 
@@ -118,9 +151,10 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={fetchPosts}
+                                onClick={() => fetchPosts()}
                                 disabled={loading}
                                 className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition"
+                                aria-label="Odśwież"
                                 title="Odśwież"
                             >
                                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -169,7 +203,7 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                             <p className="font-medium text-slate-700 dark:text-slate-300">Błąd pobierania</p>
                             <p className="text-sm text-center mt-1 max-w-xs">{error}</p>
                             <button
-                                onClick={fetchPosts}
+                                onClick={() => fetchPosts()}
                                 className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition"
                             >
                                 Spróbuj ponownie
@@ -192,7 +226,7 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                                     {post.mediaUrl ? (
                                         <img
                                             src={post.mediaUrl}
-                                            alt=""
+                                            alt="Post media thumbnail"
                                             className="w-20 h-20 rounded-lg object-cover flex-shrink-0 bg-slate-200"
                                         />
                                     ) : (
@@ -254,6 +288,60 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                                                     {formatNumber(post.reach)} zasięg
                                                 </span>
                                             )}
+                                        </div>
+
+                                        {/* Post-mortem button */}
+                                        <div className="mt-2">
+                                            <button
+                                                onClick={() => handlePostMortem(post)}
+                                                disabled={mortemLoadingId === post.id}
+                                                className="flex items-center gap-1.5 text-xs font-medium text-indigo-500 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors disabled:opacity-50"
+                                            >
+                                                {mortemLoadingId === post.id
+                                                    ? <><Loader2 className="w-3 h-3 animate-spin" />Analizuję...</>
+                                                    : mortems[post.id]
+                                                        ? expandedMortem === post.id
+                                                            ? <><ChevronUp className="w-3 h-3" />Ukryj analizę</>
+                                                            : <><ChevronDown className="w-3 h-3" />Pokaż analizę</>
+                                                        : <><Sparkles className="w-3 h-3" />AI Post-mortem</>}
+                                            </button>
+
+                                            {expandedMortem === post.id && mortems[post.id] && (() => {
+                                                const m = mortems[post.id];
+                                                const verdictColor = m.verdict === 'hit' ? 'text-green-500' : m.verdict === 'miss' ? 'text-red-500' : 'text-amber-500';
+                                                const verdictLabel = m.verdict === 'hit' ? 'Trafiony' : m.verdict === 'miss' ? 'Pudło' : 'Przeciętny';
+                                                return (
+                                                    <div className="mt-2 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl space-y-2 text-xs">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`font-bold text-sm ${verdictColor}`}>{verdictLabel}</span>
+                                                            <span className="text-slate-400">·</span>
+                                                            <span className="font-bold">{m.overallScore}/10</span>
+                                                        </div>
+                                                        {m.keyLesson && <p className="text-slate-600 dark:text-slate-300 italic">"{m.keyLesson}"</p>}
+                                                        {m.whatWorked.length > 0 && (
+                                                            <div>
+                                                                <p className="font-bold text-green-600 dark:text-green-400 mb-1">Co zadziałało</p>
+                                                                {m.whatWorked.map((w, i) => <p key={`worked-${i}`} className="text-slate-600 dark:text-slate-400">✓ {w}</p>)}
+                                                            </div>
+                                                        )}
+                                                        {m.whatFailed.length > 0 && (
+                                                            <div>
+                                                                <p className="font-bold text-red-500 mb-1">Co nie zadziałało</p>
+                                                                {m.whatFailed.map((w, i) => <p key={`failed-${i}`} className="text-slate-600 dark:text-slate-400">✗ {w}</p>)}
+                                                            </div>
+                                                        )}
+                                                        {m.nextTimeRecommendation && (
+                                                            <p className="text-indigo-600 dark:text-indigo-400 font-medium">→ {m.nextTimeRecommendation}</p>
+                                                        )}
+                                                        {m.suggestedImprovedHook && (
+                                                            <div className="p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                                                                <p className="font-bold text-indigo-700 dark:text-indigo-300 mb-0.5">Lepszy hook:</p>
+                                                                <p className="text-indigo-600 dark:text-indigo-400">"{m.suggestedImprovedHook}"</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>

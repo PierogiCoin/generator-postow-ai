@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { CampaignHistoryItem, AppError, NewCampaignPayload, FavoritePost, User, PostApprovalStatus, Comment, FormData, NotificationType } from '../types';
+import type { ConfirmFn } from './appHandlers/types';
 
 const HISTORY_STORAGE_KEY = 'generationHistory';
 
@@ -8,8 +9,7 @@ const loadHistoryFromStorage = (): CampaignHistoryItem[] => {
   try {
     const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
     return storedHistory ? JSON.parse(storedHistory) : [];
-  } catch (error) {
-    console.error("Błąd podczas wczytywania historii z localStorage:", error);
+  } catch {
     return [];
   }
 };
@@ -18,8 +18,8 @@ const loadHistoryFromStorage = (): CampaignHistoryItem[] => {
 const saveHistoryToStorage = (history: CampaignHistoryItem[]) => {
   try {
     localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
-  } catch (error) {
-    console.error("Błąd podczas zapisywania historii w localStorage:", error);
+  } catch {
+    // storage full or unavailable
   }
 };
 
@@ -35,6 +35,7 @@ export const useGenerationHistory = (
   user: User | null,
   clearStatsService: () => void,
   addNotification: (message: string, type: NotificationType, link?: string) => void,
+  confirm?: ConfirmFn,
 ) => {
   const [history, setHistory] = useState<CampaignHistoryItem[]>(loadHistoryFromStorage);
   const [inspiration, setInspiration] = useState<CampaignHistoryItem | FavoritePost | null>(null);
@@ -65,19 +66,22 @@ export const useGenerationHistory = (
     setInspiration(current => (current?.id === item?.id ? null : item));
   }, []);
 
-  const handleClearHistory = useCallback(() => {
-    if (window.confirm('Czy na pewno chcesz usunąć całą historię kampanii? Tej operacji nie można cofnąć. Spowoduje to również zresetowanie statystyk użycia.')) {
-      setHistory([]);
-      setInspiration(null);
-      clearStatsService();
-      try {
-        localStorage.removeItem(HISTORY_STORAGE_KEY);
-      } catch (e) {
-        console.error("Nie udało się wyczyścić historii z localStorage", e);
-        // Cannot call setError directly, maybe log it
-      }
+  const handleClearHistory = useCallback(async () => {
+    const message = 'Czy na pewno chcesz usunąć całą historię kampanii? Tej operacji nie można cofnąć. Spowoduje to również zresetowanie statystyk użycia.';
+    const confirmed = confirm
+      ? await confirm({ message, variant: 'danger', confirmLabel: 'Usuń historię', title: 'Wyczyść historię' })
+      : window.confirm(message);
+    if (!confirmed) return;
+
+    setHistory([]);
+    setInspiration(null);
+    clearStatsService();
+    try {
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+    } catch {
+      // storage unavailable
     }
-  }, [clearStatsService]);
+  }, [clearStatsService, confirm]);
 
   // Fix: Implemented missing functions
   const handleStatusChange = useCallback((itemId: string, status: PostApprovalStatus) => {
@@ -110,7 +114,6 @@ export const useGenerationHistory = (
 
   const handleSaveDraft = useCallback((formData: FormData) => {
     // This is a mock implementation. A real one would likely save to a backend.
-    console.log("Draft saved:", formData);
     // Could potentially add a draft to history with a specific status
   }, []);
 

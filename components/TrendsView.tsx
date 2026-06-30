@@ -44,36 +44,36 @@ const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, 
     <div>
         <h4 className="font-semibold text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 mb-2"><HashIcon className="w-4 h-4"/>Wschodzące hashtagi</h4>
         <div className="flex flex-wrap gap-2">
-            {trend.hashtags.map(tag => (
+            {trend.hashtags?.map(tag => (
                 <span key={tag} className="px-3 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-full">{`#${tag}`}</span>
-            ))}
+            )) || <span className="text-sm text-gray-500 dark:text-gray-400">Brak dostępnych hashtagów</span>}
         </div>
     </div>
     
     <div>
         <h4 className="font-semibold text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 mb-2"><LightbulbIcon className="w-4 h-4"/>Pytania od publiczności</h4>
         <ul className="space-y-2 text-sm">
-            {trend.questions.map((q, i) => (
-                <li key={i} className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
+            {trend.questions?.map((q, i) => (
+                <li key={`question-${q.slice(0, 20)}`} className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
                     <span className="text-blue-500 mt-1">&bull;</span>
                     <span>{q}</span>
                 </li>
-            ))}
+            )) || <li className="text-sm text-gray-500 dark:text-gray-400">Brak dostępnych pytań</li>}
         </ul>
     </div>
     
     <div>
         <h4 className="font-semibold text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2 mb-2"><QuoteIcon className="w-4 h-4"/>Kluczowe cytaty / Statystyki</h4>
         <div className="space-y-2 text-sm">
-            {trend.quotes.map((q, i) => (
-                <div key={i} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700/50">
+            {trend.quotes?.map((q, i) => (
+                <div key={`quote-${q.slice(0, 20)}`} className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700/50">
                     <QuoteIcon className="w-8 h-8 text-gray-300 dark:text-gray-600 flex-shrink-0" />
                     <div className="flex-grow">
                         <p className="italic text-gray-700 dark:text-gray-300">"{q}"</p>
                     </div>
                     <CopyButton textToCopy={q} />
                 </div>
-            ))}
+            )) || <div className="text-sm text-gray-500 dark:text-gray-400">Brak dostępnych cytatów</div>}
         </div>
     </div>
 
@@ -117,10 +117,12 @@ export const TrendsView: React.FC<TrendsViewProps> = () => {
     if (!user) throw new Error('Musisz być zalogowany, aby wyszukiwać trendy.');
     const result = await discoverTrends(niche, user.id);
       setTrends(result);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      const errorMessage = e instanceof Error ? e.message : 'Wystąpił nieznany błąd podczas wyszukiwania trendów.';
+      const errorType = e instanceof Error && e.name === 'ApiError' ? 'api' : 'unknown';
       setError({
-        message: e.message || 'Wystąpił nieznany błąd podczas wyszukiwania trendów.',
-        type: e.name === 'ApiError' ? 'api' : 'unknown'
+        message: errorMessage,
+        type: errorType
       });
     } finally {
       setIsLoading(false);
@@ -187,9 +189,9 @@ export const TrendsView: React.FC<TrendsViewProps> = () => {
                 <p>Wyniki pojawią się tutaj.</p>
             </div>
         )}
-        {trends.map(trend => (
+        {trends.map((trend, index) => (
             <TrendCard 
-                key={trend.id} 
+                key={trend.id || `trend-${index}-${trend.topic?.slice(0, 20) || 'unknown'}`} 
                 trend={trend} 
                 onGenerate={() => onGenerateFromTrend(trend.topic, trend.hashtags)} 
             />

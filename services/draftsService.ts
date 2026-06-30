@@ -9,7 +9,6 @@ export const fetchDrafts = async (): Promise<Draft[]> => {
     .order('timestamp', { ascending: false });
 
   if (error) {
-    console.error("Error fetching drafts:", error);
     return [];
   }
   return data || [];
@@ -34,7 +33,6 @@ export const saveDraft = async (draft: any): Promise<Draft> => {
     .single();
 
   if (error) {
-    console.error("Error saving draft:", error);
     throw new Error("Failed to save draft");
   }
 
@@ -56,7 +54,6 @@ export const deleteDraft = async (draftId: string): Promise<void> => {
     .eq('id', draftId);
 
   if (error) {
-    console.error("Error deleting draft:", error);
     throw new Error("Failed to delete draft");
   }
 };

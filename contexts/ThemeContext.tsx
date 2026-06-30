@@ -18,8 +18,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       // Domyślnie motyw ciemny, jeśli nie ma zapisanego wyboru
       return 'dark';
-    } catch (error) {
-      console.error("Nie można odczytać motywu z localStorage", error);
+    } catch {
       return 'dark';
     }
   });
@@ -33,8 +32,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     try {
       window.localStorage.setItem('theme', theme);
-    } catch (error) {
-      console.error("Nie można zapisać motywu w localStorage", error);
+    } catch {
+      // storage unavailable
     }
   }, [theme]);
 

@@ -49,7 +49,7 @@ export const StreamingText: React.FC<StreamingTextProps> = ({
         <div className={`whitespace-pre-wrap ${className}`}>
             {displayedText.map((word, index) => (
                 <span
-                    key={index}
+                    key={`word-${index}`}
                     className="inline-block animate-blur-in opacity-0"
                     style={{
                         animationDelay: '0ms',

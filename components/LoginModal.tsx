@@ -76,8 +76,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onSwitchToSignUp
     try {
       await auth.login(email, password);
       handleClose();
-    } catch (err: any) {
-      setError(err.message || 'Nie udało się zalogować. Sprawdź swoje dane.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Nie udało się zalogować. Sprawdź swoje dane.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

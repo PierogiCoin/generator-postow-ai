@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { updateUserProfile } from '../../services/accountService';
 import { IdentificationIcon } from '../icons/IdentificationIcon';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { useConfirm } from '../../hooks/useConfirm';
 
 export const ProfileSettings: React.FC = () => {
   const { user, logout } = useAuth();
+  const { confirm, confirmDialogProps } = useConfirm();
   const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,8 +36,9 @@ export const ProfileSettings: React.FC = () => {
         const response = await updateUserProfile(user, 'change_password', { /* Tutaj można by wysłać hasła */ });
         setMessage({ type: 'success', text: response.message });
         setPasswords({ current: '', new: '', confirm: '' });
-    } catch (err: any) {
-        setMessage({ type: 'error', text: err.message || 'Nie udało się zmienić hasła.' });
+    } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Nie udało się zmienić hasła.';
+        setMessage({ type: 'error', text: errorMessage });
     } finally {
         setIsLoading(false);
     }
@@ -42,23 +46,32 @@ export const ProfileSettings: React.FC = () => {
 
   const handleDeleteAccount = async () => {
     if (!user) return;
-    if (window.confirm('Czy na pewno chcesz trwale usunąć swoje konto? Tej operacji nie można cofnąć.')) {
-        setIsLoading(true);
-        try {
-            await updateUserProfile(user, 'delete_account');
-            alert('Twoje konto zostało usunięte. Zostaniesz teraz wylogowany.');
-            logout();
-        } catch (err: any) {
-             setMessage({ type: 'error', text: err.message || 'Nie udało się usunąć konta.' });
-        } finally {
-            setIsLoading(false);
-        }
+    const confirmed = await confirm({
+      title: 'Usuń konto',
+      message: 'Czy na pewno chcesz trwale usunąć swoje konto? Tej operacji nie można cofnąć.',
+      variant: 'danger',
+      confirmLabel: 'Usuń konto',
+    });
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    try {
+      await updateUserProfile(user, 'delete_account');
+      setMessage({ type: 'success', text: 'Twoje konto zostało usunięte. Zostaniesz teraz wylogowany.' });
+      setTimeout(() => logout(), 2000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Nie udało się usunąć konta.';
+      setMessage({ type: 'error', text: errorMessage });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   if (!user) return null;
 
   return (
+    <>
+    <ConfirmDialog {...confirmDialogProps} />
     <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
       <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-3">
         <IdentificationIcon className="w-6 h-6 text-blue-500" />
@@ -106,5 +119,6 @@ export const ProfileSettings: React.FC = () => {
         </button>
       </div>
     </div>
+    </>
   );
 };

@@ -18,6 +18,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   credits INTEGER DEFAULT 100,
   usage JSONB DEFAULT '{"text": 0, "image": 0, "video": 0, "campaign": 0, "learnStyle": 0}'::jsonb,
   current_team_id UUID,
+  onboarding_done BOOLEAN NOT NULL DEFAULT false,
+  niche TEXT,
+  primary_platform TEXT,
+  brand_tone TEXT,
+  brand_keywords TEXT,
   last_login_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -164,6 +169,21 @@ CREATE TABLE IF NOT EXISTS drafts (
 CREATE INDEX IF NOT EXISTS idx_drafts_user ON drafts(user_id);
 
 -- ============================================
+-- LEARNED INSIGHTS (AI long-term memory)
+-- ============================================
+CREATE TABLE IF NOT EXISTS learned_insights (
+  id BIGSERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  text TEXT NOT NULL,
+  type TEXT NOT NULL DEFAULT 'observation',
+  category TEXT NOT NULL DEFAULT 'performance_tip',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_learned_insights_user ON learned_insights(user_id);
+CREATE INDEX IF NOT EXISTS idx_learned_insights_user_id_desc ON learned_insights(user_id, id DESC);
+
+-- ============================================
 -- BRAND VOICE PROFILES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS brand_voice_profiles (
@@ -283,6 +303,7 @@ ALTER TABLE history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE drafts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE learned_insights ENABLE ROW LEVEL SECURITY;
 ALTER TABLE brand_voice_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE video_stories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics ENABLE ROW LEVEL SECURITY;
@@ -301,6 +322,7 @@ DROP POLICY IF EXISTS "Users can insert own history" ON history;
 DROP POLICY IF EXISTS "Users can manage own favorites" ON favorites;
 DROP POLICY IF EXISTS "Users can manage own templates" ON templates;
 DROP POLICY IF EXISTS "Users can manage own drafts" ON drafts;
+DROP POLICY IF EXISTS "Users manage own learned_insights" ON learned_insights;
 DROP POLICY IF EXISTS "Users can manage own brand_voice_profiles" ON brand_voice_profiles;
 DROP POLICY IF EXISTS "Users can manage own video_stories" ON video_stories;
 DROP POLICY IF EXISTS "Users can manage own analytics" ON analytics;
@@ -319,6 +341,7 @@ CREATE POLICY "Users can insert own history" ON history FOR INSERT WITH CHECK (a
 CREATE POLICY "Users can manage own favorites" ON favorites FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own templates" ON templates FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own drafts" ON drafts FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users manage own learned_insights" ON learned_insights FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can manage own brand_voice_profiles" ON brand_voice_profiles FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own video_stories" ON video_stories FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "Users can manage own analytics" ON analytics FOR ALL USING (auth.uid() = user_id);

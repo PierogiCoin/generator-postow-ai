@@ -18,8 +18,9 @@ export const PaymentHistory: React.FC = () => {
                 setIsLoading(true);
                 const paymentHistory = await fetchPaymentHistory(user);
                 setHistory(paymentHistory);
-            } catch (err: any) {
-                setError(err.message || 'Nie udało się wczytać historii płatności.');
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : 'Nie udało się wczytać historii płatności.';
+                setError(errorMessage);
             } finally {
                 setIsLoading(false);
             }

@@ -1,12 +1,18 @@
 import type { GenerationResult } from '../types';
-import type { VideoStoryStyle } from '../components/VideoStoryModal';
+import type { VideoStoryStyle, VideoStoryProvider } from '../components/VideoStoryModal';
+import { getLongRunningApiBaseUrl } from './apiClient';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+/** Timeout dopasowany do Luma/Veo polling (~3–5 min) + bufor */
+const VIDEO_STORY_TIMEOUT_MS = 10 * 60 * 1000;
 
 export interface VideoStoryRequest {
   postText: string;
   platform: string;
   style: VideoStoryStyle;
+  aspectRatio: '1:1' | '16:9' | '9:16';
+  prompt: string;
+  provider: VideoStoryProvider;
+  async?: boolean;
   hashtags?: string[];
   tone?: string;
 }
@@ -17,37 +23,152 @@ export interface VideoStoryResponse {
   thumbnail: string;
   duration: number;
   prompt: string;
+  provider?: string;
+}
+
+export type VideoStoryJobStage = 'queued' | 'prompt' | 'generating' | 'uploading' | 'done' | 'error';
+
+export interface VideoStoryProgressStatus {
+  jobId?: string;
+  stage: VideoStoryJobStage;
+  stageLabel: string;
+  progress: number;
+  activeProvider?: string;
+  pollAttempt?: number;
+  pollMax?: number;
+  estimatedSeconds?: number;
+  startedAt: number;
+  error?: string;
+}
+
+const POLL_INTERVAL_MS = 2000;
+const PROVIDER_ETA: Record<string, number> = { veo: 90, luma: 120, auto: 90, replicate: 90 };
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export async function fetchVideoStoryStatus(
+  jobId: string,
+  userId?: string
+): Promise<VideoStoryProgressStatus & { result?: VideoStoryResponse }> {
+  const res = await fetch(`${getLongRunningApiBaseUrl()}/api/video-story-status/${jobId}`, {
+    headers: { 'x-user-id': userId || '' },
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error('Nie udało się pobrać statusu generowania wideo');
+  }
+  const data = await res.json();
+  return {
+    jobId: data.jobId,
+    stage: data.stage,
+    stageLabel: data.stageLabel,
+    progress: data.progress ?? 0,
+    activeProvider: data.activeProvider,
+    pollAttempt: data.pollAttempt,
+    pollMax: data.pollMax,
+    estimatedSeconds: data.estimatedSeconds,
+    startedAt: data.startedAt ?? Date.now(),
+    error: data.error,
+    result: data.result,
+  };
 }
 
 export const generateVideoStory = async (
   post: GenerationResult,
   style: VideoStoryStyle,
-  userId?: string
+  userId?: string,
+  provider: VideoStoryProvider = 'auto',
+  onProgress?: (status: VideoStoryProgressStatus) => void
 ): Promise<VideoStoryResponse> => {
+  const aspectRatio = getVideoStoryAspectRatio(style);
+  const startedAt = Date.now();
   const request: VideoStoryRequest = {
     postText: post.postText,
     platform: post.platform,
     style,
+    aspectRatio,
+    prompt: post.postText.slice(0, 500),
+    provider,
+    async: true,
     hashtags: post.hashtags,
-    tone: post.metadata.tone
+    tone: post.metadata.tone,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api/generate-video-story`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId || ''
-    },
-    credentials: 'include',
-    body: JSON.stringify(request)
+  onProgress?.({
+    stage: 'queued',
+    stageLabel: 'Uruchamianie generowania…',
+    progress: 2,
+    activeProvider: provider,
+    estimatedSeconds: PROVIDER_ETA[provider] ?? 90,
+    startedAt,
   });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Nie udało się wygenerować video story');
-  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), VIDEO_STORY_TIMEOUT_MS);
 
-  return response.json();
+  try {
+    const startRes = await fetch(`${getLongRunningApiBaseUrl()}/api/generate-video-story`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId || '',
+      },
+      credentials: 'include',
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+
+    if (!startRes.ok) {
+      const errorData = await startRes.json().catch(() => ({}));
+      const msg = errorData.message || 'Nie udało się wygenerować video story';
+      if (startRes.status === 429) throw new Error(msg);
+      if (startRes.status === 503) {
+        throw new Error('Generowanie wideo tymczasowo niedostępne. Spróbuj ponownie później.');
+      }
+      throw new Error(msg);
+    }
+
+    const startData = await startRes.json();
+    const jobId: string | undefined = startData.jobId;
+
+    // Fallback: serwer zwrócił wynik synchronicznie (legacy)
+    if (!jobId && startData.url) {
+      onProgress?.({
+        stage: 'done',
+        stageLabel: 'Gotowe!',
+        progress: 100,
+        startedAt,
+      });
+      return startData;
+    }
+
+    if (!jobId) {
+      throw new Error('Brak identyfikatora zadania wideo');
+    }
+
+    while (true) {
+      const status = await fetchVideoStoryStatus(jobId, userId);
+      onProgress?.({ ...status, jobId, startedAt: status.startedAt || startedAt });
+
+      if (status.stage === 'done' && status.result) {
+        return status.result;
+      }
+      if (status.stage === 'error') {
+        throw new Error(status.error || 'Generowanie wideo nie powiodło się');
+      }
+
+      await sleep(POLL_INTERVAL_MS);
+    }
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(
+        'Generowanie wideo trwa zbyt długo (limit 10 min). Spróbuj krótszy post lub inny styl.'
+      );
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 };
 
 export const getVideoStoryPrompt = (
@@ -190,16 +311,17 @@ CONTENT BREAKDOWN: ${extractedContent}
 - Numbered or bulleted points`
   };
 
+  void platform;
   return stylePrompts[style];
 };
 
-export const getVideoStoryAspectRatio = (style: VideoStoryStyle): string => {
-  const aspectRatios: Record<VideoStoryStyle, string> = {
+export const getVideoStoryAspectRatio = (style: VideoStoryStyle): '1:1' | '16:9' | '9:16' => {
+  const aspectRatios: Record<VideoStoryStyle, '1:1' | '16:9' | '9:16'> = {
     'instagram-story': '9:16',
     'tiktok-vertical': '9:16',
     'animated-quote': '1:1',
     'kinetic-typography': '16:9',
-    'carousel-slides': '1:1'
+    'carousel-slides': '1:1',
   };
 
   return aspectRatios[style];
@@ -211,8 +333,9 @@ export const getVideoStoryDuration = (style: VideoStoryStyle): number => {
     'tiktok-vertical': 30,
     'animated-quote': 10,
     'kinetic-typography': 20,
-    'carousel-slides': 25
+    'carousel-slides': 25,
   };
 
   return durations[style];
 };
+

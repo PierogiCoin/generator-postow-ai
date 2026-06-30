@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Check, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
 import type { SocialConnection, SocialPlatform } from '../types/socialPublishing';
+import { useNotifications } from '../hooks/useNotifications';
+import { NotificationType } from '../types';
 
 interface SocialConnectionsModalProps {
   isOpen: boolean;
@@ -64,6 +66,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
   const [connectingPlatform, setConnectingPlatform] = useState<SocialPlatform | null>(null);
   const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { addToast } = useNotifications();
 
   if (!isOpen) return null;
 
@@ -71,8 +74,9 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
     setConnectingPlatform(platform);
     try {
       await onConnect(platform);
-    } catch (error) {
-      console.error('Failed to connect:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Błąd połączenia z platformą';
+      addToast(errorMessage, NotificationType.Error);
     } finally {
       setConnectingPlatform(null);
     }
@@ -82,8 +86,9 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
     setDisconnectingId(connectionId);
     try {
       await onDisconnect(connectionId);
-    } catch (error) {
-      console.error('Failed to disconnect:', error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Błąd rozłączenia';
+      addToast(errorMessage, NotificationType.Error);
     } finally {
       setDisconnectingId(null);
     }
@@ -154,7 +159,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                         <div className="flex items-center gap-2 mt-1">
                           <div className="w-6 h-6 bg-slate-300 dark:bg-slate-600 rounded-full overflow-hidden">
                             {connection.profileImageUrl ? (
-                              <img src={connection.profileImageUrl} alt="" className="w-full h-full object-cover" />
+                              <img src={connection.profileImageUrl} alt={`${connection.accountName} profile picture`} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-xs">
                                 {connection.accountName[0]}

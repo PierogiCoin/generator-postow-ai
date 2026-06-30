@@ -234,6 +234,7 @@ export const COST_ESTIMATES = {
   'dalle-hd': 0.08,              // $0.08 per HD image
   'luma-video': 0.40,            // ~$0.40 per video
   'replicate-video': 0.02,       // ~$0.02 per video
+  'veo-video': 0.40,             // Veo 3.1 fast (~$0.40 per 8s clip)
 };
 
 // Export singleton instance (initialized in index.ts)

@@ -8,7 +8,6 @@ export const getBrandVoiceProfiles = async (): Promise<BrandVoiceProfile[]> => {
     .select('*');
 
   if (error) {
-    console.error('Error fetching brand voice profiles:', error);
     throw new Error('Failed to fetch brand voice profiles');
   }
 
@@ -49,7 +48,6 @@ export const saveOrUpdateBrandVoiceProfile = async (profile: BrandVoiceProfile):
     .single();
 
   if (error) {
-    console.error('Error saving brand voice profile:', error.message, error.details, error.hint);
     // Try without 'settings' column in case migration hasn't been run yet
     if (error.message?.includes('settings') || error.code === '42703') {
       const { settings: _s, ...payloadWithoutSettings } = profileToSave;
@@ -59,7 +57,6 @@ export const saveOrUpdateBrandVoiceProfile = async (profile: BrandVoiceProfile):
         .select()
         .single();
       if (error2) {
-        console.error('Error saving brand voice profile (fallback):', error2);
         throw new Error(`Failed to save brand voice profile: ${error2.message}`);
       }
       return {
@@ -91,7 +88,6 @@ export const deleteBrandVoiceProfile = async (profileId: string): Promise<void> 
     .eq('id', profileId);
 
   if (error) {
-    console.error('Error deleting brand voice profile:', error);
     throw new Error('Failed to delete brand voice profile');
   }
 };

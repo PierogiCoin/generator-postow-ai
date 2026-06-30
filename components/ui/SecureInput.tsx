@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { sanitizeAndValidate, VALIDATION_LIMITS } from '../../utils/security';
+import { sanitizeRichText, sanitizeText } from '../../utils/sanitizeHTML';
 
 interface SecureInputProps {
   value: string;
@@ -135,15 +136,22 @@ export const SafeContent: React.FC<SafeContentProps> = ({
   className = '',
   allowHTML = false,
 }) => {
-  // If HTML is allowed, use sanitizeHTML, otherwise strip all tags
-  const safeContent = allowHTML
-    ? content // Already sanitized in security.ts
-    : content.replace(/<[^>]*>/g, '');
+  if (!content) {
+    return <div className={className}></div>;
+  }
 
+  // If HTML is not allowed, strip all tags using enhanced sanitization
+  if (!allowHTML) {
+    const sanitizedText = sanitizeText(content);
+    return <div className={className}>{sanitizedText}</div>;
+  }
+
+  // If HTML is allowed, use enhanced rich text sanitization
+  const sanitizedHTML = sanitizeRichText(content);
   return (
     <div
       className={className}
-      dangerouslySetInnerHTML={{ __html: safeContent }}
+      dangerouslySetInnerHTML={{ __html: sanitizedHTML }}
     />
   );
 };

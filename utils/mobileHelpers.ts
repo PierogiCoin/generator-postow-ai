@@ -189,7 +189,6 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     
     return successful;
   } catch (err) {
-    console.error('Failed to copy:', err);
     return false;
   }
 }

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TONES, CONTENT_TYPES, VISUAL_STYLES, AI_MODELS, GENERATION_TYPES } from '../constants';
 import type { FormData, CustomTemplate, CampaignHistoryItem, FavoritePost, AudiencePersona } from '../types';
-import { Tone, Platform, ContentType, VisualStyle, GenerationType, AIModel, UserPlan } from '../types';
+import { Tone, Platform, ContentType, VisualStyle, GenerationType, AIModel, UserPlan, CopywritingFramework, GenerationMode } from '../types';
 import { PlatformSelector } from './PlatformSelector';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { suggestToneAndStyle, generateAudiencePersona } from '../services/geminiService';
-import { SaveTemplateModal } from './SaveTemplateModal';
 import { SaveIcon } from './icons/SaveIcon';
 import { ToneSelector } from './ToneSelector';
+import { ContentLanguageSelector } from './ContentLanguageSelector';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { VideoCameraIcon } from './icons/VideoCameraIcon';
 import { BulbIcon } from './icons/BulbIcon';
@@ -17,14 +17,15 @@ import { CampaignIcon } from './icons/CampaignIcon';
 import { InspirationBanner } from './InspirationBanner';
 import { BrandVoice } from './BrandVoice';
 import { CheckIcon } from './icons/CheckIcon';
-import { TemplateBrowserModal } from './TemplateBrowserModal';
 import { CollectionIcon } from './icons/CollectionIcon';
 import { Tooltip } from './Tooltip';
 import { PersonaDisplay } from './PersonaDisplay';
-import { TopicAssistantModal } from './TopicAssistantModal';
 import { BeakerIcon } from './icons/BeakerIcon';
+import { ClockIcon } from './icons/ClockIcon';
+import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { GlobeIcon } from './icons/GlobeIcon';
 import { LayersIcon } from './icons/LayersIcon';
+import { TrendingUpIcon } from './icons/TrendingUpIcon';
 import * as geminiService from '../services/geminiService';
 
 
@@ -33,77 +34,43 @@ import { useDataStore } from '../stores/dataStore';
 import { useUIStore } from '../stores/uiStore';
 import { useAppHandlers } from '../hooks/useAppHandlers';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../hooks/useNotifications';
+import { NotificationType } from '../types';
 
 // Security
 import { useRateLimiter } from '../hooks/useRateLimiter';
+import { checkForSimilarContent, formatTimeAgo } from '../services/contentDuplicateService';
+import type { DuplicateCheckResult } from '../services/contentDuplicateService';
+import { isQuotaDepleted } from '../utils/chunkReload';
 import { validateTopic, validateKeywords, sanitizeText } from '../utils/security';
 import { ModernButton } from './ui/ModernButton';
 import { ModernInput } from './ui/ModernInput';
 import { ModernCard } from './ui/ModernCard';
 import { Spinner } from './ui/LoadingStates';
+import { SuggestionPills } from './inputForm/SuggestionPills';
+import { fileToBase64 } from './inputForm/formHelpers';
+import { DEFAULT_FORM_DATA, normalizeFormData } from './inputForm/defaultFormData';
+import { createAiToolPanels } from './inputForm/aiToolPanels';
+import { InputFormVisualSection } from './inputForm/InputFormVisualSection';
+import { InputFormAdvancedOptions } from './inputForm/InputFormAdvancedOptions';
+import { InputFormModals } from './inputForm/InputFormModals';
+import { InputFormModeToggle } from './inputForm/InputFormModeToggle';
+import { InputFormQuickFlow } from './inputForm/InputFormQuickFlow';
+import { getStoredInputFormMode, setStoredInputFormMode, stripTopicHtml, type InputFormMode } from '../utils/inputFormMode';
+import { isOnboardingPendingFirstGenerate } from '../utils/onboarding';
+import { OnboardingFirstPostBanner } from './inputForm/OnboardingFirstPostBanner';
+
 
 interface InputFormProps {
   prefillData: Partial<FormData> | null;
   onPrefillConsumed: () => void;
 }
 
-const SuggestionPills = <T extends string>({ suggestions, onSelect, isLoading, selectedValue }: { suggestions: T[]; onSelect: (value: T) => void; isLoading: boolean; selectedValue?: T }) => {
-  const { t } = useTranslation();
-  if (isLoading) {
-    return (
-      <div className="text-xs text-indigo-500 dark:text-indigo-400 font-medium animate-pulse mt-3 flex items-center gap-2 px-1">
-        <SparklesIcon className="w-4 h-4 animate-spin-slow" />
-        <span>{t('form.suggestions.loading')}</span>
-      </div>
-    );
-  }
-
-  if (!suggestions || suggestions.length === 0) {
-    return null;
-  }
-
-  return (
-    <div className="mt-3 flex items-center flex-wrap gap-2 animate-fade-in px-1">
-      <span className="text-[10px] uppercase tracking-widest font-black text-slate-400 dark:text-slate-500 flex items-center gap-2 mb-1 w-full">
-        <SparklesIcon className="w-3 h-3 text-purple-500" />
-        <span>{t('form.suggestions.label')}</span>
-      </span>
-      {suggestions.map((suggestion) => {
-        const isSelected = suggestion === selectedValue;
-        return (
-          <button
-            key={suggestion}
-            type="button"
-            onClick={() => onSelect(suggestion as T)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-300 border-2 ${isSelected
-              ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-500 shadow-lg shadow-blue-500/25 scale-105'
-              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-blue-400/50 hover:text-blue-500'
-              }`}
-          >
-            {suggestion}
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
-const fileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result.split(',')[1]);
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
-
 
 export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillConsumed }) => {
   const { t } = useTranslation();
   const { user, userPlan, currentTeamId } = useAuth();
+  const { addToast } = useNotifications();
   const handlers = useAppHandlers(() => { }, () => { });
 
   // State from stores
@@ -112,26 +79,17 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
 
   const { templates, brandVoiceProfiles, activeBrandVoiceId, inspiration, selectInspiration } = useDataStore();
   const { setIsBrandVoiceManagerOpen } = useUIStore();
+  const activeBrandVoice = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
+  const brandVoiceDescription = activeBrandVoice
+    ? [
+        activeBrandVoice.settings.brandName,
+        activeBrandVoice.settings.description,
+        activeBrandVoice.settings.archetype,
+        activeBrandVoice.settings.visualStyle,
+      ].filter(Boolean).join('. ')
+    : '';
 
-  const defaultFormData: FormData = {
-    topic: '',
-    audience: '',
-    keywords: '',
-    tone: Tone.Casual,
-    platform: Platform.Facebook,
-    contentType: ContentType.Post,
-    visualStyle: VisualStyle.PlatformSpecific,
-    generationType: GenerationType.PostWithImage,
-    model: AIModel.Flash,
-    videoTranscript: '',
-    campaignGoal: '',
-    campaignDuration: 7,
-    campaignPlatforms: [Platform.Facebook],
-    useMascot: "auto",
-    includeLogo: false,
-  };
-
-  const [formData, setFormData] = useState<FormData>(defaultFormData);
+  const [formData, setFormData] = useState<FormData>(DEFAULT_FORM_DATA);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [templateToEdit, setTemplateToEdit] = useState<CustomTemplate | null>(null);
@@ -142,8 +100,34 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
   const [persona, setPersona] = useState<AudiencePersona | null>(null);
   const [isGeneratingPersona, setIsGeneratingPersona] = useState(false);
   const [isAssistantModalOpen, setIsAssistantModalOpen] = useState(false);
+  const [isReverseImageOpen, setIsReverseImageOpen] = useState(false);
+  const [isTrendAnalysisOpen, setIsTrendAnalysisOpen] = useState(false);
+  const [isScheduleOptimizerOpen, setIsScheduleOptimizerOpen] = useState(false);
+  const [isAIWorkflowOpen, setIsAIWorkflowOpen] = useState(false);
+  const [isContentSafetyOpen, setIsContentSafetyOpen] = useState(false);
+  const [isRepurposingOpen, setIsRepurposingOpen] = useState(false);
+  const [isCrossPlatformOpen, setIsCrossPlatformOpen] = useState(false);
+  const [isSocialMediaOpen, setIsSocialMediaOpen] = useState(false);
+  const [isVideoGeneratorOpen, setIsVideoGeneratorOpen] = useState(false);
+  const [isOmniOpen, setIsOmniOpen] = useState(false);
+  const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
+  const [formMode, setFormMode] = useState<InputFormMode>(() => {
+    if (user?.id && isOnboardingPendingFirstGenerate(user.id)) return 'quick';
+    return getStoredInputFormMode();
+  });
+  const [showFirstPostBanner, setShowFirstPostBanner] = useState(() =>
+    Boolean(user?.id && isOnboardingPendingFirstGenerate(user.id))
+  );
 
   const topicDebounceTimeout = React.useRef<number | null>(null);
+  const duplicateTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const draftSavedTimeout = React.useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (draftSavedTimeout.current) clearTimeout(draftSavedTimeout.current);
+    };
+  }, []);
 
   const generationTypeConfig: Record<GenerationType, { label: string; icon: React.FC<any>; description: string }> = {
     [GenerationType.PostWithImage]: { label: t('generationTypes.PostWithImage'), icon: PhotoIcon, description: 'Post z grafiką AI' },
@@ -178,12 +162,12 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
 
   useEffect(() => {
     if (prefillData) {
-      setFormData(prev => ({
+      setFormData(prev => normalizeFormData({
         ...prev,
         ...prefillData,
         topic: prefillData.topic || prev.topic || '',
         platform: prefillData.platform || prev.platform,
-        generationType: prefillData.generationType || prev.generationType
+        generationType: prefillData.generationType || prev.generationType,
       }));
       onPrefillConsumed();
     }
@@ -196,6 +180,16 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
 
   const handleRichTextChange = (value: string) => {
     setFormData(prev => ({ ...prev, topic: value }));
+    if (duplicateTimeoutRef.current) clearTimeout(duplicateTimeoutRef.current);
+    if (value.trim().length >= 15) {
+      duplicateTimeoutRef.current = setTimeout(() => {
+        const { history } = useDataStore.getState();
+        const result = checkForSimilarContent(value, history);
+        setDuplicateCheck(result.hasSimilar ? result : null);
+      }, 800);
+    } else {
+      setDuplicateCheck(null);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -214,9 +208,10 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
 
   const handleSaveDraft = () => {
     handlers.handleSaveDraft(formData);
-    setFormData(defaultFormData);
+    setFormData(DEFAULT_FORM_DATA);
     setIsDraftSaved(true);
-    setTimeout(() => setIsDraftSaved(false), 2500);
+    if (draftSavedTimeout.current) clearTimeout(draftSavedTimeout.current);
+    draftSavedTimeout.current = window.setTimeout(() => setIsDraftSaved(false), 2500);
   };
 
   const handleGenerationTypeChange = (type: GenerationType) => {
@@ -256,10 +251,10 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
     if (templateId) {
       const template = templates.find(t => t.id === templateId);
       if (template) {
-        setFormData(template.formData);
+        setFormData(normalizeFormData(template.formData));
       }
     } else {
-      setFormData(defaultFormData);
+      setFormData(DEFAULT_FORM_DATA);
     }
     setIsTemplateBrowserOpen(false);
   };
@@ -283,12 +278,10 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (window.confirm('Czy na pewno chcesz usunąć ten szablon?')) {
-      await handlers.handleDeleteTemplate(templateId);
-      if (selectedTemplate === templateId) {
-        setSelectedTemplate('');
-        setFormData(defaultFormData);
-      }
+    await handlers.handleDeleteTemplate(templateId);
+    if (selectedTemplate === templateId) {
+      setSelectedTemplate('');
+      setFormData(DEFAULT_FORM_DATA);
     }
   };
 
@@ -298,24 +291,32 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
       try {
         const base64 = await fileToBase64(file);
         setFormData(prev => ({ ...prev, imageForVideo: { base64, mimeType: file.type } }));
-      } catch (error) {
-        console.error("Error converting file to base64:", error);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Błąd konwersji pliku';
+        addToast(errorMessage, NotificationType.Error);
       }
     }
   };
 
   useEffect(() => {
     if (topicDebounceTimeout.current) clearTimeout(topicDebounceTimeout.current);
-    if ((formData?.topic || "").replace(/<[^>]*>?/gm, '').trim().length > 15) {
+    if (isQuotaDepleted()) {
+      setStyleSuggestions(null);
+      return;
+    }
+    if ((formData?.topic || "").replace(/<[^>]*>?/gm, '').trim().length > 25) {
       setIsSuggestingStyle(true);
       topicDebounceTimeout.current = window.setTimeout(async () => {
         const suggestions = await suggestToneAndStyle(formData?.topic || "", user?.id || 'default-user');
         setStyleSuggestions(suggestions);
         setIsSuggestingStyle(false);
-      }, 1000);
+      }, 2000);
     } else {
       setStyleSuggestions(null);
     }
+    return () => {
+      if (topicDebounceTimeout.current) clearTimeout(topicDebounceTimeout.current);
+    };
   }, [formData.topic]);
 
   const handleGeneratePersona = async () => {
@@ -325,8 +326,8 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
     try {
       const result = await generateAudiencePersona(formData.audience, formData.platform, user?.id || 'default-user');
       setPersona(result);
-    } catch (e) {
-      console.error("Failed to generate persona", e);
+    } catch (e: any) {
+      addToast(e.message || 'Błąd generowania persony', NotificationType.Error);
     } finally {
       setIsGeneratingPersona(false);
     }
@@ -343,12 +344,80 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
   const showVisualStyle = formData.generationType === GenerationType.PostWithImage || formData.generationType === GenerationType.ABTest;
   const showContentType = formData.generationType !== GenerationType.Campaign && formData.generationType !== GenerationType.Idea;
 
+  const handleModeChange = (mode: InputFormMode) => {
+    setFormMode(mode);
+    setStoredInputFormMode(mode);
+    if (mode === 'quick') {
+      setFormData((prev) => {
+        if (prev.platform === Platform.YouTube) return prev;
+        if (prev.generationType === GenerationType.PostWithImage || prev.generationType === GenerationType.Video) {
+          return prev;
+        }
+        return { ...prev, generationType: GenerationType.PostWithImage };
+      });
+    }
+  };
+
+  const aiToolPanels = useMemo(
+    () =>
+      createAiToolPanels({
+        setIsReverseImageOpen,
+        setIsTrendAnalysisOpen,
+        setIsScheduleOptimizerOpen,
+        setIsAIWorkflowOpen,
+        setIsContentSafetyOpen,
+        setIsRepurposingOpen,
+        setIsCrossPlatformOpen,
+        setIsSocialMediaOpen,
+        setIsVideoGeneratorOpen,
+        setIsOmniOpen,
+      }),
+    []
+  );
+
+
   return (
     <>
-      <ModernCard className="p-8">
-        <form onSubmit={handleSubmit} className="space-y-10">
-          {inspiration && 'result' in inspiration && <InspirationBanner inspiration={inspiration as CampaignHistoryItem | FavoritePost} onClear={() => selectInspiration(null)} />}
+      <div id="input-form-anchor">
+      <ModernCard className="p-8 glass-premium rounded-[2.5rem] border border-white/10">
+        {showFirstPostBanner && (
+          <OnboardingFirstPostBanner onDismiss={() => setShowFirstPostBanner(false)} />
+        )}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <InputFormModeToggle mode={formMode} onChange={handleModeChange} />
+          {formMode === 'quick' && (
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t('form.mode.quickHint')}</p>
+          )}
+        </div>
 
+        {inspiration && 'result' in inspiration && (
+          <div className="mb-8">
+            <InspirationBanner inspiration={inspiration as CampaignHistoryItem | FavoritePost} onClear={() => selectInspiration(null)} />
+          </div>
+        )}
+
+        {formMode === 'quick' ? (
+          <InputFormQuickFlow
+            formData={formData}
+            onTopicChange={handleRichTextChange}
+            onPlatformChange={handlePlatformChange}
+            onToneChange={(tone) => setFormData((p) => ({ ...p, tone }))}
+            onContentLanguageChange={(contentLanguage) => setFormData((p) => ({ ...p, contentLanguage }))}
+            onSubmit={handleSubmit}
+            onSaveDraft={handleSaveDraft}
+            onOpenAssistant={() => setIsAssistantModalOpen(true)}
+            onSwitchToAdvanced={() => handleModeChange('advanced')}
+            onAiAction={(action, text) => {
+              void handlers.handleAIAssistantAction(action as Parameters<typeof handlers.handleAIAssistantAction>[0], text, formData.topic, formData);
+            }}
+            aiToolPanels={aiToolPanels}
+            isLoading={isLoading}
+            isDraftSaved={isDraftSaved}
+            duplicateCheck={duplicateCheck}
+            onDismissDuplicate={() => setDuplicateCheck(null)}
+          />
+        ) : (
+        <form onSubmit={handleSubmit} className="space-y-10">
           <div className="space-y-6">
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -356,13 +425,13 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
                 <Tooltip text={t('form.template.tooltip')} />
               </div>
               <div className="flex gap-3 items-center">
-                <div className="flex-grow px-4 h-12 border-2 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/50 text-sm text-slate-700 dark:text-slate-300 truncate flex items-center font-medium">
+                <div className="flex-grow px-4 h-12 border border-slate-200/50 dark:border-white/5 rounded-2xl bg-white/40 dark:bg-slate-950/20 text-sm text-slate-700 dark:text-slate-300 truncate flex items-center font-medium">
                   {selectedTemplate ? templates.find(t => t.id === selectedTemplate)?.name : t('common.newPost')}
                 </div>
-                <button type="button" onClick={() => setIsTemplateBrowserOpen(true)} className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 text-slate-600 dark:text-slate-400" title={t('form.template.browse')}>
+                <button type="button" onClick={() => setIsTemplateBrowserOpen(true)} className="w-12 h-12 flex items-center justify-center bg-slate-100/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 text-slate-650 dark:text-slate-400" title={t('form.template.browse')}>
                   <CollectionIcon className="w-6 h-6" />
                 </button>
-                <button type="button" onClick={() => { setTemplateToEdit(null); setIsSaveModalOpen(true); }} className="w-12 h-12 flex items-center justify-center bg-slate-100 dark:bg-slate-800/50 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95 text-slate-600 dark:text-slate-400" title={t('form.template.saveNew')}>
+                <button type="button" onClick={() => { setTemplateToEdit(null); setIsSaveModalOpen(true); }} className="w-12 h-12 flex items-center justify-center bg-slate-100/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 text-slate-650 dark:text-slate-400" title={t('form.template.saveNew')}>
                   <SaveIcon className="w-6 h-6" />
                 </button>
               </div>
@@ -387,8 +456,8 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
                                 contents: `Extract a concise, engaging social media post topic from this text: "${text.substring(0, 2000)}". Return ONLY the topic string.`
                             }, user?.id);
                             setFormData(p => ({ ...p, topic: extracted.text }));
-                            } catch (e) {
-                            console.error(e);
+                            } catch (e: any) {
+                            addToast(e.message || 'Błąd ekstrakcji tematu', NotificationType.Error);
                             } finally {
                             genActions.setProgress(null);
                             }
@@ -411,7 +480,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
                     </button>
                 </div>
               </div>
-              <div className="relative rounded-[1.5rem] border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30 focus-within:border-blue-500 transition-all duration-300">
+              <div className="relative rounded-[1.5rem] border border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 focus-within:border-cyan-500/50 focus-within:shadow-[0_0_20px_rgba(0,220,233,0.25)] transition-all duration-300">
                 <InteractiveEditor
                   value={formData.topic}
                   onChange={handleRichTextChange}
@@ -424,6 +493,25 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
               </div>
             </div>
           </div>
+
+          {duplicateCheck?.mostSimilar && (
+            <div className="animate-fade-in flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl">
+              <span className="text-amber-500 text-lg shrink-0">⚠️</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Podobny post z historii ({Math.round(duplicateCheck.mostSimilar.similarity * 100)}% podobny)</p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 truncate mt-0.5">
+                  „{duplicateCheck.mostSimilar.topic.slice(0, 80)}{duplicateCheck.mostSimilar.topic.length > 80 ? '…' : ''}"
+                  <span className="ml-1 opacity-70">· {formatTimeAgo(duplicateCheck.mostSimilar.timestamp)}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDuplicateCheck(null)}
+                className="text-amber-400 hover:text-amber-600 dark:hover:text-amber-200 text-xs shrink-0"
+                aria-label="Zamknij alert"
+              >✕</button>
+            </div>
+          )}
 
           {formData.generationType === GenerationType.Video && (
             <div className="animate-fade-in space-y-8 p-6 bg-slate-50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-800">
@@ -525,6 +613,17 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-3 px-1">
+                  <span className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.contentLanguage.label')}</span>
+                  <Tooltip text={t('form.contentLanguage.tooltip')} />
+                </div>
+                <ContentLanguageSelector
+                  selected={formData.contentLanguage}
+                  onSelect={(contentLanguage) => setFormData((p) => ({ ...p, contentLanguage }))}
+                  disabled={isLoading}
+                />
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 mb-3 px-1">
                   <span className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.tone.label')}</span>
                   <Tooltip text={t('form.tone.tooltip')} />
                 </div>
@@ -553,74 +652,23 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
           </div>
 
           {showVisualStyle && (
-            <div className="animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <label htmlFor="visualStyle" className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.visualStyle.label')}</label>
-                  <Tooltip text={t('form.visualStyle.tooltip')} />
-                </div>
-                <select id="visualStyle" name="visualStyle" value={formData.visualStyle} onChange={handleInputChange} className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm font-semibold focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer shadow-sm">
-                  {VISUAL_STYLES.map(style => <option key={style} value={style}>{t(`enums.VisualStyle.${style}`)}</option>)}
-                </select>
-                <SuggestionPills suggestions={styleSuggestions?.suggestedVisualStyles || []} onSelect={(v) => setFormData(p => ({ ...p, visualStyle: v }))} isLoading={isSuggestingStyle} selectedValue={formData.visualStyle} />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3 px-1">
-                  <label htmlFor="aspectRatio" className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.aspectRatio.label')}</label>
-                  <Tooltip text={t('form.aspectRatio.tooltip')} />
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {["1:1", "16:9", "9:16", "4:3", "3:4"].map(ratio => (
-                    <button
-                      key={ratio}
-                      type="button"
-                      onClick={() => setFormData(p => ({ ...p, aspectRatio: ratio }))}
-                      className={`px-3 py-2 text-xs font-bold rounded-xl border-2 transition-all ${formData.aspectRatio === ratio || (!formData.aspectRatio && ratio === '1:1') ? 'border-blue-500 bg-blue-500 text-white shadow-lg' : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-blue-400/50'}`}
-                    >
-                      {ratio}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <InputFormVisualSection
+              formData={formData}
+              styleSuggestions={styleSuggestions}
+              isSuggestingStyle={isSuggestingStyle}
+              aiToolPanels={aiToolPanels}
+              onInputChange={handleInputChange}
+              onVisualStyleSelect={(v) => setFormData((p) => ({ ...p, visualStyle: v }))}
+              onAspectRatioSelect={(ratio) => setFormData((p) => ({ ...p, aspectRatio: ratio }))}
+            />
           )}
 
-          <details className="group border-2 border-slate-100 dark:border-slate-800/50 rounded-3xl p-6 transition-all duration-300">
-            <summary className="text-sm font-black uppercase tracking-tight text-slate-600 dark:text-slate-400 cursor-pointer list-none flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                Opcje zaawansowane
-                <SparklesIcon className="w-4 h-4 text-indigo-400" />
-              </span>
-              <svg className="w-5 h-5 transition-transform group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-            </summary>
-            <div className="mt-8 space-y-10 animate-fade-in">
-              <ModernInput
-                label={t('form.keywords.label')}
-                id="keywords"
-                name="keywords"
-                value={formData.keywords || ''}
-                onChange={handleInputChange}
-                placeholder={t('form.keywords.placeholder')}
-                fullWidth
-                icon={<BulbIcon className="w-5 h-5" />}
-              />
-
-              <div className={`grid ${showContentType ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-10`}>
-                {showContentType && <div className="space-y-3">
-                  <label htmlFor="contentType" className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.contentType.label')}</label>
-                  <select id="contentType" name="contentType" value={formData.contentType} onChange={handleInputChange} className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm font-semibold focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer">
-                    {CONTENT_TYPES.map(type => <option key={type} value={type}>{t(`enums.ContentType.${type}`)}</option>)}
-                  </select>
-                </div>}
-                <div className={!showContentType ? 'col-span-full' : '' + " space-y-3"}>
-                  <label htmlFor="model" className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.aiModel.label')}</label>
-                  <select id="model" name="model" value={formData.model} onChange={handleInputChange} className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm font-semibold focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer">
-                    {AI_MODELS.map(model => <option key={model} value={model}>{t(`enums.AIModel.${model}`)}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </details>
+          <InputFormAdvancedOptions
+            formData={formData}
+            showContentType={showContentType}
+            onInputChange={handleInputChange}
+            onGenerationModeChange={(mode) => setFormData((p) => ({ ...p, generationMode: mode }))}
+          />
 
           {isBrandVoiceEnabled && (
             <div className="space-y-4">
@@ -691,11 +739,11 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
                       type="button"
                       onClick={() => handleGenerationTypeChange(type)}
                       disabled={isDisabled}
-                      className={`group flex flex-col items-center justify-center p-4 text-center border-2 rounded-[1.5rem] transition-all duration-300 relative overflow-hidden ${isSelected ? 'border-blue-500 bg-blue-500 text-white shadow-xl shadow-blue-500/30 scale-105' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-600 dark:text-slate-400 hover:border-blue-400/50 hover:bg-slate-50 dark:hover:bg-slate-800'} ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
+                      className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden ${isSelected ? 'border-cyan-500 bg-slate-900/60 dark:bg-white/5 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan' : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-600 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105'} ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
                     >
-                      <config.icon className={`w-8 h-8 mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
-                      <span className="text-[10px] font-black uppercase tracking-tighter leading-none">{config.label}</span>
-                      {isSelected && <div className="absolute top-1 right-2"><SparklesIcon className="w-3 h-3 text-white/50" /></div>}
+                      <config.icon className={`w-8 h-8 mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'text-cyan-500' : 'text-slate-450'}`} />
+                      <span className={`text-[10px] font-black uppercase tracking-tighter leading-none ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500'}`}>{config.label}</span>
+                      {isSelected && <div className="absolute top-1 right-2"><SparklesIcon className="w-3 h-3 text-cyan-500/60" /></div>}
                     </button>
                   );
                 })}
@@ -719,29 +767,77 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
                 size="lg"
                 disabled={isLoading}
                 fullWidth
-                icon={<SparklesIcon className="w-5 h-5" />}
+                icon={isLoading ? (
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 relative">
+                    <div className="absolute inset-0 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <div className="absolute inset-1 bg-white/20 rounded-full animate-pulse"></div>
+                  </div>
+                ) : (
+                  <SparklesIcon className="w-5 h-5 sm:w-6 sm:h-6 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" />
+                )}
+                className={`min-h-[56px] sm:min-h-[64px] text-base sm:text-lg font-bold touch-manipulation transition-all duration-300 ${isLoading ? 'animate-pulse shadow-lg shadow-purple-500/25' : 'hover:shadow-lg hover:shadow-purple-500/25'}`}
               >
-                {isLoading ? t('common.generating') : t('common.generate')}
+                <span className={isLoading ? 'animate-pulse' : ''}>
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      {t('common.generating')}
+                      <span className="inline-flex gap-1">
+                        <span className="w-1 h-1 bg-white rounded-full animate-bounce"></span>
+                        <span className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
+                        <span className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                      </span>
+                    </span>
+                  ) : t('common.generate')}
+                </span>
               </ModernButton>
             </div>
           </div>
         </form>
+        )}
       </ModernCard>
-      <SaveTemplateModal isOpen={isSaveModalOpen} onClose={() => setIsSaveModalOpen(false)} onSave={handleSaveTemplate} templateToEdit={templateToEdit} />
-      <TemplateBrowserModal
-        isOpen={isTemplateBrowserOpen}
-        onClose={() => setIsTemplateBrowserOpen(false)}
+      </div>
+      <InputFormModals
+        formData={formData}
+        brandVoiceDescription={brandVoiceDescription}
         templates={templates}
-        onSelect={handleSelectTemplate}
-        onEdit={handleEditTemplate}
-        onDelete={handleDeleteTemplate}
         currentTeamId={currentTeamId}
-      />
-      <TopicAssistantModal
-        isOpen={isAssistantModalOpen}
-        onClose={() => setIsAssistantModalOpen(false)}
-        currentTopic={formData.topic}
+        templateToEdit={templateToEdit}
+        isSaveModalOpen={isSaveModalOpen}
+        isTemplateBrowserOpen={isTemplateBrowserOpen}
+        isAssistantModalOpen={isAssistantModalOpen}
+        isReverseImageOpen={isReverseImageOpen}
+        isTrendAnalysisOpen={isTrendAnalysisOpen}
+        isScheduleOptimizerOpen={isScheduleOptimizerOpen}
+        isAIWorkflowOpen={isAIWorkflowOpen}
+        isContentSafetyOpen={isContentSafetyOpen}
+        isRepurposingOpen={isRepurposingOpen}
+        isCrossPlatformOpen={isCrossPlatformOpen}
+        isSocialMediaOpen={isSocialMediaOpen}
+        isVideoGeneratorOpen={isVideoGeneratorOpen}
+        isOmniOpen={isOmniOpen}
+        onCloseSaveModal={() => setIsSaveModalOpen(false)}
+        onCloseTemplateBrowser={() => setIsTemplateBrowserOpen(false)}
+        onCloseAssistant={() => setIsAssistantModalOpen(false)}
+        onCloseReverseImage={() => setIsReverseImageOpen(false)}
+        onCloseTrendAnalysis={() => setIsTrendAnalysisOpen(false)}
+        onCloseScheduleOptimizer={() => setIsScheduleOptimizerOpen(false)}
+        onCloseAIWorkflow={() => setIsAIWorkflowOpen(false)}
+        onCloseContentSafety={() => setIsContentSafetyOpen(false)}
+        onCloseRepurposing={() => setIsRepurposingOpen(false)}
+        onCloseCrossPlatform={() => setIsCrossPlatformOpen(false)}
+        onCloseSocialMedia={() => setIsSocialMediaOpen(false)}
+        onCloseVideoGenerator={() => setIsVideoGeneratorOpen(false)}
+        onCloseOmni={() => setIsOmniOpen(false)}
+        onSaveTemplate={handleSaveTemplate}
+        onSelectTemplate={handleSelectTemplate}
+        onEditTemplate={handleEditTemplate}
+        onDeleteTemplate={handleDeleteTemplate}
         onApplySuggestion={handleApplySuggestion}
+        onReverseImageSelect={(_prompt, caption) => {
+          if (caption) setFormData((p) => ({ ...p, topic: caption }));
+        }}
+        onTrendSelect={(topic) => setFormData((p) => ({ ...p, topic }))}
+        onScheduleSelect={() => setIsScheduleOptimizerOpen(false)}
       />
     </>
   );

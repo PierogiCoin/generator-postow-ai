@@ -14,6 +14,7 @@ import { ChartPieIcon } from './icons/ChartPieIcon';
 import { UserIcon } from './icons/UserIcon';
 import { MoonIcon } from './icons/MoonIcon';
 import { LogOutIcon } from './icons/LogOutIcon';
+import { KeyboardIcon } from './icons/KeyboardIcon';
 
 interface Command {
   id: string;
@@ -45,6 +46,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose }) => {
     { id: 'analytics', title: t('commandPalette.commands.goToAnalytics'), icon: ChartPieIcon, action: () => navigate('/analytics'), keywords: ['stats', 'performance'] },
     { id: 'account', title: t('commandPalette.commands.goToAccount'), icon: UserIcon, action: () => navigate('/account'), keywords: ['profile', 'settings'] },
     { id: 'theme', title: t('commandPalette.commands.toggleTheme'), icon: MoonIcon, action: toggleTheme, keywords: ['dark', 'light', 'mode'] },
+    { id: 'shortcuts', title: 'Skróty klawiszowe', icon: KeyboardIcon, action: () => { onClose(); setTimeout(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '?', shiftKey: true })), 100); }, keywords: ['keyboard', 'hotkeys', 'help'] },
     { id: 'logout', title: t('commandPalette.commands.logout'), icon: LogOutIcon, action: logout, keywords: ['sign out', 'exit'] },
   ];
 
@@ -130,3 +132,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ onClose }) => {
     </div>
   );
 };
+
+// Default export for lazy loading
+export default CommandPalette;

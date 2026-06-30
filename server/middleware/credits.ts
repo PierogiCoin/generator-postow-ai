@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { checkCredits, deductCredits, PRICING } from '../stripe';
+import logger from '../logger.js';
 
 declare global {
   namespace Express {
@@ -39,7 +40,7 @@ export function requireCredits(action: keyof typeof PRICING.costs) {
       req.creditCost = cost;
       next();
     } catch (error: any) {
-      console.error('Credit check error:', error);
+      logger.error('Credit check error:', error);
       res.status(500).json({ error: error.message });
     }
   };
@@ -63,7 +64,7 @@ export async function deductCreditsMiddleware(
       await deductCredits(userId, cost, action, metadata);
     }
   } catch (error) {
-    console.error('Credit deduction error:', error);
+    logger.error('Credit deduction error:', error);
     // Don't fail the request if deduction fails
   }
 }
@@ -85,7 +86,7 @@ export function withCreditDeduction(
         await deductCreditsMiddleware(req, res, action);
       }
     } catch (error: any) {
-      console.error('Handler error:', error);
+      logger.error('Handler error:', error);
       res.status(500).json({ error: error.message });
     }
   };

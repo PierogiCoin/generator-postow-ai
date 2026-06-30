@@ -9,7 +9,7 @@ export const SkeletonText: React.FC<{ lines?: number; className?: string }> = ({
     <div className={`space-y-3 ${className}`}>
       {Array.from({ length: lines }).map((_, i) => (
         <div
-          key={i}
+          key={`line-${i}`}
           className="h-4 bg-slate-200 dark:bg-slate-700 rounded animate-pulse"
           style={{ width: `${100 - (i * 10)}%` }}
         />
@@ -91,7 +91,7 @@ export const PulsatingDots: React.FC<{ className?: string }> = ({ className = ''
     <div className={`flex space-x-2 ${className}`}>
       {[0, 1, 2].map((i) => (
         <div
-          key={i}
+          key={`dot-${i}`}
           className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"
           style={{ animationDelay: `${i * 0.15}s` }}
         />
@@ -103,27 +103,44 @@ export const PulsatingDots: React.FC<{ className?: string }> = ({ className = ''
 // Full screen loading overlay
 export const LoadingOverlay: React.FC<{ 
   message?: string;
+  submessage?: string;
   progress?: number;
-}> = ({ message = 'Generowanie...', progress }) => {
+}> = ({ message = 'Generowanie...', submessage, progress }) => {
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
+      <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl shadow-2xl border border-white/10 dark:border-white/5 p-8 max-w-md w-full mx-4 backdrop-blur-xl">
         <div className="flex flex-col items-center space-y-6">
-          <Spinner size="lg" />
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="relative">
+            <Spinner size="lg" className="text-purple-600 dark:text-purple-400" />
+            <div className="absolute inset-0 bg-purple-600/20 rounded-full animate-ping"></div>
+          </div>
+          <div className="text-center space-y-3">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent">
               {message}
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Proszę czekać, to może zająć kilka sekund...
-            </p>
+            {submessage && (
+              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                {submessage}
+              </p>
+            )}
+            <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-500">
+              <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse"></div>
+              <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+              <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>
+            </div>
           </div>
           {progress !== undefined && (
-            <ProgressBar 
-              progress={progress} 
-              showPercentage 
-              className="w-full"
-            />
+            <div className="w-full space-y-2 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              <ProgressBar 
+                progress={progress} 
+                showPercentage 
+                className="w-full"
+              />
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+                <span>Inicjalizacja AI...</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+            </div>
           )}
         </div>
       </div>

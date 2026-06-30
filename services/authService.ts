@@ -1,13 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-const JWT_SECRET = import.meta.env.VITE_JWT_SECRET || 'your-secret-key-change-in-production';
-const JWT_EXPIRES_IN = '7d';
 
 export interface User {
   id: string;
@@ -37,316 +32,150 @@ export interface SignUpData {
 }
 
 export class AuthService {
-  // Sign up new user
+  // Sign up new user — delegates to Supabase Auth
   static async signUp(data: SignUpData): Promise<AuthResponse> {
-    // Validate email
     if (!this.isValidEmail(data.email)) {
       throw new Error('Invalid email format');
     }
-
-    // Validate password strength
     if (!this.isStrongPassword(data.password)) {
       throw new Error('Password must be at least 8 characters with uppercase, lowercase, and number');
     }
 
-    // Check if user exists
-    const { data: existing } = await supabase
-      .from('users')
-      .select('email')
-      .eq('email', data.email.toLowerCase())
-      .single();
+    const { data: authData, error } = await supabase.auth.signUp({
+      email: data.email.toLowerCase(),
+      password: data.password,
+      options: { data: { name: data.name } }
+    });
 
-    if (existing) {
-      throw new Error('User with this email already exists');
-    }
+    if (error) throw new Error(error.message);
+    if (!authData.user || !authData.session) throw new Error('Sign up failed');
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-
-    // Create user
-    const { data: user, error } = await supabase
-      .from('users')
-      .insert({
-        email: data.email.toLowerCase(),
-        password: hashedPassword,
+    const expiresAt = new Date(authData.session.expires_at! * 1000);
+    return {
+      user: {
+        id: authData.user.id,
+        email: authData.user.email!,
         name: data.name,
         plan: 'free',
-        credits: 100, // Free tier credits
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Generate JWT token
-    const token = this.generateToken(user.id);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    // Save session
-    await supabase.from('sessions').insert({
-      user_id: user.id,
-      token,
-      expires_at: expiresAt.toISOString(),
-      created_at: new Date().toISOString()
-    });
-
-    return {
-      user: this.mapUser(user),
-      token,
+        credits: 100,
+        createdAt: new Date(authData.user.created_at)
+      },
+      token: authData.session.access_token,
       expiresAt
     };
   }
 
-  // Login existing user
+  // Login existing user — delegates to Supabase Auth
   static async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', credentials.email.toLowerCase())
-      .single();
-
-    if (error || !user) {
-      throw new Error('Invalid email or password');
-    }
-
-    // Verify password
-    const isValidPassword = await bcrypt.compare(credentials.password, user.password);
-    
-    if (!isValidPassword) {
-      throw new Error('Invalid email or password');
-    }
-
-    // Update last login
-    await supabase
-      .from('users')
-      .update({ last_login_at: new Date().toISOString() })
-      .eq('id', user.id);
-
-    // Generate new token
-    const token = this.generateToken(user.id);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    // Save session
-    await supabase.from('sessions').insert({
-      user_id: user.id,
-      token,
-      expires_at: expiresAt.toISOString(),
-      created_at: new Date().toISOString()
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email.toLowerCase(),
+      password: credentials.password
     });
 
+    if (error) throw new Error('Invalid email or password');
+    if (!authData.user || !authData.session) throw new Error('Login failed');
+
+    const expiresAt = new Date(authData.session.expires_at! * 1000);
     return {
-      user: this.mapUser(user),
-      token,
+      user: {
+        id: authData.user.id,
+        email: authData.user.email!,
+        name: authData.user.user_metadata?.name || '',
+        plan: authData.user.user_metadata?.plan || 'free',
+        credits: authData.user.user_metadata?.credits || 0,
+        createdAt: new Date(authData.user.created_at)
+      },
+      token: authData.session.access_token,
       expiresAt
     };
   }
 
-  // Verify token and get user
-  static async verifyToken(token: string): Promise<User> {
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-
-      // Check session
-      const { data: session } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('token', token)
-        .eq('user_id', decoded.userId)
-        .single();
-
-      if (!session) {
-        throw new Error('Invalid session');
-      }
-
-      // Check if expired
-      if (new Date(session.expires_at) < new Date()) {
-        await this.logout(token);
-        throw new Error('Session expired');
-      }
-
-      // Get user
-      const { data: user, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', decoded.userId)
-        .single();
-
-      if (error || !user) {
-        throw new Error('User not found');
-      }
-
-      return this.mapUser(user);
-    } catch (error) {
-      throw new Error('Invalid or expired token');
-    }
-  }
-
-  // Logout
-  static async logout(token: string): Promise<void> {
-    await supabase
-      .from('sessions')
-      .delete()
-      .eq('token', token);
-  }
-
-  // Refresh token
-  static async refreshToken(oldToken: string): Promise<AuthResponse> {
-    const user = await this.verifyToken(oldToken);
-    
-    // Delete old session
-    await this.logout(oldToken);
-
-    // Create new session
-    const token = this.generateToken(user.id);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await supabase.from('sessions').insert({
-      user_id: user.id,
-      token,
-      expires_at: expiresAt.toISOString(),
-      created_at: new Date().toISOString()
-    });
-
+  // Verify session — delegates to Supabase Auth
+  static async verifyToken(_token: string): Promise<User> {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data.user) throw new Error('Invalid or expired token');
+    const u = data.user;
     return {
-      user,
-      token,
+      id: u.id,
+      email: u.email!,
+      name: u.user_metadata?.name || '',
+      plan: u.user_metadata?.plan || 'free',
+      credits: u.user_metadata?.credits || 0,
+      createdAt: new Date(u.created_at)
+    };
+  }
+
+  // Logout — delegates to Supabase Auth
+  static async logout(_token: string): Promise<void> {
+    await supabase.auth.signOut();
+  }
+
+  // Refresh token — delegates to Supabase Auth
+  static async refreshToken(_oldToken: string): Promise<AuthResponse> {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session || !data.user) throw new Error('Failed to refresh session');
+    const u = data.user;
+    const expiresAt = new Date(data.session.expires_at! * 1000);
+    return {
+      user: {
+        id: u.id,
+        email: u.email!,
+        name: u.user_metadata?.name || '',
+        plan: u.user_metadata?.plan || 'free',
+        credits: u.user_metadata?.credits || 0,
+        createdAt: new Date(u.created_at)
+      },
+      token: data.session.access_token,
       expiresAt
     };
   }
 
-  // Reset password request
+  // Reset password request — sends email via Supabase Auth
   static async requestPasswordReset(email: string): Promise<void> {
-    const { data: user } = await supabase
-      .from('users')
-      .select('id, email')
-      .eq('email', email.toLowerCase())
-      .single();
-
-    if (!user) {
-      // Don't reveal if user exists
-      return;
-    }
-
-    // Generate reset token
-    const resetToken = this.generateResetToken();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour expiry
-
-    await supabase.from('password_resets').insert({
-      user_id: user.id,
-      token: resetToken,
-      expires_at: expiresAt.toISOString(),
-      created_at: new Date().toISOString()
-    });
-
-    // TODO: Send email with reset link
-    console.log(`Reset token for ${email}: ${resetToken}`);
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.toLowerCase(),
+      { redirectTo: `${window.location.origin}/reset-password` }
+    );
+    if (error) throw new Error(error.message);
   }
 
-  // Reset password
-  static async resetPassword(token: string, newPassword: string): Promise<void> {
-    const { data: reset } = await supabase
-      .from('password_resets')
-      .select('*')
-      .eq('token', token)
-      .single();
-
-    if (!reset || new Date(reset.expires_at) < new Date()) {
-      throw new Error('Invalid or expired reset token');
-    }
-
+  // Reset password — update via Supabase Auth session (after email link clicked)
+  static async resetPassword(_token: string, newPassword: string): Promise<void> {
     if (!this.isStrongPassword(newPassword)) {
       throw new Error('Password must be at least 8 characters with uppercase, lowercase, and number');
     }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await supabase
-      .from('users')
-      .update({ password: hashedPassword })
-      .eq('id', reset.user_id);
-
-    // Delete reset token
-    await supabase
-      .from('password_resets')
-      .delete()
-      .eq('token', token);
-
-    // Invalidate all sessions
-    await supabase
-      .from('sessions')
-      .delete()
-      .eq('user_id', reset.user_id);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
   }
 
   // Update user profile
   static async updateProfile(userId: string, updates: Partial<User>): Promise<User> {
-    const { data, error } = await supabase
-      .from('users')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    return this.mapUser(data);
-  }
-
-  // Change password
-  static async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
-    const { data: user } = await supabase
-      .from('users')
-      .select('password')
-      .eq('id', userId)
-      .single();
-
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    const isValid = await bcrypt.compare(currentPassword, user.password);
-    if (!isValid) {
-      throw new Error('Current password is incorrect');
-    }
-
-    if (!this.isStrongPassword(newPassword)) {
-      throw new Error('Password must be at least 8 characters with uppercase, lowercase, and number');
-    }
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    await supabase
-      .from('users')
-      .update({ password: hashedPassword })
-      .eq('id', userId);
-  }
-
-  // Helper methods
-  private static generateToken(userId: string): string {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  }
-
-  private static generateResetToken(): string {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
-  }
-
-  private static mapUser(dbUser: any): User {
+    const { error } = await supabase.auth.updateUser({ data: updates });
+    if (error) throw new Error(error.message);
+    const { data, error: getUserError } = await supabase.auth.getUser();
+    if (getUserError || !data.user) throw new Error('Failed to get updated user');
+    const u = data.user;
     return {
-      id: dbUser.id,
-      email: dbUser.email,
-      name: dbUser.name,
-      avatar: dbUser.avatar,
-      plan: dbUser.plan,
-      credits: dbUser.credits,
-      createdAt: new Date(dbUser.created_at)
+      id: u.id,
+      email: u.email!,
+      name: u.user_metadata?.name || '',
+      avatar: u.user_metadata?.avatar,
+      plan: u.user_metadata?.plan || 'free',
+      credits: u.user_metadata?.credits || 0,
+      createdAt: new Date(u.created_at)
     };
   }
 
+  // Change password — delegates to Supabase Auth
+  static async changePassword(_userId: string, _currentPassword: string, newPassword: string): Promise<void> {
+    if (!this.isStrongPassword(newPassword)) {
+      throw new Error('Password must be at least 8 characters with uppercase, lowercase, and number');
+    }
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(error.message);
+  }
+
+  // Helper methods
   private static isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
@@ -361,23 +190,3 @@ export class AuthService {
   }
 }
 
-// Token storage helper
-export class TokenStorage {
-  private static readonly TOKEN_KEY = 'auth_token';
-
-  static setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
-  }
-
-  static getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
-  }
-
-  static removeToken(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-  }
-
-  static hasToken(): boolean {
-    return !!this.getToken();
-  }
-}

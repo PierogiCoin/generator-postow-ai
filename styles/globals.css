@@ -137,3 +137,34 @@
 .marquee:hover .marquee-track {
   animation-play-state: paused;
 }
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.neon-glow-pink {
+  box-shadow: 0 0 25px rgba(255, 0, 229, 0.2), inset 0 0 12px rgba(255, 0, 229, 0.1);
+  border-color: rgba(255, 0, 229, 0.4) !important;
+}
+
+.neon-glow-cyan {
+  box-shadow: 0 0 25px rgba(0, 220, 233, 0.2), inset 0 0 12px rgba(0, 220, 233, 0.1);
+  border-color: rgba(0, 220, 233, 0.4) !important;
+}
+
+.neon-glow-lime {
+  box-shadow: 0 0 25px rgba(204, 255, 0, 0.2), inset 0 0 12px rgba(204, 255, 0, 0.1);
+  border-color: rgba(204, 255, 0, 0.4) !important;
+}
+
+.glass-premium {
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}

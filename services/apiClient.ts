@@ -1,16 +1,41 @@
 import { GenerateContentResponse } from '@google/genai';
+import { extractJson } from '../utils/extractJson';
+import { markQuotaDepleted, clearQuotaDepleted, isQuotaDepleted } from '../utils/chunkReload';
+import {
+  applyAiLanguage,
+  getAppLanguageCode,
+  isAiTextEndpoint,
+  resolveAiLanguageCode,
+} from '../utils/aiLanguage';
 
-// 🟢 Dynamiczna detekcja adresu backendu
-const resolveApiBaseUrl = () => {
-    const envUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-    const isGitHubDev = typeof window !== 'undefined' && /\.app\.github\.dev$/.test(window.location.hostname);
+export { extractJson, markQuotaDepleted, clearQuotaDepleted, isQuotaDepleted };
+export { applyAiLanguage, getAppLanguageCode, getAiLanguageInstruction, getAppLocale, resolveAiLanguageCode } from '../utils/aiLanguage';
 
-    if (envUrl && !(isGitHubDev && envUrl.includes('localhost'))) {
-        return envUrl.replace(/\/api$/, '');
+const isLocalHostname = (hostname: string) =>
+    hostname === 'localhost' || hostname === '127.0.0.1';
+
+/** Ignoruje localhost w env, gdy app działa na produkcji (np. po lokalnym vercel build). */
+const sanitizeEnvApiUrl = (raw: string | undefined): string | undefined => {
+    if (!raw?.trim()) return undefined;
+    const url = raw.trim().replace(/\/api$/, '');
+    if (!url) return undefined;
+
+    if (typeof window !== 'undefined' && !isLocalHostname(window.location.hostname)) {
+        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+            return undefined;
+        }
     }
+    return url;
+};
 
+export const resolveApiBaseUrl = (): string => {
     if (typeof window !== 'undefined') {
         const { protocol, hostname } = window.location;
+
+        // Lokalny dev: zawsze przez proxy Vite (/api → :3001)
+        if (isLocalHostname(hostname)) {
+            return '';
+        }
 
         if (/\.app\.github\.dev$/.test(hostname)) {
             const autoHost = hostname.replace(/-(\d+)\.app\.github\.dev$/, (_suffix, p1) => {
@@ -20,73 +45,71 @@ const resolveApiBaseUrl = () => {
             });
             return `${protocol}//${autoHost}`;
         }
-
-        if (hostname === 'localhost') {
-            return ''; // Use relative paths for proxy
-        }
     }
 
-    return ''; // Default to relative paths
+    const envUrl = sanitizeEnvApiUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
+    if (envUrl) return envUrl;
+
+    // Produkcja Vercel: /api → serverless proxy → Railway (BACKEND_URL)
+    return '';
 };
 
-export const API_BASE_URL = resolveApiBaseUrl();
-
-/**
- * Próbuje wyciągnąć i sparować JSON z tekstu, nawet jeśli model dodał tekst dookoła lub bloki markdown.
- */
-export function extractJson<T>(text: string): T {
-    if (!text) throw new Error("Otrzymano pusty tekst do sparsowania.");
-
-    // Usuń bloki markdown ```json ... ``` lub ``` ... ```
-    let cleanText = text.replace(/```json\s?([\s\S]*?)```/g, '$1')
-        .replace(/```\s?([\s\S]*?)```/g, '$1')
-        .trim();
-
-    try {
-        // Find the boundary of the JSON object or array
-        const firstBrace = cleanText.indexOf('{');
-        const firstBracket = cleanText.indexOf('[');
-        const lastBrace = cleanText.lastIndexOf('}');
-        const lastBracket = cleanText.lastIndexOf(']');
-
-        let start = -1;
-        let end = -1;
-
-        if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
-            start = firstBrace;
-            end = lastBrace;
-        } else if (firstBracket !== -1) {
-            start = firstBracket;
-            end = lastBracket;
-        }
-
-        if (start !== -1 && end !== -1 && end > start) {
-            const possibleJson = cleanText.substring(start, end + 1);
-            return JSON.parse(possibleJson) as T;
-        }
-
-        return JSON.parse(cleanText) as T;
-    } catch (e) {
-        console.error("Błąd parsowania JSON. Tekst oryginalny:", text);
-        console.error("Błąd parsowania JSON. Tekst po czyszczeniu:", cleanText);
-        throw new Error(`Model AI nie zwrócił poprawnego formatu JSON. Otrzymano tekst zamiast danych.`);
-    }
+export function getApiBaseUrl(): string {
+    return resolveApiBaseUrl();
 }
+
+/** Długie requesty (wideo) — bezpośrednio na Railway, omija limit proxy Vercel. */
+const PRODUCTION_BACKEND_URL = 'https://generator-postow-api-production.up.railway.app';
+
+export function getLongRunningApiBaseUrl(): string {
+    const envUrl = sanitizeEnvApiUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
+    if (envUrl) return envUrl;
+
+    if (typeof window !== 'undefined' && !isLocalHostname(window.location.hostname)) {
+        return PRODUCTION_BACKEND_URL;
+    }
+
+    return getApiBaseUrl();
+}
+
+/** @deprecated Użyj getApiBaseUrl() — wartość liczona przy imporcie może być myląca w testach. */
+export const API_BASE_URL = typeof window !== 'undefined' ? getApiBaseUrl() : '';
 
 /**
  * Funkcja pomocnicza do wywołań API Proxy
  */
 export const callApi = async (endpoint: string, payload: any, userId?: string, headers: Record<string, string> = {}) => {
-    const response = await fetch(`${API_BASE_URL}/api/${endpoint}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'x-user-id': userId ?? '',
-            ...headers
-        },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+
+    const requestBody = isAiTextEndpoint(endpoint, payload)
+        ? applyAiLanguage(payload, resolveAiLanguageCode(payload))
+        : payload;
+
+    let response: Response;
+    try {
+        response = await fetch(`${getApiBaseUrl()}/api/${endpoint}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-user-id': userId ?? '',
+                'x-app-language': resolveAiLanguageCode(payload),
+                ...headers
+            },
+            credentials: 'include',
+            body: JSON.stringify(requestBody),
+            signal: controller.signal,
+        });
+    } catch (err) {
+        clearTimeout(timeout);
+        if (err instanceof Error && err.name === 'AbortError') {
+            throw new Error('Przekroczono czas oczekiwania na odpowiedź AI (30s). Spróbuj ponownie.');
+        }
+        const netErr = new Error('Nie udało się połączyć z serwerem. Sprawdź internet i odśwież stronę.') as Error & { status?: number; code?: string };
+        netErr.code = 'NETWORK_ERROR';
+        throw netErr;
+    }
+    clearTimeout(timeout);
 
     const contentType = response.headers.get('content-type');
     let bodyText = '';
@@ -97,14 +120,24 @@ export const callApi = async (endpoint: string, payload: any, userId?: string, h
 
     if (!response.ok) {
         let errorMessage = `Błąd API (${response.status}) z ${endpoint}`;
+        let errorCode: string | undefined;
         if (contentType?.includes('application/json')) {
             try {
                 const errorJson = JSON.parse(bodyText);
                 errorMessage = errorJson.message || errorJson.error || errorMessage;
+                errorCode = errorJson.code;
             } catch { }
         }
-        throw new Error(errorMessage);
+        const err = new Error(errorMessage) as Error & { status?: number; code?: string };
+        err.status = response.status;
+        if (errorCode) err.code = errorCode;
+        if (response.status === 429 || errorCode === 'GEMINI_QUOTA_EXCEEDED') {
+            markQuotaDepleted();
+        }
+        throw err;
     }
+
+    clearQuotaDepleted();
 
     if (contentType?.includes('application/json')) {
         return JSON.parse(bodyText);

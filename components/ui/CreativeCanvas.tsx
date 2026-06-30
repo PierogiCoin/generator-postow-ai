@@ -188,7 +188,6 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
                             fullWidth
                             onClick={() => {
                                 // Tu będzie logika eksportu canvas
-                                alert("Eksportowanie projektu...");
                             }}
                         >
                             Gotowe, pobierz post

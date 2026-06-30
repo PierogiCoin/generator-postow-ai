@@ -54,6 +54,29 @@
     "selectWorkspace": "Select Workspace"
   },
   "form": {
+    "mode": {
+      "label": "Form mode",
+      "quick": "Quick",
+      "advanced": "Advanced",
+      "quickHint": "3 steps: topic → platform → generate"
+    },
+    "quick": {
+      "stepTopic": "Topic",
+      "stepPlatform": "Platform & tone",
+      "stepGenerate": "Generate",
+      "next": "Next",
+      "back": "Back",
+      "summary": "Summary",
+      "summaryTopic": "Topic",
+      "summaryPlatform": "Platform",
+      "summaryTone": "Tone",
+      "summaryType": "Type",
+      "summaryTypeValue": "Post with AI image",
+      "switchToAdvanced": "Switch to advanced mode",
+      "needAdvanced": "Need campaign, video, or A/B test?",
+      "aiTools": "AI Tools",
+      "duplicateWarning": "Similar post in history"
+    },
     "template": {
       "label": "Template",
       "tooltip": "Select an existing template to quickly fill the form. You can also save the current settings as a new template for future use.",
@@ -95,6 +118,10 @@
     "tone": {
       "label": "Tone of voice",
       "tooltip": "Choose the tone that best fits your brand and message. This will affect the style and vocabulary of the generated text."
+    },
+    "contentLanguage": {
+      "label": "Post content language",
+      "tooltip": "Choose the language for AI-generated post text, hashtags, and analyses. Independent from the app menu language."
     },
     "platform": {
       "label": "Platform",
@@ -205,6 +232,12 @@
     "AIModel": {
       "Flash": "Flash (fast)",
       "Pro": "Pro (advanced)"
+    },
+    "ContentLanguage": {
+      "pl": "Polish",
+      "en": "English",
+      "de": "German",
+      "cs": "Czech"
     }
   },
   "sidebar": {
@@ -266,6 +299,57 @@
       "copyText": "Copy Text",
       "copied": "Copied!"
     },
+    "tabs": {
+      "label": "Result sections",
+      "content": "Content",
+      "media": "Media",
+      "publish": "Publish",
+      "analysis": "Analysis"
+    },
+    "actions": {
+      "copy": "Copy",
+      "copied": "Copied!",
+      "favorite": "Favorite",
+      "favorited": "Favorited",
+      "schedule": "Schedule",
+      "video": "Video"
+    },
+    "more": {
+      "label": "More",
+      "repurpose": "Repurpose",
+      "predict": "Predict",
+      "seo": "SEO analysis",
+      "publish": "Publish now",
+      "magicDesign": "Magic Design"
+    },
+    "preview": {
+      "card": "Card view",
+      "mobile": "Mobile preview"
+    },
+    "hooks": {
+      "title": "Headline variants (Hooks)",
+      "generate": "Generate alternatives",
+      "loading": "Generating hooks…"
+    },
+    "media": {
+      "previewAlt": "Image preview",
+      "noImage": "No image in this result.",
+      "visualConcept": "Visual concept",
+      "magicDesign": "Magic Design — edit image"
+    },
+    "publish": {
+      "bestTime": "Best time",
+      "todayAt": "Today at {{time}}",
+      "timeHint": "Suggested time based on your audience activity.",
+      "publishNow": "Publish now",
+      "repurpose": "Repurpose to another format"
+    },
+    "analysis": {
+      "predict": "Predict engagement",
+      "seo": "SEO analysis",
+      "hashtags": "Smart Hashtag Generator",
+      "hashtagsHint": "Reach, Engagement, Niche, Viral, Branded"
+    },
     "liveAssistant": {
       "stopSession": "End Session",
       "user": "user",
@@ -297,12 +381,36 @@
     }
   },
   "home": {
+    "nav": {
+      "ariaLabel": "Home page navigation",
+      "openMenu": "Open menu",
+      "howItWorks": "How it works",
+      "features": "Features",
+      "pricing": "Pricing",
+      "faq": "FAQ"
+    },
+    "trust": {
+      "title": "Trusted by the best",
+      "disclaimer": "Sample brands — illustrative examples of marketing team partnerships."
+    },
     "hero": {
       "title_part1": "Dominate social media. Create content that",
       "title_part2": "converts 10x faster.",
       "subtitle": "AI Content Pro is your intelligent assistant. Generate engaging posts, plan campaigns, and optimize your strategy based on data.",
       "cta": "Start creating for free",
-      "sub_cta": "Join 5,000+ marketers and creators. No credit card required."
+      "cta_logged_in": "Go to generator",
+      "secondary_cta": "See how it works",
+      "sub_cta": "Join 5,000+ marketers and creators. No credit card required.",
+      "sub_cta_logged_in": "Pick up where you left off — your projects are waiting in the generator.",
+      "pill_features": "Features",
+      "pill_testimonials": "Reviews",
+      "pill_faq": "FAQ"
+    },
+    "final_cta": {
+      "title": "Ready to revolutionize your social media?",
+      "subtitle": "Join thousands of creators and marketers who save time and get better results.",
+      "subtitle_logged_in": "Keep creating content and grow your strategy in the generator.",
+      "button": "Try AI Content Pro for free"
     }
   },
   "langSwitcher": {
@@ -404,7 +512,8 @@
     "clearAll": "Clear All",
     "label": "Notifications ({{count}} unread)",
     "toast": {
-      "title": "Notification"
+      "title": "Notification",
+      "successTitle": "Success"
     },
     "time": {
       "seconds": "{{count}}s ago",
@@ -438,7 +547,51 @@
       "title": "Video API Key Required",
       "details": "Video generation requires selecting an API key with billing enabled. Please select a key to continue."
     },
-    "unknownError": "An unknown error occurred. Please try refreshing the page."
+    "unknownError": "An unknown error occurred. Please try refreshing the page.",
+    "userFacing": {
+      "toastErrorTitle": "Problem",
+      "unknownTitle": "Something went wrong",
+      "refreshAction": "Refresh the page (Cmd+Shift+R) and try again.",
+      "safetyAction": "Remove sensitive words or simplify the topic.",
+      "quotaAction": "Wait about an hour or enable billing in Google AI Studio.",
+      "apiKeyAction": "Check your key in Google AI Studio and select a billed project.",
+      "authTitle": "Session expired",
+      "authMessage": "Please sign in again to continue.",
+      "authAction": "Sign out and sign back in.",
+      "favoritesTitle": "Could not save to favorites",
+      "favoritesMessage": "Database save failed.",
+      "favoritesAction": "Refresh the page. If it persists — sign out and back in.",
+      "videoTitle": "Video generation failed",
+      "videoUnavailable": "The video engine is temporarily unavailable.",
+      "videoRetryAction": "Try again shortly or pick another engine (Auto / Luma).",
+      "videoTimeoutTitle": "Video took too long",
+      "videoTimeoutMessage": "Generation timed out.",
+      "videoTimeoutAction": "Shorten the post text or try Instagram Story style.",
+      "staleBundleTitle": "Outdated app version",
+      "staleBundleMessage": "Your browser is using an old JS bundle.",
+      "networkTitle": "Connection error",
+      "networkMessage": "Could not reach the server.",
+      "networkAction": "Check your internet and refresh the page.",
+      "timeoutTitle": "Request timed out",
+      "timeoutMessage": "The server did not respond in time.",
+      "timeoutAction": "Try again in a moment.",
+      "serverTitle": "Server error",
+      "serverMessage": "Something went wrong on the API side.",
+      "serverAction": "Try again in 1–2 minutes.",
+      "genericAction": "Try again or refresh the page."
+    }
+  },
+  "appVersion": {
+    "title": "A new version is available",
+    "defaultChangelog": "New release — better error messages, update banner, and Quick mode in the generator.",
+    "refresh": "Refresh now",
+    "later": "Later"
+  },
+  "videoStory": {
+    "successTitle": "Done",
+    "successMessage": "Video generated successfully!",
+    "fallbackTitle": "Video engine changed",
+    "fallbackMessage": "Veo was unavailable — an alternative engine was used."
   },
   "videoKeyModal": {
     "title": "API Key Required",

@@ -8,6 +8,20 @@ import { generateJson } from './apiClient';
  * Generuje symulowane dane o wydajności dla historii postów.
  * W prawdziwej aplikacji te dane pochodziłyby z API mediów społecznościowych.
  */
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+};
+
+const hashString = (str: string): number => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
 export const generateMockPerformanceData = (history: CampaignHistoryItem[]): CampaignHistoryItem[] => {
   return history.map(item => {
     // Podstawowe wartości metryk
@@ -17,7 +31,6 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
     let baseShares = 10;
 
     // Modyfikatory w oparciu o właściwości posta (symulacja trendów)
-    const topic = item.formData?.topic || '';
     if (item.formData?.contentType === ContentType.Advertisement) baseReach *= 2.5;
     if (item.formData?.tone === Tone.Witty) baseComments *= 1.5;
     if (item.formData?.tone === Tone.Inspirational) baseShares *= 1.8;
@@ -26,16 +39,18 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
       baseLikes *= 2;
     }
 
-    // Dodaj losowość, aby dane wyglądały bardziej naturalnie
-    const randomize = (value: number) => value * (0.8 + Math.random() * 0.4);
+    // Deterministyczna losowość na podstawie ID posta – eliminuje miganie przy re-renderach
+    const seed = hashString(item.id);
+    const randomize = (value: number, offset: number) =>
+      value * (0.8 + seededRandom(seed + offset) * 0.4);
 
     return {
       ...item,
       performance: {
-        reach: Math.floor(randomize(baseReach)),
-        likes: Math.floor(randomize(baseLikes)),
-        comments: Math.floor(randomize(baseComments)),
-        shares: Math.floor(randomize(baseShares)),
+        reach: Math.floor(randomize(baseReach, 0)),
+        likes: Math.floor(randomize(baseLikes, 1)),
+        comments: Math.floor(randomize(baseComments, 2)),
+        shares: Math.floor(randomize(baseShares, 3)),
       },
     };
   });
@@ -98,8 +113,7 @@ export const fetchAIAnalysis = async (
     }, userId);
 
     return result;
-  } catch (error) {
-    console.error("AI Analysis failed:", error);
+  } catch {
     // Fallback w razie błędu API
     return {
       insights: [
@@ -144,8 +158,7 @@ export const generateStrategySuggestions = async (
     }, userId);
 
     return result.suggestions;
-  } catch (error) {
-    console.error("Strategy suggestions failed:", error);
+  } catch {
     return [];
   }
 };

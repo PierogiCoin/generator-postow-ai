@@ -26,13 +26,13 @@ export const PersonaDisplay: React.FC<PersonaDisplayProps> = ({ persona, onClose
         <div>
           <h5 className="font-semibold text-blue-700 dark:text-blue-200">{t('persona.goals')}</h5>
           <ul className="list-disc list-inside text-blue-900/80 dark:text-blue-100/80">
-            {persona.goals.map((goal, i) => <li key={i}>{goal}</li>)}
+            {persona.goals.map((goal, i) => <li key={`goal-${i}`}>{goal}</li>)}
           </ul>
         </div>
         <div>
           <h5 className="font-semibold text-blue-700 dark:text-blue-200">{t('persona.painPoints')}</h5>
           <ul className="list-disc list-inside text-blue-900/80 dark:text-blue-100/80">
-            {persona.painPoints.map((point, i) => <li key={i}>{point}</li>)}
+            {persona.painPoints.map((point, i) => <li key={`pain-${i}`}>{point}</li>)}
           </ul>
         </div>
         <div>

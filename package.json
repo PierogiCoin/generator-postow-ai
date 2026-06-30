@@ -7,7 +7,12 @@
     "dev": "vite",
     "dev:full": "concurrently -k \"cd server && pnpm exec tsx --env-file=.env index.ts\" \"vite\"",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start:server": "cd server && pnpm exec tsx --env-file=.env index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "smoke": "node scripts/smoke-prod.mjs"
   },
   "dependencies": {
     "@google/genai": "1.24.0",
@@ -39,6 +44,9 @@
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.14.0",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vercel/node": "^5.8.22",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.27",
     "baseline-browser-mapping": "^2.10.0",
@@ -47,6 +55,8 @@
     "tailwindcss": "^3.4.19",
     "tsx": "^4.20.6",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^3.2.6",
+    "zod": "^4.4.3"
   }
 }

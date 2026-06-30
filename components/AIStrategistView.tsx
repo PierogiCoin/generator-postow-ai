@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -106,11 +106,11 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
         });
     };
 
-    const handleImport = () => {
+    const handleImport = useCallback(() => {
         setIntelligentCalendarPlan(report.actionablePlan);
         setPlanImported(true);
         setTimeout(() => navigate("/calendar"), 1500);
-    };
+    }, [report.actionablePlan, navigate]);
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -133,7 +133,7 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
                                 <summary className="font-semibold cursor-pointer">{p.pillar}</summary>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{p.description}</p>
                                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
-                                    {p.postIdeas.map((idea, i) => <li key={i}>{idea}</li>)}
+                                    {p.postIdeas.map((idea, i) => <li key={`${p.pillar}-${i}`}>{idea}</li>)}
                                 </ul>
                             </details>
                         ))}
@@ -155,19 +155,19 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <h4 className="font-semibold text-green-600 mb-2">{t('strategist.report.strengths')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.strengths.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.strengths.map((s, i) => <li key={`strength-${i}`}>{s}</li>)}</ul>
                     </div>
                     <div>
                         <h4 className="font-semibold text-red-600 mb-2">{t('strategist.report.weaknesses')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.weaknesses.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.weaknesses.map((s, i) => <li key={`weakness-${i}`}>{s}</li>)}</ul>
                     </div>
                     <div>
                         <h4 className="font-semibold text-blue-600 mb-2">{t('strategist.report.opportunities')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.opportunities.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.opportunities.map((s, i) => <li key={`opportunity-${i}`}>{s}</li>)}</ul>
                     </div>
                     <div>
                         <h4 className="font-semibold text-yellow-600 mb-2">{t('strategist.report.threats')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.threats.map((s, i) => <li key={i}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.threats.map((s, i) => <li key={`threat-${i}`}>{s}</li>)}</ul>
                     </div>
                 </div>
             </div>
@@ -176,7 +176,7 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
             <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('strategist.report.plan')}</h3>
-                    <button onClick={handleImport} disabled={planImported} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition disabled:bg-green-600">
+                    <button onClick={handleImport} disabled={planImported} aria-label={planImported ? "Plan imported" : "Import plan"} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition disabled:bg-green-600">
                         {planImported ? <><CheckIcon className="w-5 h-5" /> {t('strategist.report.planImported')}</> : <>{t('strategist.report.importPlan')}</>}
                     </button>
                 </div>
@@ -199,6 +199,7 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
                             </div>
                             <button
                                 onClick={() => handleGenerateClick(item)}
+                                aria-label={t('strategist.report.generatePost')}
                                 className="opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-sm"
                                 title={t('strategist.report.generatePost')}
                             >
@@ -226,7 +227,7 @@ export const AIStrategistView: React.FC = () => {
     const [frequency, setFrequency] = useState('3_times_week');
     const [formats, setFormats] = useState<GenerationType[]>([GenerationType.PostWithImage, GenerationType.Video]);
     const [platforms, setPlatforms] = useState<Platform[]>([Platform.Facebook]); // NEW
-    const [lastSubmittedData, setLastSubmittedData] = useState<{ goal: string; audience: string; competitors: string[]; brandId?: string, preferences: any, platforms: Platform[] } | null>(null); // UPDATED
+    const [lastSubmittedData, setLastSubmittedData] = useState<{ goal: string; audience: string; competitors: string[]; brandId?: string, preferences: { frequency: string; formats: GenerationType[] }, platforms: Platform[] } | null>(null); // UPDATED
 
     const { brandVoiceProfiles } = useDataStore();
 
@@ -323,6 +324,7 @@ export const AIStrategistView: React.FC = () => {
                                     key={p}
                                     type="button"
                                     onClick={() => setPlatforms(prev => prev.includes(p) ? prev.filter(pl => pl !== p) : [...prev, p])}
+                                    aria-label={isSelected ? `Deselect ${p}` : `Select ${p}`}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected ? config.color.replace("bg-", "bg-") + " text-white shadow-sm" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"}`}
                                 >
                                     <Icon className="w-4 h-4" /> {p}
@@ -369,7 +371,7 @@ export const AIStrategistView: React.FC = () => {
                     <textarea id="competitors" value={competitors} onChange={e => setCompetitors(e.target.value)} rows={3} placeholder={t('strategist.form.competitorsPlaceholder')} className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="flex justify-end">
-                    <button type="submit" disabled={!goal || !audience || platforms.length === 0 || formats.length === 0} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition disabled:opacity-50">
+                    <button type="submit" disabled={!goal || !audience || platforms.length === 0 || formats.length === 0} aria-label="Generate strategy" className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition disabled:opacity-50">
                         <SparklesIcon className="w-5 h-5" />
                         {t('strategist.form.submit')}
                     </button>

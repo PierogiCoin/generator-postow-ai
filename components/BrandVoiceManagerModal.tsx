@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useConfirm } from '../hooks/useConfirm';
 import { ToneArchetype, BrandVoiceProfile } from '../types';
 import { TrashIcon } from './icons/TrashIcon';
 import { PlusCircleIcon } from './icons/PlusCircleIcon';
@@ -17,6 +19,8 @@ import { ModernInput } from './ui/ModernInput';
 import { ModernCard } from './ui/ModernCard';
 import { uploadBrandAsset } from '../services/storageService';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../hooks/useNotifications';
+import { NotificationType } from '../types';
 import { PhotoIcon } from './icons/PhotoIcon';
 
 
@@ -144,6 +148,7 @@ const ProfileForm: React.FC<{
     };
 
     const { user } = useAuth();
+    const { addToast } = useNotifications();
     const [isUploading, setIsUploading] = useState<string | null>(null);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logos' | 'mascots') => {
@@ -158,9 +163,9 @@ const ProfileForm: React.FC<{
                 ...prev,
                 settings: { ...prev.settings, [fieldName]: publicUrl }
             }));
-        } catch (error: any) {
-            console.error("Upload failed:", error);
-            alert(error.message || "Błąd podczas wgrywania pliku.");
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Błąd podczas wgrywania pliku';
+            addToast(errorMessage, NotificationType.Error);
         } finally {
             setIsUploading(null);
         }
@@ -336,12 +341,12 @@ const ProfileForm: React.FC<{
                             <p className="text-xs font-black text-green-700 dark:text-green-400 uppercase tracking-widest mb-4">Używaj takich sformułowań:</p>
                             <div className="space-y-3">
                                 {formData.settings.examplesToFollow?.map((ex, i) => (
-                                    <div key={i} className="flex gap-2">
+                                    <div key={`example-${i}`} className="flex gap-2">
                                         <input value={ex} onChange={e => handleExampleChange('examplesToFollow', i, e.target.value)} className="flex-grow bg-white dark:bg-slate-900 border-none rounded-xl p-2 text-xs" />
-                                        <button onClick={() => removeExample('examplesToFollow', i)} className="text-red-400 hover:text-red-600">&times;</button>
+                                        <button onClick={() => removeExample('examplesToFollow', i)} aria-label="Remove example" className="text-red-400 hover:text-red-600">&times;</button>
                                     </div>
                                 ))}
-                                <button onClick={() => addExample('examplesToFollow')} className="text-[10px] font-black text-green-600 uppercase">+ Dodaj przykład</button>
+                                <button onClick={() => addExample('examplesToFollow')} aria-label="Add example" className="text-[10px] font-black text-green-600 uppercase">+ Dodaj przykład</button>
                             </div>
                         </div>
                     </div>
@@ -354,6 +359,7 @@ const ProfileForm: React.FC<{
 export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ isOpen, onClose, profiles, onSave, onDelete, onSetActive, activeId, onLearnFromFavorites, onLearnFromHistory, isLearningStyle }) => {
     const [editingProfile, setEditingProfile] = useState<Partial<BrandVoiceProfile> | null>(null);
     const { t } = useTranslation();
+    const { confirm, confirmDialogProps } = useConfirm();
 
     useEffect(() => {
         if (!isOpen) {
@@ -366,15 +372,23 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
         setEditingProfile(null);
     };
 
-    const handleDelete = (id: string) => {
-        if (window.confirm(t('brandVoiceManager.deleteConfirm'))) {
-            onDelete(id);
-        }
+    const handleDelete = async (id: string) => {
+        const confirmed = await confirm({
+            title: t('brandVoiceManager.deleteConfirmTitle', 'Usuń profil'),
+            message: t('brandVoiceManager.deleteConfirm'),
+            variant: 'danger',
+            confirmLabel: t('common.delete', 'Usuń'),
+        });
+        if (confirmed) onDelete(id);
     };
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+        return <ConfirmDialog {...confirmDialogProps} />;
+    }
 
     return (
+        <>
+        <ConfirmDialog {...confirmDialogProps} />
         <div
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] transition-all p-4"
             onClick={onClose}
@@ -467,8 +481,8 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                                     {activeId !== profile.id && (
                                                         <ModernButton onClick={() => onSetActive(profile.id)} variant="ghost" size="sm">Aktywuj</ModernButton>
                                                     )}
-                                                    <button onClick={() => setEditingProfile(profile)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><PencilIcon className="w-4 h-4" /></button>
-                                                    <button onClick={() => handleDelete(profile.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><TrashIcon className="w-4 h-4" /></button>
+                                                    <button onClick={() => setEditingProfile(profile)} aria-label="Edit profile" className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><PencilIcon className="w-4 h-4" /></button>
+                                                    <button onClick={() => handleDelete(profile.id)} aria-label="Delete profile" className="p-2 text-slate-400 hover:text-red-500 transition-colors"><TrashIcon className="w-4 h-4" /></button>
                                                 </div>
                                             </div>
                                         ))
@@ -480,5 +494,9 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                 </div>
             </div>
         </div>
+        </>
     );
 };
+
+// Default export for lazy loading
+export default BrandVoiceManagerModal;

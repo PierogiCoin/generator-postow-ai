@@ -101,9 +101,7 @@ export const ScheduledPostsList: React.FC<ScheduledPostsListProps> = ({ schedule
   }, []);
 
   const handleDelete = (id: string, topic: string) => {
-    if (window.confirm(`Czy na pewno chcesz usunąć zaplanowany post dla "${topic || 'bez tytułu'}"?`)) {
-      onDelete(id);
-    }
+    onDelete(id);
   };
 
   const sortedPosts = [...scheduledPosts].sort((a, b) => {

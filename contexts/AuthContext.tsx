@@ -5,10 +5,12 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '../services/supabaseClient';
 import { User, UserPlan, Team } from '../types';
 import { useDataStore } from '../stores/dataStore';
+import { clearAllPersistedStores } from '../utils/storageUtils';
 
 export interface AuthContextType {
   user: User | null;
   userPlan: UserPlan;
+  authLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string) => Promise<void>;
   logout: () => void;
@@ -21,29 +23,11 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-const mockTeams: Team[] = [
-  {
-    id: '00000000-0000-0000-0000-000000000001',
-    name: 'Agencja Kreatywna',
-    members: [
-      { id: 'test-user-123', name: 'Ty', email: 'test@example.com', role: 'manager' },
-      { id: 'member-1', name: 'Jan Kowalski', email: 'jan@example.com', role: 'member' }
-    ]
-  },
-  {
-    id: '00000000-0000-0000-0000-000000000002',
-    name: 'E-commerce Glow',
-    members: [
-      { id: 'test-user-123', name: 'Ty', email: 'test@example.com', role: 'member' },
-      { id: 'manager-2', name: 'Anna Nowak', email: 'anna@example.com', role: 'manager' }
-    ]
-  }
-];
 
 // Helper for timeout – avoids generic syntax that is misinterpreted as JSX in .tsx
-function withTimeout(promise: Promise<any>, ms: number, label: string): Promise<any> {
+function withTimeout(promise: PromiseLike<any>, ms: number, label: string): Promise<any> {
   return Promise.race([
-    promise,
+    Promise.resolve(promise),
     new Promise((_resolve, reject) =>
       setTimeout(() => reject(new Error(`Timeout: ${label}`)), ms)
     )
@@ -57,8 +41,8 @@ function withTimeout(promise: Promise<any>, ms: number, label: string): Promise<
 async function wakeUpSupabase(supabase: SupabaseClient): Promise<void> {
   try {
     await withTimeout(
-      Promise.resolve(supabase.from('profiles').select('id', { count: 'exact', head: true })),
-      10000,
+      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      5000,
       'wake_ping'
     );
   } catch {
@@ -78,45 +62,54 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const supabase = useMemo(() => {
     try {
       return getSupabase();
-    } catch (e) {
-      console.warn('Supabase not ready yet...');
+    } catch {
       return null;
     }
   }, []);
 
   const fetchAndSetUserData = async (sbUser: any) => {
-    if (!supabase) return;
-    if (syncInProgress.current === sbUser.id) return;
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    if (syncInProgress.current === sbUser.id) {
+      return;
+    }
     syncInProgress.current = sbUser.id;
 
-    console.log(`[Auth] Syncing profile for user: ${sbUser.id}`);
     try {
       // 1. Fetch Profile (Critical) – 20 s timeout, one silent retry
       let profileData: any = null;
       try {
-        const profileQuery = () =>
-          supabase.from('profiles').select('*').eq('id', sbUser.id).maybeSingle();
+        const profileQuery = supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', sbUser.id)
+          .maybeSingle();
 
         let pd: any;
         try {
-          pd = await withTimeout(Promise.resolve(profileQuery()), 20000, 'profiles_fetch');
-        } catch (timeoutErr: any) {
-          if (timeoutErr?.message?.includes('Timeout')) {
-            console.warn('[Auth] Profile fetch timed out, retrying...');
-            await new Promise(res => setTimeout(res, 1500));
-            pd = await withTimeout(Promise.resolve(profileQuery()), 15000, 'profiles_fetch_retry');
+          pd = await withTimeout(profileQuery, 8000, 'profiles_fetch');
+        } catch (timeoutErr: unknown) {
+          if (timeoutErr instanceof Error && timeoutErr.message?.includes('Timeout')) {
+            await new Promise(res => setTimeout(res, 500));
+            pd = await withTimeout(
+              supabase.from('profiles').select('*').eq('id', sbUser.id).maybeSingle(),
+              8000,
+              'profiles_fetch_retry'
+            );
           } else {
             throw timeoutErr;
           }
         }
 
         if (pd?.error) {
-          console.error('[Auth] Profiles table error:', pd.error.message);
+          // profile fetch error — use defaults
         } else {
           profileData = pd?.data;
         }
-      } catch (err) {
-        console.warn('[Auth] Could not fetch profile, using defaults:', (err as Error).message);
+      } catch {
+        // profile unavailable — use defaults
       }
 
       const combinedUser: User = {
@@ -124,7 +117,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: sbUser.email || '',
         name: profileData?.name || sbUser.email?.split('@')[0] || 'User',
         plan: (profileData?.plan as UserPlan) || UserPlan.Free,
-        teams: mockTeams,
+        teams: [],
         currentTeamId: profileData?.current_team_id || null
       };
 
@@ -140,22 +133,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           usage: { text: 0, image: 0, video: 0, campaign: 0, learnStyle: 0 },
           current_team_id: null,
         };
-        supabase.from('profiles').upsert(defaultProfile).then(({ error }: any) => {
-          if (!error) console.log('[Auth] Profile auto-created in background');
-        });
+        supabase.from('profiles').upsert(defaultProfile);
       }
 
       // 3. Fetch secondary data (non-critical) incrementally with 8 s timeouts
       const fetchTable = async (table: string, orderCol = 'timestamp', ascending = false) => {
         try {
           const result = await withTimeout(
-            Promise.resolve(supabase.from(table).select('*').order(orderCol, { ascending })),
+            supabase.from(table).select('*').order(orderCol, { ascending }),
             8000,
             `${table}_fetch`
           ) as any;
           return result?.error ? [] : (result?.data || []);
-        } catch (e) {
-          console.warn(`[Auth] Skip sync for ${table}:`, (e as Error).message);
+        } catch {
           return [];
         }
       };
@@ -200,9 +190,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       });
 
-      console.log('[Auth] Background synchronization started.');
-    } catch (error) {
-      console.error('[Auth] Sync error:', error);
+    } catch {
+      // sync failed — app still usable
       setLoading(false);
     } finally {
       syncInProgress.current = null;
@@ -210,49 +199,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+    // Awaryjnie odblokuj UI — np. po powrocie z OAuth Facebook
+    const loadingGuard = setTimeout(() => setLoading(false), 8000);
+
     let isSubscribed = true;
 
     const checkInitialSession = async () => {
       if (initialCheckDone.current) return;
       initialCheckDone.current = true;
 
-      console.log('[Auth] Checking initial session...');
-
-      // Wake up the Supabase project (handles free-tier pausing)
-      await wakeUpSupabase(supabase);
-
-      // Try getSession with a 15 s timeout; retry once on timeout
-      const tryGetSession = () => withTimeout(supabase.auth.getSession(), 15000, 'getSession');
-
       try {
-        let result: any;
-        try {
-          result = await tryGetSession();
-        } catch (firstErr: any) {
-          if (firstErr?.message?.includes('Timeout')) {
-            console.warn('[Auth] Session check timed out, retrying in 2 s...');
-            await new Promise(res => setTimeout(res, 2000));
-            result = await withTimeout(supabase.auth.getSession(), 20000, 'getSession_retry');
-          } else {
-            throw firstErr;
-          }
-        }
+        const [, sessionResult] = await Promise.all([
+          wakeUpSupabase(supabase),
+          withTimeout(supabase.auth.getSession(), 10000, 'getSession'),
+        ]);
 
-        const { data, error } = result;
+        const { data, error } = sessionResult;
         if (error) throw error;
 
         const session = data?.session;
-        console.log('[Auth] Session:', session ? `User ${session.user.id}` : 'None');
-
         if (session?.user && isSubscribed) {
           await fetchAndSetUserData(session.user);
         } else if (isSubscribed) {
           setUser(null);
           setLoading(false);
         }
-      } catch (e) {
-        console.error('[Auth] Session check failed after retries:', e);
+      } catch {
         if (isSubscribed) {
           setUser(null);
           setLoading(false);
@@ -262,10 +238,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
       if (!isSubscribed) return;
-      console.log(`[Auth] Event: ${event}`, session?.user?.id);
 
-      if (event === 'SIGNED_IN' && session?.user) {
-        setLoading(true);
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
         await fetchAndSetUserData(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -286,6 +260,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return () => {
       isSubscribed = false;
+      clearTimeout(loadingGuard);
       subscription.unsubscribe();
     };
   }, [supabase, setDataStoreState]);
@@ -308,10 +283,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     setUser(null);
+    // Clear persisted Zustand stores
+    clearAllPersistedStores();
     try {
       if (supabase) await supabase.auth.signOut();
-    } catch (e) {
-      console.warn('SignOut failed locally', e);
+    } catch {
+      // signOut failed — user is already logged out locally
     }
   };
 
@@ -328,6 +305,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const value: AuthContextType = {
     user,
     userPlan: user?.plan || UserPlan.Free,
+    authLoading: loading,
     login,
     signup,
     logout,
@@ -340,16 +318,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? (
-        <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-lg font-medium animate-pulse">Łączenie z bazą danych...</p>
-          </div>
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </AuthContext.Provider>
   );
 };

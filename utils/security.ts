@@ -125,8 +125,8 @@ export function validateHashtag(hashtag: string): { valid: boolean; error?: stri
     return { valid: false, error: `Hashtag nie może być dłuższy niż ${VALIDATION_LIMITS.HASHTAG_MAX} znaków` };
   }
 
-  // Hashtag should only contain alphanumeric and underscore
-  if (!/^#?[a-zA-Z0-9_]+$/.test(trimmed)) {
+  // Hashtag should only contain alphanumeric, underscore and unicode letters (including Polish chars)
+  if (!/^#?[\p{L}\p{N}_]+$/u.test(trimmed)) {
     return { valid: false, error: 'Hashtag może zawierać tylko litery, cyfry i podkreślnik' };
   }
 

@@ -1,5 +1,5 @@
 import { getSupabase } from './supabaseClient';
-import { API_BASE_URL } from './apiClient';
+import { getApiBaseUrl } from './apiClient';
 import type { SocialConnection, SocialPost, SocialPlatform } from '../types/socialPublishing';
 
 export const socialConnectionsService = {
@@ -34,34 +34,48 @@ export const socialConnectionsService = {
      * Get the OAuth authorization URL for a platform
      */
     async getAuthUrl(platform: SocialPlatform, userId: string): Promise<string> {
-        const response = await fetch(`${API_BASE_URL}/api/social/auth/${platform}`, {
-            headers: {
-                'x-user-id': userId
-            }
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to get auth URL: ${response.statusText}`);
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+            const response = await fetch(`${getApiBaseUrl()}/api/social/auth/${platform}`, {
+                headers: { 'x-user-id': userId },
+                signal: controller.signal,
+            });
+            if (!response.ok) throw new Error(`Failed to get auth URL: ${response.statusText}`);
+            const data = await response.json();
+            return data.authUrl;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError')
+                throw new Error('Przekroczono czas łączenia z platformą (15s).');
+            throw err;
+        } finally {
+            clearTimeout(timeout);
         }
-        const data = await response.json();
-        return data.authUrl;
     },
 
     /**
      * Fetch all historical posts from all connections for a user
      */
     async getAggregateHistory(userId: string): Promise<SocialPost[]> {
-        const response = await fetch(`${API_BASE_URL}/api/social/aggregate-history`, {
-            headers: {
-                'x-user-id': userId
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+            const response = await fetch(`${getApiBaseUrl()}/api/social/aggregate-history`, {
+                headers: { 'x-user-id': userId },
+                signal: controller.signal,
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `Failed to fetch aggregate history: ${response.statusText}`);
             }
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.error || `Failed to fetch aggregate history: ${response.statusText}`);
+            const data = await response.json();
+            return data.posts;
+        } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError')
+                throw new Error('Przekroczono czas pobierania historii (15s).');
+            throw err;
+        } finally {
+            clearTimeout(timeout);
         }
-
-        const data = await response.json();
-        return data.posts;
     }
 };

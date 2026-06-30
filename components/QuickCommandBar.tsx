@@ -6,7 +6,7 @@ import { useAppHandlers } from '../hooks/useAppHandlers';
 import { useNotifications } from '../hooks/useNotifications';
 
 import { SparklesIcon } from './icons/SparklesIcon';
-import { getCommandFunctionDeclarations, executeCommand } from '../services/geminiService';
+import { executeCommand } from '../services/geminiService';
 import type { ScheduledPost, FormData, GenerationResult, Platform } from '../types';
 import { GenerationType, NotificationType } from '../types';
 
@@ -28,14 +28,11 @@ export const QuickCommandBar: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const tools = getCommandFunctionDeclarations();
-            const result = await executeCommand(command, tools);
-            const functionCall = result.functionCalls?.[0];
+            const result = await executeCommand(command, user.id);
+            const functionCall = (result as any).functionCalls?.[0];
 
             if (functionCall) {
                 const { name, args } = functionCall;
-                console.log(`Executing function: ${name} with args:`, args);
-                
                 switch (name) {
                     case 'navigateTo':
                         navigate(`/${args.view}`);
@@ -67,7 +64,7 @@ export const QuickCommandBar: React.FC = () => {
                             comments: [],
                             createdAt: Date.now(),
                         };
-                        handlers.handleConfirmSchedule(newPost.scheduleTimestamp, newPost);
+                        handlers.handleConfirmSchedule(newPost.scheduleTimestamp, [platform], [GenerationType.PostWithImage]);
                         addToast(t('quickCommand.scheduled', { platform: platform, time: scheduleTime.toLocaleString() }), NotificationType.Success);
                         break;
                     }
@@ -78,7 +75,7 @@ export const QuickCommandBar: React.FC = () => {
                         break;
                     }
                     default:
-                        console.warn(`Nieznana funkcja: ${name}`);
+                        // Unknown function - silently ignore
                 }
                 setCommand('');
             } else {

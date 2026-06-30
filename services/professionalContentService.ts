@@ -222,8 +222,7 @@ Return JSON:
 
   try {
     return JSON.parse(response.text);
-  } catch (e) {
-    console.error('Error parsing strategic hashtags:', response.text);
+  } catch {
     throw new Error('Failed to generate strategic hashtags');
   }
 };
@@ -297,8 +296,7 @@ Return JSON:
 
   try {
     return JSON.parse(response.text);
-  } catch (e) {
-    console.error('Error parsing image concept:', response.text);
+  } catch {
     throw new Error('Failed to generate image concept');
   }
 };
@@ -381,8 +379,7 @@ Return JSON:
 
   try {
     return JSON.parse(response.text);
-  } catch (e) {
-    console.error('Error parsing video script:', response.text);
+  } catch {
     throw new Error('Failed to generate video script');
   }
 };
@@ -450,8 +447,7 @@ Return JSON:
 
   try {
     return JSON.parse(response.text);
-  } catch (e) {
-    console.error('Error parsing content analysis:', response.text);
+  } catch {
     throw new Error('Failed to analyze content');
   }
 };

@@ -26,3 +26,15 @@ dist-ssr
 # Zmienne środowiskowe
 .env
 .env.*
+!.env.example
+!server/.env.example
+.vercel
+
+# Supabase CLI local link state
+supabase/.temp/
+
+# IDE / agenci AI (Cursor, Devin, Antigravity) – nie commituj
+.cursor/
+.devin/
+AGENTS.md
+.devinrules

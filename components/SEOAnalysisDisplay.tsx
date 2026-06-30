@@ -104,7 +104,7 @@ export const SEOAnalysisDisplay: React.FC<SEOAnalysisDisplayProps> = ({ result, 
                     <h4 className="text-xs font-semibold text-gray-600 dark:text-gray-300">Sugestie</h4>
                     <ul className="mt-1 space-y-1">
                         {(result.suggestions || []).map((suggestion, index) => (
-                            <li key={index} className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300">
+                            <li key={`suggestion-${index}`} className="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-300">
                                 <CheckIcon className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                                 <span>{suggestion}</span>
                             </li>

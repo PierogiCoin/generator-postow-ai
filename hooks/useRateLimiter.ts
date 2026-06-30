@@ -15,7 +15,7 @@ export function useRateLimiter(
   
   const callTimesRef = useRef<number[]>([]);
   const lastCallRef = useRef<number>(0);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Check if action can proceed
@@ -138,7 +138,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number = 500
 ): (...args: Parameters<T>) => void {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
@@ -170,7 +170,7 @@ export function useThrottle<T extends (...args: any[]) => any>(
   limit: number = 1000
 ): (...args: Parameters<T>) => void {
   const lastCallRef = useRef<number>(0);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {

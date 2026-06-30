@@ -13,10 +13,7 @@ export const fetchLearnedInsights = async (userId: string): Promise<AIInsight[] 
         .eq('user_id', user.id)
         .order('id', { ascending: false });
 
-    if (error) {
-        console.error('Error fetching learned insights:', error);
-        return null;
-    }
+    if (error) return null;
 
     return (data || []).map(row => ({
         id: row.id.toString(),
@@ -44,10 +41,7 @@ export const saveInsights = async (insights: AIInsight[]): Promise<void> => {
 
     const { error } = await supabase.from('learned_insights').insert(records);
 
-    if (error) {
-        console.error('Error saving learned insights:', error);
-        throw new Error(`Failed to save insights: ${error.message}`);
-    }
+    if (error) throw new Error('Failed to save insights');
 };
 
 export const clearInsights = async (): Promise<void> => {

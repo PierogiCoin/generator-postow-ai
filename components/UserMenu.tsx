@@ -32,10 +32,8 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
   }, []);
 
   const handleLogoutClick = () => {
-    if (window.confirm('Czy na pewno chcesz się wylogować?')) {
-      onLogout();
-      setIsOpen(false);
-    }
+    onLogout();
+    setIsOpen(false);
   };
 
   const handleNavigate = (path: string) => {

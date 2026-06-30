@@ -16,7 +16,6 @@ export const fetchLatestCalendarPlan = async (userId: string): Promise<Intellige
 
     if (error) {
         if (error.code === 'PGRST116') return null; // No rows found
-        console.error('Error fetching calendar plan:', error);
         return null;
     }
 
@@ -37,7 +36,6 @@ export const saveCalendarPlan = async (plan: IntelligentCalendarPlanItem[]): Pro
         });
 
     if (error) {
-        console.error('Error saving calendar plan:', error);
         throw new Error(`Failed to save calendar plan: ${error.message}`);
     }
 };
@@ -53,7 +51,6 @@ export const clearCalendarPlans = async (): Promise<void> => {
         .eq('user_id', user.id);
 
     if (error) {
-        console.error('Error clearing calendar plans:', error);
         throw new Error(`Failed to clear calendar plans: ${error.message}`);
     }
 };

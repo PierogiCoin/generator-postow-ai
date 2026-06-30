@@ -79,8 +79,9 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     try {
       await auth.signup(email, password);
       handleClose();
-    } catch (err: any) {
-      setError(err.message || 'Nie udało się zarejestrować. Spróbuj ponownie.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Nie udało się zarejestrować. Spróbuj ponownie.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

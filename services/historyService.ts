@@ -26,6 +26,8 @@ export const addHistoryItem = async (payload: NewCampaignPayload): Promise<Campa
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User must be logged in.");
 
+    const { data: profileData } = await supabase.from('profiles').select('name').eq('id', user.id).maybeSingle();
+
     const newHistoryItem = {
         form_data: payload.formData,
         result: payload.result,
@@ -33,7 +35,7 @@ export const addHistoryItem = async (payload: NewCampaignPayload): Promise<Campa
         seo_analysis: payload.seoAnalysis,
         user_id: user.id,
         author_id: user.id,
-        author_name: user.email?.split('@')[0] || 'User',
+        author_name: profileData?.name || user.email?.split('@')[0] || 'User',
         status: 'draft',
         comments: []
     };

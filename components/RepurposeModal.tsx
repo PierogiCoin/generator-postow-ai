@@ -53,7 +53,7 @@ const ContentDisplay: React.FC<{
         return (
             <div className="space-y-4">
                 {parts.map((part, index) => (
-                    <div key={index} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg relative group border border-gray-200 dark:border-gray-700">
+                    <div key={`part-${index}`} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg relative group border border-gray-200 dark:border-gray-700">
                         <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{part}</p>
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                              <button onClick={() => onUse(part)} title="Użyj tej treści" className="p-2 bg-gray-200 dark:bg-gray-700/50 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600">
@@ -70,7 +70,7 @@ const ContentDisplay: React.FC<{
     return (
         <div className="space-y-4">
             {platformContent.map((item, index) => (
-                <div key={index} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg relative group border border-gray-200 dark:border-gray-700">
+                <div key={`item-${item.title}-${index}`} className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg relative group border border-gray-200 dark:border-gray-700">
                     <h5 className="font-semibold text-gray-900 dark:text-white">{item.title}</h5>
                     <p className="mt-1 text-sm text-gray-700 dark:text-gray-300">{item.text}</p>
                     {item.visualIdea && (

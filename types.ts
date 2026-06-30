@@ -17,6 +17,14 @@ export enum Tone {
   Persuasive = "Persuasive",
 }
 
+/** Język wygenerowanej treści posta (niezależny od języka UI). */
+export enum ContentLanguage {
+  Polish = "pl",
+  English = "en",
+  German = "de",
+  Czech = "cs",
+}
+
 export enum ToneArchetype {
   Expert = "Expert",
   Friend = "Friend",
@@ -47,6 +55,23 @@ export enum GenerationType {
   ABTest = "ABTest",
   SeriesFollowUp = "SeriesFollowUp",
   Omnichannel = "Omnichannel",
+}
+
+export enum GenerationMode {
+  Single = "Single",
+  MultiVariant = "MultiVariant", // A/B/C with different hooks
+  SplitTest = "SplitTest",       // For formal A/B testing
+}
+
+export enum CopywritingFramework {
+  Auto = "Auto",
+  PAS = "PAS",
+  AIDA = "AIDA",
+  Storytelling = "Storytelling",
+  HookStoryOffer = "HookStoryOffer",
+  ProblemAgitateSolve = "ProblemAgitateSolve",
+  BeforeAfterBridge = "BeforeAfterBridge",
+  FeatureBenefit = "FeatureBenefit",
 }
 
 export enum SortKey {
@@ -131,6 +156,27 @@ export interface FormData {
   includeLogo?: boolean;
   learnedInsights?: AIInsight[];
   selectedPlatforms?: Platform[];
+
+  // Copywriting framework
+  copywritingFramework?: CopywritingFramework;
+
+  // Generation mode (single vs multi-variant)
+  generationMode?: GenerationMode;
+
+  /** Język wygenerowanego opisu posta */
+  contentLanguage: ContentLanguage;
+
+  // Internal: visual vibe analysis result passed between generation steps
+  _visualVibe?: string;
+}
+
+export interface MultiVariantPost {
+  variant: 'A' | 'B' | 'C';
+  hookType: 'emotional' | 'educational' | 'storytelling' | 'controversial' | 'curiosity';
+  postText: string;
+  hashtags: string[];
+  predictedEngagement: 'high' | 'medium' | 'low';
+  whyItWorks: string;
 }
 
 export interface IdeaResult {
@@ -164,11 +210,15 @@ export interface GenerationResult {
   audioDescription?: string | null;
   campaignPlan?: CampaignPlan | null;
   omnichannelPosts?: OmnichannelPost[] | null;
+  multiVariantPosts?: MultiVariantPost[] | null;
   metadata: {
     tone: Tone;
     audience: string;
     keywords?: string;
     prompt: string;
+    generationMode?: GenerationMode;
+    hookType?: string;
+    selectedVariant?: string;
   };
   approvalStatus: PostApprovalStatus;
   comments: Comment[];
@@ -309,6 +359,7 @@ export interface SEOAnalysisResult {
 export interface PredictionTip {
   text: string;
   isMet: boolean;
+  impact?: 'High' | 'Medium' | 'Low';
 }
 
 export interface PerformancePrediction {
@@ -336,6 +387,11 @@ export interface BrandVoiceSettings {
   mascotName?: string;
   mascotDescription?: string;
   includeMascotInGeneration?: boolean;
+
+  // URL-based extraction
+  websiteUrl?: string;
+  brandColors?: string[];
+  extractedFromUrl?: boolean;
 }
 
 export type BrandVoiceData = BrandVoiceSettings;

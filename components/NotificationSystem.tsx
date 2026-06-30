@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { Notification } from '../types';
@@ -39,22 +39,30 @@ const ToastMessage: React.FC<{ toast: Toast; onRemove: (id: string) => void }> =
     const { t } = useTranslation();
     
     if (toast.component) {
-        // FIX: Cast the element props to `any` to resolve the TypeScript error.
-        // This is a common workaround when TypeScript can't infer the props of a dynamically rendered component via React.cloneElement.
         return React.cloneElement(toast.component as React.ReactElement<any>, { toast, onRemove });
     }
 
     const Icon = typeConfig[toast.type].icon;
     const color = typeConfig[toast.type].color;
+    const title =
+      toast.title ||
+      (toast.type === NotificationType.Error
+        ? t('errors.userFacing.toastErrorTitle', 'Problem')
+        : toast.type === NotificationType.Success
+          ? t('notifications.toast.successTitle', 'Sukces')
+          : t('notifications.toast.title', 'Powiadomienie'));
 
     return (
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-4 flex items-start gap-4 animate-fade-in-up w-full max-w-sm">
             <Icon className={`w-6 h-6 ${color} flex-shrink-0 mt-0.5`} />
-            <div className="flex-grow">
-                <p className="text-sm font-semibold text-slate-800 dark:text-white">{t('notifications.toast.title')}</p>
-                <p className="text-sm text-slate-600 dark:text-slate-300">{toast.message}</p>
+            <div className="flex-grow min-w-0">
+                <p className="text-sm font-semibold text-slate-800 dark:text-white">{title}</p>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">{toast.message}</p>
+                {toast.action && (
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2 font-medium">{toast.action}</p>
+                )}
             </div>
-            <button onClick={() => onRemove(toast.id)} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full">
+            <button onClick={() => onRemove(toast.id)} aria-label="Close notification" className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full shrink-0">
                 <XMarkIcon className="w-5 h-5" />
             </button>
         </div>
@@ -78,7 +86,7 @@ const NotificationItem: React.FC<{ notification: Notification; onMarkAsRead: (id
     const color = typeConfig[notification.type].color;
     
     // Relative time formatting
-    const timeAgo = (timestamp: number): string => {
+    const timeAgo = useCallback((timestamp: number): string => {
         const now = new Date();
         const seconds = Math.floor((now.getTime() - timestamp) / 1000);
         if (seconds < 60) return t('notifications.time.seconds', { count: seconds });
@@ -87,9 +95,9 @@ const NotificationItem: React.FC<{ notification: Notification; onMarkAsRead: (id
         const hours = Math.floor(minutes / 60);
         if (hours < 24) return t('notifications.time.hours', { count: hours });
         return new Date(timestamp).toLocaleDateString('pl-PL');
-    };
+    }, [t]);
 
-    const handleClick = () => {
+    const handleClick = useCallback(() => {
         if (!notification.read) {
             onMarkAsRead(notification.id);
         }
@@ -97,7 +105,7 @@ const NotificationItem: React.FC<{ notification: Notification; onMarkAsRead: (id
             navigate(notification.link);
         }
         closePanel();
-    };
+    }, [notification.read, notification.id, notification.link, onMarkAsRead, navigate, closePanel]);
 
     return (
         <div
@@ -151,21 +159,28 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = (props) => 
                         <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                             <h4 className="font-semibold text-slate-800 dark:text-white">{t('notifications.title')}</h4>
                             {notifications.length > 0 && (
-                                <button onClick={onMarkAllAsRead} className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                <button onClick={onMarkAllAsRead} aria-label="Mark all notifications as read" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                                     {t('notifications.markAllRead')}
                                 </button>
                             )}
                         </div>
                         <div className="flex-grow overflow-y-auto p-2 space-y-1">
                             {notifications.length > 0 ? (
-                                notifications.map(n => <NotificationItem key={n.id} notification={n} onMarkAsRead={onMarkAsRead} closePanel={() => setIsOpen(false)} />)
+                                notifications.map(notification => (
+                                    <NotificationItem
+                                        key={notification.id}
+                                        notification={notification}
+                                        onMarkAsRead={onMarkAsRead}
+                                        closePanel={() => setIsOpen(false)}
+                                    />
+                                ))
                             ) : (
                                 <p className="text-center text-sm text-slate-400 py-8">{t('notifications.empty')}</p>
                             )}
                         </div>
                          {notifications.length > 0 && (
                             <div className="p-2 border-t border-slate-200 dark:border-slate-700 text-center">
-                                <button onClick={onClear} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 mx-auto">
+                                <button onClick={onClear} aria-label="Clear all notifications" className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 mx-auto">
                                    <TrashIcon className="w-3 h-3"/> {t('notifications.clearAll')}
                                 </button>
                             </div>

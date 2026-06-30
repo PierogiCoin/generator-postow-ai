@@ -45,7 +45,7 @@ const _initializeSupabase = async (): Promise<SupabaseClient> => {
       throw new Error('SUPABASE_URL nie jest prawidłowym URL.');
     }
     if (typeof supabaseAnonKey === 'string' && supabaseAnonKey.toLowerCase().includes('service_role')) {
-      console.warn('Wykryto prawdopodobny klucz service_role. Nie wystawiaj go na froncie.');
+      // Security warning: service_role key detected
     }
 
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, { 
@@ -58,7 +58,6 @@ const _initializeSupabase = async (): Promise<SupabaseClient> => {
     return supabaseInstance;
   } catch (err) {
     supabasePromise = null;
-    console.error('Inicjalizacja Supabase nie powiodła się:', err);
     throw err;
   }
 };

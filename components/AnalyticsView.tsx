@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import type { CampaignHistoryItem, AIInsight, OptimalTime } from '../types';
+import type { CampaignHistoryItem, AIInsight, OptimalTime, PostPerformanceData } from '../types';
+import type { SocialPost } from '../types/socialPublishing';
 import { UserPlan, NotificationType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useDataStore } from '../stores/dataStore';
@@ -10,6 +11,7 @@ import { useNotifications } from '../hooks/useNotifications';
 import * as analyticsService from '../services/analyticsService';
 import { socialConnectionsService } from '../services/socialConnectionsService';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { Spinner } from './ui/LoadingStates';
 import { EyeIcon } from './icons/EyeIcon';
 import { HeartIcon } from './icons/HeartIcon';
 import { ChatBubbleIcon } from './icons/ChatBubbleIcon';
@@ -83,7 +85,7 @@ const SEOTrendChart: React.FC<{ data: CampaignHistoryItem[] }> = ({ data }) => {
                 ))}
                 {/* X Axis Labels */}
                 {chartData.map((item, index) => (
-                    <text key={index} x={getX(item.timestamp)} y={CHART_HEIGHT - PADDING + 15} textAnchor="middle" className="text-xs" fill="var(--text-secondary)">
+                    <text key={`xaxis-${index}`} x={getX(item.timestamp)} y={CHART_HEIGHT - PADDING + 15} textAnchor="middle" className="text-xs" fill="var(--text-secondary)">
                         {new Date(item.timestamp).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' })}
                     </text>
                 ))}
@@ -97,7 +99,7 @@ const SEOTrendChart: React.FC<{ data: CampaignHistoryItem[] }> = ({ data }) => {
                 {/* Data points */}
                 {chartData.map((item, index) => (
                     <circle
-                        key={index}
+                        key={`point-${index}`}
                         cx={getX(item.timestamp)}
                         cy={getY(item.seoAnalysis!.score)}
                         r="5"
@@ -178,10 +180,7 @@ const EmptyState: React.FC<{ onRunAnalysis: () => void; hasHistory: boolean }> =
 
 const LoadingState: React.FC = () => (
     <div className="text-center py-20 px-6 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center">
-        <svg className="animate-spin h-12 w-12 text-blue-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+        <Spinner size="lg" className="mb-4" />
         <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Analizowanie danych...</h2>
         <p className="mt-2 text-gray-500 dark:text-gray-400">AI przetwarza wydajność Twoich postów, aby znaleźć kluczowe trendy i sugestie.</p>
     </div>
@@ -194,6 +193,56 @@ const transformData = (data: Record<string, number> | undefined) => {
         .sort((a, b) => b.value - a.value);
 };
 
+type DraftAnalyticsPost = CampaignHistoryItem & { source: 'draft' };
+type LiveAnalyticsPost = SocialPost & { source: 'live' };
+type AnalyticsDisplayPost = DraftAnalyticsPost | LiveAnalyticsPost;
+
+const isLivePost = (post: AnalyticsDisplayPost): post is LiveAnalyticsPost => post.source === 'live';
+const isDraftPost = (post: AnalyticsDisplayPost): post is DraftAnalyticsPost => post.source === 'draft';
+
+const emptyMetrics = (): PostPerformanceData => ({ reach: 0, likes: 0, comments: 0, shares: 0 });
+
+const getPostTimestamp = (post: AnalyticsDisplayPost): number => {
+    if (isLivePost(post)) {
+        return new Date(post.publishedAt).getTime();
+    }
+    return post.timestamp;
+};
+
+const getPostMetrics = (post: AnalyticsDisplayPost): PostPerformanceData => {
+    if (isLivePost(post)) {
+        const m = post.metrics;
+        return {
+            reach: m?.reach ?? m?.impressions ?? m?.views ?? 0,
+            likes: m?.likes ?? 0,
+            comments: m?.comments ?? 0,
+            shares: m?.shares ?? 0,
+        };
+    }
+    return post.performance ?? emptyMetrics();
+};
+
+const getPostPlatform = (post: AnalyticsDisplayPost): string => {
+    if (isLivePost(post)) {
+        return post.platform || 'Facebook';
+    }
+    return post.formData?.platform || 'Facebook';
+};
+
+const getPostTitle = (post: AnalyticsDisplayPost): string => {
+    if (isLivePost(post)) {
+        return post.content.substring(0, 60) + (post.content.length > 60 ? '...' : '');
+    }
+    return post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu';
+};
+
+const getPostContentForRecycle = (post: AnalyticsDisplayPost): string => {
+    if (isLivePost(post)) {
+        return post.content;
+    }
+    return post.result.postText;
+};
+
 export const AnalyticsView: React.FC = () => {
     const { userPlan, user } = useAuth();
     const { stats, history, learnedInsights, setLearnedInsights, setState } = useDataStore();
@@ -201,7 +250,7 @@ export const AnalyticsView: React.FC = () => {
     const { addToast } = useNotifications();
 
     const [analyzedHistory, setAnalyzedHistory] = useState<CampaignHistoryItem[]>([]);
-    const [realHistory, setRealHistory] = useState<any[]>([]);
+    const [realHistory, setRealHistory] = useState<SocialPost[]>([]);
     const [strategySuggestions, setStrategySuggestions] = useState<{ date: string; platform: string; topic: string; reason: string }[]>([]);
     const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
     const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -217,14 +266,14 @@ export const AnalyticsView: React.FC = () => {
         setIsAnalyzing(true);
         try {
             // 1. Pobierz posty z połączonych platform społecznościowych (FB, Instagram, LinkedIn, etc.)
-            let realSocialHistory = [];
+            let realSocialHistory: SocialPost[] = [];
             if (user) {
                 try {
                     const fetched = await socialConnectionsService.getAggregateHistory(user.id);
                     // Filtrowanie postów bez treści lub z placeholderami
                     realSocialHistory = fetched.filter(p => p.content && p.content.trim() !== "" && !p.content.toLowerCase().includes("bez tytułu"));
-                } catch (e) {
-                    console.warn("Failed to fetch real social history, falling back to app history only:", e);
+                } catch {
+                    // Fallback to app history only
                 }
             }
 
@@ -280,7 +329,7 @@ export const AnalyticsView: React.FC = () => {
             state: {
                 prefillData: {
                     topic: s.topic || "",
-                    platform: (s.platform as any) || "Facebook"
+                    platform: s.platform || "Facebook"
                 }
             }
         });
@@ -419,7 +468,7 @@ export const AnalyticsView: React.FC = () => {
                             ) : (
                                 <div className="space-y-4">
                                     {strategySuggestions.map((s, i) => (
-                                        <div key={i} className="p-4 bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-800 rounded-lg shadow-sm">
+                                        <div key={`strategy-${s.date}-${s.platform}`} className="p-4 bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-800 rounded-lg shadow-sm">
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <CalendarIcon className="w-4 h-4 text-blue-500" />
@@ -451,12 +500,12 @@ export const AnalyticsView: React.FC = () => {
                     {/* Aggregated Summary */}
                     <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl flex flex-wrap justify-around gap-4 text-center">
                         {[
-                            { label: 'Całkowity Zasięg', value: [...analyzedHistory.map(h => h.performance?.reach || 0), ...realHistory.map(r => r.metrics?.reach || 0)].reduce((a, b) => a + b, 0) },
+                            { label: 'Całkowity Zasięg', value: [...analyzedHistory.map(h => h.performance?.reach || 0), ...realHistory.map(r => r.metrics?.reach || r.metrics?.impressions || r.metrics?.views || 0)].reduce((a, b) => a + b, 0) },
                             { label: 'Polubienia', value: [...analyzedHistory.map(h => h.performance?.likes || 0), ...realHistory.map(r => r.metrics?.likes || 0)].reduce((a, b) => a + b, 0) },
                             { label: 'Komentarze', value: [...analyzedHistory.map(h => h.performance?.comments || 0), ...realHistory.map(r => r.metrics?.comments || 0)].reduce((a, b) => a + b, 0) },
                             { label: 'Udostępnienia', value: [...analyzedHistory.map(h => h.performance?.shares || 0), ...realHistory.map(r => r.metrics?.shares || 0)].reduce((a, b) => a + b, 0) },
-                        ].map((stat, i) => (
-                            <div key={i}>
+                        ].map((stat) => (
+                            <div key={`stat-${stat.label}`}>
                                 <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{formatNumber(stat.value)}</p>
                                 <p className="text-[10px] font-bold uppercase tracking-wider text-blue-800/60 dark:text-blue-300/60">{stat.label}</p>
                             </div>
@@ -464,27 +513,19 @@ export const AnalyticsView: React.FC = () => {
                     </div>
 
                     <div className="space-y-4 max-h-[calc(100vh-20rem)] overflow-y-auto pr-3">
-                        {[
-                            ...analyzedHistory.map(item => ({ ...item, _isReal: false })),
-                            ...realHistory.map(item => ({ ...item, _isReal: true }))
-                        ].sort((a, b) => new Date(b.timestamp || b.publishedAt).getTime() - new Date(a.timestamp || a.publishedAt).getTime()).map((item, idx) => {
-                            const platform = item._isReal ? (item.platform || 'Facebook') : (item.formData?.platform || 'Facebook');
+                        {([
+                            ...analyzedHistory.map(item => ({ ...item, source: 'draft' as const })),
+                            ...realHistory.map(item => ({ ...item, source: 'live' as const }))
+                        ] as AnalyticsDisplayPost[])
+                        .sort((a, b) => getPostTimestamp(b) - getPostTimestamp(a))
+                        .map((item, idx) => {
+                            const platform = getPostPlatform(item);
                             const config = platformConfig[platform] || platformConfig['Facebook'];
                             const PlatformIcon = config.icon;
                             const isExpanded = expandedPosts.has(item.id);
-
-                            const title = item._isReal
-                                ? (item.content?.substring(0, 60) + (item.content?.length > 60 ? '...' : ''))
-                                : (item.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu');
-
-                            const metrics = item._isReal ? {
-                                reach: item.metrics?.reach || item.reach || 0,
-                                likes: item.metrics?.likes || item.likes || 0,
-                                comments: item.metrics?.comments || item.comments || 0,
-                                shares: item.metrics?.shares || item.shares || 0,
-                            } : item.performance;
-
-                            const dateString = new Date(item.timestamp || item.publishedAt).toLocaleDateString();
+                            const title = getPostTitle(item);
+                            const metrics = getPostMetrics(item);
+                            const dateString = new Date(getPostTimestamp(item)).toLocaleDateString();
 
                             return (
                                 <div key={item.id || idx} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
@@ -497,19 +538,19 @@ export const AnalyticsView: React.FC = () => {
                                                 <span className="text-gray-300 dark:text-gray-600">&bull;</span>
                                                 <span>{dateString}</span>
                                                 <span className="text-gray-300 dark:text-gray-600">&bull;</span>
-                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${item._isReal ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
-                                                    {item._isReal ? 'Live' : 'Draft'}
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${isLivePost(item) ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
+                                                    {isLivePost(item) ? 'Live' : 'Draft'}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            {item._isReal && item.url && (
+                                            {isLivePost(item) && item.url && (
                                                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-400 transition" title="Otwórz post">
                                                     <ExternalLinkIcon className="w-4 h-4" />
                                                 </a>
                                             )}
                                             <button
-                                                onClick={() => handleRecyclePost(item._isReal ? item.content : item.result.postText, platform)}
+                                                onClick={() => handleRecyclePost(getPostContentForRecycle(item), platform)}
                                                 className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg text-blue-500 transition"
                                                 title="Inteligentny Recykling"
                                             >
@@ -520,10 +561,10 @@ export const AnalyticsView: React.FC = () => {
 
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4 text-center">
                                         {[
-                                            { icon: EyeIcon, label: 'Zasięg', value: metrics?.reach || 0 },
-                                            { icon: HeartIcon, label: 'Polubienia', value: metrics?.likes || 0 },
-                                            { icon: ChatBubbleIcon, label: 'Komentarze', value: metrics?.comments || 0 },
-                                            { icon: ShareIcon, label: 'Udostępnienia', value: metrics?.shares || 0 },
+                                            { icon: EyeIcon, label: 'Zasięg', value: metrics.reach },
+                                            { icon: HeartIcon, label: 'Polubienia', value: metrics.likes },
+                                            { icon: ChatBubbleIcon, label: 'Komentarze', value: metrics.comments },
+                                            { icon: ShareIcon, label: 'Udostępnienia', value: metrics.shares },
                                         ].map(({ icon: Icon, label, value }) => (
                                             <div key={label}>
                                                 <Icon className="w-5 h-5 mx-auto text-gray-400 dark:text-gray-500 mb-1" />
@@ -541,7 +582,7 @@ export const AnalyticsView: React.FC = () => {
                                             <span>{isExpanded ? 'Ukryj' : 'Pokaż'} analizę</span>
                                             <ArrowUpIcon className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-0' : 'rotate-180'}`} />
                                         </button>
-                                        {isExpanded && (
+                                        {isExpanded && isDraftPost(item) && (
                                             <div className="mt-4 space-y-4 animate-fade-in">
                                                 <SentimentDisplay result={item.sentimentAnalysis} isLoading={false} />
                                                 <SEOAnalysisDisplay result={item.seoAnalysis} isLoading={false} />

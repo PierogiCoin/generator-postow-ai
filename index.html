@@ -3,20 +3,20 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://aistudiocdn.com;
-      script-src-elem 'self' 'unsafe-inline' https://esm.sh https://aistudiocdn.com;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://esm.sh https://aistudiocdn.com https://vercel.live;
+      script-src-elem 'self' 'unsafe-inline' https://esm.sh https://aistudiocdn.com https://vercel.live;
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https: blob:;
       connect-src 'self' data: http://localhost:3001 http://127.0.0.1:3001 ws://localhost:3000 https://*.supabase.co https://*.railway.app https://generativelanguage.googleapis.com wss://*.supabase.co;
-      frame-src 'none';
+      frame-src 'self' https://vercel.live;
       object-src 'none';
       base-uri 'self';
       form-action 'self';

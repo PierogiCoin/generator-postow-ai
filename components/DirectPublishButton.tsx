@@ -37,7 +37,6 @@ export const DirectPublishButton: React.FC<DirectPublishButtonProps> = ({
         setShowSchedule(false);
       }, 3000);
     } catch (error) {
-      console.error('Publish failed:', error);
       setPublishStatus('error');
       
       // Reset error after 5 seconds

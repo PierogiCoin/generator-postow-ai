@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { ThemeToggle } from './ThemeToggle';
@@ -21,6 +21,7 @@ import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { UserIcon } from './icons/UserIcon';
 import { CampaignIcon } from './icons/CampaignIcon';
 import { BrainCircuitIcon } from './icons/BrainCircuitIcon';
+import { UsersIcon } from './icons/UsersIcon';
 
 interface HeaderProps {
     isCalendarEnabled: boolean;
@@ -35,23 +36,34 @@ const NavItem: React.FC<{ to: string, children: React.ReactNode, title?: string,
         to={to}
         title={title}
         onClick={onClick}
-        className={({ isActive }) => `flex items-center justify-center md:justify-start gap-3 px-3 md:px-5 py-2.5 text-sm font-bold rounded-xl transition-all duration-300 ${isActive
-                ? 'bg-white/10 text-white shadow-[0_0_20px_rgba(255,255,255,0.1)] backdrop-blur-md border border-white/20'
-                : 'text-slate-300 hover:text-white hover:bg-white/5 border border-transparent'
+        className={({ isActive }) => `group flex items-center justify-center md:justify-start gap-3 px-4 md:px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-300 relative overflow-hidden ${isActive
+                ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-white shadow-lg shadow-indigo-500/25 backdrop-blur-md border border-indigo-400/30 scale-[1.02] animate-pulse-subtle'
+                : 'text-slate-400 dark:text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 border border-transparent hover:border-white/10 hover:scale-[1.01] hover:shadow-lg'
             } ${disabled ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''}`
         }
     >
-        {children}
+        <div className={`absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl group-hover:scale-105`}></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
+        <div className="relative z-10 flex items-center gap-3 transition-transform duration-300 group-hover:scale-105">
+            {children}
+        </div>
     </NavLink>
 );
 
 const BottomNavItem: React.FC<{ to: string, icon: React.FC<any>, label: string }> = ({ to, icon: Icon, label }) => (
     <NavLink
         to={to}
-        className={({ isActive }) => `flex flex-col items-center justify-center gap-1 w-full h-full transition-all duration-300 ${isActive ? 'text-blue-500 scale-110' : 'text-slate-500 dark:text-slate-400 opacity-70 hover:opacity-100'}`}
+        className={({ isActive }) => `group flex flex-col items-center justify-center gap-2 w-full h-full py-2 transition-all duration-300 relative ${isActive 
+            ? 'text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text scale-105 animate-pulse-subtle' 
+            : 'text-slate-500 dark:text-slate-400 opacity-70 hover:opacity-100 hover:scale-105'}`
+        }
     >
-        <Icon className="w-6 h-6" />
-        <span className="text-[9px] font-black uppercase tracking-tighter">{label}</span>
+        <div className={`absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
+        <div className="relative z-10 flex flex-col items-center gap-1 transition-transform duration-300 group-hover:scale-105">
+            <Icon className="w-6 h-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />
+            <span className="text-[10px] font-bold uppercase tracking-tight transition-all duration-300 group-hover:tracking-normal group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-purple-400 group-hover:bg-clip-text">{label}</span>
+        </div>
     </NavLink>
 );
 
@@ -80,29 +92,43 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void, onOpenMoreMenu: () 
     );
 };
 
-const MobileCreateMenu: React.FC<{ createNavItems: any[], onClose: () => void }> = ({ createNavItems, onClose }) => {
+interface CreateNavItem {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  to: string;
+  state?: any;
+  disabled?: boolean;
+  badge?: string;
+}
+
+const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () => void }> = ({ createNavItems, onClose }) => {
     const { t } = useTranslation();
     return (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[60] sm:hidden animate-fade-in" onClick={onClose}>
-            <div className="absolute bottom-32 left-1/2 -translate-x-1/2 w-[90%] max-w-sm glass rounded-[2.5rem] border border-white/10 shadow-2xl p-6 animate-slide-in">
-                <div className="grid grid-cols-2 gap-4">
-                    {createNavItems.map(({ id, to, label, icon: Icon, state }, i) => (
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-[60] sm:hidden animate-fade-in" onClick={onClose}>
+            <div className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[92%] max-w-sm bg-gradient-to-br from-slate-900/95 to-slate-800/95 rounded-[3rem] border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-6 animate-slide-in backdrop-blur-2xl">
+                <div className="grid grid-cols-2 gap-3">
+                    {createNavItems.map(({ id, to, label, icon: Icon, state, disabled }, i) => (
                         <NavLink
                             key={id}
                             to={to}
                             state={state}
                             onClick={onClose}
-                            className="flex flex-col items-center justify-center gap-3 p-5 bg-white/5 dark:bg-slate-800/50 rounded-3xl border border-white/5 hover:border-white/20 transition-all hover:scale-105 active:scale-95 animate-fade-in-up"
-                            style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'both' }}
+                            className={`group flex flex-col items-center justify-center gap-3 p-4 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 hover:scale-105 active:scale-95 animate-fade-in-up relative overflow-hidden ${disabled ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''}`}
+                            style={{ animationDelay: `${i * 0.08}s`, animationFillMode: 'both' }}
                         >
-                            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 hover:rotate-0 transition-transform">
-                                <Icon className="w-7 h-7" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                            <div className="relative z-10 w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-purple-500/25 rotate-6 hover:rotate-0 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-purple-500/40">
+                                <Icon className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
                             </div>
-                            <span className="font-bold text-xs text-center uppercase tracking-tight text-slate-200">{label}</span>
+                            <span className="relative z-10 font-bold text-xs text-center uppercase tracking-tight text-slate-200 group-hover:text-white transition-colors duration-300">{label}</span>
                         </NavLink>
                     ))}
                 </div>
-                <button onClick={onClose} className="w-full mt-6 py-3 text-sm font-bold text-slate-400 hover:text-white transition-colors">
+                <button 
+                    onClick={onClose} 
+                    className="w-full mt-6 py-3 text-sm font-bold text-slate-400 hover:text-white bg-gradient-to-r from-white/5 to-transparent rounded-xl transition-all duration-300 hover:bg-white/10 border border-white/5 hover:border-white/10"
+                >
                     {t('common.close')}
                 </button>
             </div>
@@ -119,6 +145,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
     const { user, logout, setCurrentTeamId } = useAuth();
     const { t } = useTranslation();
+    const location = useLocation();
+    const isLandingPage = location.pathname === '/';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
     const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
@@ -185,32 +213,67 @@ export const Header: React.FC<HeaderProps> = ({
         { id: 'trends', to: '/trends', label: t('header.nav.trends'), icon: TrendingUpIcon, state: null },
         { id: 'calendar', to: '/calendar', label: t('header.nav.calendar'), icon: CalendarIcon, disabled: !isCalendarEnabled, title: !isCalendarEnabled ? t('header.calendarDisabledTooltip') : t('header.calendarTooltip'), state: null },
         { id: 'analytics', to: '/analytics', label: t('header.nav.analytics'), icon: ChartPieIcon, disabled: !isAnalyticsEnabled, title: !isAnalyticsEnabled ? t('header.analyticsDisabledTooltip') : t('header.analyticsTooltip'), state: null },
+        { id: 'competitors', to: '/competitors', label: 'Konkurencja', icon: UsersIcon, state: null },
     ];
 
     const mobileDrawerNavItems = [
         { id: 'strategist', to: '/strategist', label: t('header.nav.strategist'), icon: BrainCircuitIcon, disabled: !isStrategistEnabled },
         { id: 'analytics', to: '/analytics', label: t('header.nav.analytics'), icon: ChartPieIcon, disabled: !isAnalyticsEnabled },
+        { id: 'competitors', to: '/competitors', label: 'Konkurencja', icon: UsersIcon, disabled: false },
         { id: 'account', to: '/account', label: t('userMenu.myAccount'), icon: UserIcon, disabled: false },
     ];
 
+    const landingNavItems: Array<
+        | { id: string; label: string; href: string }
+        | { id: string; label: string; onClick: () => void }
+    > = [
+        { id: 'how-it-works', href: '#how-it-works', label: t('home.nav.howItWorks') },
+        { id: 'features', href: '#features', label: t('home.nav.features') },
+        { id: 'pricing', onClick: onUpgradeClick, label: t('home.nav.pricing') },
+        { id: 'faq', href: '#faq', label: t('home.nav.faq') },
+    ];
+
+    const landingNavLinkClass =
+        'px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-xl hover:text-slate-900 dark:hover:text-white hover:bg-white/10 transition-colors';
+
+    const landingNavMobileLinkClass =
+        'px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left w-full';
+
     return (
         <>
-            <header className="glass sticky top-0 z-[50] border-b border-white/10 shadow-lg">
+            <header className="glass sticky top-0 z-[50] border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.1)] backdrop-blur-xl">
                 <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-6 lg:gap-8">
                         <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group" aria-label="Strona główna">
-                            <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-2 shadow-[0_0_20px_rgba(168,85,247,0.4)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
-                                <SparklesIcon className="w-6 h-6 text-white" />
+                            <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-2.5 shadow-[0_0_30px_rgba(99,102,241,0.4)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
+                                <SparklesIcon className="w-6 h-6 text-white relative z-10 transition-transform duration-500 group-hover:rotate-12" />
                             </div>
-                            <h1 className="hidden sm:block text-2xl lg:text-3xl font-black gradient-text tracking-tighter">
+                            <h1 className="hidden sm:block text-2xl lg:text-3xl font-black bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white bg-clip-text text-transparent tracking-tighter group-hover:scale-105 transition-all duration-300 group-hover:from-indigo-600 group-hover:via-purple-600 group-hover:to-pink-600 dark:group-hover:from-indigo-400 dark:group-hover:via-purple-400 dark:group-hover:to-pink-400">
                                 {t('header.title')}
                             </h1>
                         </NavLink>
                         {user && <TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} />}
+                        {!user && isLandingPage && (
+                            <nav className="hidden md:flex items-center gap-1 ml-2" aria-label={t('home.nav.ariaLabel')}>
+                                {landingNavItems.map((item) =>
+                                    'href' in item ? (
+                                        <a key={item.id} href={item.href} className={landingNavLinkClass}>
+                                            {item.label}
+                                        </a>
+                                    ) : (
+                                        <button key={item.id} type="button" onClick={item.onClick} className={landingNavLinkClass}>
+                                            {item.label}
+                                        </button>
+                                    )
+                                )}
+                            </nav>
+                        )}
                     </div>
 
                     {user && (
-                        <nav className="hidden sm:flex items-center gap-1.5 p-1.5 bg-slate-950/20 rounded-[1.25rem] border border-white/5">
+                        <nav className="hidden sm:flex items-center gap-2 p-2 bg-gradient-to-br from-slate-900/40 to-slate-800/40 rounded-[1.5rem] border border-white/[0.08] backdrop-blur-md shadow-inner">
                             {mainNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
                                 <NavItem key={id} to={to} title={title || label} disabled={disabled}>
                                     <Icon className="w-5 h-5 opacity-80" />
@@ -259,21 +322,31 @@ export const Header: React.FC<HeaderProps> = ({
                         {user ? (
                             <UserMenu user={user} onLogout={logout} />
                         ) : (
-                            <div className="hidden sm:flex items-center gap-2">
+                            <>
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <button
+                                        onClick={onLoginClick}
+                                        className="px-6 py-2.5 text-sm font-bold text-white rounded-xl border border-white/20 hover:bg-white/10 transition-all active:scale-95"
+                                    >
+                                        {t('header.login')}
+                                    </button>
+                                    <button
+                                        onClick={onSignUpClick}
+                                        className="flex items-center gap-2 px-6 py-2.5 text-sm font-black text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 shadow-lg"
+                                    >
+                                        <SparklesIcon className="w-5 h-5" />
+                                        {t('header.signup')}
+                                    </button>
+                                </div>
                                 <button
-                                    onClick={onLoginClick}
-                                    className="px-6 py-2.5 text-sm font-bold text-white rounded-xl border border-white/20 hover:bg-white/10 transition-all active:scale-95"
+                                    type="button"
+                                    onClick={() => setIsMobileMenuOpen(true)}
+                                    className="sm:hidden p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white/10 border border-white/10"
+                                    aria-label={t('home.nav.openMenu')}
                                 >
-                                    {t('header.login')}
+                                    <MenuIcon className="w-6 h-6" />
                                 </button>
-                                <button
-                                    onClick={onSignUpClick}
-                                    className="flex items-center gap-2 px-6 py-2.5 text-sm font-black text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 shadow-lg"
-                                >
-                                    <SparklesIcon className="w-5 h-5" />
-                                    {t('header.signup')}
-                                </button>
-                            </div>
+                            </>
                         )}
                     </div>
                 </div>
@@ -317,6 +390,34 @@ export const Header: React.FC<HeaderProps> = ({
                                     </>
                                 ) : (
                                     <div className="flex flex-col gap-4">
+                                        {isLandingPage && (
+                                            <nav className="flex flex-col gap-2 mb-2" aria-label={t('home.nav.ariaLabel')}>
+                                                {landingNavItems.map((item) =>
+                                                    'href' in item ? (
+                                                        <a
+                                                            key={item.id}
+                                                            href={item.href}
+                                                            onClick={() => setIsMobileMenuOpen(false)}
+                                                            className={landingNavMobileLinkClass}
+                                                        >
+                                                            {item.label}
+                                                        </a>
+                                                    ) : (
+                                                        <button
+                                                            key={item.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                item.onClick();
+                                                                setIsMobileMenuOpen(false);
+                                                            }}
+                                                            className={landingNavMobileLinkClass}
+                                                        >
+                                                            {item.label}
+                                                        </button>
+                                                    )
+                                                )}
+                                            </nav>
+                                        )}
                                         <button onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                                             {t('header.login')}
                                         </button>

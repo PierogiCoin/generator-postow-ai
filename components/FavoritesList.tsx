@@ -93,8 +93,9 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({ favorites, inspira
                         <div
                           className="font-semibold text-sm text-slate-900 dark:text-white truncate"
                           title={item.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}
-                          dangerouslySetInnerHTML={{ __html: item.formData?.topic || t('common.untitled') }}
-                        />
+                        >
+                          {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('common.untitled')}
+                        </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                           {item.formData?.platform || '---'} &bull; {new Date(item.timestamp).toLocaleDateString()}
                         </p>

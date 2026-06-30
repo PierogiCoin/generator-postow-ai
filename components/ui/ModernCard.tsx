@@ -3,6 +3,7 @@ import React from 'react';
 interface ModernCardProps {
   children: React.ReactNode;
   className?: string;
+  style?: React.CSSProperties;
   hover?: boolean;
   glass?: boolean;
   padding?: 'none' | 'sm' | 'md' | 'lg';
@@ -12,6 +13,7 @@ interface ModernCardProps {
 export const ModernCard: React.FC<ModernCardProps> = ({
   children,
   className = '',
+  style,
   hover = false,
   glass = false,
   padding = 'md',
@@ -37,6 +39,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
   return (
     <div
       onClick={onClick}
+      style={style}
       className={`${baseClasses} ${glassClasses} ${hoverClasses} ${paddingClasses[padding]} ${className}`}
     >
       {children}

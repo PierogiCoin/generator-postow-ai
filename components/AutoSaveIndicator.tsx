@@ -82,7 +82,7 @@ export const useAutoSave = <T,>(
 ) => {
   const [status, setStatus] = useState<SaveStatus>('saved');
   const [lastSaved, setLastSaved] = useState<Date | undefined>();
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastDataRef = React.useRef<T>(data);
 
   useEffect(() => {
@@ -108,7 +108,6 @@ export const useAutoSave = <T,>(
         lastDataRef.current = data;
       } catch (error) {
         setStatus('error');
-        console.error('Auto-save failed:', error);
       }
     }, delay);
 

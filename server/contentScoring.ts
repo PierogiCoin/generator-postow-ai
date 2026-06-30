@@ -5,6 +5,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import logger from './logger.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
@@ -129,7 +130,7 @@ Return ONLY valid JSON, no markdown.
     };
 
   } catch (error) {
-    console.error('[Content Scoring] Error:', error);
+    logger.error('[Content Scoring] Error:', error);
     // Fallback: basic scoring
     return getFallbackScore(content, platform);
   }
@@ -233,8 +234,7 @@ export async function compareWithBenchmark(
   topPerformers: number;
   position: 'bottom_25' | 'average' | 'top_25' | 'top_10';
 }> {
-  // TODO: Integracja z bazą danych viral content
-  // Na razie mock
+  // Note: Mock implementation - integrate with viral content database when available
   const yourScore = (await scoreContent(content, platform)).overall;
 
   return {

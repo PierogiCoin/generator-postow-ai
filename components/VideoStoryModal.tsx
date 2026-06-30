@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Sparkles, Video, Download, Instagram, Share2, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { GenerationResult } from '../types';
+import type { VideoStoryProgressStatus } from '../services/videoStoryService';
+import { VideoStoryProgress } from './VideoStoryProgress';
 
 interface VideoStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   post: GenerationResult | null;
-  onGenerate: (style: VideoStoryStyle) => Promise<void>;
+  onGenerate: (style: VideoStoryStyle, provider: VideoStoryProvider) => Promise<void>;
   isGenerating: boolean;
+  progressStatus?: VideoStoryProgressStatus | null;
   generatedVideo?: {
     url: string;
     thumbnail: string;
@@ -22,6 +25,8 @@ export type VideoStoryStyle =
   | 'animated-quote' 
   | 'kinetic-typography'
   | 'carousel-slides';
+
+export type VideoStoryProvider = 'auto' | 'veo' | 'luma';
 
 interface StyleOption {
   id: VideoStoryStyle;
@@ -38,11 +43,33 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
   post,
   onGenerate,
   isGenerating,
+  progressStatus,
   generatedVideo
 }) => {
   const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] = useState<VideoStoryStyle>('instagram-story');
-  const [progress, setProgress] = useState(0);
+  const [selectedProvider, setSelectedProvider] = useState<VideoStoryProvider>('veo');
+
+  const providerOptions: { id: VideoStoryProvider; name: string; description: string; icon: string }[] = [
+    {
+      id: 'veo',
+      name: t('videoStory.providers.veo', 'Google Veo 3.1'),
+      description: t('videoStory.providers.veoDesc', 'Gemini API, natywny dźwięk, 8s'),
+      icon: '✨',
+    },
+    {
+      id: 'luma',
+      name: t('videoStory.providers.luma', 'Luma Dream Machine'),
+      description: t('videoStory.providers.lumaDesc', 'Każda proporcja, cinematic'),
+      icon: '🎬',
+    },
+    {
+      id: 'auto',
+      name: t('videoStory.providers.auto', 'Auto'),
+      description: t('videoStory.providers.autoDesc', 'Najlepszy dostępny dostawca'),
+      icon: '⚙️',
+    },
+  ];
 
   const styleOptions: StyleOption[] = [
     {
@@ -87,24 +114,10 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
     }
   ];
 
-  useEffect(() => {
-    if (isGenerating) {
-      const interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 95) return prev;
-          return prev + Math.random() * 15;
-        });
-      }, 500);
-      return () => clearInterval(interval);
-    } else {
-      setProgress(0);
-    }
-  }, [isGenerating]);
-
   if (!isOpen) return null;
 
   const handleGenerate = async () => {
-    await onGenerate(selectedStyle);
+    await onGenerate(selectedStyle, selectedProvider);
   };
 
   const selectedOption = styleOptions.find(opt => opt.id === selectedStyle);
@@ -176,6 +189,32 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
                   </button>
                 ))}
               </div>
+
+              {/* Provider selection */}
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mt-6 mb-3">
+                {t('videoStory.selectProvider', 'Silnik AI')}
+              </h3>
+              <div className="grid grid-cols-3 gap-2">
+                {providerOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setSelectedProvider(option.id)}
+                    className={`p-3 rounded-xl border-2 transition text-left ${
+                      selectedProvider === option.id
+                        ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-purple-300'
+                    }`}
+                  >
+                    <div className="text-xl mb-1">{option.icon}</div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
+                      {option.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
+                      {option.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Right: Preview/Result */}
@@ -203,25 +242,17 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
                 </div>
               )}
 
-              {isGenerating && (
+              {isGenerating && progressStatus && (
+                <div className="aspect-[9/16] max-h-[500px] bg-slate-100 dark:bg-slate-900 rounded-2xl flex flex-col items-center justify-center p-6">
+                  <VideoStoryProgress status={progressStatus} />
+                </div>
+              )}
+
+              {isGenerating && !progressStatus && (
                 <div className="aspect-[9/16] max-h-[500px] bg-slate-100 dark:bg-slate-900 rounded-2xl flex flex-col items-center justify-center p-6">
                   <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
-                  <p className="text-slate-900 dark:text-white font-semibold mb-2">
+                  <p className="text-slate-900 dark:text-white font-semibold">
                     {t('videoStory.generating', 'Generowanie wideo...')}
-                  </p>
-                  <div className="w-full max-w-xs">
-                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                    <p className="text-xs text-slate-500 text-center mt-2">
-                      {Math.round(progress)}%
-                    </p>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-4 text-center">
-                    {t('videoStory.generatingHint', 'To może potrwać 30-60 sekund...')}
                   </p>
                 </div>
               )}
@@ -269,7 +300,7 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
         <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Sparkles className="w-4 h-4" />
-            <span>{t('videoStory.poweredBy', 'Powered by Veo 2')}</span>
+            <span>{t('videoStory.poweredBy', 'Powered by Google Veo & Luma AI')}</span>
           </div>
           <div className="flex gap-3">
             <button
@@ -301,3 +332,6 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
     </div>
   );
 };
+
+// Default export for lazy loading
+export default VideoStoryModal;

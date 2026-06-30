@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { GenerationResult, AppError, FormData, RepurposedContent, SentimentAnalysisResult, SEOAnalysisResult, PerformancePrediction } from '../types';
+import type { VideoStoryProgressStatus } from '../services/videoStoryService';
 
 type GenerationState = {
   result: GenerationResult | null;
@@ -29,6 +31,7 @@ type GenerationState = {
   assistantTranscript: { speaker: 'user' | 'model'; text: string }[];
   liveTranscript: { user: string; model: string };
   isGeneratingVideoStory: boolean;
+  videoStoryProgress: VideoStoryProgressStatus | null;
   isOptimizingMultiPlatform: boolean;
   hookVariations: string[];
   isSuggestingHooks: boolean;
@@ -58,6 +61,8 @@ type GenerationState = {
   aiActionFailure: (error: AppError) => void;
   finishAIAction: () => void;
   revertAIAction: () => void;
+  clearResult: () => void;
+  resetAssistant: () => void;
   startRepurpose: () => void;
   repurposeSuccess: (content: RepurposedContent) => void;
   repurposeFailure: (error: AppError) => void;
@@ -78,6 +83,7 @@ type GenerationState = {
   seoAnalysisSuccess: (analysis: SEOAnalysisResult | null) => void;
   seoAnalysisFailure: () => void;
   startVideoStoryGeneration: () => void;
+  setVideoStoryProgress: (progress: GenerationState['videoStoryProgress']) => void;
   videoStorySuccess: () => void;
   videoStoryFailure: () => void;
   startMultiPlatformOptimization: () => void;
@@ -116,12 +122,15 @@ const initialGenerationState = {
   assistantTranscript: [],
   liveTranscript: { user: '', model: '' },
   isGeneratingVideoStory: false,
+  videoStoryProgress: null,
   isOptimizingMultiPlatform: false,
   hookVariations: [],
   isSuggestingHooks: false,
 };
 
-export const useGenerationStore = create<GenerationState>((set, get) => ({
+export const useGenerationStore = create<GenerationState>()(
+  persist(
+    (set, get) => ({
   ...initialGenerationState,
 
   startGeneration: (formData) => set({ ...initialGenerationState, isLoading: true, lastFormData: formData }),
@@ -186,9 +195,18 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
   startSEOAnalysis: () => set({ isAnalyzingSEO: true, seoAnalysis: null }),
   seoAnalysisSuccess: (analysis) => set({ isAnalyzingSEO: false, seoAnalysis: analysis }),
   seoAnalysisFailure: () => set({ isAnalyzingSEO: false }),
-  startVideoStoryGeneration: () => set({ isGeneratingVideoStory: true }),
-  videoStorySuccess: () => set({ isGeneratingVideoStory: false }),
-  videoStoryFailure: () => set({ isGeneratingVideoStory: false }),
+  startVideoStoryGeneration: () => set({
+    isGeneratingVideoStory: true,
+    videoStoryProgress: {
+      stage: 'queued',
+      stageLabel: 'Uruchamianie…',
+      progress: 2,
+      startedAt: Date.now(),
+    },
+  }),
+  setVideoStoryProgress: (progress) => set({ videoStoryProgress: progress }),
+  videoStorySuccess: () => set({ isGeneratingVideoStory: false, videoStoryProgress: null }),
+  videoStoryFailure: () => set({ isGeneratingVideoStory: false, videoStoryProgress: null }),
   startMultiPlatformOptimization: () => set({ isOptimizingMultiPlatform: true }),
   multiPlatformSuccess: () => set({ isOptimizingMultiPlatform: false }),
   multiPlatformFailure: () => set({ isOptimizingMultiPlatform: false }),
@@ -207,4 +225,50 @@ export const useGenerationStore = create<GenerationState>((set, get) => ({
     }
     return { result: { ...state.result, postText: newText } };
   }),
-}));
+  clearResult: () => set({ 
+    result: null, 
+    error: null, 
+    isLoading: false,
+    sentimentAnalysis: null,
+    seoAnalysis: null,
+    performancePrediction: null,
+    hookVariations: [],
+    suggestedHashtags: [],
+    suggestedAudio: []
+  }),
+  resetAssistant: () => set({ 
+    isLiveAssistantActive: false, 
+    isAssistantSpeaking: false, 
+    assistantTranscript: [],
+    liveTranscript: { user: '', model: '' }
+  }),
+}), {
+  name: 'generation-storage',
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({ 
+    lastFormData: state.lastFormData,
+    result: state.result,
+  }),
+  onRehydrateStorage: () => (state) => {
+    if (state) {
+      state.isLoading = false;
+      state.error = null;
+      state.generationProgress = null;
+      state.isAssistantLoading = false;
+      state.isRegenerating = false;
+      state.isRepurposing = false;
+      state.isPredictingPerformance = false;
+      state.isAnalyzingSentiment = false;
+      state.isAnalyzingSEO = false;
+      state.isSuggestingHashtags = false;
+      state.isSuggestingAudio = false;
+      state.isSuggestingHooks = false;
+      state.isGeneratingVideoStory = false;
+      state.videoStoryProgress = null;
+      state.isOptimizingMultiPlatform = false;
+      state.isLiveAssistantActive = false;
+      state.isAssistantSpeaking = false;
+    }
+  },
+})
+);

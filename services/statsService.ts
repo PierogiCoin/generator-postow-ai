@@ -30,7 +30,6 @@ export const recordGeneration = async (formData: FormData): Promise<void> => {
     const { error } = await supabase.rpc('increment_usage', { usage_type: type });
     
     if (error) {
-        console.error(`Error recording generation for type ${type}:`, error);
         throw new Error('Failed to record generation');
     }
 };
@@ -39,7 +38,6 @@ export const recordLearnStyle = async (): Promise<void> => {
     const supabase = getSupabase();
     const { error } = await supabase.rpc('increment_usage', { usage_type: 'learnStyle' });
     if (error) {
-        console.error('Error recording style learning:', error);
         throw new Error('Failed to record style learning');
     }
 };
@@ -55,7 +53,6 @@ export const clearStats = async (): Promise<void> => {
         .eq('id', user.id);
 
     if (error) {
-        console.error('Error clearing stats:', error);
         throw new Error('Failed to clear stats');
     }
 };

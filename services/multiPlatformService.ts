@@ -1,7 +1,6 @@
 import { Platform, Tone } from '../types';
 import type { PlatformOptimization } from '../components/MultiPlatformOptimizer';
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+import { getApiBaseUrl } from './apiClient';
 
 export interface MultiPlatformRequest {
   originalText: string;
@@ -15,22 +14,31 @@ export const optimizeForPlatforms = async (
   request: MultiPlatformRequest,
   userId?: string
 ): Promise<PlatformOptimization[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/optimize-multi-platform`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId || ''
-    },
-    credentials: 'include',
-    body: JSON.stringify(request)
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Nie udało się zoptymalizować dla platform');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/api/optimize-multi-platform`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId || ''
+      },
+      credentials: 'include',
+      body: JSON.stringify(request),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Nie udało się zoptymalizować dla platform');
+    }
+    return response.json();
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError')
+      throw new Error('Przekroczono czas oczekiwania (30s). Spróbuj ponownie.');
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return response.json();
 };
 
 export const getPlatformCharacterLimit = (platform: Platform): number => {
@@ -128,6 +136,12 @@ export const predictEngagement = (
     if (textLength >= 1000 && textLength <= 2000) score += 10;
   } else if (platform === Platform.Instagram) {
     if (textLength >= 500 && textLength <= 1500) score += 10;
+  } else if (platform === Platform.Facebook) {
+    if (textLength >= 40 && textLength <= 300) score += 15;
+    else if (textLength > 1000) score -= 10;
+  } else if (platform === Platform.TikTok) {
+    if (textLength >= 20 && textLength <= 150) score += 15;
+    else if (textLength > 500) score -= 10;
   }
 
   // Hashtag optimization
@@ -172,20 +186,28 @@ export const generateABTestVariants = async (
   tone: Tone,
   userId?: string
 ): Promise<{ variantA: string; variantB: string }> => {
-  const response = await fetch(`${API_BASE_URL}/api/generate-ab-variants`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-user-id': userId || ''
-    },
-    credentials: 'include',
-    body: JSON.stringify({ originalText, platform, tone })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Nie udało się wygenerować wariantów A/B');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(`${getApiBaseUrl()}/api/generate-ab-variants`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': userId || ''
+      },
+      credentials: 'include',
+      signal: controller.signal,
+      body: JSON.stringify({ originalText, platform, tone })
+    });
+    clearTimeout(timeout);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Nie udało się wygenerować wariantów A/B');
+    }
+    return response.json();
+  } catch (err) {
+    clearTimeout(timeout);
+    if ((err as Error).name === 'AbortError') throw new Error('Przekroczono limit czasu generowania wariantów A/B');
+    throw err;
   }
-
-  return response.json();
 };

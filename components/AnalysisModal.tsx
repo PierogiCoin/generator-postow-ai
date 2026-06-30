@@ -55,7 +55,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
             <BeakerIcon className="w-6 h-6 text-blue-500" />
             {t('analysisModal.title')}
           </h2>
-          <button onClick={onClose} className="p-2 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 text-2xl leading-none">&times;</button>
+          <button onClick={onClose} aria-label="Close modal" className="p-2 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 text-2xl leading-none">&times;</button>
         </div>
         
         <div className="p-6 overflow-y-auto space-y-6">
@@ -126,3 +126,6 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
     </div>
   );
 };
+
+// Default export for lazy loading
+export default AnalysisModal;

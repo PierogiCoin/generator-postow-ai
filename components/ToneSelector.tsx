@@ -24,7 +24,7 @@ const toneConfig: Record<Tone, { icon: React.FC<any> }> = {
 export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSelect, disabled = false }) => {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
       {Object.values(Tone).map(tone => {
         const config = toneConfig[tone];
         const Icon = config.icon;
@@ -36,23 +36,23 @@ export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSele
             type="button"
             onClick={() => onSelect(tone)}
             disabled={disabled}
-            className={`group flex flex-col items-center justify-center p-4 text-center border-2 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden ${isSelected
-                ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 shadow-lg shadow-blue-500/10'
-                : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900/50 hover:border-blue-400 dark:hover:border-blue-400/50 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
+            className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden ${isSelected
+                ? 'border-cyan-500 bg-slate-900/60 dark:bg-white/5 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan'
+                : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105'
               }`}
           >
-            {isSelected && <div className="absolute top-0 right-0 w-8 h-8 bg-blue-500 text-white flex items-center justify-center rounded-bl-xl"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg></div>}
+            {isSelected && <div className="absolute top-0 right-0 w-6 h-6 bg-cyan-500 text-white flex items-center justify-center rounded-bl-lg"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg></div>}
 
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-50 dark:bg-slate-800 text-slate-400 dark:text-slate-600 group-hover:bg-blue-100 group-hover:text-blue-500 dark:group-hover:bg-blue-900/30'}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-100 dark:bg-white/5 text-slate-450 dark:text-slate-650 group-hover:text-cyan-500'}`}>
               <Icon className="w-6 h-6" />
             </div>
 
-            <span className={`text-[10px] uppercase font-black tracking-widest transition-colors ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500 dark:text-slate-500 group-hover:text-blue-600 dark:group-hover:text-blue-400'}`}>
+            <span className={`text-[10px] uppercase font-black tracking-widest transition-colors ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-505 dark:text-slate-500 group-hover:text-cyan-500'}`}>
               {label}
             </span>
 
             {isSelected && (
-              <div className="absolute inset-0 border-2 border-blue-500 rounded-2xl animate-pulse opacity-20 pointer-events-none" />
+              <div className="absolute inset-0 border border-cyan-500/30 rounded-2xl animate-pulse pointer-events-none" />
             )}
           </button>
         );

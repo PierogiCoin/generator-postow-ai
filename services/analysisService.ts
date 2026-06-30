@@ -28,8 +28,7 @@ export const analyzeSentiment = async (text: string, userId: string): Promise<Se
             - keywords identified.
             Return exactly as JSON.`,
         }, userId);
-    } catch (e) {
-        console.error("Sentiment analysis failed:", e);
+    } catch {
         return null;
     }
 };
@@ -48,8 +47,7 @@ export const analyzeSEO = async (text: string, userId: string): Promise<SEOAnaly
             - metaDescriptionSuggestion.
             Return exactly as JSON.`,
         }, userId);
-    } catch (e) {
-        console.error("SEO analysis failed:", e);
+    } catch {
         return null;
     }
 };
@@ -73,8 +71,7 @@ export const predictPerformance = async (result: GenerationResult, formData: For
             }`,
         }, userId);
         return prediction;
-    } catch (e) {
-        console.error("Performance prediction failed:", e);
+    } catch {
         return null;
     }
 };
@@ -95,8 +92,7 @@ export const getStrategicContentIdeas = async (
             - reason (why this works/strategy).
             Return as a JSON array of objects.`,
         }, userId);
-    } catch (e) {
-        console.error("Strategic ideas generation failed:", e);
+    } catch {
         return [];
     }
 };
@@ -105,11 +101,10 @@ export const discoverTrends = async (niche: string, userId?: string): Promise<an
     try {
         return await generateJson<any[]>({
             model: "gemini-flash-latest",
-            contents: `Search for real-time trending topics, hashtags, and viral challenges currently relevant to the ${niche} niche. 
+            contents: `Based on your knowledge of social media patterns, suggest trending topics, hashtags, and content formats relevant to the ${niche} niche. Note: these are AI-generated suggestions based on training data, not live trends.
             Return a list of objects with: name, trendCategory, popularity (1-100), and reason for entry.`,
         }, userId);
-    } catch (e) {
-        console.error("Trend discovery failed:", e);
+    } catch {
         return [];
     }
 };
@@ -166,7 +161,6 @@ export const generateStrategicAudit = async (
             The plan should cover the next 7-14 days. Tones must be one of the listed enums.`,
         }, user.id);
     } catch (e) {
-        console.error("Strategic audit failed:", e);
         return {
             summary: "Audit failed to generate correctly. Please try more specific input.",
             contentPillars: [],

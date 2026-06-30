@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../logger.js';
 
 export class AppError extends Error {
   constructor(
@@ -17,7 +18,7 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('Error:', err);
+  logger.error('Unhandled error:', { message: err.message, stack: err.stack, statusCode: err instanceof AppError ? err.statusCode : 500 });
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({

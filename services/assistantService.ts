@@ -1,6 +1,7 @@
 import { Type, FunctionDeclaration } from '@google/genai';
 import { v4 as uuidv4 } from 'uuid';
 import { generateContent, generateJson, callApi } from './apiClient';
+import { getAppLocale } from '../utils/aiLanguage';
 import {
     AudiencePersona,
     CalendarSuggestion,
@@ -24,7 +25,6 @@ export const getTopicSuggestions = async (currentTopic: string, prompt: string, 
             contents: `You are a creative content strategist. Based on the current topic: "${currentTopic}", suggest 5 more specific, trending, or alternative topic ideas that follow this user request: "${prompt}". Return only a JSON array of strings.`,
         }, userId);
     } catch (e) {
-        console.error("Topic suggestions failed:", e);
         return [];
     }
 };
@@ -41,7 +41,6 @@ export const generateStoryboard = async (topic: string, userId: string): Promise
             Return as a JSON array of objects.`,
         }, userId);
     } catch (e) {
-        console.error("Storyboard generation failed:", e);
         return [];
     }
 };
@@ -52,7 +51,6 @@ export const generateSpeech = async (text: string, userId: string): Promise<Blob
         const response = await callApi("generate-speech", { text }, userId);
         return response; // This might be base64 string or handled by the caller
     } catch (e) {
-        console.error("Speech generation failed:", e);
         return null;
     }
 };
@@ -71,6 +69,8 @@ export const performAIAction = async (
         case 'add-emoji': prompt = `Strategically add relevant emojis to this text to enhance visual appeal and tone: "${text}"`; break;
         case 'change_tone': prompt = `Transform the tone of this text to "${context.tone || 'professional'}": "${text}"`; break;
         case 'summarize': prompt = `Provide a concise summary of the following content: "${text}"`; break;
+        case 'expand_keywords': prompt = `Identify the most important keywords and key phrases in this text, then naturally weave in additional relevant keywords to improve reach and SEO without making it sound forced. Return only the enhanced text: "${text}"`; break;
+        case 'suggest_hashtags': prompt = `Analyze this social media post and generate 10-15 highly relevant, trending hashtags that will maximize reach and engagement. Return ONLY the hashtags as a space-separated list starting with #, nothing else: "${text}"`; break;
         case 'custom': prompt = `Perform the following action on this text: "${context.customPrompt}".\n\nTEXT: "${text}"`; break;
         default: prompt = `Process this text according to the action "${action}": "${text}"`;
     }
@@ -111,16 +111,17 @@ export const generateCalendarSuggestions = async (date: Date | any[], niche?: st
             Identify gaps and suggest 3 new strategic dates with high-engagement topics. 
             Return a JSON array of objects. Each object must have: date (YYYY-MM-DD), topic (string), format (string, one of: ${Object.values(GenerationType).join(', ')}), platform (string, one of: ${Object.values(Platform).join(', ')}), strategy (string explaining the reason).`;
         } else {
-            prompt = `Wygeneruj 3 kreatywne pomysły na posty w mediach społecznościowych na datę ${date.toLocaleDateString('pl-PL')}. 
-            NICHE (NISZA): ${niche || 'General'}
+            const locale = getAppLocale();
+            prompt = `Generate 3 creative social media post ideas for ${date.toLocaleDateString(locale)}.
+            NICHE: ${niche || 'General'}
             PREVIOUS CONTENT CONTEXT: ${history || 'None'}
-            Zwróć wynik jako tablicę JSON (JSON ARRAY) obiektów z dokładnie tymi kluczami:
-            - topic: konkretny, kreatywny temat posta w języku polskim (string)
-            - format: musi być jeden z: ${Object.values(GenerationType).join(', ')}
-            - platform: musi być jeden z: ${Object.values(Platform).join(', ')}
-            - strategy: krótkie uzasadnienie wiralowości lub haczyka w języku polskim (string).
-            
-            Zwróć TYLKO czysty JSON. Bez tekstu konwersacyjnego i bloków markdown.`;
+            Return a JSON array of objects with exactly these keys:
+            - topic: specific, creative post topic (string)
+            - format: one of: ${Object.values(GenerationType).join(', ')}
+            - platform: one of: ${Object.values(Platform).join(', ')}
+            - strategy: brief rationale for virality or hook (string).
+
+            Return ONLY valid JSON. No markdown or conversational text.`;
         }
 
         return await generateJson<CalendarSuggestion[]>({
@@ -128,7 +129,6 @@ export const generateCalendarSuggestions = async (date: Date | any[], niche?: st
             contents: prompt,
         }, userId);
     } catch (e) {
-        console.error("Calendar suggestion generation failed:", e);
         return [];
     }
 };
@@ -143,7 +143,6 @@ export const generateIntelligentCalendarPlan = async (goal: string, duration: nu
             For each item return: id (unique), date, platform, topic, format (one of ${Object.values(GenerationType).join(', ')}), strategy.`,
         }, userId);
     } catch (e) {
-        console.error("Intelligent calendar plan failed:", e);
         return [{ id: uuidv4(), date: startDate.toISOString().split('T')[0], platform: Platform.Facebook, topic: goal, format: GenerationType.PostWithImage, strategy: "Basic fallback plan" }];
     }
 };
@@ -202,7 +201,6 @@ export const learnBrandVoiceFromPosts = async (posts: any[], userId: string): Pr
             - profilesName (a suggested name for this profile, e.g., "Główny profil firmy")`,
         }, userId);
     } catch (e) {
-        console.error("Learn brand voice failed:", e);
         return null;
     }
 };

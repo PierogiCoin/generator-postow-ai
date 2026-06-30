@@ -57,6 +57,29 @@
     "selectWorkspace": "Wybierz przestrzeń"
   },
   "form": {
+    "mode": {
+      "label": "Tryb formularza",
+      "quick": "Szybki",
+      "advanced": "Zaawansowany",
+      "quickHint": "3 kroki: temat → platforma → generuj"
+    },
+    "quick": {
+      "stepTopic": "Temat",
+      "stepPlatform": "Platforma i ton",
+      "stepGenerate": "Generuj",
+      "next": "Dalej",
+      "back": "Wstecz",
+      "summary": "Podsumowanie",
+      "summaryTopic": "Temat",
+      "summaryPlatform": "Platforma",
+      "summaryTone": "Ton",
+      "summaryType": "Typ",
+      "summaryTypeValue": "Post z grafiką AI",
+      "switchToAdvanced": "Przełącz na tryb zaawansowany",
+      "needAdvanced": "Potrzebujesz kampanii, wideo lub A/B testu?",
+      "aiTools": "Narzędzia AI",
+      "duplicateWarning": "Podobny post w historii"
+    },
     "template": {
       "label": "Szablon",
       "tooltip": "Wybierz istniejący szablon, aby szybko wypełnić formularz. Możesz również zapisać bieżące ustawienia jako nowy szablon do przyszłego użytku.",
@@ -98,6 +121,10 @@
     "tone": {
       "label": "Ton wypowiedzi",
       "tooltip": "Wybierz ton, który najlepiej pasuje do Twojej marki i przekazu. Wpłynie to na styl i słownictwo wygenerowanego tekstu."
+    },
+    "contentLanguage": {
+      "label": "Język treści posta",
+      "tooltip": "Wybierz język, w którym AI wygeneruje opis posta, hashtagi i analizy. Niezależne od języka menu aplikacji."
     },
     "platform": {
       "label": "Platforma",
@@ -209,6 +236,12 @@
     "AIModel": {
       "Flash": "Flash (szybki)",
       "Pro": "Pro (zaawansowany)"
+    },
+    "ContentLanguage": {
+      "pl": "Polski",
+      "en": "Angielski",
+      "de": "Niemiecki",
+      "cs": "Czeski"
     }
   },
   "sidebar": {
@@ -270,6 +303,57 @@
       "copyText": "Kopiuj tekst",
       "copied": "Skopiowano!"
     },
+    "tabs": {
+      "label": "Sekcje wyniku",
+      "content": "Treść",
+      "media": "Media",
+      "publish": "Publikacja",
+      "analysis": "Analiza"
+    },
+    "actions": {
+      "copy": "Kopiuj",
+      "copied": "Skopiowano!",
+      "favorite": "Ulubione",
+      "favorited": "Ulubiony",
+      "schedule": "Zaplanuj",
+      "video": "Wideo"
+    },
+    "more": {
+      "label": "Więcej",
+      "repurpose": "Przetwórz",
+      "predict": "Prognozuj",
+      "seo": "Analiza SEO",
+      "publish": "Publikuj teraz",
+      "magicDesign": "Magic Design"
+    },
+    "preview": {
+      "card": "Widok karty",
+      "mobile": "Podgląd mobile"
+    },
+    "hooks": {
+      "title": "Warianty nagłówka (Hooks)",
+      "generate": "Generuj alternatywy",
+      "loading": "Generowanie haczyków…"
+    },
+    "media": {
+      "previewAlt": "Podgląd grafiki",
+      "noImage": "Brak grafiki w tym wyniku.",
+      "visualConcept": "Koncepcja wizualna",
+      "magicDesign": "Magic Design — edytuj grafikę"
+    },
+    "publish": {
+      "bestTime": "Optymalny czas",
+      "todayAt": "Dziś o {{time}}",
+      "timeHint": "Sugerowana godzina na podstawie aktywności grupy docelowej.",
+      "publishNow": "Publikuj teraz",
+      "repurpose": "Przetwórz na inny format"
+    },
+    "analysis": {
+      "predict": "Prognozuj zaangażowanie",
+      "seo": "Analiza SEO",
+      "hashtags": "Smart Hashtag Generator",
+      "hashtagsHint": "Reach, Engagement, Niche, Viral, Branded"
+    },
     "liveAssistant": {
       "stopSession": "Zakończ sesję",
       "user": "użytkownik",
@@ -301,12 +385,36 @@
     }
   },
   "home": {
+    "nav": {
+      "ariaLabel": "Nawigacja strony głównej",
+      "openMenu": "Otwórz menu",
+      "howItWorks": "Jak to działa",
+      "features": "Funkcje",
+      "pricing": "Cennik",
+      "faq": "FAQ"
+    },
+    "trust": {
+      "title": "Zaufali nam najlepsi",
+      "disclaimer": "Przykładowe marki — ilustracja stylu współpracy z zespołami marketingowymi."
+    },
     "hero": {
       "title_part1": "Zdominuj media społecznościowe. Twórz treści, które",
       "title_part2": "konwertują 10x szybciej.",
       "subtitle": "AI Content Pro to Twój inteligentny asystent. Generuj angażujące posty, planuj kampanie i optymalizuj strategię w oparciu o dane.",
       "cta": "Zacznij tworzyć za darmo",
-      "sub_cta": "Dołącz do 5,000+ marketerów i twórców. Bez karty kredytowej."
+      "cta_logged_in": "Przejdź do generatora",
+      "secondary_cta": "Zobacz jak to działa",
+      "sub_cta": "Dołącz do 5,000+ marketerów i twórców. Bez karty kredytowej.",
+      "sub_cta_logged_in": "Wróć do pracy — Twoje projekty czekają w generatorze.",
+      "pill_features": "Funkcje",
+      "pill_testimonials": "Opinie",
+      "pill_faq": "FAQ"
+    },
+    "final_cta": {
+      "title": "Gotowy zrewolucjonizować swoje media społecznościowe?",
+      "subtitle": "Dołącz do tysięcy twórców i marketerów, którzy oszczędzają czas i osiągają lepsze wyniki.",
+      "subtitle_logged_in": "Kontynuuj tworzenie treści i rozwijaj swoją strategię w generatorze.",
+      "button": "Wypróbuj AI Content Pro za darmo"
     }
   },
   "langSwitcher": {
@@ -408,7 +516,8 @@
     "clearAll": "Wyczyść wszystko",
     "label": "Powiadomienia ({{count}} nieprzeczytanych)",
     "toast": {
-      "title": "Powiadomienie"
+      "title": "Powiadomienie",
+      "successTitle": "Sukces"
     },
     "time": {
       "seconds": "{{count}}s temu",
@@ -442,7 +551,51 @@
       "title": "Wymagany klucz API do wideo",
       "details": "Generowanie wideo wymaga wybrania klucza API z włączonymi płatnościami. Wybierz klucz, aby kontynuować."
     },
-    "unknownError": "Wystąpił nieznany błąd. Spróbuj odświeżyć stronę."
+    "unknownError": "Wystąpił nieznany błąd. Spróbuj odświeżyć stronę.",
+    "userFacing": {
+      "toastErrorTitle": "Problem",
+      "unknownTitle": "Coś poszło nie tak",
+      "refreshAction": "Odśwież stronę (Cmd+Shift+R) i spróbuj ponownie.",
+      "safetyAction": "Usuń wrażliwe słowa lub uprość temat posta.",
+      "quotaAction": "Poczekaj ok. godzinę lub włącz rozliczenia w Google AI Studio.",
+      "apiKeyAction": "Sprawdź klucz w Google AI Studio i wybierz projekt z płatnościami.",
+      "authTitle": "Sesja wygasła",
+      "authMessage": "Zaloguj się ponownie, aby kontynuować.",
+      "authAction": "Wyloguj się i zaloguj ponownie.",
+      "favoritesTitle": "Nie udało się zapisać ulubionych",
+      "favoritesMessage": "Zapis w bazie nie powiódł się.",
+      "favoritesAction": "Odśwież stronę. Jeśli problem wraca — wyloguj się i zaloguj ponownie.",
+      "videoTitle": "Błąd generowania wideo",
+      "videoUnavailable": "Silnik wideo jest chwilowo niedostępny.",
+      "videoRetryAction": "Spróbuj za chwilę lub wybierz inny silnik (Auto / Luma).",
+      "videoTimeoutTitle": "Wideo trwa zbyt długo",
+      "videoTimeoutMessage": "Przekroczono limit czasu generowania.",
+      "videoTimeoutAction": "Skróć tekst posta lub wybierz styl Instagram Story.",
+      "staleBundleTitle": "Stara wersja aplikacji",
+      "staleBundleMessage": "Przeglądarka używa nieaktualnego pliku JS.",
+      "networkTitle": "Błąd połączenia",
+      "networkMessage": "Nie udało się połączyć z serwerem.",
+      "networkAction": "Sprawdź internet i odśwież stronę.",
+      "timeoutTitle": "Przekroczono czas oczekiwania",
+      "timeoutMessage": "Serwer nie odpowiedział na czas.",
+      "timeoutAction": "Spróbuj ponownie za chwilę.",
+      "serverTitle": "Błąd serwera",
+      "serverMessage": "Coś poszło nie tak po stronie API.",
+      "serverAction": "Spróbuj ponownie za 1–2 minuty.",
+      "genericAction": "Spróbuj ponownie lub odśwież stronę."
+    }
+  },
+  "appVersion": {
+    "title": "Dostępna nowa wersja aplikacji",
+    "defaultChangelog": "Nowa wersja — m.in. lepsze komunikaty błędów i tryb Szybki w generatorze.",
+    "refresh": "Odśwież teraz",
+    "later": "Później"
+  },
+  "videoStory": {
+    "successTitle": "Gotowe",
+    "successMessage": "Wideo wygenerowane pomyślnie!",
+    "fallbackTitle": "Zmiana silnika wideo",
+    "fallbackMessage": "Veo było niedostępne — użyto alternatywnego silnika."
   },
   "videoKeyModal": {
     "title": "Wymagany Klucz API",

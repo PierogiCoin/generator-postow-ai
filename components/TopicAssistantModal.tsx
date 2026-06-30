@@ -81,8 +81,9 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
               </label>
               <div
                 className="p-5 bg-white/50 dark:bg-slate-950/50 rounded-2xl text-slate-700 dark:text-slate-300 min-h-[4rem] border border-slate-200/50 dark:border-slate-800 shadow-inner italic leading-relaxed text-sm"
-                dangerouslySetInnerHTML={{ __html: currentTopic || '...' }}
-              />
+              >
+                {currentTopic?.replace(/<[^>]*>?/gm, '') || '...'}
+              </div>
             </div>
 
             <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
@@ -131,7 +132,7 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
                   <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                     {suggestions.map((s, i) => (
                       <div
-                        key={i}
+                        key={`suggestion-${i}`}
                         className="group flex items-center gap-4 p-4 bg-white/40 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 animate-fade-in-up shadow-sm hover:shadow-md cursor-pointer"
                         style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'both' }}
                         onClick={() => handleApply(s)}

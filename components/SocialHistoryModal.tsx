@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     X, ExternalLink, Calendar, Loader2, MessageSquare, Heart, Share2,
     BarChart3, AlertCircle, Eye, TrendingUp, RefreshCw, Image as ImageIcon
 } from 'lucide-react';
-import { API_BASE_URL } from '../services/apiClient';
+import { getApiBaseUrl } from '../services/apiClient';
 import type { SocialConnection } from '../types/socialPublishing';
 
 interface PostWithMetrics {
@@ -77,13 +77,14 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const loadHistory = async () => {
+    const loadHistory = useCallback(async (signal: AbortSignal) => {
         if (!connection || !userId) return;
         setIsLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/social/history/${connection.id}`, {
-                headers: { 'x-user-id': userId }
+            const res = await fetch(`${getApiBaseUrl()}/api/social/history/${connection.id}`, {
+                headers: { 'x-user-id': userId },
+                signal,
             });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
@@ -91,18 +92,20 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
             }
             const data = await res.json();
             setPosts(data.posts || []);
-        } catch (err: any) {
-            setError(err.message || 'Nieznany błąd');
+        } catch (err: unknown) {
+            if ((err as Error).name === 'AbortError') return;
+            setError((err as Error).message || 'Nieznany błąd');
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [connection, userId]);
 
     useEffect(() => {
-        if (isOpen && connection && userId) {
-            loadHistory();
-        }
-    }, [isOpen, connection, userId]);
+        if (!isOpen || !connection || !userId) return;
+        const controller = new AbortController();
+        loadHistory(controller.signal);
+        return () => controller.abort();
+    }, [isOpen, loadHistory]);
 
     if (!isOpen || !connection) return null;
 
@@ -134,7 +137,7 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={loadHistory}
+                                onClick={() => loadHistory(new AbortController().signal)}
                                 disabled={isLoading}
                                 className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition"
                                 title="Odśwież"
@@ -144,6 +147,7 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
                             <button
                                 onClick={onClose}
                                 className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition"
+                                aria-label="Zamknij"
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -184,7 +188,7 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
                             <h3 className="text-lg font-bold text-red-900 dark:text-red-200 mb-2">Coś poszło nie tak</h3>
                             <p className="text-red-700 dark:text-red-300 text-sm mb-5">{error}</p>
                             <button
-                                onClick={loadHistory}
+                                onClick={() => loadHistory(new AbortController().signal)}
                                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
                             >
                                 Spróbuj ponownie
@@ -219,7 +223,7 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
                                         {thumbnail ? (
                                             <img
                                                 src={thumbnail}
-                                                alt=""
+                                                alt="Post thumbnail"
                                                 className="w-24 h-24 rounded-xl object-cover flex-shrink-0 bg-slate-200"
                                                 onError={(e) => (e.currentTarget.style.display = 'none')}
                                             />
@@ -307,3 +311,6 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
         </div>
     );
 };
+
+// Default export for lazy loading
+export default SocialHistoryModal;

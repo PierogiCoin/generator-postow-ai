@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { parseUserFacingError } from './userFacingError';
 
 export interface ApiError {
   message: string;
@@ -8,66 +9,20 @@ export interface ApiError {
 
 // Format error message for user
 export function formatErrorMessage(error: unknown): string {
-  if (typeof error === 'string') {
-    return error;
+  const parsed = parseUserFacingError(error);
+  if (parsed.action) {
+    return `${parsed.title}: ${parsed.message} ${parsed.action}`;
   }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  if (typeof error === 'object' && error !== null) {
-    const apiError = error as any;
-
-    // Google API quota error
-    if (apiError.message?.includes('quota') || apiError.message?.includes('429')) {
-      return 'Przekroczono limit API. Spróbuj ponownie za chwilę lub użyj innego modelu.';
-    }
-
-    // Network errors
-    if (apiError.message?.includes('Network') || apiError.message?.includes('fetch')) {
-      return 'Błąd połączenia. Sprawdź internet i spróbuj ponownie.';
-    }
-
-    // Timeout
-    if (apiError.message?.includes('timeout')) {
-      return 'Żądanie przekroczyło limit czasu. Spróbuj ponownie.';
-    }
-
-    // Supabase errors
-    if (apiError.message?.includes('Supabase') || apiError.message?.includes('RLS')) {
-      return 'Błąd bazy danych. Skontaktuj się z administratorem.';
-    }
-
-    // Auth errors
-    if (apiError.status === 401 || apiError.status === 403) {
-      return 'Brak autoryzacji. Zaloguj się ponownie.';
-    }
-
-    // Server errors
-    if (apiError.status === 500) {
-      return 'Błąd serwera. Spróbuj ponownie za chwilę.';
-    }
-
-    // Rate limiting
-    if (apiError.status === 429) {
-      return 'Zbyt wiele żądań. Poczekaj chwilę i spróbuj ponownie.';
-    }
-
-    // Generic API error
-    if (apiError.message) {
-      return apiError.message;
-    }
-  }
-
-  return 'Wystąpił nieoczekiwany błąd. Spróbuj ponownie.';
+  return `${parsed.title}: ${parsed.message}`;
 }
 
 // Show error toast
 export function showError(error: unknown, customMessage?: string) {
-  const message = customMessage || formatErrorMessage(error);
-  toast.error(message, {
-    duration: 5000,
+  const parsed = parseUserFacingError(error);
+  const title = customMessage || parsed.title;
+  toast.error(title, {
+    description: parsed.action ? `${parsed.message} — ${parsed.action}` : parsed.message,
+    duration: 6000,
     action: {
       label: 'Zamknij',
       onClick: () => { },

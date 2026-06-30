@@ -1,0 +1,314 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { Platform } from '../types';
+import { SparklesIcon } from './icons/SparklesIcon';
+import { CheckCircleIcon } from './icons/CheckCircleIcon';
+import { getSupabase } from '../services/supabaseClient';
+import {
+  markOnboardingDone,
+  buildFirstPostTopic,
+  type OnboardingData,
+  isOnboardingDone,
+} from '../utils/onboarding';
+
+export type { OnboardingData };
+export { isOnboardingDone };
+
+const PLATFORM_OPTIONS = [
+  { value: Platform.Instagram, label: 'Instagram', emoji: '📸' },
+  { value: Platform.TikTok, label: 'TikTok', emoji: '🎵' },
+  { value: Platform.Facebook, label: 'Facebook', emoji: '👥' },
+  { value: Platform.LinkedIn, label: 'LinkedIn', emoji: '💼' },
+  { value: Platform.YouTube, label: 'YouTube', emoji: '▶️' },
+  { value: Platform.X, label: 'X (Twitter)', emoji: '𝕏' },
+];
+
+const NICHE_SUGGESTIONS = [
+  'Fitness & zdrowie', 'Moda & lifestyle', 'Jedzenie & gotowanie',
+  'Biznes & marketing', 'Podróże', 'Technologia', 'Edukacja',
+  'Beauty & uroda', 'Muzyka', 'Sport', 'Motoryzacja', 'Finanse osobiste',
+];
+
+const TONE_OPTIONS = [
+  { value: 'casual', label: 'Casualowy', desc: 'Luźny, przyjazny, naturalny' },
+  { value: 'professional', label: 'Profesjonalny', desc: 'Ekspercki, poważny, merytoryczny' },
+  { value: 'inspirational', label: 'Inspirujący', desc: 'Motywujący, energetyczny, emocjonalny' },
+  { value: 'humorous', label: 'Humorystyczny', desc: 'Zabawny, lekki, angażujący' },
+];
+
+interface OnboardingWizardProps {
+  onComplete: (data: OnboardingData) => void;
+}
+
+export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
+  const [step, setStep] = useState(0);
+  const [niche, setNiche] = useState('');
+  const [platform, setPlatform] = useState<Platform>(Platform.Instagram);
+  const [tone, setTone] = useState('casual');
+  const [brandKeywords, setBrandKeywords] = useState('');
+  const [firstPostTopic, setFirstPostTopic] = useState('');
+
+  const steps = ['Twoja nisza', 'Platforma', 'Styl', 'Pierwszy post'];
+
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (step === 3 && niche.trim().length >= 2 && !firstPostTopic.trim()) {
+      setFirstPostTopic(buildFirstPostTopic(niche, platform));
+    }
+  }, [step, niche, platform, firstPostTopic]);
+
+  const handleComplete = useCallback(async () => {
+    setSaving(true);
+    const brandVoice = brandKeywords.trim()
+      ? `Ton: ${tone}. Słowa kluczowe marki: ${brandKeywords}.`
+      : `Ton: ${tone}.`;
+    const topic = firstPostTopic.trim() || buildFirstPostTopic(niche, platform);
+    let userId: string | null = null;
+    try {
+      const supabase = getSupabase();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        userId = user.id;
+        await supabase.from('profiles').update({
+          niche,
+          primary_platform: platform,
+          brand_tone: tone,
+          brand_keywords: brandKeywords.trim() || null,
+          onboarding_done: true,
+        }).eq('id', user.id);
+      }
+    } catch {
+      // save failed — continue anyway, data is in localStorage
+    } finally {
+      markOnboardingDone(userId ?? undefined);
+      const suffix = userId ? `_${userId}` : '';
+      localStorage.setItem(`userNiche${suffix}`, niche);
+      localStorage.setItem(`userPlatform${suffix}`, platform);
+      localStorage.setItem(`userTone${suffix}`, tone);
+      localStorage.setItem('userNiche', niche);
+      localStorage.setItem('userPlatform', platform);
+      localStorage.setItem('userTone', tone);
+      setSaving(false);
+      onComplete({
+        niche,
+        platform,
+        tone,
+        brandVoice,
+        firstPostTopic: topic,
+      });
+    }
+  }, [niche, platform, tone, brandKeywords, firstPostTopic, onComplete]);
+
+  const canProceed = [
+    niche.trim().length >= 2,
+    true,
+    true,
+    firstPostTopic.replace(/<[^>]*>?/gm, '').trim().length >= 10,
+  ][step];
+
+  const platformLabel = PLATFORM_OPTIONS.find((p) => p.value === platform)?.label ?? platform;
+  const toneLabel = TONE_OPTIONS.find((t) => t.value === tone)?.label ?? tone;
+
+  return (
+    <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="w-full max-w-lg my-8">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-2xl mb-4">
+            <SparklesIcon className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-3xl font-black text-white">Witaj w SocialOS</h1>
+          <p className="text-slate-400 mt-1">Skonfiguruj profil i wygeneruj pierwszy post</p>
+        </div>
+
+        <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8 overflow-x-auto pb-1">
+          {steps.map((label, i) => (
+            <React.Fragment key={`step-${i}`}>
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                  i < step ? 'bg-green-500 text-white' :
+                  i === step ? 'bg-indigo-500 text-white ring-2 ring-indigo-300' :
+                  'bg-slate-700 text-slate-400'
+                }`}>
+                  {i < step ? <CheckCircleIcon className="w-4 h-4" /> : i + 1}
+                </div>
+                <span className={`text-[10px] sm:text-xs text-center ${i === step ? 'text-indigo-300 font-semibold' : 'text-slate-500'}`}>{label}</span>
+              </div>
+              {i < steps.length - 1 && (
+                <div className={`h-0.5 w-6 sm:w-8 mb-4 transition-all shrink-0 ${i < step ? 'bg-green-500' : 'bg-slate-700'}`} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
+
+          {step === 0 && (
+            <div className="space-y-5 animate-fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">Jaka jest Twoja nisza?</h2>
+                <p className="text-slate-400 text-sm">AI będzie generować treści dopasowane do Twojej branży.</p>
+              </div>
+              <input
+                type="text"
+                value={niche}
+                onChange={e => setNiche(e.target.value)}
+                placeholder="np. fitness, moda, gotowanie..."
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                autoFocus
+              />
+              <div>
+                <p className="text-xs text-slate-500 mb-2 uppercase tracking-wider font-semibold">Szybki wybór</p>
+                <div className="flex flex-wrap gap-2">
+                  {NICHE_SUGGESTIONS.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setNiche(s)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        niche === s
+                          ? 'bg-indigo-500 text-white'
+                          : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div className="space-y-5 animate-fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">Główna platforma</h2>
+                <p className="text-slate-400 text-sm">Gdzie przede wszystkim publikujesz treści?</p>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {PLATFORM_OPTIONS.map(({ value, label, emoji }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPlatform(value)}
+                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
+                      platform === value
+                        ? 'bg-indigo-500/20 border-indigo-400 text-white'
+                        : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className="text-2xl">{emoji}</span>
+                    <span className="text-sm font-semibold">{label}</span>
+                    {platform === value && <CheckCircleIcon className="w-4 h-4 text-indigo-400" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-5 animate-fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">Styl komunikacji</h2>
+                <p className="text-slate-400 text-sm">Jak chcesz brzmieć? AI dopasuje ton wszystkich treści.</p>
+              </div>
+              <div className="space-y-2">
+                {TONE_OPTIONS.map(({ value, label, desc }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setTone(value)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                      tone === value
+                        ? 'bg-indigo-500/20 border-indigo-400'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                      tone === value ? 'bg-indigo-500 border-indigo-400' : 'border-slate-500'
+                    }`} />
+                    <div>
+                      <p className={`text-sm font-semibold ${tone === value ? 'text-white' : 'text-slate-300'}`}>{label}</p>
+                      <p className="text-xs text-slate-500">{desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold block mb-1.5">
+                  Słowa kluczowe marki (opcjonalne)
+                </label>
+                <input
+                  type="text"
+                  value={brandKeywords}
+                  onChange={e => setBrandKeywords(e.target.value)}
+                  placeholder="np. autentyczny, nowoczesny, pro-ekologiczny"
+                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-5 animate-fade-in">
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1">Twój pierwszy post</h2>
+                <p className="text-slate-400 text-sm">
+                  Sprawdź temat — po zakończeniu przejdziesz do generatora z gotowym prefill.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2 text-sm">
+                <p className="text-slate-300"><span className="text-slate-500">Nisza:</span> {niche}</p>
+                <p className="text-slate-300"><span className="text-slate-500">Platforma:</span> {platformLabel}</p>
+                <p className="text-slate-300"><span className="text-slate-500">Ton:</span> {toneLabel}</p>
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold block mb-1.5">
+                  Temat pierwszego posta
+                </label>
+                <textarea
+                  value={firstPostTopic.replace(/<[^>]*>?/gm, '')}
+                  onChange={(e) => setFirstPostTopic(`<p>${e.target.value}</p>`)}
+                  rows={4}
+                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  placeholder="Opisz, o czym ma być pierwszy post..."
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-between items-center mt-8">
+            <button
+              type="button"
+              onClick={() => setStep(s => s - 1)}
+              disabled={step === 0}
+              className="px-4 py-2 text-sm text-slate-400 hover:text-white disabled:opacity-0 transition-colors"
+            >
+              ← Wróć
+            </button>
+            {step < steps.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => setStep(s => s + 1)}
+                disabled={!canProceed}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold rounded-xl transition-all"
+              >
+                Dalej →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleComplete}
+                disabled={saving || !canProceed}
+                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/30"
+              >
+                {saving ? 'Zapisuję...' : 'Wygeneruj pierwszy post ✨'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

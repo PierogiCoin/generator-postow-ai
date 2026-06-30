@@ -13,7 +13,6 @@ export const fetchLatestAudit = async (userId: string): Promise<StrategicAuditRe
 
     if (error) {
         if (error.code === 'PGRST116') return null; // No rows found
-        console.error('Error fetching audit:', error);
         return null;
     }
 
@@ -34,7 +33,6 @@ export const saveStrategicAudit = async (report: StrategicAuditReport): Promise<
         });
 
     if (error) {
-        console.error('Error saving strategic audit:', error);
         throw new Error(`Failed to save audit: ${error.message}`);
     }
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../services/apiClient';
+import { getApiBaseUrl } from '../services/apiClient';
 
 export const SocialAuthCallback: React.FC = () => {
     const { platform } = useParams<{ platform: string }>();
@@ -34,7 +34,7 @@ export const SocialAuthCallback: React.FC = () => {
             try {
                 setStatus(`Łączenie z platformą ${platform}...`);
 
-                const response = await fetch(`${API_BASE_URL}/api/social/callback/${platform}`, {
+                const response = await fetch(`${getApiBaseUrl()}/api/social/callback/${platform}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -50,8 +50,9 @@ export const SocialAuthCallback: React.FC = () => {
 
                 setStatus('Połączono pomyślnie!');
                 setTimeout(() => navigate('/dashboard'), 2000);
-            } catch (err: any) {
-                setError(err.message || 'Wystąpił nieoczekiwany błąd');
+            } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : 'Wystąpił nieoczekiwany błąd';
+                setError(errorMessage);
             }
         };
 

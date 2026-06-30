@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 // FIX: Add missing NewCampaignPayload type import.
 import { UsageStats, BrandVoiceProfile, FavoritePost, CustomTemplate, AIInsight, AudiencePersona, CampaignHistoryItem, ScheduledPost, GenerationResult, FormData, PostApprovalStatus, Comment, Draft, AchievementId, IntelligentCalendarPlanItem, StrategicAuditReport, AppError, NewCampaignPayload, Platform, GenerationType } from '../types'; 
 
@@ -95,7 +96,9 @@ type DataState = {
   setAuditError: (error: AppError) => void;
 };
 
-export const useDataStore = create<DataState>((set, get) => ({
+export const useDataStore = create<DataState>()(
+  persist(
+    (set, get) => ({
   stats: null,
   brandVoiceProfiles: [],
   activeBrandVoiceId: null,
@@ -212,10 +215,8 @@ export const useDataStore = create<DataState>((set, get) => ({
     set(state => ({ history: [newHistoryItem, ...state.history] }));
   },
   clearHistory: async () => {
-    if (window.confirm("Czy na pewno chcesz usunąć całą historię? Tej operacji nie można cofnąć.")) {
-      await historyService.clearHistory();
-      set({ history: [], inspiration: null });
-    }
+    await historyService.clearHistory();
+    set({ history: [], inspiration: null });
   },
   handleStatusChange: async (itemId, status) => {
     await historyService.updateHistoryItem(itemId, { status });
@@ -261,10 +262,8 @@ export const useDataStore = create<DataState>((set, get) => ({
     set({ scheduledPosts: newPosts });
   },
   clearScheduledPosts: async () => {
-    if (window.confirm("Czy na pewno chcesz usunąć wszystkie zaplanowane posty?")) {
-      await scheduledPostsService.clearScheduledPosts();
-      set({ scheduledPosts: [] });
-    }
+    await scheduledPostsService.clearScheduledPosts();
+    set({ scheduledPosts: [] });
   },
 
   // Inspiration
@@ -311,4 +310,13 @@ export const useDataStore = create<DataState>((set, get) => ({
     set({ strategicAuditReport: report, isAuditing: false, auditError: null });
   },
   setAuditError: (error) => set({ isAuditing: false, auditError: error }),
-}));
+}), {
+  name: 'data-storage',
+  storage: createJSONStorage(() => localStorage),
+  partialize: (state) => ({ 
+    activeBrandVoiceId: state.activeBrandVoiceId,
+    audiencePersona: state.audiencePersona,
+    unlockedAchievements: state.unlockedAchievements,
+  }),
+})
+);

@@ -112,7 +112,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
         {itemToSchedule && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">Planujesz na podstawie:</p>
-            <strong className="text-slate-800 dark:text-white font-semibold text-base" dangerouslySetInnerHTML={{ __html: itemToSchedule.formData?.topic || 'Bez tytułu' }}></strong>
+            <strong className="text-slate-800 dark:text-white font-semibold text-base">{itemToSchedule.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}</strong>
             <div className="mt-2 flex flex-wrap gap-2">
               <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">{itemToSchedule.formData.platform}</span>
               <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">{itemToSchedule.formData.generationType}</span>
@@ -174,7 +174,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Formaty treści (wiele)</label>
             <div className="flex flex-wrap gap-2">
               {allFormats.map(format => {
-                const config = platformConfig[format as Platform] || { icon: CalendarIcon, color: "bg-gray-500", iconColor: "text-gray-500" }; // Fallback
+                const config = platformConfig[format as unknown as Platform] || { icon: CalendarIcon, color: "bg-gray-500", iconColor: "text-gray-500" }; // Fallback
                 const Icon = config.icon;
                 const isSelected = selectedFormats.includes(format);
                 return (

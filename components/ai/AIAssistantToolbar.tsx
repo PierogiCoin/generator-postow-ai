@@ -19,6 +19,8 @@ const actions = [
   { id: 'shorten', label: 'Skróć', icon: TextShortenIcon },
   { id: 'lengthen', label: 'Wydłuż', icon: TextLengthenIcon },
   { id: 'add-emoji', label: 'Dodaj emoji', icon: SmileyIcon },
+  { id: 'expand_keywords', label: 'Rozwiń słowa kluczowe', icon: ExpandKeywordsIcon },
+  { id: 'suggest_hashtags', label: 'Sugeruj hashtagi', icon: SuggestHashtagsIcon },
 ] as const;
 
 
@@ -31,7 +33,7 @@ export const AIAssistantToolbar: React.FC<AIAssistantToolbarProps> = ({ onAction
       // We'll treat custom prompt as a special action or pass it via a specific ID
       // For now, let's assume 'rewrite' can handle it if we pass the prompt, 
       // but better to have a dedicated handler or cast.
-      (onAction as any)('custom', customPrompt);
+      onAction('custom', customPrompt);
       setCustomPrompt('');
     }
   };
@@ -76,7 +78,7 @@ export const AIAssistantToolbar: React.FC<AIAssistantToolbarProps> = ({ onAction
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault();
-                handleCustomSubmit(e as any);
+                handleCustomSubmit(e);
               }
             }}
             placeholder="Zapytaj AI... (np. uczyń to dowcipnym)"

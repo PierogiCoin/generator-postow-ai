@@ -27,13 +27,18 @@ export interface SocialPost {
   platformPostId: string;
   content: string;
   mediaUrls?: string[];
-  publishedAt: Date;
-  url: string;
+  publishedAt: Date | string;
+  url?: string;
+  platform?: string;
+  connectionId?: string;
+  mediaUrl?: string;
   metrics?: {
     likes?: number;
     comments?: number;
     shares?: number;
     views?: number;
+    reach?: number;
+    impressions?: number;
   };
 }
 

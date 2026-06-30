@@ -50,3 +50,6 @@ export const PhoneMockup: React.FC<PhoneMockupProps> = ({ result, formData }) =>
         </div>
     );
 };
+
+// Default export for lazy loading
+export default PhoneMockup;

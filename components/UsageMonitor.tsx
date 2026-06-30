@@ -1,9 +1,5 @@
-// @ts-nocheck
-import React, { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useState, useCallback } from 'react';
+import { getSupabase } from '../services/supabaseClient';
 import {
   Zap,
   Image,
@@ -13,7 +9,7 @@ import {
   AlertCircle,
   CreditCard
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { PricingModal } from './PricingModal';
 
 interface UsageStats {
@@ -28,51 +24,60 @@ export function UsageMonitor() {
   const [loading, setLoading] = useState(true);
   const [showPricing, setShowPricing] = useState(false);
 
-  useEffect(() => {
-    loadUsageStats();
-  }, []);
-
-  const loadUsageStats = async () => {
+  const loadUsageStats = useCallback(async () => {
+    setLoading(true);
     try {
+      const supabase = getSupabase();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) return;
       const response = await fetch('/api/payments/usage?days=30', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
+      if (!response.ok) return;
       const data = await response.json();
       setStats(data);
-    } catch (error) {
-      console.error('Failed to load usage stats:', error);
+    } catch {
+      // Silently fail, UI will show empty state
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) loadUsageStats();
+    else setLoading(false);
+  }, [user, loadUsageStats]);
 
   if (loading) {
     return (
-      <Card className="p-6">
+      <div className="p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="animate-pulse space-y-4">
           <div className="h-4 bg-gray-200 rounded w-1/4"></div>
           <div className="h-8 bg-gray-200 rounded"></div>
           <div className="h-4 bg-gray-200 rounded w-3/4"></div>
         </div>
-      </Card>
+      </div>
     );
   }
 
-  const creditsRemaining = user?.credits || 0;
   const creditsUsed = stats?.totalCreditsUsed || 0;
   const planLimits = getPlanLimits(user?.plan || 'free');
+  const creditsRemaining = planLimits.maxCredits != null
+    ? Math.max(0, planLimits.maxCredits - creditsUsed)
+    : null;
   const usagePercent = planLimits.maxCredits
     ? (creditsUsed / planLimits.maxCredits) * 100
     : 0;
 
-  const isLowCredits = creditsRemaining < 100;
-  const isCriticalCredits = creditsRemaining < 50;
+  const isLowCredits = stats != null && creditsRemaining != null && creditsRemaining < 100;
+  const isCriticalCredits = stats != null && creditsRemaining != null && creditsRemaining < 50;
 
   return (
     <>
-      <Card className="p-6 space-y-6">
+      <div className="p-6 space-y-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -81,9 +86,9 @@ export function UsageMonitor() {
               Current billing period
             </p>
           </div>
-          <Badge variant={user?.plan === 'free' ? 'secondary' : 'default'}>
+          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user?.plan === 'free' ? 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>
             {user?.plan?.toUpperCase()} Plan
-          </Badge>
+          </span>
         </div>
 
         {/* Credits Remaining */}
@@ -96,15 +101,17 @@ export function UsageMonitor() {
                 }`} />
               <span className="font-medium">Credits Remaining</span>
             </div>
-            <span className="text-2xl font-bold">{creditsRemaining}</span>
+            <span className="text-2xl font-bold">{creditsRemaining ?? '∞'}</span>
           </div>
 
           {planLimits.maxCredits && (
             <>
-              <Progress
-                value={100 - usagePercent}
-                className="h-2"
-              />
+              <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all"
+                  style={{ width: `${Math.min(100, Math.max(0, 100 - usagePercent))}%` }}
+                />
+              </div>
               <p className="text-xs text-muted-foreground text-right">
                 {creditsUsed} of {planLimits.maxCredits} used this month
               </p>
@@ -120,15 +127,13 @@ export function UsageMonitor() {
                     ? 'You\'re running very low on credits!'
                     : 'Your credits are running low'}
                 </p>
-                <Button
-                  size="sm"
-                  variant="default"
+                <button
                   onClick={() => setShowPricing(true)}
-                  className="w-full"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <CreditCard className="w-4 h-4 mr-2" />
+                  <CreditCard className="w-4 h-4" />
                   Buy More Credits
-                </Button>
+                </button>
               </div>
             </div>
           )}
@@ -171,46 +176,46 @@ export function UsageMonitor() {
 
         {/* Actions */}
         <div className="flex gap-2 pt-4 border-t">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => setShowPricing(true)}
-            className="flex-1"
+            className="flex-1 px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
             View Plans
-          </Button>
+          </button>
           {user?.plan !== 'free' && (
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={async () => {
                 try {
+                  const supabase = getSupabase();
+                  const { data: { session } } = await supabase.auth.getSession();
+                  const token = session?.access_token;
+                  if (!token) return;
                   const response = await fetch('/api/payments/portal', {
                     method: 'POST',
                     headers: {
-                      Authorization: `Bearer ${localStorage.getItem('token')}`,
+                      Authorization: `Bearer ${token}`,
                     },
                   });
                   const data = await response.json();
                   if (data.url) {
-                    window.open(data.url, '_blank');
+                    window.open(data.url, '_blank', 'noopener,noreferrer');
                   }
-                } catch (error) {
-                  console.error('Portal error:', error);
+                } catch {
+                  // Portal open failed
                 }
               }}
-              className="flex-1"
+              className="flex-1 px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
               Manage Billing
-            </Button>
+            </button>
           )}
         </div>
-      </Card>
+      </div>
 
       <PricingModal
         isOpen={showPricing}
         onClose={() => setShowPricing(false)}
-        defaultTab="credits"
+        onSubscriptionSuccess={() => setShowPricing(false)}
       />
     </>
   );

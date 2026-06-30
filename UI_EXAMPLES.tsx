@@ -50,7 +50,7 @@ export const FeatureCardsExample = () => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
       {features.map((feature, i) => (
         <ModernCard 
-          key={i} 
+          key={`feature-${feature.title}`} 
           glass 
           hover 
           padding="lg"
@@ -83,7 +83,7 @@ export const StatsDashboardExample = () => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6">
       {stats.map((stat, i) => (
         <ModernCard 
-          key={i} 
+          key={`stat-${stat.label}`} 
           glass 
           hover 
           padding="md"
@@ -164,7 +164,7 @@ export const PricingExample = () => {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
       {plans.map((plan, i) => (
         <ModernCard
-          key={i}
+          key={`plan-${plan.name}`}
           glass={!plan.popular}
           hover
           padding="lg"
@@ -222,7 +222,7 @@ export const MobileBottomSheetExample = ({ isOpen, onClose }: { isOpen: boolean;
         <div className="space-y-3">
           {['Edytuj', 'Udostępnij', 'Zaplanuj', 'Usuń'].map((action, i) => (
             <button
-              key={i}
+              key={`action-${action}`}
               className="w-full text-left px-4 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               {action}

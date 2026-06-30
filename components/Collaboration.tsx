@@ -100,16 +100,16 @@ export const Collaboration: React.FC<CollaborationProps> = ({ item, user, role, 
             </div>
             <div className="flex items-center gap-2">
                 {canRequestApproval && (
-                    <button onClick={() => onStatusChange(item.id, 'pending_approval')} className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">
+                    <button onClick={() => onStatusChange(item.id, 'pending_approval')} aria-label="Send for approval" className="px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">
                         Wyślij do akceptacji
                     </button>
                 )}
                 {canApproveOrReject && (
                     <>
-                        <button onClick={() => onStatusChange(item.id, 'rejected')} className="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-200 dark:bg-red-900/50 dark:text-red-300 rounded-md hover:bg-red-300 dark:hover:bg-red-800 transition">
+                        <button onClick={() => onStatusChange(item.id, 'rejected')} aria-label="Reject" className="px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-200 dark:bg-red-900/50 dark:text-red-300 rounded-md hover:bg-red-300 dark:hover:bg-red-800 transition">
                             Odrzuć
                         </button>
-                        <button onClick={() => onStatusChange(item.id, 'approved')} className="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition">
+                        <button onClick={() => onStatusChange(item.id, 'approved')} aria-label="Approve" className="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 rounded-md hover:bg-green-700 transition">
                             Zatwierdź
                         </button>
                     </>
@@ -127,8 +127,8 @@ export const Collaboration: React.FC<CollaborationProps> = ({ item, user, role, 
                             onChange={(e) => setNewDueDate(e.target.value)}
                             className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md p-1 text-sm focus:ring-1 focus:ring-blue-500"
                         />
-                        <button onClick={handleSaveDate} className="px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Zapisz</button>
-                        <button onClick={() => setIsEditingDate(false)} className="px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">Anuluj</button>
+                        <button onClick={handleSaveDate} aria-label="Save due date" className="px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700">Zapisz</button>
+                        <button onClick={() => setIsEditingDate(false)} aria-label="Cancel editing due date" className="px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600">Anuluj</button>
                     </div>
                 ) : item.dueDate ? (
                     <div className={`flex items-center gap-2 font-semibold text-sm ${isOverdue ? 'text-red-500' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -140,7 +140,7 @@ export const Collaboration: React.FC<CollaborationProps> = ({ item, user, role, 
                 )}
             </div>
              {canEditDate && !isEditingDate && (
-                 <button onClick={handleDateEditToggle} className="p-1.5 text-slate-500 hover:text-blue-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={item.dueDate ? 'Zmień termin' : 'Ustaw termin'}>
+                 <button onClick={handleDateEditToggle} aria-label={item.dueDate ? 'Edit due date' : 'Set due date'} className="p-1.5 text-slate-500 hover:text-blue-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors" title={item.dueDate ? 'Zmień termin' : 'Ustaw termin'}>
                     <PencilIcon className="w-4 h-4"/>
                  </button>
             )}

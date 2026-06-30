@@ -7,10 +7,7 @@ export const fetchTemplates = async (): Promise<CustomTemplate[]> => {
     .from('templates')
     .select('*');
 
-  if (error) {
-    console.error('Error fetching templates:', error);
-    throw new Error('Failed to fetch templates');
-  }
+  if (error) throw new Error('Failed to fetch templates');
 
   return (data || []).map(t => ({
     id: t.id,
@@ -39,10 +36,7 @@ export const saveTemplate = async (template: CustomTemplate): Promise<CustomTemp
     .select()
     .single();
 
-  if (error) {
-    console.error('Error saving template:', error);
-    throw new Error('Failed to save template');
-  }
+  if (error) throw new Error('Failed to save template');
 
   return {
     id: data.id,
@@ -62,8 +56,5 @@ export const deleteTemplate = async (templateId: string): Promise<void> => {
     .delete()
     .eq('id', templateId);
 
-  if (error) {
-    console.error('Error deleting template:', error);
-    throw new Error('Failed to delete template');
-  }
+  if (error) throw new Error('Failed to delete template');
 };

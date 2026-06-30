@@ -2,31 +2,38 @@
 
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-import { createHashRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 
 // Import our promise and instance, replacing the side-effect import
 import i18nPromise, { i18n } from './i18n';
 
+import { setupChunkReloadRecovery, lazyWithRetry } from './utils/chunkReload';
+
+setupChunkReloadRecovery();
+
 // Import the main App component and views
 import { App, ProtectedRoute } from './App';
 // Dynamiczne importy widoków (Code Splitting dla zmniejszenia rozmiaru początkowego)
-const GeneratorView = React.lazy(() => import('./components/GeneratorView').then(m => ({ default: m.GeneratorView })));
-const TrendsView = React.lazy(() => import('./components/TrendsView').then(m => ({ default: m.TrendsView })));
-const ContentCalendar = React.lazy(() => import('./components/ContentCalendar').then(m => ({ default: m.ContentCalendar })));
-const AnalyticsView = React.lazy(() => import('./components/AnalyticsView').then(m => ({ default: m.AnalyticsView })));
-const AccountView = React.lazy(() => import('./components/account/AccountView').then(m => ({ default: m.AccountView })));
-const AnalyzerView = React.lazy(() => import('./components/AnalyzerView').then(m => ({ default: m.AnalyzerView })));
-const StoryboardView = React.lazy(() => import('./components/StoryboardView').then(m => ({ default: m.StoryboardView })));
-const HomeView = React.lazy(() => import('./components/HomeView').then(m => ({ default: m.HomeView })));
-const DashboardView = React.lazy(() => import('./components/DashboardView').then(m => ({ default: m.DashboardView })));
-const AIStrategistView = React.lazy(() => import('./components/AIStrategistView').then(m => ({ default: m.AIStrategistView })));
-const SocialAuthCallback = React.lazy(() => import('./components/SocialAuthCallback').then(m => ({ default: m.SocialAuthCallback })));
+const GeneratorView = lazyWithRetry(() => import('./components/GeneratorView').then(m => ({ default: m.GeneratorView })));
+const TrendsView = lazyWithRetry(() => import('./components/TrendsView').then(m => ({ default: m.TrendsView })));
+const ContentCalendar = lazyWithRetry(() => import('./components/ContentCalendar').then(m => ({ default: m.ContentCalendar })));
+const AnalyticsView = lazyWithRetry(() => import('./components/AnalyticsView').then(m => ({ default: m.AnalyticsView })));
+const AccountView = lazyWithRetry(() => import('./components/account/AccountView').then(m => ({ default: m.AccountView })));
+const AnalyzerView = lazyWithRetry(() => import('./components/AnalyzerView').then(m => ({ default: m.AnalyzerView })));
+const StoryboardView = lazyWithRetry(() => import('./components/StoryboardView').then(m => ({ default: m.StoryboardView })));
+const HomeView = lazyWithRetry(() => import('./components/HomeView').then(m => ({ default: m.HomeView })));
+const PricingPage = lazyWithRetry(() => import('./components/PricingPage').then(m => ({ default: m.PricingPage })));
+const DashboardView = lazyWithRetry(() => import('./components/DashboardView').then(m => ({ default: m.DashboardView })));
+const AIStrategistView = lazyWithRetry(() => import('./components/AIStrategistView').then(m => ({ default: m.AIStrategistView })));
+const SocialAuthCallback = lazyWithRetry(() => import('./components/SocialAuthCallback').then(m => ({ default: m.SocialAuthCallback })));
+const CompetitorTrackerPanel = lazyWithRetry(() => import('./components/CompetitorTrackerPanel').then(m => ({ default: m.CompetitorTrackerPanel })));
 
 
 // Import providers
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { NotificationsProvider } from './contexts/NotificationsContext';
 import { ToastProvider } from './components/ui/Toast';
 // PAMIĘTAJ: To musi być zaimportowane!
 import { initializeSupabase } from './services/supabaseClient';
@@ -36,12 +43,13 @@ import './styles/globals.css';
 import './styles/mobile.css';
 
 
-const router = createHashRouter([
+const router = createBrowserRouter([
   {
     path: '/',
     element: <App />, // App provides the main layout and context
     children: [
-      { index: true, element: <HomeView /> }, // Always show HomeView at the root
+      { index: true, element: <HomeView /> },
+      { path: 'pricing', element: <PricingPage /> },
       // Nested protected routes that will render inside App's Outlet
       {
         element: <ProtectedRoute />,
@@ -55,6 +63,7 @@ const router = createHashRouter([
           { path: 'account', element: <AccountView /> },
           { path: 'storyboard', element: <StoryboardView /> },
           { path: 'strategist', element: <AIStrategistView /> },
+          { path: 'competitors', element: <CompetitorTrackerPanel /> },
           // Obsługa przekierowań z OAuth
           { path: 'auth/:platform/callback', element: <SocialAuthCallback /> },
         ]
@@ -135,27 +144,26 @@ async function startApp() {
   try {
     // Ładujemy i18n oraz Supabase RÓWNOLEGLE
     await Promise.all([i18nPromise, initializeSupabase()]);
-    console.log('✅ Aplikacja zainicjalizowana pomyślnie. Rozpoczynam renderowanie.');
 
     // 4. Renderowanie głównej aplikacji dopiero po udanej inicjalizacji
-    console.log('🚀 root.render() calling...');
     root.render(
       <Suspense fallback={<CenteredSpinner />}>
         <I18nextProvider i18n={i18n}>
           <ThemeProvider>
             <AuthProvider>
-              <ToastProvider />
-              <AppRouter />
+              <NotificationsProvider>
+                <ToastProvider />
+                <AppRouter />
+              </NotificationsProvider>
             </AuthProvider>
           </ThemeProvider>
         </I18nextProvider>
       </Suspense>
     );
-    console.log('✨ root.render() called.');
   } catch (error) {
     // 5. OBSŁUGA KRYTYCZNEGO BŁĘDU: Zatrzymujemy renderowanie i pokazujemy błąd.
     const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error("❌ Błąd krytyczny podczas inicjalizacji:", error);
+    // Error handled by renderCriticalError
     renderCriticalError(`Inicjalizacja Supabase lub i18n nie powiodła się. Szczegóły: ${errorMessage}`);
   }
 }

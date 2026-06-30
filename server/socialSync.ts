@@ -8,9 +8,59 @@ import {
 } from './socialPublishing.js';
 import logger from './logger.js';
 
+const twitterConfig = {
+    appKey: process.env.TWITTER_APP_KEY || '',
+    appSecret: process.env.TWITTER_APP_SECRET || '',
+};
+
+const tiktokConfig = {
+    clientKey: process.env.TIKTOK_CLIENT_KEY || '',
+    clientSecret: process.env.TIKTOK_CLIENT_SECRET || '',
+    redirectUri: process.env.TIKTOK_REDIRECT_URI || '',
+};
+
 /**
  * Service to sync social media posts from external APIs to the local database.
  */
+
+/**
+ * Sync all users with at least one active connection (called by auto-sync interval)
+ */
+export async function syncAllActiveConnections() {
+    try {
+        const { data: users, error } = await supabase
+            .from('social_connections')
+            .select('user_id')
+            .eq('is_active', true);
+
+        if (error) throw error;
+        if (!users || users.length === 0) return;
+
+        // Deduplicate user IDs
+        const uniqueUserIds = [...new Set(users.map((u: any) => u.user_id))];
+        logger.info(`[AutoSync] Synchronizuję ${uniqueUserIds.length} użytkowników...`);
+
+        for (const uid of uniqueUserIds) {
+            try {
+                const result = await syncUserSocialPosts(uid);
+                if (result.errors.length > 0) {
+                    logger.warn(`[AutoSync] Błędy dla użytkownika ${uid}:`, result.errors);
+                } else {
+                    logger.info(`[AutoSync] Zsynchronizowano ${result.synced} postów dla ${uid}`);
+                }
+            } catch (e: any) {
+                logger.error(`[AutoSync] Błąd dla użytkownika ${uid}:`, e);
+            }
+        }
+    } catch (error: any) {
+        logger.error('[AutoSync] Błąd podczas pobierania aktywnych połączeń:', error);
+    }
+}
+
+// Auto-sync co 6 godzin
+const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+setInterval(syncAllActiveConnections, SIX_HOURS_MS);
+logger.info('[AutoSync] Uruchomiono auto-sync co 6 godzin.');
 
 export async function syncUserSocialPosts(userId: string) {
     try {
@@ -50,7 +100,14 @@ export async function syncUserSocialPosts(userId: string) {
                         });
                         posts = await li.getPosts(conn.access_token, conn.account_id);
                         break;
-                    // Add other platforms as needed...
+                    case 'twitter':
+                        const tw = new TwitterPublisher(twitterConfig.appKey, twitterConfig.appSecret, conn.access_token, conn.refresh_token || '');
+                        posts = await tw.getPosts(conn.account_id);
+                        break;
+                    case 'tiktok':
+                        const tt = new TikTokPublisher(tiktokConfig);
+                        posts = await tt.getPosts(conn.access_token);
+                        break;
                 }
 
                 if (posts.length > 0) {
@@ -99,6 +156,24 @@ export async function syncUserSocialPosts(userId: string) {
             } catch (e: any) {
                 logger.error(`Sync error for connection ${conn.id} (${conn.platform}):`, e);
                 errors.push(`${conn.platform}: ${e.message}`);
+
+                // Token expiry detection: 401/403 lub specyficzne błędy FB/TikTok = token wygasł
+                const msg: string = e.message || '';
+                const isAuthError =
+                    e.response?.status === 401 ||
+                    e.response?.status === 403 ||
+                    /token.*expired|invalid.*token|OAuthException|access.*denied/i.test(msg);
+
+                if (isAuthError) {
+                    await supabase
+                        .from('social_connections')
+                        .update({
+                            is_active: false,
+                            metadata: { expired_at: new Date().toISOString(), error: msg }
+                        })
+                        .eq('id', conn.id);
+                    logger.warn(`[Sync] Token wygasł dla ${conn.platform} (${conn.id}) – oznaczono jako nieaktywne`);
+                }
             }
         }
 

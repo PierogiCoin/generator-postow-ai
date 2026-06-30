@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -15,6 +15,7 @@ import { ClipboardDocumentListIcon } from './icons/ClipboardDocumentListIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { History, RefreshCw, Wifi, Plus, Send, Zap } from 'lucide-react';
 import { LivePulse } from './LivePulse';
+import { recordActivity, getStreakData } from '../services/streakService';
 
 // Components
 import { QuickCommandBar } from './QuickCommandBar';
@@ -27,7 +28,7 @@ import { useAppHandlers } from '../hooks/useAppHandlers';
 // Services & Types
 import { getStrategicContentIdeas } from '../services/geminiService';
 import type { StrategicIdea, Platform as PlatformType } from '../types';
-import { Platform } from '../types';
+import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
 import { socialConnectionsService } from '../services/socialConnectionsService';
 import { useUIStore } from '../stores/uiStore';
@@ -35,22 +36,30 @@ import { useUIStore } from '../stores/uiStore';
 // Zustand stores
 import { useDataStore } from '../stores/dataStore';
 
-const StatCard: React.FC<{ icon: React.FC<any>, label: string, value: number | string, color: string, trend?: string, gradient: string }> = ({ icon: Icon, label, value, color, trend, gradient }) => (
-    <div className={`p-8 rounded-[3rem] border border-white/20 dark:border-slate-800/50 flex flex-col gap-6 shadow-2xl relative overflow-hidden group transition-all hover:scale-[1.02] hover:-translate-y-1 ${gradient}`}>
-        <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/10 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+const StatCard: React.FC<{
+    icon: React.FC<any>,
+    label: string,
+    value: number | string,
+    color: string,
+    trend?: string,
+    glowClass: string,
+    iconColor: string
+}> = ({ icon: Icon, label, value, color, trend, glowClass, iconColor }) => (
+    <div className={`p-8 rounded-[2.5rem] border bg-slate-900/40 backdrop-blur-xl border-white/5 flex flex-col gap-6 shadow-2xl relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${glowClass}`}>
+        <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-        <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center ${color} shadow-lg shadow-black/20 relative z-10`}>
-            <Icon className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${color} shadow-lg shadow-black/10 relative z-10 border border-white/10`}>
+            <Icon className={`w-7 h-7 ${iconColor} group-hover:scale-110 transition-transform`} />
         </div>
 
         <div className="relative z-10">
-            <p className="text-6xl font-black text-white tracking-tighter drop-shadow-sm">{value}</p>
+            <p className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter">{value}</p>
             <div className="flex items-center justify-between mt-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">{label}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{label}</p>
                 {trend && (
-                    <span className="flex items-center gap-1 text-[10px] font-black text-white bg-white/20 px-3 py-1 rounded-full backdrop-blur-md">
-                        <Zap className="w-3 h-3 fill-current" />
+                    <span className="flex items-center gap-1 text-[10px] font-black text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 rounded-full">
+                        <Zap className="w-3 h-3 fill-current text-amber-500" />
                         {trend}
                     </span>
                 )}
@@ -67,7 +76,8 @@ const StrategyAssistant: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [retryTrigger, setRetryTrigger] = useState(0);
-    const niche = localStorage.getItem('userNiche') || 'zrównoważona moda';
+    const nicheKey = user ? `userNiche_${user.id}` : 'userNiche';
+    const niche = localStorage.getItem(nicheKey) || localStorage.getItem('userNiche') || 'zrównoważona moda';
 
     useEffect(() => {
         const fetchIdeas = async () => {
@@ -92,29 +102,31 @@ const StrategyAssistant: React.FC = () => {
 
     const IdeaTypeIcon: React.FC<{ type: StrategicIdea['type'] }> = ({ type }) => {
         switch (type) {
-            case 'Trending': return <TrendingUpIcon className="w-5 h-5 text-green-500" />;
-            case 'Content Gap': return <LightbulbIcon className="w-5 h-5 text-yellow-500" />;
-            case 'Evergreen': return <SparklesIcon className="w-5 h-5 text-blue-500" />;
-            default: return <SparklesIcon className="w-5 h-5 text-gray-500" />;
+            case 'Trending': return <TrendingUpIcon className="w-5 h-5 text-emerald-500" />;
+            case 'Content Gap': return <LightbulbIcon className="w-5 h-5 text-amber-500" />;
+            case 'Evergreen': return <SparklesIcon className="w-5 h-5 text-cyan-500" />;
+            default: return <SparklesIcon className="w-5 h-5 text-slate-500" />;
         }
     }
 
     return (
-        <div className="p-8 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] shadow-xl">
-            <div className="flex items-center justify-between mb-8">
+        <div className="glass-premium p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="absolute -top-12 -left-12 w-24 h-24 bg-cyan-500/10 rounded-full blur-[60px]" />
+            
+            <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
-                    <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Asystent Strategiczny</h3>
-                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Wskazówki dla marki: <span className="text-blue-500">{niche}</span></p>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Asystent Strategiczny</h3>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Wskazówki dla marki: <span className="text-cyan-500">{niche}</span></p>
                 </div>
-                <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center animate-bounce">
-                    <SparklesIcon className="w-6 h-6 text-blue-500" />
+                <div className="w-12 h-12 bg-cyan-500/10 rounded-2xl flex items-center justify-center border border-cyan-500/20">
+                    <SparklesIcon className="w-6 h-6 text-cyan-500" />
                 </div>
             </div>
 
             {isLoading ? (
-                <div className="space-y-4">
+                <div className="space-y-4 relative z-10">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={i} className="p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-3xl animate-pulse">
+                        <div key={`skeleton-${i}`} className="p-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5 rounded-3xl animate-pulse">
                             <div className="flex gap-4">
                                 <div className="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-xl" />
                                 <div className="space-y-2 flex-grow">
@@ -126,36 +138,36 @@ const StrategyAssistant: React.FC = () => {
                     ))}
                 </div>
             ) : error ? (
-                <div className="p-8 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-[2rem] text-center">
-                    <p className="text-sm font-bold text-red-600 dark:text-red-400 mb-4">{error}</p>
+                <div className="p-8 bg-red-500/5 border border-red-500/20 rounded-3xl text-center relative z-10">
+                    <p className="text-sm font-bold text-red-500 dark:text-red-400 mb-4">{error}</p>
                     <button
                         onClick={() => setRetryTrigger(prev => prev + 1)}
-                        className="px-6 py-2.5 bg-red-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-red-700 transition shadow-lg shadow-red-500/20 inline-flex items-center gap-2"
+                        className="px-6 py-2.5 bg-red-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-red-600 transition shadow-lg inline-flex items-center gap-2"
                     >
                         <RefreshCw className="w-4 h-4" />
                         Spróbuj ponownie
                     </button>
                 </div>
             ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 relative z-10">
                     {ideas.map((idea, index) => (
-                        <div key={index} className="p-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] hover:border-blue-500 transition-all group">
+                        <div key={`idea-${index}`} className="p-6 bg-white/40 dark:bg-slate-950/20 border border-slate-200/50 dark:border-white/5 rounded-3xl hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
                             <div className="flex justify-between items-start gap-4">
                                 <div className="flex gap-4">
-                                    <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-110">
+                                    <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5 transition-transform group-hover:scale-115">
                                         <IdeaTypeIcon type={idea.type} />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">{idea.type}</span>
+                                            <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-500">{idea.type}</span>
                                         </div>
-                                        <h4 className="text-lg font-black text-slate-800 dark:text-white leading-tight uppercase tracking-tight">{idea.title}</h4>
-                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 line-clamp-2 leading-relaxed italic">"{idea.strategy}"</p>
+                                        <h4 className="text-base font-bold text-slate-850 dark:text-white leading-tight">{idea.title}</h4>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed italic">"{idea.strategy}"</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => onGenerateFromIdea(idea.title)}
-                                    className="px-4 py-2 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 transition shadow-lg shadow-blue-500/20"
+                                    className="px-4 py-2 bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-500 hover:text-white transition duration-300"
                                 >
                                     Stwórz
                                 </button>
@@ -204,30 +216,30 @@ const SocialMediaSection: React.FC = () => {
     };
 
     return (
-        <div className="glass p-8 rounded-[2.5rem] border border-white/10 dark:border-slate-800 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-5">
-                <Wifi className="w-24 h-24 text-blue-500" />
+        <div className="glass-premium p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.02] pointer-events-none">
+                <Wifi className="w-24 h-24 text-cyan-500" />
             </div>
 
             <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Social Intelligence</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Auto-Publish: Active</span>
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Auto-Publish: Active</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={load}
                         disabled={loading}
-                        className="p-2 text-slate-400 hover:text-blue-500 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition"
+                        className="p-2 text-slate-400 hover:text-cyan-500 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     </button>
                     <button
                         onClick={() => setIsSocialConnectionsModalOpen(true)}
-                        className="w-8 h-8 flex items-center justify-center bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition shadow-lg shadow-blue-500/20"
+                        className="w-8 h-8 flex items-center justify-center bg-cyan-500 text-white rounded-xl hover:bg-cyan-600 transition shadow-md"
                     >
                         <Plus className="w-4 h-4" />
                     </button>
@@ -235,15 +247,15 @@ const SocialMediaSection: React.FC = () => {
             </div>
 
             {connections.length === 0 ? (
-                <div className="text-center py-12 bg-slate-50 dark:bg-slate-950/40 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-800 relative z-10">
-                    <div className="w-20 h-20 bg-white dark:bg-slate-900 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black/5">
-                        <Wifi className="w-10 h-10 text-slate-200 dark:text-slate-700" />
+                <div className="text-center py-10 bg-slate-50/50 dark:bg-slate-950/20 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-white/5 relative z-10">
+                    <div className="w-16 h-16 bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow">
+                        <Wifi className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                     </div>
-                    <h4 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Brak połączeń</h4>
-                    <p className="text-xs text-slate-500 max-w-[200px] mx-auto mb-6">Połącz konta, aby AI mogło publikować posty automatycznie.</p>
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-1">Brak połączeń</h4>
+                    <p className="text-[11px] text-slate-400 max-w-[200px] mx-auto mb-4">Połącz konta, aby AI mogło publikować posty automatycznie.</p>
                     <button
                         onClick={() => setIsSocialConnectionsModalOpen(true)}
-                        className="px-6 py-2.5 bg-blue-600 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-blue-500 transition shadow-xl shadow-blue-500/20"
+                        className="px-5 py-2 bg-cyan-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-600 transition shadow-md"
                     >
                         Konfiguruj Teraz
                     </button>
@@ -253,24 +265,23 @@ const SocialMediaSection: React.FC = () => {
                     {connections.map((conn) => (
                         <div
                             key={conn.id}
-                            className="group flex items-center justify-between p-4 bg-white dark:bg-slate-900/50 rounded-[1.5rem] border border-slate-100 dark:border-slate-800 hover:border-blue-400 transition-all shadow-sm hover:shadow-lg"
+                            className="group flex items-center justify-between p-4 bg-white/40 dark:bg-slate-950/20 rounded-2xl border border-slate-200/50 dark:border-white/5 hover:border-cyan-500/50 transition-all shadow-sm"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center text-2xl shadow-sm relative overflow-hidden group-hover:scale-110 transition-transform">
-                                    <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors" />
-                                    <span className="relative z-10">{PLATFORM_ICONS[conn.platform]}</span>
+                                <div className="w-12 h-12 bg-white dark:bg-white/5 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-slate-200/50 dark:border-white/5 group-hover:scale-110 transition-transform">
+                                    <span>{PLATFORM_ICONS[conn.platform]}</span>
                                 </div>
                                 <div className="min-w-0">
-                                    <div className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tight">{conn.accountName}</div>
+                                    <div className="text-sm font-bold text-slate-900 dark:text-white truncate uppercase tracking-tight">{conn.accountName}</div>
                                     <div className="flex items-center gap-1.5">
-                                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                                        <div className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{PLATFORM_NAMES[conn.platform]}</div>
+                                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                                        <div className="text-[9px] font-bold text-cyan-500 uppercase tracking-widest">{PLATFORM_NAMES[conn.platform]}</div>
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => openHistory(conn)}
-                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                                className="w-10 h-10 flex items-center justify-center text-slate-450 hover:text-cyan-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition"
                                 title="Historia"
                             >
                                 <History className="w-5 h-5" />
@@ -292,16 +303,50 @@ const SocialMediaSection: React.FC = () => {
     );
 };
 
-
 export const DashboardView: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const [searchParams, setSearchParams] = useSearchParams();
 
     const { history, scheduledPosts, stats, drafts } = useDataStore();
     const { setIsCommandPaletteOpen } = useUIStore();
     const notificationSystem = useNotifications();
     const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
+
+    const [streak, setStreak] = React.useState(() => getStreakData());
+
+    useEffect(() => {
+        if (user) {
+            const updated = recordActivity();
+            setStreak(updated);
+        }
+    }, [user]);
+
+    useEffect(() => {
+        const socialSuccess = searchParams.get('socialSuccess');
+        const socialError = searchParams.get('socialError');
+        const platform = searchParams.get('platform');
+
+        if (socialSuccess === 'true') {
+            notificationSystem.addToast(
+                platform
+                    ? `Połączono konto ${platform}!`
+                    : 'Konto social zostało połączone!',
+                NotificationType.Success
+            );
+            searchParams.delete('socialSuccess');
+            searchParams.delete('platform');
+            setSearchParams(searchParams, { replace: true });
+        } else if (socialError) {
+            notificationSystem.addToast(
+                decodeURIComponent(socialError),
+                NotificationType.Error
+            );
+            searchParams.delete('socialError');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams, notificationSystem]);
 
     if (!user) return null;
 
@@ -309,44 +354,49 @@ export const DashboardView: React.FC = () => {
     const scheduledThisWeek = scheduledPosts.filter(p => p.scheduleTimestamp <= oneWeekFromNow).length;
 
     return (
-        <div className="space-y-12 animate-fade-in pb-12">
-            <header className="relative py-20 px-12 bg-slate-900 dark:bg-black rounded-[4rem] overflow-hidden group border border-white/5 shadow-3xl">
-                <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-blue-600/30 via-indigo-600/10 to-transparent pointer-events-none" />
-                <div className="absolute -right-40 -top-40 w-[600px] h-[600px] bg-blue-500/10 rounded-full blur-[120px] animate-pulse" />
-                <div className="absolute left-1/4 bottom-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-[80px]" />
+        <div className="space-y-12 animate-fade-in pb-16">
+            <header className="relative py-16 px-8 md:px-12 glass-premium rounded-[3rem] overflow-hidden border border-white/10 shadow-3xl">
+                <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-cyan-500/10 via-fuchsia-500/5 to-transparent pointer-events-none" />
+                <div className="absolute -right-40 -top-40 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px]" />
+                <div className="absolute left-1/4 bottom-0 w-80 h-80 bg-fuchsia-500/5 rounded-full blur-[90px]" />
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-12">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
                     <div className="space-y-6">
-                        <div className="flex items-center gap-3">
-                            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 border border-white/20 rounded-full text-white text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl">
-                                <div className="w-2 h-2 bg-green-500 rounded-full animate-ping" />
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl">
+                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
                                 System Online
                             </div>
-                            <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600/20 border border-blue-500/30 rounded-full text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl">
-                                <SparklesIcon className="w-4 h-4" />
+                            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl">
+                                <SparklesIcon className="w-3.5 h-3.5" />
                                 AI v2.0
                             </div>
+                            {streak.currentStreak > 0 && (
+                                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/10 border border-amber-400/20 rounded-full text-amber-300 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl" title={`Najdłuższy streak: ${streak.longestStreak} dni`}>
+                                    🔥 {streak.currentStreak} {streak.currentStreak === 1 ? 'dzień' : 'dni'} z rzędu
+                                </div>
+                            )}
                         </div>
-                        <h1 className="text-6xl lg:text-8xl font-black text-white tracking-tighter leading-none">
-                            Witaj, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">{user.name.split(' ')[0]}</span>.
+                        <h1 className="text-4xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none font-sans">
+                            Witaj, <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 font-extrabold">{user.name.split(' ')[0]}</span>.
                         </h1>
-                        <p className="text-xl text-slate-300 max-w-2xl font-medium leading-relaxed opacity-90">
+                        <p className="text-lg text-slate-650 dark:text-slate-300 max-w-2xl leading-relaxed">
                             Twoja inteligencja społecznościowa czeka. Algorytmy przeanalizowały {stats?.totalGenerations || 0} postów i są gotowe na nowe wyzwania.
                         </p>
-                        <div className="flex flex-wrap gap-4 pt-4">
+                        <div className="flex flex-wrap gap-4 pt-2">
                             <button
                                 onClick={() => navigate('/generator')}
-                                className="px-8 py-4 bg-white text-slate-950 font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-blue-50 transition-all shadow-xl shadow-white/5 flex items-center gap-3 active:scale-95"
+                                className="px-6 py-3.5 bg-gradient-to-r from-fuchsia-500 to-indigo-650 text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:opacity-90 transition-all shadow-lg active:scale-95 flex items-center gap-2.5"
                             >
-                                <Plus className="w-5 h-5" />
+                                <Plus className="w-4 h-4" />
                                 Nowy Projekt
                             </button>
                             <button
                                 onClick={() => setIsCommandPaletteOpen(true)}
-                                className="px-8 py-4 bg-white/10 border border-white/20 text-white font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-white/20 transition-all backdrop-blur-xl flex items-center gap-3"
+                                className="px-6 py-3.5 bg-white/5 border border-white/10 text-slate-800 dark:text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-white/10 transition-all backdrop-blur flex items-center gap-2.5"
                             >
-                                <Zap className="w-5 h-5" />
-                                Quick Actions
+                                <Zap className="w-4 h-4 text-amber-400" />
+                                Szybkie Akcje
                             </button>
                         </div>
                     </div>
@@ -360,25 +410,28 @@ export const DashboardView: React.FC = () => {
                     icon={RocketLaunchIcon}
                     label="AI Generations"
                     value={stats?.totalGenerations || 0}
-                    color="bg-blue-600"
+                    color="bg-cyan-500/10 border border-cyan-500/20"
                     trend="+12% today"
-                    gradient="bg-gradient-to-br from-blue-600 to-indigo-700"
+                    glowClass="neon-glow-cyan"
+                    iconColor="text-cyan-500"
                 />
                 <StatCard
                     icon={CalendarIcon}
                     label="Scheduled Postings"
                     value={scheduledThisWeek}
-                    color="bg-purple-600"
+                    color="bg-fuchsia-500/10 border border-fuchsia-500/20"
                     trend="Automated"
-                    gradient="bg-gradient-to-br from-purple-600 to-indigo-800"
+                    glowClass="neon-glow-pink"
+                    iconColor="text-fuchsia-500"
                 />
                 <StatCard
                     icon={ClipboardDocumentListIcon}
                     label="Active Drafts"
                     value={drafts.length}
-                    color="bg-emerald-600"
+                    color="bg-lime-500/10 border border-lime-500/20"
                     trend="Ready to Ship"
-                    gradient="bg-gradient-to-br from-emerald-600 to-teal-800"
+                    glowClass="neon-glow-lime"
+                    iconColor="text-lime-500"
                 />
             </div>
 
@@ -391,12 +444,12 @@ export const DashboardView: React.FC = () => {
                     <LivePulse />
                     <SocialMediaSection />
 
-                    <div className="glass p-8 rounded-[2.5rem] border border-white/10 dark:border-slate-800 shadow-xl overflow-hidden relative group">
-                        <div className="absolute -top-12 -right-12 w-24 h-24 bg-purple-500/10 rounded-full blur-[60px] group-hover:scale-150 transition-transform duration-1000" />
+                    <div className="glass-premium p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative group">
+                        <div className="absolute -top-12 -right-12 w-24 h-24 bg-fuchsia-500/10 rounded-full blur-[60px]" />
 
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 uppercase tracking-tighter flex items-center gap-3">
-                            <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center">
-                                <CalendarIcon className="w-6 h-6 text-purple-500" />
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8 uppercase tracking-tighter flex items-center gap-3">
+                            <div className="w-10 h-10 bg-fuchsia-500/10 rounded-xl flex items-center justify-center border border-fuchsia-500/25">
+                                <CalendarIcon className="w-5 h-5 text-fuchsia-500" />
                             </div>
                             Nadchodzące Posty
                         </h3>
@@ -409,50 +462,50 @@ export const DashboardView: React.FC = () => {
                                     .map(post => {
                                         const config = platformConfig[post.formData?.platform || Platform.Facebook];
                                         return (
-                                            <div key={post.id} className="group relative flex items-center gap-5 p-5 bg-white/50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-purple-400 transition-all shadow-sm hover:shadow-xl">
-                                                <div className={`w-14 h-14 rounded-2xl ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 shadow-lg shadow-black/5 relative overflow-hidden`}>
+                                            <div key={post.id} className="group relative flex items-center gap-5 p-5 bg-white/40 dark:bg-slate-950/20 rounded-2xl border border-slate-200/50 dark:border-white/5 hover:border-fuchsia-500/50 transition-all shadow-sm">
+                                                <div className={`w-12 h-12 rounded-2xl ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5 shadow-inner relative overflow-hidden`}>
                                                     <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                    {config && <config.icon className={`w-7 h-7 ${config.iconColor} relative z-10 group-hover:scale-110 transition-transform`} />}
+                                                    {config && <config.icon className={`w-6 h-6 ${config.iconColor} relative z-10 group-hover:scale-110 transition-transform`} />}
                                                 </div>
                                                 <div className="min-w-0 flex-grow">
-                                                    <p className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tight" title={post.formData?.topic}>
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate uppercase tracking-tight" title={post.formData?.topic}>
                                                         {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
                                                     </p>
-                                                    <div className="flex items-center gap-3 mt-1.5">
-                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded-md">Automated</span>
-                                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 tabular-nums">
+                                                    <div className="flex items-center gap-2.5 mt-1.5">
+                                                        <span className="text-[9px] font-bold uppercase tracking-wider text-fuchsia-500 bg-fuchsia-500/10 px-2 py-0.5 rounded-md">Automated</span>
+                                                        <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 tabular-nums">
                                                             {new Date(post.scheduleTimestamp).toLocaleString('pl-PL', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                         </p>
                                                     </div>
                                                 </div>
                                                 <button
                                                     onClick={() => handlers.handlePublishNow(post.result, post.formData?.platform || 'Facebook')}
-                                                    className="opacity-0 group-hover:opacity-100 w-10 h-10 flex items-center justify-center bg-purple-600 text-white rounded-xl shadow-lg shadow-purple-500/30 transition-all hover:bg-purple-500 hover:scale-110 active:scale-90"
+                                                    className="opacity-0 group-hover:opacity-105 w-9 h-9 flex items-center justify-center bg-fuchsia-600 text-white rounded-xl shadow-lg transition-all hover:bg-fuchsia-500"
                                                     title="Publikuj teraz"
                                                 >
-                                                    <Send className="w-5 h-5" />
+                                                    <Send className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         );
                                     })}
                             </div>
                         ) : (
-                            <div className="text-center py-12 bg-slate-50/50 dark:bg-slate-900/30 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
-                                <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-[1.5rem] flex items-center justify-center mx-auto mb-4 shadow-sm">
-                                    <ClockIcon className="w-8 h-8 text-slate-200" />
+                            <div className="text-center py-10 bg-slate-50/50 dark:bg-slate-950/20 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-white/5">
+                                <div className="w-14 h-14 bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow">
+                                    <ClockIcon className="w-6 h-6 text-slate-300 dark:text-slate-650" />
                                 </div>
-                                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Kolejka jest pusta</p>
-                                <p className="text-[10px] text-slate-300 mt-2 uppercase">Zaplanuj swój pierwszy post</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Kolejka jest pusta</p>
+                                <p className="text-[9px] text-slate-350 mt-1 uppercase">Zaplanuj swój pierwszy post</p>
                             </div>
                         )}
                     </div>
 
-                    <div className="glass p-8 rounded-[2.5rem] border border-white/10 dark:border-slate-800 shadow-xl overflow-hidden relative group">
-                        <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-blue-500/10 rounded-full blur-[60px] group-hover:scale-150 transition-transform duration-1000" />
+                    <div className="glass-premium p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative group">
+                        <div className="absolute -bottom-12 -left-12 w-24 h-24 bg-cyan-500/10 rounded-full blur-[60px]" />
 
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-8 uppercase tracking-tighter flex items-center gap-3">
-                            <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                                <ClockIcon className="w-6 h-6 text-blue-500" />
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-8 uppercase tracking-tighter flex items-center gap-3">
+                            <div className="w-10 h-10 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/25">
+                                <ClockIcon className="w-5 h-5 text-cyan-500" />
                             </div>
                             Ostatnie Dzieła
                         </h3>
@@ -467,16 +520,16 @@ export const DashboardView: React.FC = () => {
                                         <button
                                             key={item.id}
                                             onClick={() => navigate('/generator', { state: { inspirationItem: item } })}
-                                            className="w-full flex items-center gap-5 p-5 bg-white/50 dark:bg-slate-900/50 rounded-[2rem] border border-slate-100 dark:border-slate-800 hover:border-blue-400 transition-all text-left shadow-sm hover:shadow-xl group"
+                                            className="w-full flex items-center gap-5 p-5 bg-white/40 dark:bg-slate-950/20 rounded-2xl border border-slate-200/50 dark:border-white/5 hover:border-cyan-500/50 transition-all text-left shadow-sm hover:shadow-xl group"
                                         >
-                                            <div className={`w-14 h-14 rounded-2xl ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 shadow-lg shadow-black/5 relative overflow-hidden group-hover:rotate-6 transition-transform`}>
-                                                <Icon className={`w-7 h-7 ${config?.iconColor || ''} relative z-10`} />
+                                            <div className={`w-12 h-12 rounded-2xl ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5 shadow-inner group-hover:rotate-3 transition-transform`}>
+                                                <Icon className={`w-6 h-6 ${config?.iconColor || ''} relative z-10`} />
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="text-sm font-black text-slate-900 dark:text-white truncate uppercase tracking-tight" title={item.formData?.topic}>
+                                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate uppercase tracking-tight" title={item.formData?.topic}>
                                                     {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
                                                 </p>
-                                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1.5 tabular-nums">
+                                                <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mt-1.5 tabular-nums">
                                                     {new Date(item.timestamp).toLocaleDateString()}
                                                 </p>
                                             </div>

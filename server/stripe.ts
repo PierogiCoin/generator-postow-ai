@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { supabase } from './supabase';
+import logger from './logger.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-11-20.acacia' as any,
@@ -23,6 +24,22 @@ export const PRICING = {
         videosPerMonth: 0,
         platforms: 1,
         scheduling: false,
+        analytics: false,
+        brandVoices: 1,
+        apiAccess: false,
+      }
+    },
+    creator: {
+      name: 'Creator',
+      price: 49,
+      priceId: process.env.STRIPE_CREATOR_PRICE_ID || null,
+      credits: 500,
+      features: {
+        postsPerMonth: 100,
+        imagesPerMonth: 20,
+        videosPerMonth: 2,
+        platforms: 3,
+        scheduling: true,
         analytics: false,
         brandVoices: 1,
         apiAccess: false,
@@ -57,6 +74,22 @@ export const PRICING = {
         scheduling: true,
         analytics: true,
         brandVoices: 20,
+        apiAccess: true,
+      }
+    },
+    agency: {
+      name: 'Agency',
+      price: 249,
+      priceId: process.env.STRIPE_AGENCY_PRICE_ID || null,
+      credits: 10000,
+      features: {
+        postsPerMonth: 2000,
+        imagesPerMonth: 300,
+        videosPerMonth: 30,
+        platforms: -1,
+        scheduling: true,
+        analytics: true,
+        brandVoices: -1,
         apiAccess: true,
       }
     },
@@ -145,31 +178,44 @@ export const PRICING = {
 // SUBSCRIPTION MANAGEMENT
 // ============================================
 
+const frontendUrl = () =>
+  (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+
+async function getBillingUser(userId: string) {
+  const { data: authData, error: authError } = await supabase.auth.admin.getUserById(userId);
+  if (authError || !authData.user?.email) {
+    throw new Error('Nie znaleziono użytkownika');
+  }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, plan, stripe_customer_id')
+    .eq('id', userId)
+    .maybeSingle();
+
+  return {
+    email: authData.user.email,
+    stripeCustomerId: profile?.stripe_customer_id as string | undefined,
+  };
+}
+
 export async function createCheckoutSession(
   userId: string,
   priceId: string,
   mode: 'subscription' | 'payment' = 'subscription'
 ) {
-  const { data: user } = await supabase
-    .from('users')
-    .select('email, stripe_customer_id')
-    .eq('id', userId)
-    .single();
+  const billingUser = await getBillingUser(userId);
+  let customerId = billingUser.stripeCustomerId;
 
-  if (!user) throw new Error('User not found');
-
-  let customerId = user.stripe_customer_id;
-
-  // Create Stripe customer if doesn't exist
   if (!customerId) {
     const customer = await stripe.customers.create({
-      email: user.email,
-      metadata: { userId }
+      email: billingUser.email,
+      metadata: { userId },
     });
     customerId = customer.id;
 
     await supabase
-      .from('users')
+      .from('profiles')
       .update({ stripe_customer_id: customerId })
       .eq('id', userId);
   }
@@ -179,28 +225,27 @@ export async function createCheckoutSession(
     mode,
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${process.env.FRONTEND_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.FRONTEND_URL}/pricing`,
-    metadata: { userId }
+    success_url: `${frontendUrl()}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${frontendUrl()}/pricing?canceled=1`,
+    metadata: { userId },
+    ...(mode === 'subscription'
+      ? { subscription_data: { metadata: { userId } } }
+      : {}),
   });
 
   return session;
 }
 
 export async function createPortalSession(userId: string) {
-  const { data: user } = await supabase
-    .from('users')
-    .select('stripe_customer_id')
-    .eq('id', userId)
-    .single();
+  const billingUser = await getBillingUser(userId);
 
-  if (!user?.stripe_customer_id) {
-    throw new Error('No Stripe customer found');
+  if (!billingUser.stripeCustomerId) {
+    throw new Error('Brak aktywnej subskrypcji Stripe');
   }
 
   const session = await stripe.billingPortal.sessions.create({
-    customer: user.stripe_customer_id,
-    return_url: `${process.env.FRONTEND_URL}/dashboard`
+    customer: billingUser.stripeCustomerId,
+    return_url: `${frontendUrl()}/account`,
   });
 
   return session;
@@ -296,7 +341,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
       break;
 
     default:
-      console.log(`Unhandled event type: ${event.type}`);
+      logger.warn(`Unhandled Stripe event type: ${event.type}`);
   }
 }
 
@@ -330,12 +375,26 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata.userId;
+  let userId = subscription.metadata?.userId;
+
+  if (!userId && subscription.customer) {
+    const customerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_customer_id', customerId)
+      .maybeSingle();
+    userId = profile?.id;
+  }
+
   if (!userId) return;
 
-  const priceId = subscription.items.data[0].price.id;
+  const priceId = subscription.items.data[0]?.price.id;
+  if (!priceId) return;
 
-  // Find plan by price ID
   let plan = 'free';
   for (const [key, value] of Object.entries(PRICING.subscriptions)) {
     if (value.priceId === priceId) {
@@ -344,21 +403,19 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     }
   }
 
-  // Update user plan and credits
   const planConfig = PRICING.subscriptions[plan as keyof typeof PRICING.subscriptions];
 
   await supabase
-    .from('users')
+    .from('profiles')
     .update({
       plan,
       credits: planConfig.credits,
       subscription_id: subscription.id,
       subscription_status: subscription.status,
-      subscription_current_period_end: new Date((subscription as any).current_period_end * 1000)
+      subscription_current_period_end: new Date((subscription as any).current_period_end * 1000),
     })
     .eq('id', userId);
 
-  // Create subscription record
   await supabase.from('subscriptions').upsert({
     user_id: userId,
     stripe_subscription_id: subscription.id,
@@ -366,21 +423,35 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     status: subscription.status,
     current_period_start: new Date((subscription as any).current_period_start * 1000),
     current_period_end: new Date((subscription as any).current_period_end * 1000),
-    cancel_at_period_end: subscription.cancel_at_period_end
+    cancel_at_period_end: subscription.cancel_at_period_end,
   });
 }
 
 async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
-  const userId = subscription.metadata.userId;
+  let userId = subscription.metadata?.userId;
+
+  if (!userId && subscription.customer) {
+    const customerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_customer_id', customerId)
+      .maybeSingle();
+    userId = profile?.id;
+  }
+
   if (!userId) return;
 
   await supabase
-    .from('users')
+    .from('profiles')
     .update({
       plan: 'free',
       credits: PRICING.subscriptions.free.credits,
       subscription_id: null,
-      subscription_status: 'canceled'
+      subscription_status: 'canceled',
     })
     .eq('id', userId);
 
@@ -391,22 +462,31 @@ async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const userId = (invoice as any).subscription_details?.metadata?.userId;
+  const subscriptionId =
+    typeof invoice.subscription === 'string'
+      ? invoice.subscription
+      : invoice.subscription?.id;
+
+  if (!subscriptionId) return;
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const userId = subscription.metadata?.userId;
   if (!userId) return;
 
-  // Refill monthly credits
-  const { data: user } = await supabase
-    .from('users')
+  const { data: profile } = await supabase
+    .from('profiles')
     .select('plan')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
-  if (user) {
-    const planConfig = PRICING.subscriptions[user.plan as keyof typeof PRICING.subscriptions];
-    await supabase
-      .from('users')
-      .update({ credits: planConfig.credits })
-      .eq('id', userId);
+  if (profile?.plan) {
+    const planConfig = PRICING.subscriptions[profile.plan as keyof typeof PRICING.subscriptions];
+    if (planConfig) {
+      await supabase
+        .from('profiles')
+        .update({ credits: planConfig.credits })
+        .eq('id', userId);
+    }
   }
 }
 

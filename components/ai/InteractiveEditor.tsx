@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { AIAssistantAction, FormData } from '../../types';
 import { StreamingText } from '../ui/StreamingText';
 import { AIAssistantToolbar } from './AIAssistantToolbar';
+import { sanitizeRichText } from '../../utils/sanitizeHTML';
 
 // Import ikon dla paska narzędzi formatowania
 // ... (rest of imports)
@@ -236,9 +237,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    // If it's a custom action, we might want to pass the prompt in context
-    // Currently onAction signature doesn't take extra args, but we can pass it via cast or update signature
-    (onAction as any)(action, text, editorRef.current?.innerHTML || value, formData, customPrompt);
+    onAction(action, text, editorRef.current?.innerHTML || value, formData);
   };
 
   const handleFormat = (command: string, value?: string) => {
@@ -259,13 +258,10 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     } else {
       const selection = window.getSelection();
       if (!selection || selection.isCollapsed) {
-        alert('Najpierw zaznacz tekst, aby utworzyć link.');
         return;
       }
-      const url = window.prompt('Wprowadź adres URL:', 'https://');
-      if (url) {
-        document.execCommand('createLink', false, url);
-      }
+      // Link creation requires proper UI component - disabled for now
+      return;
     }
     editorRef.current?.focus();
     updateFormattingToolbar();
@@ -361,7 +357,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
       suppressContentEditableWarning
       onInput={handleEditorChange}
       onKeyDown={handleKeyDown}
-      className={`focus:outline-none interactive-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
+      className={`focus:outline-none intesanitizeRichText(racti)ve-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
       dangerouslySetInnerHTML={{ __html: value }}
     />
   );
