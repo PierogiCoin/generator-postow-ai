@@ -24,6 +24,7 @@ const AnalyzerView = lazyWithRetry(() => import('./components/AnalyzerView').the
 const StoryboardView = lazyWithRetry(() => import('./components/StoryboardView').then(m => ({ default: m.StoryboardView })));
 const HomeView = lazyWithRetry(() => import('./components/HomeView').then(m => ({ default: m.HomeView })));
 const PricingPage = lazyWithRetry(() => import('./components/PricingPage').then(m => ({ default: m.PricingPage })));
+const LegalPage = lazyWithRetry(() => import('./components/legal/LegalPage').then(m => ({ default: m.LegalPage })));
 const DashboardView = lazyWithRetry(() => import('./components/DashboardView').then(m => ({ default: m.DashboardView })));
 const AIStrategistView = lazyWithRetry(() => import('./components/AIStrategistView').then(m => ({ default: m.AIStrategistView })));
 const SocialAuthCallback = lazyWithRetry(() => import('./components/SocialAuthCallback').then(m => ({ default: m.SocialAuthCallback })));
@@ -37,6 +38,7 @@ import { NotificationsProvider } from './contexts/NotificationsContext';
 import { ToastProvider } from './components/ui/Toast';
 // PAMIĘTAJ: To musi być zaimportowane!
 import { initializeSupabase } from './services/supabaseClient';
+import { initErrorReporting } from './utils/errorReporting';
 
 // Import styles
 import './styles/globals.css';
@@ -50,6 +52,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomeView /> },
       { path: 'pricing', element: <PricingPage /> },
+      { path: 'terms', element: <LegalPage kind="terms" /> },
+      { path: 'privacy', element: <LegalPage kind="privacy" /> },
       // Nested protected routes that will render inside App's Outlet
       {
         element: <ProtectedRoute />,
@@ -141,6 +145,7 @@ const renderCriticalError = (message: string) => {
 
 // 1. Definiujemy asynchroniczną funkcję startową.
 async function startApp() {
+  initErrorReporting();
   try {
     // Ładujemy i18n oraz Supabase RÓWNOLEGLE
     await Promise.all([i18nPromise, initializeSupabase()]);

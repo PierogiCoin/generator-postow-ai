@@ -320,7 +320,20 @@ export const Header: React.FC<HeaderProps> = ({
                             {notificationSystem}
                         </div>
                         {user ? (
-                            <UserMenu user={user} onLogout={logout} />
+                            <>
+                                {typeof user.credits === 'number' && (
+                                    <button
+                                        type="button"
+                                        onClick={onUpgradeClick}
+                                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors"
+                                        title={t('header.creditsTooltip', 'Saldo kredytów')}
+                                    >
+                                        <SparklesIcon className="w-3.5 h-3.5 text-cyan-400" />
+                                        {user.credits.toLocaleString('pl-PL')}
+                                    </button>
+                                )}
+                                <UserMenu user={user} onLogout={logout} />
+                            </>
                         ) : (
                             <>
                                 <div className="hidden sm:flex items-center gap-2">

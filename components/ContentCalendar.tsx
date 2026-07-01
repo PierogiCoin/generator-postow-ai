@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ScheduledPost,
@@ -12,8 +12,6 @@ import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { ArrowRightIcon } from './icons/ArrowRightIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { platformConfig } from '../config/platformConfig';
-import { LayersIcon } from './icons/LayersIcon';
-import { CalendarIcon } from './icons/CalendarIcon';
 import { useDataStore } from '../stores/dataStore';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppHandlers } from '../hooks/useAppHandlers';
@@ -23,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { PreviewPopover } from './PreviewPopover';
 import { XMarkIcon } from './icons/XMarkIcon';
 import { CalendarFillToolbar } from './calendar/CalendarFillToolbar';
-import { DayAuditPanel } from './calendar/DayAuditPanel';
+import { DayDetailDrawer } from './calendar/DayDetailDrawer';
 import {
   auditCalendarDay,
   generateCadenceWeekPlan,
@@ -37,8 +35,8 @@ import {
   saveCalendarCadencePrefs,
 } from '../utils/calendarCadencePrefs';
 import {
-  buildCalendarSlotContext,
-  buildPrefillFromCalendarSlot,
+  buildPlanItemFromSuggestion,
+  navigateToCalendarSlot,
 } from '../services/calendarSlotService';
 import { useGenerationStore } from '../stores/generationStore';
 import {
@@ -70,49 +68,14 @@ function auditScoreClass(score: number): string {
   return 'bg-red-500/90 text-white';
 }
 
-const SuggestionModal: React.FC<{
-  suggestions: CalendarSuggestion[];
-  isLoading: boolean;
-  onClose: () => void;
-  onSelect: (suggestion: CalendarSuggestion) => void;
-}> = ({ suggestions, isLoading, onClose, onSelect }) => (
-  <div
-    className="absolute inset-0 bg-black/45 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in"
-    onClick={onClose}
-  >
-    <div
-      className="glass-premium rounded-[2rem] border border-white/10 shadow-2xl p-6 w-full max-w-md relative overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <h4 className="font-bold text-lg text-slate-900 dark:text-white mb-4">Sugestie AI na ten dzień</h4>
-      {isLoading ? (
-        <div className="flex items-center justify-center h-40">
-          <svg className="animate-spin h-8 w-8 text-cyan-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1.5 custom-scrollbar">
-          {suggestions.map((s, i) => (
-            <div key={`suggestion-${i}`} className="p-4 bg-white/40 dark:bg-slate-950/20 rounded-2xl border border-slate-200/50 dark:border-white/5">
-              <p className="font-bold text-sm text-slate-800 dark:text-white">{s.topic}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">&quot;{s.strategy}&quot;</p>
-              <button
-                type="button"
-                onClick={() => onSelect(s)}
-                className="mt-3 text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1"
-              >
-                <SparklesIcon className="w-3.5 h-3.5" />
-                Użyj pomysłu
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  </div>
-);
+function isToday(date: Date): boolean {
+  const now = new Date();
+  return (
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate()
+  );
+}
 
 export const ContentCalendar: React.FC = () => {
   const {
@@ -143,8 +106,9 @@ export const ContentCalendar: React.FC = () => {
 
   const [suggestions, setSuggestions] = useState<CalendarSuggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
-  const [suggestionDate, setSuggestionDate] = useState<Date | null>(null);
-  const [auditDate, setAuditDate] = useState<Date | null>(null);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [calendarView, setCalendarView] = useState<'month' | 'week'>('month');
+  const autoSuggestRef = useRef<string | null>(null);
   const [hoveredPost, setHoveredPost] = useState<{
     post: ScheduledPost;
     pos: { top: number; left: number };
@@ -162,73 +126,158 @@ export const ContentCalendar: React.FC = () => {
     [presetId, weekTheme, platform]
   );
 
-  const changeMonth = (amount: number) => {
-    setCurrentDate((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + amount);
-      return newDate;
-    });
-  };
-
-  const handleSuggest = async (date: Date) => {
-    setSuggestionDate(date);
-    setIsSuggesting(true);
-    try {
-      const historySummary = history
-        .slice(0, 5)
-        .map((h) => h.formData?.topic || '')
-        .filter(Boolean)
-        .join(', ');
-      const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
-      if (!user) throw new Error('Musisz być zalogowany, aby użyć sugestii kalendarza.');
-      const result = await generateCalendarSuggestions(date, niche, historySummary, user.id);
-      setSuggestions(result);
-    } catch (e: unknown) {
-      addToast(
-        e instanceof Error ? e.message : 'Błąd generowania sugestii kalendarza',
-        NotificationType.Error
-      );
-    } finally {
-      setIsSuggesting(false);
-    }
-  };
-
-  const handleSelectSuggestion = (suggestion: CalendarSuggestion | IntelligentCalendarPlanItem) => {
-    if ('id' in suggestion && suggestion.id) {
-      handleGenerateForSlot(suggestion as IntelligentCalendarPlanItem, false);
-      return;
-    }
-    navigate('/generator', {
-      state: {
-        prefillData: {
-          topic: suggestion.topic || '',
-          generationType: suggestion.format,
-          platform: suggestion.platform,
-        },
-      },
-    });
-    setSuggestionDate(null);
-  };
-
-  const handleGenerateForSlot = (item: IntelligentCalendarPlanItem, autoGenerate = true) => {
-    const calendarSlot = buildCalendarSlotContext(item);
-    useGenerationStore.getState().setPendingCalendarSlot(calendarSlot);
-    navigate('/generator', {
-      state: {
-        prefillData: buildPrefillFromCalendarSlot(item),
-        calendarSlot,
-        autoGenerateSlot: autoGenerate,
-      },
-    });
-    setSuggestionDate(null);
-  };
-
   const getWeekStart = (from: Date = new Date()): Date => {
     const d = new Date(from);
     const dow = d.getDay();
     d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
     d.setHours(0, 0, 0, 0);
     return d;
+  };
+
+  const changePeriod = (amount: number) => {
+    setCurrentDate((prev) => {
+      const newDate = new Date(prev);
+      if (calendarView === 'week') {
+        newDate.setDate(prev.getDate() + amount * 7);
+      } else {
+        newDate.setMonth(prev.getMonth() + amount);
+      }
+      return newDate;
+    });
+  };
+
+  const weekStartDate = useMemo(() => getWeekStart(currentDate), [currentDate]);
+
+  const periodLabel = useMemo(() => {
+    if (calendarView === 'week') {
+      const end = new Date(weekStartDate);
+      end.setDate(weekStartDate.getDate() + 6);
+      const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+      return `${weekStartDate.toLocaleDateString('pl-PL', opts)} – ${end.toLocaleDateString('pl-PL', { ...opts, year: 'numeric' })}`;
+    }
+    return currentDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
+  }, [calendarView, currentDate, weekStartDate]);
+
+  const openDay = useCallback((date: Date) => {
+    setSelectedDay(date);
+    setSuggestions([]);
+    autoSuggestRef.current = null;
+  }, []);
+
+  const closeDay = useCallback(() => {
+    setSelectedDay(null);
+    setSuggestions([]);
+    autoSuggestRef.current = null;
+  }, []);
+
+  const syncMonthToDate = useCallback((date: Date) => {
+    setCurrentDate((prev) => {
+      if (prev.getFullYear() === date.getFullYear() && prev.getMonth() === date.getMonth()) {
+        return prev;
+      }
+      return new Date(date.getFullYear(), date.getMonth(), 1);
+    });
+  }, []);
+
+  const navigateSelectedDay = useCallback(
+    (delta: number) => {
+      setSelectedDay((prev) => {
+        if (!prev) return prev;
+        const next = new Date(prev);
+        next.setDate(next.getDate() + delta);
+        syncMonthToDate(next);
+        setSuggestions([]);
+        autoSuggestRef.current = null;
+        return next;
+      });
+    },
+    [syncMonthToDate]
+  );
+
+  const goToToday = useCallback(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    syncMonthToDate(today);
+    openDay(today);
+  }, [openDay, syncMonthToDate]);
+
+  const loadSuggestionsForDay = useCallback(
+    async (date: Date) => {
+      setIsSuggesting(true);
+      try {
+        const historySummary = history
+          .slice(0, 5)
+          .map((h) => h.formData?.topic || '')
+          .filter(Boolean)
+          .join(', ');
+        const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
+        if (!user) throw new Error('Musisz być zalogowany, aby użyć sugestii kalendarza.');
+        const result = await generateCalendarSuggestions(date, niche, historySummary, user.id);
+        setSuggestions(result);
+        if (result.length === 0) {
+          addToast(t('calendar.dayDrawer.noIdeas', 'Brak pomysłów — spróbuj ponownie'), NotificationType.Info);
+        }
+      } catch (e: unknown) {
+        addToast(
+          e instanceof Error ? e.message : 'Błąd generowania sugestii kalendarza',
+          NotificationType.Error
+        );
+      } finally {
+        setIsSuggesting(false);
+      }
+    },
+    [history, user, addToast, t]
+  );
+
+  const handleSuggest = async () => {
+    if (!selectedDay) return;
+    await loadSuggestionsForDay(selectedDay);
+  };
+
+  const handleAddSuggestionToPlan = async (suggestion: CalendarSuggestion) => {
+    if (!selectedDay || !user) return;
+    const item = buildPlanItemFromSuggestion(
+      suggestion,
+      selectedDay,
+      intelligentCalendarPlan || []
+    );
+    const merged = mergeCalendarPlans(intelligentCalendarPlan, [item]);
+    await setIntelligentCalendarPlan(merged);
+    addToast(t('calendar.dayDrawer.addedToPlan', 'Pomysł dodany do planu dnia'), NotificationType.Success);
+  };
+
+  const handleUseSuggestionWithSlot = async (suggestion: CalendarSuggestion, autoGenerate = true) => {
+    if (!selectedDay || !user) return;
+    const item = buildPlanItemFromSuggestion(
+      suggestion,
+      selectedDay,
+      intelligentCalendarPlan || []
+    );
+    const merged = mergeCalendarPlans(intelligentCalendarPlan, [item]);
+    await setIntelligentCalendarPlan(merged);
+    closeDay();
+    navigateToCalendarSlot(item, navigate, autoGenerate);
+  };
+
+  const handleUpdatePlanSlot = async (
+    itemId: string,
+    patch: Partial<Pick<IntelligentCalendarPlanItem, 'topic' | 'time' | 'platform'>>
+  ) => {
+    await useDataStore.getState().updateIntelligentCalendarPlanItem(itemId, patch);
+    addToast(t('calendar.dayDrawer.slotSaved', 'Slot zaktualizowany'), NotificationType.Success);
+  };
+
+  const handleSelectSuggestion = (suggestion: CalendarSuggestion | IntelligentCalendarPlanItem) => {
+    if ('id' in suggestion && suggestion.date) {
+      handleGenerateForSlot(suggestion as IntelligentCalendarPlanItem, true);
+      return;
+    }
+    void handleUseSuggestionWithSlot(suggestion as CalendarSuggestion, true);
+  };
+
+  const handleGenerateForSlot = (item: IntelligentCalendarPlanItem, autoGenerate = true) => {
+    closeDay();
+    navigateToCalendarSlot(item, navigate, autoGenerate);
   };
 
   const handleFillWeek = async () => {
@@ -270,13 +319,13 @@ export const ContentCalendar: React.FC = () => {
   };
 
   const handleFillMissingDay = async () => {
-    if (!user?.id || !auditDate) return;
+    if (!user?.id || !selectedDay) return;
 
     setIsFillingDay(true);
     try {
       const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
       const missing = await generateMissingDaySlots(
-        auditDate,
+        selectedDay,
         presetId,
         intelligentCalendarPlan || [],
         weekTheme.trim() || 'Treść tygodnia',
@@ -296,7 +345,6 @@ export const ContentCalendar: React.FC = () => {
         t('calendar.audit.filled', 'Uzupełniono {{count}} slot(ów)', { count: missing.length }),
         NotificationType.Success
       );
-      setAuditDate(null);
     } catch (e: unknown) {
       addToast(e instanceof Error ? e.message : 'Błąd uzupełniania', NotificationType.Error);
     } finally {
@@ -305,7 +353,7 @@ export const ContentCalendar: React.FC = () => {
   };
 
   const handleGenerateAllMissingDay = async () => {
-    if (!user?.id || !auditDate) return;
+    if (!user?.id || !selectedDay) return;
 
     setIsGeneratingDay(true);
     try {
@@ -313,7 +361,7 @@ export const ContentCalendar: React.FC = () => {
       let plan = intelligentCalendarPlan || [];
 
       const missing = await generateMissingDaySlots(
-        auditDate,
+        selectedDay,
         presetId,
         plan,
         weekTheme.trim() || 'Treść tygodnia',
@@ -327,7 +375,7 @@ export const ContentCalendar: React.FC = () => {
         await setIntelligentCalendarPlan(plan);
       }
 
-      const toGenerate = listSlotsNeedingGeneration(auditDate, plan, scheduledPosts);
+      const toGenerate = listSlotsNeedingGeneration(selectedDay, plan, scheduledPosts);
 
       if (toGenerate.length === 0) {
         addToast(t('calendar.audit.noGenerate', 'Brak slotów do wygenerowania'), NotificationType.Info);
@@ -342,7 +390,7 @@ export const ContentCalendar: React.FC = () => {
         NotificationType.Info
       );
 
-      setAuditDate(null);
+      closeDay();
       handleGenerateForSlot(first, true);
     } catch (e: unknown) {
       useGenerationStore.getState().clearCalendarBatch();
@@ -406,9 +454,187 @@ export const ContentCalendar: React.FC = () => {
     }
   };
 
-  const activeAudit = auditDate
-    ? auditCalendarDay(auditDate, presetId, intelligentCalendarPlan || [], scheduledPosts)
+  const selectedDayAudit = selectedDay
+    ? auditCalendarDay(selectedDay, presetId, intelligentCalendarPlan || [], scheduledPosts)
     : null;
+
+  const selectedDayPosts = selectedDay
+    ? scheduledPosts
+        .filter((p) => isSameCalendarDay(p.scheduleTimestamp, selectedDay))
+        .sort((a, b) => a.scheduleTimestamp - b.scheduleTimestamp)
+    : [];
+
+  const selectedDayPlanItems = selectedDay
+    ? (intelligentCalendarPlan?.filter((p) => isSameCalendarDay(p.date, selectedDay)) || [])
+    : [];
+
+  const selectedDayIsEmpty = selectedDayPosts.length === 0 && selectedDayPlanItems.length === 0;
+
+  useEffect(() => {
+    if (!selectedDay || !user || !selectedDayIsEmpty || isSuggesting) return;
+    const key = formatCellDate(selectedDay);
+    if (autoSuggestRef.current === key) return;
+    autoSuggestRef.current = key;
+    void loadSuggestionsForDay(selectedDay);
+  }, [selectedDay, selectedDayIsEmpty, user, isSuggesting, loadSuggestionsForDay]);
+
+  const renderDayCell = (date: Date, key: React.Key, tall = false) => {
+    const day = date.getDate();
+    const postsForDay = scheduledPosts
+      .filter((p) => isSameCalendarDay(p.scheduleTimestamp, date))
+      .sort((a, b) => a.scheduleTimestamp - b.scheduleTimestamp);
+    const planItemsForDay =
+      intelligentCalendarPlan?.filter((p) => isSameCalendarDay(p.date, date)) || [];
+    const dayAudit = auditCalendarDay(date, presetId, intelligentCalendarPlan || [], scheduledPosts);
+    const hasContent = postsForDay.length > 0 || planItemsForDay.length > 0;
+    const isSelected =
+      selectedDay !== null && isSameCalendarDay(formatCellDate(selectedDay), date);
+    const today = isToday(date);
+
+    return (
+      <div
+        key={key}
+        role="button"
+        tabIndex={0}
+        onClick={() => openDay(date)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openDay(date);
+          }
+        }}
+        className={`group/day relative border rounded-2xl p-2 ${
+          tall ? 'min-h-[160px] sm:min-h-[200px]' : 'min-h-[120px] sm:min-h-[145px]'
+        } flex flex-col cursor-pointer transition-all duration-300 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${
+          isSelected
+            ? 'border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/10 ring-2 ring-cyan-500/30'
+            : today
+              ? 'border-cyan-400/60 bg-cyan-500/5 dark:bg-cyan-500/5 hover:border-cyan-500/50'
+              : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:bg-white dark:hover:bg-slate-900/40 hover:border-cyan-500/35'
+        }`}
+        onDragOver={handleDragOver}
+        onDrop={(e) => handleDrop(e, date)}
+      >
+        <div className="flex items-center justify-between gap-1">
+          <span
+            className={`font-bold text-xs ${
+              today ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-800 dark:text-slate-350'
+            }`}
+          >
+            {calendarView === 'week'
+              ? date.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })
+              : day}
+            {today && (
+              <span className="ml-1 text-[8px] font-black uppercase text-cyan-500">dziś</span>
+            )}
+          </span>
+          {dayAudit.slotsTarget.post + dayAudit.slotsTarget.reel + dayAudit.slotsTarget.story > 0 && (
+            <span
+              data-calendar-interactive
+              onClick={(e) => {
+                e.stopPropagation();
+                openDay(date);
+              }}
+              className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${auditScoreClass(dayAudit.score)}`}
+              title={t('calendar.audit.open', 'Audyt dnia')}
+            >
+              {dayAudit.score}
+            </span>
+          )}
+        </div>
+
+        <div className="flex-grow space-y-1.5 mt-1.5 overflow-y-auto pr-0.5 custom-scrollbar max-h-[88px] sm:max-h-none">
+          {postsForDay.slice(0, 3).map((post) => {
+            const postPlatform = post.formData?.platform || Platform.Facebook;
+            const config = platformConfig[postPlatform] || platformConfig[Platform.Facebook];
+            const Icon = config.icon;
+            return (
+              <div
+                key={post.id}
+                data-calendar-interactive
+                draggable
+                onDragStart={(e) => handleDragStart(e, post.id, 'post')}
+                onDragEnd={handleDragEnd}
+                onMouseEnter={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  setHoveredPost({ post, pos: { top: rect.top, left: rect.right + 10 } });
+                }}
+                onMouseLeave={() => setHoveredPost(null)}
+                className="group/post relative p-1.5 rounded-lg bg-slate-100/80 dark:bg-white/5 border-l-[3px] border-l-emerald-500 cursor-grab active:cursor-grabbing hover:shadow-md transition-all border border-slate-200/50 dark:border-white/5"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlers.handleEditScheduledPost(post);
+                }}
+              >
+                <div className="flex items-center gap-1">
+                  <Icon className={`w-3 h-3 flex-shrink-0 ${config.iconColor}`} />
+                  <p className="text-[9px] font-bold truncate text-slate-850 dark:text-white flex-1">
+                    {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+
+          {planItemsForDay
+            .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+            .slice(0, Math.max(0, 3 - Math.min(postsForDay.length, 3)))
+            .map((item) => {
+              const config = platformConfig[item.platform] || platformConfig[Platform.Facebook];
+              const Icon = config.icon;
+              return (
+                <div
+                  key={item.id}
+                  data-calendar-interactive
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, item.id, 'plan')}
+                  onDragEnd={handleDragEnd}
+                  className="p-1.5 rounded-lg border border-dashed border-cyan-500/40 bg-cyan-500/5 cursor-grab active:cursor-grabbing"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDay(date);
+                  }}
+                >
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] shrink-0">{slotTypeBadge(item.slotType)}</span>
+                    <Icon className="w-3 h-3 shrink-0 text-cyan-500" />
+                    <p className="text-[9px] font-bold truncate text-slate-800 dark:text-white flex-1">
+                      {item.topic}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          {postsForDay.length + planItemsForDay.length > 3 && (
+            <p className="text-[8px] font-bold text-cyan-600 dark:text-cyan-400 text-center">
+              +{postsForDay.length + planItemsForDay.length - 3}{' '}
+              {t('calendar.dayDrawer.more', 'więcej')}
+            </p>
+          )}
+        </div>
+
+        <div className="mt-auto pt-1 flex items-center justify-between gap-1">
+          <div className="flex gap-1">
+            {postsForDay.length > 0 && (
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-emerald-500"
+                title={`${postsForDay.length} zaplanowanych`}
+              />
+            )}
+            {planItemsForDay.length > 0 && (
+              <span
+                className="w-1.5 h-1.5 rounded-full bg-cyan-500"
+                title={`${planItemsForDay.length} slotów planu`}
+              />
+            )}
+          </div>
+          <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 group-hover/day:text-cyan-600 dark:group-hover/day:text-cyan-400 transition-colors">
+            {hasContent ? t('calendar.dayDrawer.open', 'Plan dnia') : '+ AI'}
+          </span>
+        </div>
+      </div>
+    );
+  };
 
   const renderCalendarDays = () => {
     const days = [];
@@ -423,154 +649,19 @@ export const ContentCalendar: React.FC = () => {
 
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
-      const postsForDay = scheduledPosts
-        .filter((p) => isSameCalendarDay(p.scheduleTimestamp, date))
-        .sort((a, b) => a.scheduleTimestamp - b.scheduleTimestamp);
-      const planItemsForDay =
-        intelligentCalendarPlan?.filter((p) => isSameCalendarDay(p.date, date)) || [];
-      const dayAudit = auditCalendarDay(date, presetId, intelligentCalendarPlan || [], scheduledPosts);
-      const hasContent = postsForDay.length > 0 || planItemsForDay.length > 0;
-
-      days.push(
-        <div
-          key={day}
-          className="group/day relative border border-slate-200/50 dark:border-white/5 rounded-2xl p-2.5 min-h-[145px] flex flex-col bg-white/40 dark:bg-slate-950/20 hover:bg-white dark:hover:bg-slate-900/40 hover:border-cyan-500/35 transition-all duration-300 shadow-sm"
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, date)}
-        >
-          <div className="flex items-center justify-between gap-1">
-            <span className="font-bold text-xs text-slate-800 dark:text-slate-350">{day}</span>
-            {dayAudit.slotsTarget.post + dayAudit.slotsTarget.reel + dayAudit.slotsTarget.story > 0 && (
-              <button
-                type="button"
-                onClick={() => setAuditDate(date)}
-                className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${auditScoreClass(dayAudit.score)} hover:scale-105 transition-transform`}
-                title={t('calendar.audit.open', 'Audyt dnia')}
-              >
-                {dayAudit.score}
-              </button>
-            )}
-          </div>
-
-          <div className="flex-grow space-y-2 mt-2 overflow-y-auto pr-0.5 custom-scrollbar">
-            {postsForDay.map((post) => {
-              const postPlatform = post.formData?.platform || Platform.Facebook;
-              const config = platformConfig[postPlatform] || platformConfig[Platform.Facebook];
-              const Icon = config.icon;
-              return (
-                <div
-                  key={post.id}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, post.id, 'post')}
-                  onDragEnd={handleDragEnd}
-                  onMouseEnter={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    setHoveredPost({ post, pos: { top: rect.top, left: rect.right + 10 } });
-                  }}
-                  onMouseLeave={() => setHoveredPost(null)}
-                  className="group/post relative p-2 rounded-xl bg-slate-100/80 dark:bg-white/5 border-l-4 cursor-grab active:cursor-grabbing hover:shadow-md transition-all border border-slate-200/50 dark:border-white/5"
-                  onClick={() => handlers.handleEditScheduledPost(post)}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <Icon className={`w-3.5 h-3.5 flex-shrink-0 ${config.iconColor}`} />
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold truncate text-slate-850 dark:text-white uppercase tracking-tighter">
-                        {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
-                      </p>
-                      <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase">
-                        <CalendarIcon className="w-2.5 h-2.5" />
-                        <span>
-                          {new Date(post.scheduleTimestamp).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {planItemsForDay
-              .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-              .map((item) => {
-                const config = platformConfig[item.platform] || platformConfig[Platform.Facebook];
-                const Icon = config.icon;
-                return (
-                  <div
-                    key={item.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item.id, 'plan')}
-                    onDragEnd={handleDragEnd}
-                    className="group/slot w-full text-left relative p-2 rounded-xl bg-transparent border border-dashed border-cyan-500/40 hover:border-cyan-500 hover:bg-cyan-500/5 cursor-grab active:cursor-grabbing transition-all"
-                  >
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] shrink-0">{slotTypeBadge(item.slotType)}</span>
-                      <Icon className="w-3.5 h-3.5 flex-shrink-0 text-cyan-500" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-bold truncate text-slate-855 dark:text-white uppercase tracking-tighter">
-                          {item.topic}
-                        </p>
-                        <p className="text-[8px] font-black uppercase text-cyan-500/70">
-                          {item.time ? `${item.time} · ` : ''}
-                          {t('calendar.suggestion')}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="mt-1.5 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover/slot:opacity-100 sm:group-focus-within/slot:opacity-100 transition-opacity">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleGenerateForSlot(item, false);
-                        }}
-                        className="flex-1 text-[8px] font-bold uppercase tracking-wide px-1.5 py-1 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 hover:border-cyan-500 text-slate-600 dark:text-slate-300"
-                      >
-                        {t('calendar.slot.edit', 'Edytuj')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleGenerateForSlot(item, true);
-                        }}
-                        className="flex-1 text-[8px] font-bold uppercase tracking-wide px-1.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center gap-0.5"
-                      >
-                        <SparklesIcon className="w-2.5 h-2.5" />
-                        {t('calendar.slot.generate', 'Generuj')}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-
-          {!hasContent && (
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/day:opacity-100 transition-opacity pointer-events-none z-10">
-              <button
-                type="button"
-                onClick={() => handleSuggest(date)}
-                className="pointer-events-auto flex items-center gap-1 px-3 py-1.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur rounded-full text-[9px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 hover:border-cyan-500 hover:text-cyan-500 shadow-md transition-all"
-              >
-                <SparklesIcon className="w-3.5 h-3.5 text-cyan-500 animate-pulse" />
-                AI Ideas
-              </button>
-            </div>
-          )}
-
-          {suggestionDate && isSameCalendarDay(formatCellDate(suggestionDate), date) && (
-            <SuggestionModal
-              suggestions={suggestions}
-              isLoading={isSuggesting}
-              onClose={() => setSuggestionDate(null)}
-              onSelect={handleSelectSuggestion}
-            />
-          )}
-        </div>
-      );
+      days.push(renderDayCell(date, day));
     }
     return days;
+  };
+
+  const renderWeekDays = () => {
+    const cells = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStartDate);
+      date.setDate(weekStartDate.getDate() + i);
+      cells.push(renderDayCell(date, `week-${i}`, true));
+    }
+    return cells;
   };
 
   return (
@@ -598,10 +689,34 @@ export const ContentCalendar: React.FC = () => {
       />
 
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4 relative z-10">
-        <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter font-sans">
-          {currentDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}
+        <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter font-sans capitalize">
+          {periodLabel}
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex rounded-xl border border-slate-200/50 dark:border-white/10 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setCalendarView('month')}
+              className={`px-3 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                calendarView === 'month'
+                  ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300'
+                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
+              }`}
+            >
+              {t('calendar.viewMonth', 'Miesiąc')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCalendarView('week')}
+              className={`px-3 py-2 text-xs font-bold uppercase tracking-wide transition ${
+                calendarView === 'week'
+                  ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300'
+                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
+              }`}
+            >
+              {t('calendar.viewWeek', 'Tydzień')}
+            </button>
+          </div>
           {intelligentCalendarPlan && (
             <button
               type="button"
@@ -615,14 +730,21 @@ export const ContentCalendar: React.FC = () => {
           <div className="flex items-center gap-1.5 self-end sm:self-center">
             <button
               type="button"
-              onClick={() => changeMonth(-1)}
+              onClick={goToToday}
+              className="px-3 py-2 rounded-xl text-xs font-bold uppercase tracking-wide bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition"
+            >
+              {t('calendar.today', 'Dziś')}
+            </button>
+            <button
+              type="button"
+              onClick={() => changePeriod(-1)}
               className="p-2 rounded-xl bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200/50 dark:border-white/5 text-slate-500 transition"
             >
               <ArrowLeftIcon className="w-4 h-4" />
             </button>
             <button
               type="button"
-              onClick={() => changeMonth(1)}
+              onClick={() => changePeriod(1)}
               className="p-2 rounded-xl bg-slate-100/50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200/50 dark:border-white/5 text-slate-500 transition"
             >
               <ArrowRightIcon className="w-4 h-4" />
@@ -632,7 +754,7 @@ export const ContentCalendar: React.FC = () => {
       </div>
 
       <div className="overflow-x-auto -mx-2 px-2 pb-2 relative z-10">
-        <div className="min-w-[900px]">
+        <div className="min-w-0 sm:min-w-[720px] lg:min-w-[900px]">
           <div className="grid grid-cols-7 gap-2.5 text-center text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-3">
             {WEEK_DAYS.map((d) => (
               <div key={d} className="py-2">
@@ -640,7 +762,9 @@ export const ContentCalendar: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-2.5">{renderCalendarDays()}</div>
+          <div className="grid grid-cols-7 gap-2.5">
+            {calendarView === 'week' ? renderWeekDays() : renderCalendarDays()}
+          </div>
         </div>
       </div>
 
@@ -653,30 +777,39 @@ export const ContentCalendar: React.FC = () => {
           <p className="mt-2 text-xs max-w-md mx-auto leading-relaxed">
             {t(
               'calendar.empty.hint',
-              'Użyj „Wypełnij tydzień” powyżej lub kliknij AI Ideas na wybranym dniu.'
+              'Użyj „Wypełnij tydzień” powyżej lub kliknij dowolny dzień, aby zaplanować treści.'
             )}
           </p>
         </div>
       )}
 
-      {activeAudit && auditDate && (
-        <DayAuditPanel
-          audit={activeAudit}
-          dateLabel={auditDate.toLocaleDateString('pl-PL', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+      {selectedDay && selectedDayAudit && (
+        <DayDetailDrawer
+          date={selectedDay}
+          audit={selectedDayAudit}
+          scheduledPosts={selectedDayPosts}
+          planItems={selectedDayPlanItems}
+          isEmptyDay={selectedDayIsEmpty}
           generateGapCount={countDayGenerationGaps(
-            auditDate,
+            selectedDay,
             intelligentCalendarPlan,
             scheduledPosts
           )}
-          onClose={() => setAuditDate(null)}
-          onFillMissing={handleFillMissingDay}
-          onGenerateAll={handleGenerateAllMissingDay}
+          suggestions={suggestions}
+          isLoadingSuggestions={isSuggesting}
           isFilling={isFillingDay}
           isGenerating={isGeneratingDay}
+          onClose={closeDay}
+          onPrevDay={() => navigateSelectedDay(-1)}
+          onNextDay={() => navigateSelectedDay(1)}
+          onLoadSuggestions={handleSuggest}
+          onFillMissing={handleFillMissingDay}
+          onGenerateAll={handleGenerateAllMissingDay}
+          onSelectSuggestion={handleSelectSuggestion}
+          onAddSuggestionToPlan={handleAddSuggestionToPlan}
+          onGenerateSlot={(item) => handleGenerateForSlot(item, true)}
+          onUpdateSlot={handleUpdatePlanSlot}
+          onEditPost={(post) => handlers.handleEditScheduledPost(post)}
         />
       )}
 

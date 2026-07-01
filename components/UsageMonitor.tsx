@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getSupabase } from '../services/supabaseClient';
 import {
   Zap,
@@ -21,7 +22,8 @@ interface UsageStats {
 }
 
 export function UsageMonitor() {
-  const { user } = useAuth();
+  const { t } = useTranslation();
+  const { user, refreshUserCredits } = useAuth();
   const [stats, setStats] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPricing, setShowPricing] = useState(false);
@@ -29,6 +31,7 @@ export function UsageMonitor() {
   const loadUsageStats = useCallback(async () => {
     setLoading(true);
     try {
+      await refreshUserCredits();
       const supabase = getSupabase();
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
@@ -46,7 +49,7 @@ export function UsageMonitor() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshUserCredits]);
 
   useEffect(() => {
     if (user) loadUsageStats();
@@ -65,24 +68,23 @@ export function UsageMonitor() {
     );
   }
 
-  const creditsUsed = stats?.totalCreditsUsed || 0;
   const planConfig = getPlanByUserPlan((user?.plan as UserPlan) || UserPlan.Free);
   const maxCredits = planConfig.credits;
-  const creditsRemaining = Math.max(0, maxCredits - creditsUsed);
+  const creditsRemaining = user?.credits ?? maxCredits;
+  const creditsUsed = stats?.totalCreditsUsed ?? Math.max(0, maxCredits - creditsRemaining);
   const usagePercent = maxCredits > 0 ? (creditsUsed / maxCredits) * 100 : 0;
 
-  const isLowCredits = stats != null && creditsRemaining < 100;
-  const isCriticalCredits = stats != null && creditsRemaining < 50;
+  const isLowCredits = creditsRemaining < 100;
+  const isCriticalCredits = creditsRemaining < 50;
 
   return (
     <>
       <div className="p-6 space-y-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold">Credit Usage</h3>
+            <h3 className="text-lg font-semibold">{t('usage.title', 'Kredyty')}</h3>
             <p className="text-sm text-muted-foreground">
-              Current billing period
+              {t('usage.subtitle', 'Saldo z profilu · zużycie z ostatnich 30 dni')}
             </p>
           </div>
           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user?.plan === 'free' ? 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'}`}>
@@ -90,7 +92,6 @@ export function UsageMonitor() {
           </span>
         </div>
 
-        {/* Credits Remaining */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -98,21 +99,24 @@ export function UsageMonitor() {
                   isLowCredits ? 'text-yellow-500' :
                     'text-primary'
                 }`} />
-              <span className="font-medium">Credits Remaining</span>
+              <span className="font-medium">{t('usage.remaining', 'Pozostało')}</span>
             </div>
-            <span className="text-2xl font-bold">{creditsRemaining}</span>
+            <span className="text-2xl font-bold">{creditsRemaining.toLocaleString('pl-PL')}</span>
           </div>
 
           {maxCredits > 0 && (
             <>
               <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min(100, Math.max(0, 100 - usagePercent))}%` }}
+                  className={`h-2 rounded-full transition-all ${isCriticalCredits ? 'bg-red-500' : isLowCredits ? 'bg-yellow-500' : 'bg-blue-600'}`}
+                  style={{ width: `${Math.min(100, Math.max(0, (creditsRemaining / maxCredits) * 100))}%` }}
                 />
               </div>
               <p className="text-xs text-muted-foreground text-right">
-                {creditsUsed} of {maxCredits} used this month
+                {t('usage.usedOfPlan', '{{used}} zużyto (szac.) · plan {{max}}', {
+                  used: creditsUsed,
+                  max: maxCredits,
+                })}
               </p>
             </>
           )}
@@ -123,27 +127,26 @@ export function UsageMonitor() {
               <div className="space-y-2 flex-1">
                 <p className="text-sm text-yellow-800 dark:text-yellow-200">
                   {isCriticalCredits
-                    ? 'You\'re running very low on credits!'
-                    : 'Your credits are running low'}
+                    ? t('usage.critical', 'Bardzo niskie saldo kredytów!')
+                    : t('usage.low', 'Kredyty się kończą')}
                 </p>
                 <button
                   onClick={() => setShowPricing(true)}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <CreditCard className="w-4 h-4" />
-                  Buy More Credits
+                  {t('usage.buyCredits', 'Dokup kredyty')}
                 </button>
               </div>
             </div>
           )}
         </div>
 
-        {/* Usage Breakdown */}
         {stats && Object.keys(stats.byAction).length > 0 && (
           <div className="space-y-3">
             <h4 className="text-sm font-medium flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
-              Usage This Month
+              {t('usage.breakdown', 'Zużycie (30 dni)')}
             </h4>
 
             <div className="space-y-2">
@@ -164,7 +167,7 @@ export function UsageMonitor() {
                         </span>
                       </div>
                       <span className="font-medium text-muted-foreground">
-                        {credits} credits
+                        {credits} {t('usage.creditsShort', 'kr.')}
                       </span>
                     </div>
                   );
@@ -173,13 +176,12 @@ export function UsageMonitor() {
           </div>
         )}
 
-        {/* Actions */}
         <div className="flex gap-2 pt-4 border-t">
           <button
             onClick={() => setShowPricing(true)}
             className="flex-1 px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
           >
-            View Plans
+            {t('usage.viewPlans', 'Plany')}
           </button>
           {user?.plan !== 'free' && (
             <button
@@ -205,7 +207,7 @@ export function UsageMonitor() {
               }}
               className="flex-1 px-4 py-2 text-sm font-medium border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
             >
-              Manage Billing
+              {t('usage.manageBilling', 'Rozliczenia')}
             </button>
           )}
         </div>
@@ -214,7 +216,10 @@ export function UsageMonitor() {
       <PricingModal
         isOpen={showPricing}
         onClose={() => setShowPricing(false)}
-        onSubscriptionSuccess={() => setShowPricing(false)}
+        onSubscriptionSuccess={() => {
+          setShowPricing(false);
+          void loadUsageStats();
+        }}
       />
     </>
   );

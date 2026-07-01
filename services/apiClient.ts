@@ -7,6 +7,7 @@ import {
   isAiTextEndpoint,
   resolveAiLanguageCode,
 } from '../utils/aiLanguage';
+import { applyCreditsFromResponse } from '../utils/creditSync';
 import { getSupabase } from './supabaseClient';
 
 export { extractJson, markQuotaDepleted, clearQuotaDepleted, isQuotaDepleted };
@@ -164,9 +165,12 @@ export const callApi = async (endpoint: string, payload: any, userId?: string, h
     clearQuotaDepleted();
 
     if (contentType?.includes('application/json')) {
-        return JSON.parse(bodyText);
+        const parsed = JSON.parse(bodyText);
+        applyCreditsFromResponse(parsed, response.headers);
+        return parsed;
     }
 
+    applyCreditsFromResponse(null, response.headers);
     return bodyText;
 };
 

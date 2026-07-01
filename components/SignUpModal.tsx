@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext, AuthContextType } from '../contexts/AuthContext';
 
 interface SignUpModalProps {
@@ -14,6 +15,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
   const [validationErrors, setValidationErrors] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   
   const auth = useContext(AuthContext) as AuthContextType;
 
@@ -25,6 +27,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
         setPassword('');
         setError(null);
         setValidationErrors({ email: '', password: '' });
+        setTermsAccepted(false);
     }
   }, [isOpen]);
 
@@ -74,6 +77,10 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     const isPasswordValid = validateField('password', password);
 
     if (!isEmailValid || !isPasswordValid) return;
+    if (!termsAccepted) {
+      setError('Zaakceptuj regulamin i politykę prywatności, aby kontynuować.');
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -87,7 +94,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     }
   };
   
-  const isSubmitDisabled = isLoading || !!validationErrors.email || !!validationErrors.password || !email || !password;
+  const isSubmitDisabled = isLoading || !!validationErrors.email || !!validationErrors.password || !email || !password || !termsAccepted;
 
   if (!isOpen && !isClosing) return null;
 
@@ -142,6 +149,26 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
             />
             {validationErrors.password && <p id="signup-password-error" className="text-red-500 text-xs mt-1">{validationErrors.password}</p>}
           </div>
+
+          <label className="flex items-start gap-2.5 mt-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(e) => setTermsAccepted(e.target.checked)}
+              className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Akceptuję{' '}
+              <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">
+                regulamin
+              </Link>{' '}
+              oraz{' '}
+              <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">
+                politykę prywatności
+              </Link>
+              .
+            </span>
+          </label>
           
           <button
             type="submit"

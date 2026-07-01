@@ -58,35 +58,42 @@ function deductOnSuccess(): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
     let deducted = false;
 
-    const maybeDeduct = () => {
-      if (deducted) return;
-      if (res.statusCode < 200 || res.statusCode >= 300) return;
-      if (!req.user?.id || !req.creditCost) return;
+    const runDeduction = async (): Promise<number | null> => {
+      if (deducted) return null;
+      if (res.statusCode < 200 || res.statusCode >= 300) return null;
+      if (!req.user?.id || !req.creditCost) return null;
 
       deducted = true;
       const userId = req.user.id;
       const cost = req.creditCost;
       const action = req.creditAction || 'unknown';
 
-      void deductCredits(userId, cost, action, {
-        path: req.path,
-        method: req.method,
-      }).catch((error) => {
+      try {
+        const result = await deductCredits(userId, cost, action, {
+          path: req.path,
+          method: req.method,
+        });
+        return result.remainingCredits;
+      } catch (error) {
         logger.error('Credit deduction error:', error);
-      });
+        return null;
+      }
     };
 
     const originalJson = res.json.bind(res);
-    const originalEnd = res.end.bind(res);
 
-    res.json = function jsonWithCredits(...args: Parameters<typeof res.json>) {
-      maybeDeduct();
-      return originalJson(...args);
-    };
-
-    res.end = function endWithCredits(...args: Parameters<typeof res.end>) {
-      maybeDeduct();
-      return originalEnd(...args);
+    res.json = function jsonWithCredits(body?: unknown) {
+      void (async () => {
+        const remaining = await runDeduction();
+        if (remaining !== null) {
+          res.setHeader('X-Credits-Remaining', String(remaining));
+          if (body && typeof body === 'object' && body !== null && !Array.isArray(body)) {
+            (body as Record<string, unknown>).creditsRemaining = remaining;
+          }
+        }
+        originalJson(body);
+      })();
+      return res;
     };
 
     next();

@@ -5,6 +5,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '../services/supabaseClient';
 import { User, UserPlan, Team } from '../types';
 import { getPlanByUserPlan } from '../config/subscriptionPlans';
+import { CREDITS_UPDATED_EVENT } from '../utils/creditSync';
 import { useDataStore } from '../stores/dataStore';
 import { clearAllPersistedStores } from '../utils/storageUtils';
 
@@ -212,6 +213,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setLoading(false);
       return;
     }
+
+    const onCreditsUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ credits: number }>).detail;
+      if (typeof detail?.credits !== 'number') return;
+      setUser((curr) => (curr ? { ...curr, credits: detail.credits } : null));
+    };
+    window.addEventListener(CREDITS_UPDATED_EVENT, onCreditsUpdated);
+
     // Awaryjnie odblokuj UI — np. po powrocie z OAuth Facebook
     const loadingGuard = setTimeout(() => setLoading(false), 8000);
 
@@ -271,6 +280,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isSubscribed = false;
       clearTimeout(loadingGuard);
       subscription.unsubscribe();
+      window.removeEventListener(CREDITS_UPDATED_EVENT, onCreditsUpdated);
     };
   }, [supabase, setDataStoreState]);
 

@@ -88,6 +88,10 @@ type DataState = {
   // Intelligent Calendar
   setIntelligentCalendarPlan: (plan: IntelligentCalendarPlanItem[] | null) => void;
   updateIntelligentCalendarPlanItemDate: (itemId: string, newDate: string) => void;
+  updateIntelligentCalendarPlanItem: (
+    itemId: string,
+    patch: Partial<Pick<IntelligentCalendarPlanItem, 'topic' | 'time' | 'platform' | 'strategy'>>
+  ) => Promise<void>;
   removeIntelligentCalendarPlanItem: (itemId: string) => Promise<void>;
   clearIntelligentCalendarPlan: () => void;
 
@@ -295,6 +299,13 @@ export const useDataStore = create<DataState>()(
   updateIntelligentCalendarPlanItemDate: async (itemId, newDate) => {
     const updated = (get().intelligentCalendarPlan || []).map(item =>
       item.id === itemId ? { ...item, date: newDate } : item
+    );
+    await calendarPlanService.saveCalendarPlan(updated);
+    set({ intelligentCalendarPlan: updated });
+  },
+  updateIntelligentCalendarPlanItem: async (itemId, patch) => {
+    const updated = (get().intelligentCalendarPlan || []).map((item) =>
+      item.id === itemId ? { ...item, ...patch } : item
     );
     await calendarPlanService.saveCalendarPlan(updated);
     set({ intelligentCalendarPlan: updated });

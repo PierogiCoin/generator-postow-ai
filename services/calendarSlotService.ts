@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import type {
   CalendarSlotContext,
+  CalendarSuggestion,
   FormData,
   GenerationResult,
   IntelligentCalendarPlanItem,
@@ -10,6 +11,68 @@ import { GenerationType, Tone, VisualStyle } from '../types';
 import { slotFormat } from './calendarCadenceService';
 import { normalizeFormData } from '../components/inputForm/defaultFormData';
 import { getPlatformVisualSpec } from '../utils/platformVisualSpec';
+import { useGenerationStore } from '../stores/generationStore';
+
+function formatDateYMD(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const DEFAULT_SLOT_TIMES = ['09:00', '12:00', '15:00', '18:00'] as const;
+
+/** Domyślna godzina slotu — unika kolizji z istniejącymi slotami tego dnia */
+export function defaultSlotTimeForDay(
+  date: Date,
+  existingPlanItems: IntelligentCalendarPlanItem[] = []
+): string {
+  const dateStr = formatDateYMD(date);
+  const taken = new Set(
+    existingPlanItems.filter((p) => p.date === dateStr && p.time).map((p) => p.time!)
+  );
+  for (const t of DEFAULT_SLOT_TIMES) {
+    if (!taken.has(t)) return t;
+  }
+  return '14:00';
+}
+
+export function buildPlanItemFromSuggestion(
+  suggestion: CalendarSuggestion,
+  date: Date,
+  existingPlanItems: IntelligentCalendarPlanItem[] = []
+): IntelligentCalendarPlanItem {
+  const slotType =
+    suggestion.format === GenerationType.Video
+      ? 'reel'
+      : suggestion.format === GenerationType.PostWithImage
+        ? 'post'
+        : 'post';
+
+  return {
+    id: uuidv4(),
+    date: formatDateYMD(date),
+    time: defaultSlotTimeForDay(date, existingPlanItems),
+    platform: suggestion.platform,
+    topic: suggestion.topic,
+    format: suggestion.format,
+    strategy: suggestion.strategy,
+    slotType,
+  };
+}
+
+export function navigateToCalendarSlot(
+  item: IntelligentCalendarPlanItem,
+  navigate: (path: string, options?: { state?: unknown }) => void,
+  autoGenerate = true
+): void {
+  const calendarSlot = buildCalendarSlotContext(item);
+  useGenerationStore.getState().setPendingCalendarSlot(calendarSlot);
+  navigate('/generator', {
+    state: {
+      prefillData: buildPrefillFromCalendarSlot(item),
+      calendarSlot,
+      autoGenerateSlot: autoGenerate,
+    },
+  });
+}
 
 const INTENT_TONE: Record<NonNullable<IntelligentCalendarPlanItem['contentIntent']>, Tone> = {
   educational: Tone.Professional,

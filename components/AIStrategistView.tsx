@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useDataStore } from '../stores/dataStore';
+import { mergeCalendarPlans } from '../services/calendarCadenceService';
+import { navigateToCalendarSlot } from '../services/calendarSlotService';
 import { useUIStore } from '../stores/uiStore';
 import { useAppHandlers } from '../hooks/useAppHandlers';
 import { useNotifications } from '../hooks/useNotifications';
@@ -76,34 +78,18 @@ const LoadingState: React.FC = () => {
 
 const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: string }> = ({ report, selectedBrandId }) => {
     const { t } = useTranslation();
-    const { setIntelligentCalendarPlan, setActiveBrandVoiceId } = useDataStore();
+    const { setIntelligentCalendarPlan, setActiveBrandVoiceId, intelligentCalendarPlan } = useDataStore();
     const [planImported, setPlanImported] = useState(false);
     const navigate = useNavigate();
 
-    const handleGenerateClick = (item: IntelligentCalendarPlanItem) => {
-        // If we have a brand ID from the strategy form, activate it before navigating
+    const handleGenerateClick = async (item: IntelligentCalendarPlanItem) => {
         if (selectedBrandId) {
             setActiveBrandVoiceId(selectedBrandId);
         }
 
-        navigate("/generator", {
-            state: {
-                prefillData: {
-                    topic: item.topic || "",
-                    platform: item.platform,
-                    generationType: item.format,
-                    tone: item.suggestedTone,
-                    learnedInsights: [{
-                        id: `audit-${Date.now()}`,
-                        type: 'suggestion',
-                        category: 'performance_tip',
-                        text: `SUGGESTION FROM STRATEGY: ${item.strategy}`
-                    }],
-                    // Pass it through state too for extra safety
-                    activeBrandVoiceId: selectedBrandId
-                }
-            }
-        });
+        const merged = mergeCalendarPlans(intelligentCalendarPlan, [item]);
+        await setIntelligentCalendarPlan(merged);
+        navigateToCalendarSlot(item, navigate, true);
     };
 
     const handleImport = useCallback(() => {

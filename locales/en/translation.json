@@ -205,6 +205,7 @@
     "useIdea": "Use Idea",
     "planActive": "An AI-generated strategic plan is active. These are suggestions you can generate.",
     "clearStrategicPlan": "Clear Strategic Plan",
+    "today": "Today",
     "cadence": {
       "label": "Cadence template",
       "starter": "Starter (1 post/day)",
@@ -241,7 +242,30 @@
     },
     "empty": {
       "title": "Calendar is empty",
-      "hint": "Use “Fill week” above or click AI Ideas on a day."
+      "hint": "Use “Fill week” above or click any day to plan content."
+    },
+    "dayDrawer": {
+      "label": "Day plan",
+      "open": "Day plan",
+      "more": "more",
+      "prevDay": "Previous day",
+      "nextDay": "Next day",
+      "addToPlan": "Add to plan",
+      "addedToPlan": "Idea added to day plan",
+      "emptyHero": "Empty day — time for content!",
+      "emptyHeroHint": "AI will suggest ideas shortly, or tap below.",
+      "keyboardHint": "← → change day · Esc close",
+      "scheduled": "Scheduled posts",
+      "noScheduled": "No scheduled posts for this day.",
+      "planSlots": "Plan slots",
+      "noSlots": "No slots yet — fill the plan or generate AI ideas.",
+      "aiIdeas": "AI ideas",
+      "getIdeas": "3 ideas",
+      "refreshIdeas": "Refresh",
+      "loadingIdeas": "Generating…",
+      "ideasCta": "Generate 3 ideas for this day",
+      "ideasHint": "AI will match format and platform to your niche",
+      "noIdeas": "No ideas returned — try again"
     },
     "slot": {
       "generate": "Generate",

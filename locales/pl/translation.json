@@ -208,6 +208,7 @@
     "useIdea": "Użyj pomysłu",
     "planActive": "Aktywny jest plan strategiczny wygenerowany przez AI. To są sugestie, które możesz wygenerować.",
     "clearStrategicPlan": "Wyczyść Plan Strategiczny",
+    "today": "Dziś",
     "cadence": {
       "label": "Szablon cadence",
       "starter": "Starter (1 post/dzień)",
@@ -244,7 +245,30 @@
     },
     "empty": {
       "title": "Kalendarz jest pusty",
-      "hint": "Użyj „Wypełnij tydzień” powyżej lub kliknij AI Ideas na wybranym dniu."
+      "hint": "Użyj „Wypełnij tydzień” powyżej lub kliknij dowolny dzień, aby zaplanować treści."
+    },
+    "dayDrawer": {
+      "label": "Plan dnia",
+      "open": "Plan dnia",
+      "more": "więcej",
+      "prevDay": "Poprzedni dzień",
+      "nextDay": "Następny dzień",
+      "addToPlan": "Dodaj do planu",
+      "addedToPlan": "Pomysł dodany do planu dnia",
+      "emptyHero": "Pusty dzień — czas na treść!",
+      "emptyHeroHint": "AI przygotuje propozycje za chwilę lub kliknij poniżej.",
+      "keyboardHint": "← → zmiana dnia · Esc zamknij",
+      "scheduled": "Zaplanowane publikacje",
+      "noScheduled": "Brak zaplanowanych postów na ten dzień.",
+      "planSlots": "Sloty w planie",
+      "noSlots": "Brak slotów — uzupełnij plan lub wygeneruj pomysły AI.",
+      "aiIdeas": "Pomysły AI",
+      "getIdeas": "3 pomysły",
+      "refreshIdeas": "Odśwież",
+      "loadingIdeas": "Generuję…",
+      "ideasCta": "Wygeneruj 3 pomysły na ten dzień",
+      "ideasHint": "AI dopasuje format i platformę do Twojej niszy",
+      "noIdeas": "Brak pomysłów — spróbuj ponownie"
     },
     "slot": {
       "generate": "Generuj",
