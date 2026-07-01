@@ -231,7 +231,7 @@ export const AIStrategistView: React.FC = () => {
 
     const { brandVoiceProfiles } = useDataStore();
 
-    const isStrategistEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
+    const isStrategistEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
 
     if (!isStrategistEnabled) {
         return <LockedState />;

@@ -260,7 +260,7 @@ export const AnalyticsView: React.FC = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
 
-    const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
+    const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
 
     const handleRunAnalysis = async () => {
         setIsAnalyzing(true);

@@ -154,8 +154,8 @@ export const Header: React.FC<HeaderProps> = ({
     const mobileMenuRef = useRef<HTMLDivElement>(null);
 
     const userPlan = user?.plan || UserPlan.Free;
-    const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
-    const isStrategistEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
+    const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
+    const isStrategistEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

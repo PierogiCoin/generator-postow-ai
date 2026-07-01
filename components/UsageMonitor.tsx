@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { PricingModal } from './PricingModal';
+import { getPlanByUserPlan } from '../config/subscriptionPlans';
+import { UserPlan } from '../types';
 
 interface UsageStats {
   totalCreditsUsed: number;
@@ -64,16 +66,13 @@ export function UsageMonitor() {
   }
 
   const creditsUsed = stats?.totalCreditsUsed || 0;
-  const planLimits = getPlanLimits(user?.plan || 'free');
-  const creditsRemaining = planLimits.maxCredits != null
-    ? Math.max(0, planLimits.maxCredits - creditsUsed)
-    : null;
-  const usagePercent = planLimits.maxCredits
-    ? (creditsUsed / planLimits.maxCredits) * 100
-    : 0;
+  const planConfig = getPlanByUserPlan((user?.plan as UserPlan) || UserPlan.Free);
+  const maxCredits = planConfig.credits;
+  const creditsRemaining = Math.max(0, maxCredits - creditsUsed);
+  const usagePercent = maxCredits > 0 ? (creditsUsed / maxCredits) * 100 : 0;
 
-  const isLowCredits = stats != null && creditsRemaining != null && creditsRemaining < 100;
-  const isCriticalCredits = stats != null && creditsRemaining != null && creditsRemaining < 50;
+  const isLowCredits = stats != null && creditsRemaining < 100;
+  const isCriticalCredits = stats != null && creditsRemaining < 50;
 
   return (
     <>
@@ -101,10 +100,10 @@ export function UsageMonitor() {
                 }`} />
               <span className="font-medium">Credits Remaining</span>
             </div>
-            <span className="text-2xl font-bold">{creditsRemaining ?? '∞'}</span>
+            <span className="text-2xl font-bold">{creditsRemaining}</span>
           </div>
 
-          {planLimits.maxCredits && (
+          {maxCredits > 0 && (
             <>
               <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2">
                 <div
@@ -113,7 +112,7 @@ export function UsageMonitor() {
                 />
               </div>
               <p className="text-xs text-muted-foreground text-right">
-                {creditsUsed} of {planLimits.maxCredits} used this month
+                {creditsUsed} of {maxCredits} used this month
               </p>
             </>
           )}
@@ -219,16 +218,6 @@ export function UsageMonitor() {
       />
     </>
   );
-}
-
-function getPlanLimits(plan: string) {
-  const limits = {
-    free: { maxCredits: 100 },
-    pro: { maxCredits: 1000 },
-    business: { maxCredits: 5000 },
-    enterprise: { maxCredits: null }, // unlimited
-  };
-  return limits[plan as keyof typeof limits] || limits.free;
 }
 
 function getActionIcon(action: string) {

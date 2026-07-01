@@ -615,6 +615,7 @@
   "errors": {
     "api_not_available": "AI API is not available. Check your API key or log in.",
     "limit_reached": "Usage limit for your plan has been reached.",
+    "insufficient_credits": "You need {{cost}} credits (you have {{credits}}). Upgrade your plan or buy a credit pack.",
     "generation_failed": "Generation failed.",
     "regeneration_failed": "Improving content failed.",
     "ai_action_failed": "AI action failed.",

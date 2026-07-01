@@ -8,8 +8,7 @@ import { useDataStore } from '../../stores/dataStore';
 import { useUIStore } from '../../stores/uiStore';
 
 export const AccountView: React.FC = () => {
-  const { user, userPlan } = useAuth();
-  const { stats } = useDataStore();
+  const { user, userPlan } = useAuth();const { stats } = useDataStore();
   const { setIsPricingModalOpen } = useUIStore();
   
   const onUpgrade = () => setIsPricingModalOpen(true);
@@ -36,7 +35,12 @@ export const AccountView: React.FC = () => {
           <PaymentHistory />
         </div>
         <div className="lg:col-span-1 lg:sticky lg:top-24">
-          <SubscriptionStatus stats={stats} userPlan={userPlan} onUpgrade={onUpgrade} />
+          <SubscriptionStatus
+            credits={user.credits ?? 0}
+            userPlan={userPlan}
+            stats={stats}
+            onUpgrade={onUpgrade}
+          />
         </div>
       </div>
     </div>

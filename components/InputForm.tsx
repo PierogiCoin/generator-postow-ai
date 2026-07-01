@@ -401,7 +401,7 @@ export const InputForm: React.FC<InputFormProps> = ({
   };
 
 
-  const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
+  const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
   const showVisualStyle = formData.generationType === GenerationType.PostWithImage || formData.generationType === GenerationType.ABTest;
   const showContentType = formData.generationType !== GenerationType.Campaign && formData.generationType !== GenerationType.Idea;
 

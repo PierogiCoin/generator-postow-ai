@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { supabase } from './supabase';
 import logger from './logger.js';
+import { buildCreditPacksConfig, buildSubscriptionsConfig } from './lib/pricingConfig.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-11-20.acacia' as any,
@@ -11,105 +12,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 // ============================================
 
 export const PRICING = {
-  // Subskrypcje miesięczne
-  subscriptions: {
-    free: {
-      name: 'Free',
-      price: 0,
-      priceId: null,
-      credits: 100,
-      features: {
-        postsPerMonth: 10,
-        imagesPerMonth: 5,
-        videosPerMonth: 0,
-        platforms: 1,
-        scheduling: false,
-        analytics: false,
-        brandVoices: 1,
-        apiAccess: false,
-      }
-    },
-    creator: {
-      name: 'Creator',
-      price: 49,
-      priceId: process.env.STRIPE_CREATOR_PRICE_ID || null,
-      credits: 500,
-      features: {
-        postsPerMonth: 100,
-        imagesPerMonth: 20,
-        videosPerMonth: 2,
-        platforms: 3,
-        scheduling: true,
-        analytics: false,
-        brandVoices: 1,
-        apiAccess: false,
-      }
-    },
-    pro: {
-      name: 'Pro',
-      price: 29,
-      priceId: process.env.STRIPE_PRO_PRICE_ID,
-      credits: 1000,
-      features: {
-        postsPerMonth: 100,
-        imagesPerMonth: 50,
-        videosPerMonth: 10,
-        platforms: 5,
-        scheduling: true,
-        analytics: true,
-        brandVoices: 5,
-        apiAccess: false,
-      }
-    },
-    business: {
-      name: 'Business',
-      price: 99,
-      priceId: process.env.STRIPE_BUSINESS_PRICE_ID,
-      credits: 5000,
-      features: {
-        postsPerMonth: 500,
-        imagesPerMonth: 200,
-        videosPerMonth: 50,
-        platforms: 10,
-        scheduling: true,
-        analytics: true,
-        brandVoices: 20,
-        apiAccess: true,
-      }
-    },
-    agency: {
-      name: 'Agency',
-      price: 249,
-      priceId: process.env.STRIPE_AGENCY_PRICE_ID || null,
-      credits: 10000,
-      features: {
-        postsPerMonth: 2000,
-        imagesPerMonth: 300,
-        videosPerMonth: 30,
-        platforms: -1,
-        scheduling: true,
-        analytics: true,
-        brandVoices: -1,
-        apiAccess: true,
-      }
-    },
-    enterprise: {
-      name: 'Enterprise',
-      price: 299,
-      priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID,
-      credits: 20000,
-      features: {
-        postsPerMonth: -1, // Unlimited
-        imagesPerMonth: -1,
-        videosPerMonth: -1,
-        platforms: -1,
-        scheduling: true,
-        analytics: true,
-        brandVoices: -1,
-        apiAccess: true,
-      }
-    }
-  },
+  subscriptions: buildSubscriptionsConfig(),
 
   // Koszty per-use (w kredytach)
   costs: {
@@ -143,35 +46,7 @@ export const PRICING = {
   },
 
   // Pakiety kredytów (one-time purchase)
-  creditPacks: {
-    small: {
-      name: 'Small Pack',
-      credits: 500,
-      price: 9.99,
-      priceId: process.env.STRIPE_CREDITS_SMALL_PRICE_ID,
-    },
-    medium: {
-      name: 'Medium Pack',
-      credits: 1500,
-      price: 24.99,
-      priceId: process.env.STRIPE_CREDITS_MEDIUM_PRICE_ID,
-      discount: '17%'
-    },
-    large: {
-      name: 'Large Pack',
-      credits: 3500,
-      price: 49.99,
-      priceId: process.env.STRIPE_CREDITS_LARGE_PRICE_ID,
-      discount: '29%'
-    },
-    mega: {
-      name: 'Mega Pack',
-      credits: 10000,
-      price: 99.99,
-      priceId: process.env.STRIPE_CREDITS_MEGA_PRICE_ID,
-      discount: '50%'
-    }
-  }
+  creditPacks: buildCreditPacksConfig(),
 };
 
 // ============================================
@@ -255,61 +130,130 @@ export async function createPortalSession(userId: string) {
 // CREDIT MANAGEMENT
 // ============================================
 
+const creditsDisabled = () => process.env.DISABLE_CREDIT_LIMITS === 'true';
+
 export async function deductCredits(
   userId: string,
   amount: number,
   action: string,
-  metadata?: any
+  metadata?: Record<string, unknown>
 ) {
-  // Premium mode: track usage only, never block or deduct
+  if (creditsDisabled()) {
+    try {
+      await supabase.from('usage_tracking').insert({
+        user_id: userId,
+        action,
+        credits_used: amount,
+        metadata,
+      });
+    } catch {
+      // ignore
+    }
+    return { success: true, remainingCredits: 999999 };
+  }
+
+  const check = await checkCredits(userId, amount);
+  if (!check.hasEnough) {
+    throw new Error('Insufficient credits');
+  }
+
+  const newBalance = check.currentCredits - amount;
+  const { error } = await supabase
+    .from('profiles')
+    .update({ credits: newBalance })
+    .eq('id', userId);
+
+  if (error) throw error;
+
   try {
     await supabase.from('usage_tracking').insert({
       user_id: userId,
       action,
       credits_used: amount,
-      metadata
+      metadata,
     });
-  } catch (_) {
-    // Ignore tracking errors silently
+  } catch {
+    // ignore tracking errors
   }
-  return { success: true, remainingCredits: 999999 };
+
+  try {
+    await supabase.from('credit_transactions').insert({
+      user_id: userId,
+      amount: -amount,
+      type: 'debit',
+      reason: action,
+      balance_after: newBalance,
+    });
+  } catch {
+    // optional table
+  }
+
+  return { success: true, remainingCredits: newBalance };
 }
 
 export async function addCredits(userId: string, amount: number, reason: string) {
-  const { data: user } = await supabase
-    .from('users')
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
     .select('credits')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
 
-  if (!user) throw new Error('User not found');
+  if (fetchError || !profile) throw new Error('User not found');
 
+  const newBalance = (profile.credits ?? 0) + amount;
   const { error } = await supabase
-    .from('users')
-    .update({ credits: user.credits + amount })
+    .from('profiles')
+    .update({ credits: newBalance })
     .eq('id', userId);
 
   if (error) throw error;
 
-  // Track credit addition
-  await supabase.from('credit_transactions').insert({
-    user_id: userId,
-    amount,
-    type: 'credit',
-    reason,
-    balance_after: user.credits + amount
-  });
+  try {
+    await supabase.from('credit_transactions').insert({
+      user_id: userId,
+      amount,
+      type: 'credit',
+      reason,
+      balance_after: newBalance,
+    });
+  } catch {
+    // optional table
+  }
 
-  return { success: true, newBalance: user.credits + amount };
+  return { success: true, newBalance };
 }
 
 export async function checkCredits(userId: string, requiredAmount: number) {
-  // Premium mode: always allow – no credit limits enforced
+  if (creditsDisabled()) {
+    return {
+      hasEnough: true,
+      currentCredits: 999999,
+      requiredCredits: requiredAmount,
+      plan: 'enterprise',
+    };
+  }
+
+  const { data: profile, error } = await supabase
+    .from('profiles')
+    .select('credits, plan')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error || !profile) {
+    return {
+      hasEnough: false,
+      currentCredits: 0,
+      requiredCredits: requiredAmount,
+      plan: 'free',
+    };
+  }
+
+  const currentCredits = profile.credits ?? 0;
   return {
-    hasEnough: true,
-    currentCredits: 999999,
+    hasEnough: currentCredits >= requiredAmount,
+    currentCredits,
     requiredCredits: requiredAmount,
-    plan: 'enterprise'
+    plan: profile.plan || 'free',
   };
 }
 

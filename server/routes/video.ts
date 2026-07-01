@@ -2,6 +2,7 @@ import { Router } from 'express';
 import axios from 'axios';
 import logger from '../logger.js';
 import { expensiveLimiter } from '../middleware/rateLimiter.js';
+import { creditGate } from '../middleware/credits.js';
 
 const VEO_MODEL = 'veo-3.1-fast-generate-preview';
 
@@ -9,7 +10,7 @@ export function createVideoRouter(): Router {
   const router = Router();
 
   // Veo używa operacji długotrwałych (LRO) — właściwy endpoint to :predictLongRunning, nie :predict
-  router.post('/api/generate-videos', expensiveLimiter, async (req, res) => {
+  router.post('/api/generate-videos', expensiveLimiter, ...creditGate('generateVideo'), async (req, res) => {
     try {
       const { prompt, image, config } = req.body;
       const currentApiKey = process.env.GOOGLE_API_KEY || process.env.VITE_API_KEY;

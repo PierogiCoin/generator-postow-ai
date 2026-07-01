@@ -1,6 +1,6 @@
 import type { GenerationResult } from '../types';
 import type { VideoStoryStyle, VideoStoryProvider } from '../components/VideoStoryModal';
-import { getLongRunningApiBaseUrl } from './apiClient';
+import { getLongRunningApiBaseUrl, getApiAuthHeaders } from './apiClient';
 
 /** Timeout dopasowany do Luma/Veo polling (~3–5 min) + bufor */
 const VIDEO_STORY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -50,8 +50,9 @@ export async function fetchVideoStoryStatus(
   jobId: string,
   userId?: string
 ): Promise<VideoStoryProgressStatus & { result?: VideoStoryResponse }> {
+  const authHeaders = await getApiAuthHeaders(userId);
   const res = await fetch(`${getLongRunningApiBaseUrl()}/api/video-story-status/${jobId}`, {
-    headers: { 'x-user-id': userId || '' },
+    headers: authHeaders,
     credentials: 'include',
   });
   if (!res.ok) {
@@ -107,11 +108,12 @@ export const generateVideoStory = async (
   const timeout = setTimeout(() => controller.abort(), VIDEO_STORY_TIMEOUT_MS);
 
   try {
+    const authHeaders = await getApiAuthHeaders(userId);
     const startRes = await fetch(`${getLongRunningApiBaseUrl()}/api/generate-video-story`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId || '',
+        ...authHeaders,
       },
       credentials: 'include',
       body: JSON.stringify(request),
@@ -121,6 +123,9 @@ export const generateVideoStory = async (
     if (!startRes.ok) {
       const errorData = await startRes.json().catch(() => ({}));
       const msg = errorData.message || 'Nie udało się wygenerować video story';
+      if (startRes.status === 402) {
+        throw new Error('Brak kredytów na generowanie wideo. Ulepsz plan lub dokup kredyty.');
+      }
       if (startRes.status === 429) throw new Error(msg);
       if (startRes.status === 503) {
         throw new Error('Generowanie wideo tymczasowo niedostępne. Spróbuj ponownie później.');

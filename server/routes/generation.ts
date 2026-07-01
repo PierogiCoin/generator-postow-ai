@@ -19,6 +19,8 @@ import {
   multiPlatformSchema,
 } from '../middleware/validate.js';
 import { textLimiter, streamLimiter, expensiveLimiter } from '../middleware/rateLimiter.js';
+import { creditGate, videoStoryCreditCost } from '../middleware/credits.js';
+import { PRICING } from '../stripe.js';
 import {
   createVideoJob,
   completeVideoJob,
@@ -96,7 +98,9 @@ export function createGenerationRouter(): Router {
     });
   }
 
-router.post('/api/generate-batch', textLimiter, async (req, res) => {
+router.post('/api/generate-batch', textLimiter, ...creditGate('generatePost', (req) =>
+  PRICING.costs.generatePost * Math.max(1, Array.isArray(req.body?.platforms) ? req.body.platforms.length : 1)
+), async (req, res) => {
   try {
     const { topic, platforms, style = 'Professional', tone = 'Casual' } = req.body;
     const userId = req.headers['x-user-id'] as string || 'anon';
@@ -188,7 +192,7 @@ ${template.includeHashtags ? 'HASHTAGS: [Space-separated hashtags]' : ''}`;
 });
 
 // ✅ GENEROWANIE TEKSTU (AI Studio) - with text limiter + validation
-router.post('/api/generate-content', textLimiter, validateRequest(textGenerationSchema), async (req, res) => {
+router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
   try {
     const { model = 'gemini-flash-latest', contents, config } = req.body || {};
     const primaryModel = mapModel(model);
@@ -222,7 +226,7 @@ router.post('/api/generate-content', textLimiter, validateRequest(textGeneration
 });
 
 // ✅ STREAMING (AI Studio) - with text limiter + validation
-router.post('/api/generate-content-stream', streamLimiter, validateRequest(textGenerationSchema), async (req, res) => {
+router.post('/api/generate-content-stream', streamLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
   const { model = 'gemini-flash-latest', contents, config } = req.body || {};
   const candidates = modelsWithFallback(mapModel(model));
 
@@ -288,7 +292,7 @@ router.post('/api/generate-content-stream', streamLimiter, validateRequest(textG
 });
 
 // ✅ CHAT (AI Studio) - with text limiter
-router.post('/api/generate', textLimiter, async (req, res) => {
+router.post('/api/generate', textLimiter, ...creditGate('generatePost'), async (req, res) => {
   try {
     const { prompt, history, model = 'gemini-flash-latest' } = req.body;
     const modelName = mapModel(model);
@@ -316,7 +320,7 @@ router.post('/api/generate', textLimiter, async (req, res) => {
 
 
 // --- GENEROWANIE OBRAZÓW (Google Imagen 3) ---
-router.post('/api/generate-images', expensiveLimiter, validateRequest(imageGenerationSchema), async (req, res) => {
+router.post('/api/generate-images', expensiveLimiter, ...creditGate('generateImage'), validateRequest(imageGenerationSchema), async (req, res) => {
   try {
     const { prompt, config } = req.body;
     const userId = req.header('x-user-id') || 'unknown';
@@ -412,7 +416,7 @@ router.get('/api/video-story-status/:jobId', (req, res) => {
   return res.json(job);
 });
 
-router.post('/api/generate-video-story', expensiveLimiter, validateRequest(videoGenerationSchema), async (req, res) => {
+router.post('/api/generate-video-story', expensiveLimiter, ...creditGate('generateVideo', videoStoryCreditCost), validateRequest(videoGenerationSchema), async (req, res) => {
   let jobId: string | null = null;
   let httpSent = false;
 
@@ -946,7 +950,9 @@ router.post('/api/generate-video-story', expensiveLimiter, validateRequest(video
 });
 
 // 🚀 Multi-Platform Optimizer — równoległe wywołania Gemini (szybsze niż sekwencja)
-router.post('/api/optimize-multi-platform', textLimiter, validateRequest(multiPlatformSchema), async (req, res) => {
+router.post('/api/optimize-multi-platform', textLimiter, ...creditGate('contentOptimization', (req) =>
+  PRICING.costs.contentOptimization * Math.max(1, Array.isArray(req.body?.targetPlatforms) ? req.body.targetPlatforms.length : 1)
+), validateRequest(multiPlatformSchema), async (req, res) => {
   const PLATFORM_CHAR_LIMITS: Record<string, number> = {
     Facebook: 63206,
     Instagram: 2200,
@@ -1023,7 +1029,7 @@ router.post('/api/optimize-multi-platform', textLimiter, validateRequest(multiPl
 });
 
 // 🧪 A/B Test Variants - with text limiter
-router.post('/api/generate-ab-variants', textLimiter, async (req, res) => {
+router.post('/api/generate-ab-variants', textLimiter, ...creditGate('contentOptimization'), async (req, res) => {
   try {
     const { originalText, platform, tone } = req.body;
     const systemPrompt = `Create A/B variants for ${platform} (${tone}). Original: "${originalText}". Return JSON: { "variantA": "...", "variantB": "..." }`;

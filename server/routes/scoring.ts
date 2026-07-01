@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import logger, { logRequest, logCost } from '../logger.js';
 import { scoreContent, compareWithBenchmark, quickValidate } from '../contentScoring.js';
+import { creditGate } from '../middleware/credits.js';
 
 export function createScoringRouter(): Router {
   const router = Router();
-router.post('/api/score-content', async (req, res) => {
+router.post('/api/score-content', ...creditGate('sentimentAnalysis'), async (req, res) => {
   logRequest(req, 200, 0);
 
   try {
@@ -50,7 +51,7 @@ router.post('/api/score-content', async (req, res) => {
 // ===============================================
 // 🏆 BENCHMARK COMPARISON ENDPOINT (Optional)
 // ===============================================
-router.post('/api/benchmark-content', async (req, res) => {
+router.post('/api/benchmark-content', ...creditGate('contentOptimization'), async (req, res) => {
   logRequest(req, 200, 0);
 
   try {

@@ -619,6 +619,7 @@
   "errors": {
     "api_not_available": "API AI jest niedostępne. Sprawdź swój klucz API lub zaloguj się.",
     "limit_reached": "Osiągnięto limit użycia dla Twojego planu.",
+    "insufficient_credits": "Potrzebujesz {{cost}} kredytów (masz {{credits}}). Ulepsz plan lub dokup pakiet.",
     "generation_failed": "Generowanie nie powiodło się.",
     "regeneration_failed": "Ulepszanie treści nie powiodło się.",
     "ai_action_failed": "Akcja AI nie powiodła się.",

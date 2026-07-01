@@ -1,9 +1,10 @@
 // contexts/AuthContext.tsx
 
-import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo, useRef } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo, useRef, useCallback } from 'react';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { getSupabase } from '../services/supabaseClient';
 import { User, UserPlan, Team } from '../types';
+import { getPlanByUserPlan } from '../config/subscriptionPlans';
 import { useDataStore } from '../stores/dataStore';
 import { clearAllPersistedStores } from '../utils/storageUtils';
 
@@ -15,6 +16,8 @@ export interface AuthContextType {
   signup: (email: string, pass: string) => Promise<void>;
   logout: () => void;
   updateUserPlan: (newPlan: UserPlan) => void;
+  adjustCredits: (delta: number) => void;
+  refreshUserCredits: () => Promise<{ credits: number; plan: UserPlan } | null>;
   setCurrentTeamId: (teamId: string | null) => void;
   authModal: 'login' | 'signup' | null;
   setAuthModal: React.Dispatch<React.SetStateAction<'login' | 'signup' | null>>;
@@ -112,11 +115,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         // profile unavailable — use defaults
       }
 
+      const resolvedPlan = (profileData?.plan as UserPlan) || UserPlan.Free;
+      const planDefaults = getPlanByUserPlan(resolvedPlan);
+
       const combinedUser: User = {
         id: sbUser.id,
         email: sbUser.email || '',
         name: profileData?.name || sbUser.email?.split('@')[0] || 'User',
-        plan: (profileData?.plan as UserPlan) || UserPlan.Free,
+        plan: resolvedPlan,
+        credits:
+          typeof profileData?.credits === 'number' ? profileData.credits : planDefaults.credits,
         teams: [],
         currentTeamId: profileData?.current_team_id || null
       };
@@ -130,6 +138,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: sbUser.id,
           name: combinedUser.name,
           plan: UserPlan.Free,
+          credits: getPlanByUserPlan(UserPlan.Free).credits,
           usage: { text: 0, image: 0, video: 0, campaign: 0, learnStyle: 0 },
           current_team_id: null,
         };
@@ -293,8 +302,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const updateUserPlan = (newPlan: UserPlan) => {
-    if (user) setUser({ ...user, plan: newPlan });
+    if (user) {
+      const planCredits = getPlanByUserPlan(newPlan).credits;
+      setUser({ ...user, plan: newPlan, credits: user.credits ?? planCredits });
+    }
   };
+
+  const adjustCredits = (delta: number) => {
+    setUser((curr) =>
+      curr ? { ...curr, credits: Math.max(0, (curr.credits ?? 0) + delta) } : null
+    );
+  };
+
+  const refreshUserCredits = useCallback(async (): Promise<{ credits: number; plan: UserPlan } | null> => {
+    if (!user?.id || !supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('credits, plan')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (error || !data) return null;
+
+      const plan = (data.plan as UserPlan) || user.plan;
+      const credits =
+        typeof data.credits === 'number' ? data.credits : getPlanByUserPlan(plan).credits;
+
+      setUser((curr) =>
+        curr ? { ...curr, plan, credits } : null
+      );
+
+      return { credits, plan };
+    } catch {
+      return null;
+    }
+  }, [user?.id, user?.plan, supabase]);
 
   const setCurrentTeamId = async (teamId: string | null) => {
     if (!user || !supabase) return;
@@ -310,6 +352,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signup,
     logout,
     updateUserPlan,
+    adjustCredits,
+    refreshUserCredits,
     setCurrentTeamId,
     authModal,
     setAuthModal,

@@ -159,7 +159,7 @@ export const GeneratorView: React.FC = () => {
         setPopover(null);
     }, []);
 
-    const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
+    const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
 
     const isResultVisible = !!result || !!inspiration;
 
@@ -274,7 +274,12 @@ export const GeneratorView: React.FC = () => {
             case 'subscription':
                 return (
                     <Suspense fallback={<SkeletonCard />}>
-                        <SubscriptionStatus stats={stats} userPlan={userPlan} onUpgrade={() => setIsPricingModalOpen(true)} />
+                        <SubscriptionStatus
+                            credits={user?.credits ?? 0}
+                            userPlan={userPlan}
+                            stats={stats}
+                            onUpgrade={() => setIsPricingModalOpen(true)}
+                        />
                     </Suspense>
                 );
             default: return null;

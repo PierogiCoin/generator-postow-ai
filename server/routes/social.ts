@@ -27,6 +27,7 @@ import {
   persistPostMortemAnalysis,
 } from '../lib/postMortem.js';
 import { resolveFrontendUrl } from '../lib/publicUrl.js';
+import { creditGate } from '../middleware/credits.js';
 
 export function createSocialRouter(): Router {
   const router = Router();
@@ -394,8 +395,8 @@ router.get('/api/social/best-times', async (req, res) => {
 });
 
 // Ręczny trigger post-mortem (dla QA / dashboardu)
-router.post('/api/social/post-mortem', async (req, res) => {
-  const userId = req.headers['x-user-id'] as string;
+router.post('/api/social/post-mortem', ...creditGate('sentimentAnalysis'), async (req, res) => {
+  const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'User ID required' });
 
   const { postIds, sinceHours = 48, forceRecalc = false, limit = 12 } = req.body || {};
@@ -454,11 +455,11 @@ router.post('/api/social/sync', async (req, res) => {
 /**
  * 🚀 NOWY ENDPOINT: Publikacja posta (używany ręcznie lub przez automat)
  */
-router.post('/api/social/publish', async (req, res) => {
-  const userId = req.headers['x-user-id'] as string;
+router.post('/api/social/publish', ...creditGate('publishPost'), async (req, res) => {
+  const userId = req.user?.id;
   const { connectionId, postText, imageUrl, scheduledPostId } = req.body;
 
-  if (!userId) return res.status(401).json({ error: 'Missing x-user-id header' });
+  if (!userId) return res.status(401).json({ error: 'Missing authentication' });
   if (!connectionId || !postText) return res.status(400).json({ error: 'Missing connectionId or postText' });
 
   try {

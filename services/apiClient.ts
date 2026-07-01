@@ -7,6 +7,7 @@ import {
   isAiTextEndpoint,
   resolveAiLanguageCode,
 } from '../utils/aiLanguage';
+import { getSupabase } from './supabaseClient';
 
 export { extractJson, markQuotaDepleted, clearQuotaDepleted, isQuotaDepleted };
 export { applyAiLanguage, getAppLanguageCode, getAiLanguageInstruction, getAppLocale, resolveAiLanguageCode } from '../utils/aiLanguage';
@@ -75,6 +76,24 @@ export function getLongRunningApiBaseUrl(): string {
 /** @deprecated Użyj getApiBaseUrl() — wartość liczona przy imporcie może być myląca w testach. */
 export const API_BASE_URL = typeof window !== 'undefined' ? getApiBaseUrl() : '';
 
+export async function getApiAuthHeaders(userId?: string): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+        'x-user-id': userId ?? '',
+    };
+
+    try {
+        const supabase = getSupabase();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+            headers.Authorization = `Bearer ${session.access_token}`;
+        }
+    } catch {
+        // Supabase niedostępny (np. testy)
+    }
+
+    return headers;
+}
+
 /**
  * Funkcja pomocnicza do wywołań API Proxy
  */
@@ -87,13 +106,14 @@ export const callApi = async (endpoint: string, payload: any, userId?: string, h
         : payload;
 
     let response: Response;
+    const authHeaders = await getApiAuthHeaders(userId);
     try {
         response = await fetch(`${getApiBaseUrl()}/api/${endpoint}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-user-id': userId ?? '',
                 'x-app-language': resolveAiLanguageCode(payload),
+                ...authHeaders,
                 ...headers
             },
             credentials: 'include',
@@ -130,6 +150,10 @@ export const callApi = async (endpoint: string, payload: any, userId?: string, h
         }
         const err = new Error(errorMessage) as Error & { status?: number; code?: string };
         err.status = response.status;
+        if (response.status === 402) {
+            errorCode = 'insufficient_credits';
+            errorMessage = errorMessage || 'Brak kredytów. Ulepsz plan lub dokup pakiet kredytów.';
+        }
         if (errorCode) err.code = errorCode;
         if (response.status === 429 || errorCode === 'GEMINI_QUOTA_EXCEEDED') {
             markQuotaDepleted();

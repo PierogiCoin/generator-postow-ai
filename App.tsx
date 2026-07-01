@@ -49,12 +49,13 @@ import { useUIStore } from './stores/uiStore';
 import { useGenerationStore } from './stores/generationStore';
 import { useDataStore } from './stores/dataStore';
 import type { GenerationResult } from './types';
-import { NotificationType } from './types';
+import { NotificationType, UserPlan } from './types';
 import { parseUserFacingError } from './utils/userFacingError';
 import {
   consumePendingCheckoutPlan,
   redirectToSubscriptionCheckout,
 } from './services/paymentService';
+import { getPlanByUserPlan } from './config/subscriptionPlans';
 
 // Loading fallback dla lazy-loaded modali
 const ModalLoadingFallback: React.FC = () => (
@@ -97,9 +98,10 @@ export const ProtectedRoute = () => {
 
 export const App: React.FC = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, refreshUserCredits } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const checkoutHandledRef = useRef<string | null>(null);
   const isHomePage = location.pathname === '/' || location.pathname === '/pricing';
   const { confirm, confirmDialogProps } = useConfirm();
 
@@ -217,19 +219,65 @@ export const App: React.FC = () => {
     });
   }, [user, showOnboarding, setIsPricingModalOpen, notificationSystem]);
 
-  // Powrót ze Stripe Checkout
+  // Powrót ze Stripe Checkout — odśwież plan i kredyty (webhook może przyjść z opóźnieniem)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('checkout') !== 'success') return;
+    if (!user) return;
 
-    notificationSystem.addToast(
-      'Płatność zakończona! Plan zaktualizuje się automatycznie po potwierdzeniu Stripe.',
-      NotificationType.Success
-    );
+    const sessionId = params.get('session_id') || `checkout-${Date.now()}`;
+    if (checkoutHandledRef.current === sessionId) return;
+    checkoutHandledRef.current = sessionId;
 
-    const cleanPath = location.pathname;
-    window.history.replaceState({}, '', cleanPath);
-  }, [location.pathname, location.search, notificationSystem]);
+    const initialCredits = user.credits ?? 0;
+    const initialPlan = user.plan;
+
+    window.history.replaceState({}, '', location.pathname);
+
+    let cancelled = false;
+
+    (async () => {
+      const delays = [0, 2000, 5000, 10000];
+      let lastResult: { credits: number; plan: UserPlan } | null = null;
+
+      for (const delay of delays) {
+        if (cancelled) return;
+        if (delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+        lastResult = await refreshUserCredits();
+        if (
+          lastResult &&
+          (lastResult.credits !== initialCredits || lastResult.plan !== initialPlan)
+        ) {
+          break;
+        }
+      }
+
+      if (cancelled) return;
+
+      if (
+        lastResult &&
+        (lastResult.credits !== initialCredits || lastResult.plan !== initialPlan)
+      ) {
+        notificationSystem.addToast(
+          `Płatność zakończona! Plan: ${getPlanByUserPlan(lastResult.plan).namePl}, kredyty: ${lastResult.credits.toLocaleString('pl-PL')}.`,
+          NotificationType.Success,
+          8000
+        );
+      } else {
+        notificationSystem.addToast(
+          'Płatność przyjęta! Kredyty i plan zaktualizują się po potwierdzeniu Stripe (zwykle do minuty).',
+          NotificationType.Success,
+          8000
+        );
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.search, location.pathname, user, refreshUserCredits, notificationSystem]);
 
   // Initialize keyboard shortcuts
   useKeyboardShortcuts();

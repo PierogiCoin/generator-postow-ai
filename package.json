@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-prod.mjs",
-    "prod:readiness": "node scripts/prod-readiness.mjs"
+    "prod:readiness": "node scripts/prod-readiness.mjs",
+    "stripe:bootstrap": "bash scripts/stripe-bootstrap.sh"
   },
   "dependencies": {
     "@google/genai": "1.24.0",

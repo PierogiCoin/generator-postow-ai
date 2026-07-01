@@ -39,19 +39,25 @@ interface GenerationHandlerDeps {
 }
 
 export const useGenerationHandlers = ({ addToast, t, handleApiError }: GenerationHandlerDeps) => {
-    const { user, userPlan } = useAuth();
+    const { user, adjustCredits } = useAuth();
     const abortControllerRef = useRef<AbortController | null>(null);
     const handleGenerateRef = useRef<((formData: FormData) => Promise<void>) | undefined>(undefined);
 
     const genActions = useGenerationStore.getState();
     const dataActions = useDataStore.getState();
 
-    const stats = useDataStore(state => state.stats);
     const brandVoiceProfiles = useDataStore(state => state.brandVoiceProfiles);
     const activeBrandVoiceId = useDataStore(state => state.activeBrandVoiceId);
     const learnedInsights = useDataStore(state => state.learnedInsights);
 
-    const { canGenerate } = useUsageLimiter({ userPlan, stats, addToast });
+    const { canGenerate, estimateCost } = useUsageLimiter({
+        credits: user?.credits ?? 0,
+        addToast,
+    });
+
+    const deductCreditsOnSuccess = (formData: FormData) => {
+        adjustCredits(-estimateCost(formData));
+    };
 
     const markOnboardingFirstPostDone = () => {
         if (user?.id) clearOnboardingPendingFirstGenerate(user.id);
@@ -211,7 +217,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
 
         const activeBrandVoice = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
 
-        if (!canGenerate(formData.generationType)) {
+        if (!canGenerate(formData)) {
             genActions.generationFailure({ message: t('errors.limit_reached'), type: 'limit' });
             return;
         }
@@ -256,6 +262,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 await dataActions.addGenerationToHistory({ formData, result: abTestResultContainer });
                 await dataActions.addGenerationStat({ ...formData, generationType: GenerationType.Idea });
 
+                deductCreditsOnSuccess(formData);
                 genActions.generationSuccess(abTestResultContainer);
                 markOnboardingFirstPostDone();
                 addToast('Test A/B wygenerowany pomyślnie!', NotificationType.Success);
@@ -291,6 +298,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 await dataActions.addGenerationToHistory({ formData, result: multiVariantResult });
                 await dataActions.addGenerationStat(formData);
 
+                deductCreditsOnSuccess(formData);
                 genActions.generationSuccess(multiVariantResult);
                 markOnboardingFirstPostDone();
                 addToast('3 warianty posta wygenerowane! Wybierz najlepszy hook.', NotificationType.Success);
@@ -330,6 +338,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 await dataActions.addGenerationToHistory({ formData, result: omnichannelResult });
                 await dataActions.addGenerationStat(formData);
 
+                deductCreditsOnSuccess(formData);
                 genActions.generationSuccess(omnichannelResult);
                 markOnboardingFirstPostDone();
                 addToast('Omnichannel wygenerowany pomyślnie!', NotificationType.Success);
@@ -431,6 +440,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
 
                 await dataActions.addGenerationToHistory({ formData, result: videoResult });
                 await dataActions.addGenerationStat(formData);
+                deductCreditsOnSuccess(formData);
                 genActions.generationSuccess(videoResult);
                 markOnboardingFirstPostDone();
                 addToast('Wideo (Placeholder) wygenerowane pomyślnie!', NotificationType.Success);
@@ -546,6 +556,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 seoAnalysis: seo,
             });
             await dataActions.addGenerationStat(formData);
+            deductCreditsOnSuccess(formData);
             genActions.generationSuccess(finalResult);
             markOnboardingFirstPostDone();
 
@@ -573,6 +584,8 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         activeBrandVoiceId,
         learnedInsights,
         canGenerate,
+        adjustCredits,
+        estimateCost,
     ]);
 
     handleGenerateRef.current = handleGenerate;

@@ -17,6 +17,10 @@ export const useApiError = (addToast: ToastFn) => {
             uiActions.setIsVeoKeyModalNeeded(true);
         }
 
+        if (parsed.code === 'insufficient_credits') {
+            uiActions.setIsPricingModalOpen(true);
+        }
+
         const errorPayload: AppError = {
             message: parsed.title,
             details: parsed.message,

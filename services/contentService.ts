@@ -1,5 +1,5 @@
 import { clearQuotaDepleted } from '../utils/chunkReload';
-import { getApiBaseUrl, generateContent, generateJson, applyAiLanguage } from './apiClient';
+import { getApiBaseUrl, generateContent, generateJson, applyAiLanguage, getApiAuthHeaders } from './apiClient';
 import { generateImages } from './mediaService';
 import {
     FormData,
@@ -222,12 +222,13 @@ YOUTUBE STYLE GUIDELINES:
         }
     }
 
+    const streamAuthHeaders = await getApiAuthHeaders(userId);
     const streamResponse = await fetch(`${getApiBaseUrl()}/api/generate-content-stream`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "x-user-id": userId,
             "x-app-language": formData.contentLanguage,
+            ...streamAuthHeaders,
         },
         credentials: "include",
         signal,
@@ -249,6 +250,7 @@ YOUTUBE STYLE GUIDELINES:
         } catch { /* ignore */ }
         const err = new Error(errMsg) as Error & { status?: number; code?: string };
         err.status = streamResponse.status;
+        if (streamResponse.status === 402) err.code = 'insufficient_credits';
         throw err;
     }
 

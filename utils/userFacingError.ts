@@ -106,6 +106,23 @@ export function parseUserFacingError(
     };
   }
 
+  if (
+    status === 402 ||
+    code === 'insufficient_credits' ||
+    lower.includes('insufficient_credits') ||
+    lower.includes('brak kredytów')
+  ) {
+    return {
+      title: tr(t, 'errors.userFacing.creditsTitle', 'Brak kredytów'),
+      message:
+        message && !isTechnicalNoise(message)
+          ? message
+          : tr(t, 'errors.userFacing.creditsMessage', 'Nie masz wystarczającej liczby kredytów na tę operację.'),
+      action: tr(t, 'errors.userFacing.creditsAction', 'Otwórz cennik — wybierz plan lub dokup pakiet kredytów.'),
+      code: 'insufficient_credits',
+    };
+  }
+
   if (status === 401 || status === 403 || lower.includes('not authenticated') || lower.includes('jwt')) {
     return {
       title: t?.('errors.userFacing.authTitle', 'Sesja wygasła') ?? 'Sesja wygasła',

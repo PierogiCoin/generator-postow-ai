@@ -9,6 +9,7 @@ const PAID_PLANS: UserPlan[] = [
   UserPlan.Pro,
   UserPlan.Agency,
   UserPlan.Business,
+  UserPlan.Enterprise,
 ];
 
 export function isPaidPlan(plan: UserPlan): boolean {
@@ -68,6 +69,37 @@ export async function createSubscriptionCheckout(plan: UserPlan): Promise<string
 
 export async function redirectToSubscriptionCheckout(plan: UserPlan): Promise<void> {
   const url = await createSubscriptionCheckout(plan);
+  window.location.assign(url);
+}
+
+export async function createCreditPackCheckout(packId: string): Promise<string> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${getApiBaseUrl()}/api/payments/checkout/credits`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: 'include',
+    body: JSON.stringify({ pack: packId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Błąd checkout (${response.status})`);
+  }
+
+  if (!data.url) {
+    throw new Error('Stripe nie zwrócił adresu płatności.');
+  }
+
+  return data.url as string;
+}
+
+export async function redirectToCreditPackCheckout(packId: string): Promise<void> {
+  const url = await createCreditPackCheckout(packId);
   window.location.assign(url);
 }
 

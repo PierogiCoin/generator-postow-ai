@@ -1,6 +1,6 @@
 import { Platform, Tone } from '../types';
 import type { PlatformOptimization } from '../components/MultiPlatformOptimizer';
-import { getApiBaseUrl, getLongRunningApiBaseUrl } from './apiClient';
+import { getApiBaseUrl, getLongRunningApiBaseUrl, getApiAuthHeaders } from './apiClient';
 
 export interface MultiPlatformRequest {
   originalText: string;
@@ -27,11 +27,12 @@ export const optimizeForPlatforms = async (
   const timeoutSec = Math.round(timeoutMs / 1000);
 
   try {
+    const authHeaders = await getApiAuthHeaders(userId);
     const response = await fetch(`${getLongRunningApiBaseUrl()}/api/optimize-multi-platform`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId || ''
+        ...authHeaders,
       },
       credentials: 'include',
       body: JSON.stringify(request),
@@ -206,11 +207,12 @@ export const generateABTestVariants = async (
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60_000);
   try {
+    const authHeaders = await getApiAuthHeaders(userId);
     const response = await fetch(`${getApiBaseUrl()}/api/generate-ab-variants`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-user-id': userId || ''
+        ...authHeaders,
       },
       credentials: 'include',
       signal: controller.signal,

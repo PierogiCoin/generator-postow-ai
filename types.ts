@@ -95,6 +95,7 @@ export enum UserPlan {
   Pro = "pro",
   Agency = "agency",
   Business = "business",
+  Enterprise = "enterprise",
 }
 
 export type TeamMemberRole = "manager" | "member";
@@ -117,6 +118,8 @@ export interface User {
   name: string;
   email: string;
   plan: UserPlan;
+  /** Saldo kredytów z profiles.credits */
+  credits?: number;
   teams?: Team[];
   currentTeamId?: string | null;
   teamId?: string | null;

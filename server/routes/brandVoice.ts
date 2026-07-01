@@ -3,11 +3,12 @@ import logger from '../logger.js';
 import { genAI, supabase } from '../lib/clients.js';
 import { syncUserSocialPosts } from '../socialSync.js';
 import { FacebookPublisher, InstagramPublisher } from '../socialPublishing.js';
+import { creditGate } from '../middleware/credits.js';
 
 export function createBrandVoiceRouter(): Router {
   const router = Router();
-router.post('/api/brand-voice/learn', async (req, res) => {
-  const userId = req.headers['x-user-id'] as string;
+router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async (req, res) => {
+  const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'User ID required' });
 
   try {
