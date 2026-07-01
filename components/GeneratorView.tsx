@@ -50,8 +50,9 @@ import { OnboardingGuide } from './OnboardingGuide';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { useConfirm } from '../hooks/useConfirm';
 import { isOnboardingGuideActive } from '../utils/onboarding';
+import { CalendarSlotBanner } from './calendar/CalendarSlotBanner';
 
-import type { FormData, CampaignHistoryItem, FavoritePost, Draft, GenerationResult, ScheduledPost } from '../types';
+import type { FormData, CampaignHistoryItem, FavoritePost, Draft, GenerationResult, ScheduledPost, CalendarSlotContext } from '../types';
 import { UserPlan } from '../types';
 
 type SidebarTab = 'history' | 'drafts' | 'favorites' | 'scheduled' | 'stats' | 'subscription';
@@ -66,7 +67,7 @@ export const GeneratorView: React.FC = () => {
         inspiration, selectInspiration, clearHistory, removeFavorite, clearFavorites,
         saveTemplate, deleteTemplate, removeDraft
     } = useDataStore();
-    const { result, isLoading, isOptimizingMultiPlatform, generationProgress } = useGenerationStore();
+    const { result, isLoading, isOptimizingMultiPlatform, generationProgress, pendingCalendarSlot } = useGenerationStore();
     const { setIsPricingModalOpen, setIsSocialConnectionsModalOpen } = useUIStore();
     const { confirm, confirmDialogProps } = useConfirm();
 
@@ -83,6 +84,7 @@ export const GeneratorView: React.FC = () => {
     const location = useLocation();
     const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
     const [prefillData, setPrefillData] = useState<Partial<FormData> | null>(null);
+    const [autoGenerateSlot, setAutoGenerateSlot] = useState(false);
     const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('history');
     const [popover, setPopover] = useState<{ item: CampaignHistoryItem | Draft | ScheduledPost, rect: DOMRect } | null>(null);
 
@@ -116,6 +118,14 @@ export const GeneratorView: React.FC = () => {
     useEffect(() => {
         if (location.state?.prefillData) {
             setPrefillData(location.state.prefillData);
+        }
+        if (location.state?.calendarSlot) {
+            useGenerationStore.getState().setPendingCalendarSlot(location.state.calendarSlot as CalendarSlotContext);
+        }
+        if (location.state?.autoGenerateSlot) {
+            setAutoGenerateSlot(true);
+        }
+        if (location.state?.prefillData || location.state?.calendarSlot) {
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
@@ -422,8 +432,18 @@ export const GeneratorView: React.FC = () => {
                                 </ModernButton>
                             </div>
                         )}
+                        {pendingCalendarSlot && (
+                            <div className="mb-6">
+                                <CalendarSlotBanner slot={pendingCalendarSlot} isGenerating={isLoading} />
+                            </div>
+                        )}
                         <Suspense fallback={<SkeletonCard />}>
-                            <InputForm prefillData={prefillData} onPrefillConsumed={onPrefillConsumed} />
+                            <InputForm
+                                prefillData={prefillData}
+                                onPrefillConsumed={onPrefillConsumed}
+                                autoGenerateSlot={autoGenerateSlot}
+                                onAutoGenerateConsumed={() => setAutoGenerateSlot(false)}
+                            />
                         </Suspense>
                     </div>
                     )}

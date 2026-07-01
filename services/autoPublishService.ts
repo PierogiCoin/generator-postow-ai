@@ -56,6 +56,14 @@ export function canAutoPublish(result: GenerationResult, formData: FormData): bo
   return Boolean(result.postText?.trim());
 }
 
+/** Tekst do oceny jakości przed auto-publikacją (główny post lub pierwszy z omnichannel). */
+export function getPublishablePostText(result: GenerationResult): string {
+  const main = result.postText?.trim() || '';
+  if (main.length >= 60) return main;
+  const fromOmni = result.omnichannelPosts?.find((p) => p.postText?.trim())?.postText?.trim();
+  return fromOmni || main;
+}
+
 function formatPostText(text: string, hashtags: string[] = []): string {
   const tags = hashtags
     .filter(Boolean)

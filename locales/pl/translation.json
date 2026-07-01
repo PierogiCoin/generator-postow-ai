@@ -86,7 +86,8 @@
       "optimizePerPlatform": "Dostosuj treść do każdej platformy przed publikacją",
       "loadingAccounts": "Ładowanie kont…",
       "noAccounts": "Brak połączonych kont.",
-      "connectAccounts": "Połącz konta"
+      "connectAccounts": "Połącz konta",
+      "qualityGateHint": "Publikacja nastąpi tylko przy ocenie ≥ {{min}} w bramie jakości."
     },
     "techRadar": {
       "title": "Tech Radar",
@@ -236,6 +237,13 @@
     "empty": {
       "title": "Kalendarz jest pusty",
       "hint": "Użyj „Wypełnij tydzień” powyżej lub kliknij AI Ideas na wybranym dniu."
+    },
+    "slot": {
+      "generate": "Generuj",
+      "edit": "Edytuj",
+      "generateNow": "Generuj teraz",
+      "bannerLabel": "Generowanie ze slotu kalendarza",
+      "bannerHint": "Po wygenerowaniu treść trafi do zaplanowanych publikacji, a slot zniknie z planu."
     }
   },
   "topicAssistant": {

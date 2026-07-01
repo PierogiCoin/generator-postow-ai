@@ -5,6 +5,7 @@ import type { Platform } from '../../types';
 import {
   scorePostContent,
   buildAutoFixPrompt,
+  AUTO_PUBLISH_MIN_SCORE,
   type ContentScore,
 } from '../../services/contentScoringService';
 import { ModernButton } from '../ui/ModernButton';
@@ -164,7 +165,7 @@ export const QualityGatePanel: React.FC<QualityGatePanelProps> = ({
             </ul>
           )}
 
-          {score.overall < 70 && (
+          {score.overall < AUTO_PUBLISH_MIN_SCORE && (
             <ModernButton
               type="button"
               variant="secondary"

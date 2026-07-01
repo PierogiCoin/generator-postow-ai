@@ -65,3 +65,10 @@ export function buildAutoFixPrompt(score: ContentScore): string {
 
   return `Zastosuj te poprawki (zachowaj język i ton oryginału):\n${unique.map((s) => `- ${s}`).join('\n')}`;
 }
+
+/** Minimalna ocena (0–100) wymagana do automatycznej publikacji — zgodna z badge „green”. */
+export const AUTO_PUBLISH_MIN_SCORE = 70;
+
+export function passesAutoPublishQualityGate(score: ContentScore): boolean {
+  return score.overall >= AUTO_PUBLISH_MIN_SCORE;
+}

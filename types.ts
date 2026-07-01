@@ -522,6 +522,17 @@ export interface IntelligentCalendarPlanItem {
   contentIntent?: 'educational' | 'entertaining' | 'inspirational' | 'promotional' | 'community' | 'behind-the-scenes';
 }
 
+/** Kontekst slotu kalendarza przekazywany do generatora (planowanie po wygenerowaniu). */
+export interface CalendarSlotContext {
+  planItemId: string;
+  date: string;
+  time?: string;
+  platform: Platform;
+  slotType?: 'post' | 'reel' | 'story';
+  contentIntent?: IntelligentCalendarPlanItem['contentIntent'];
+  topic: string;
+}
+
 // Types for Gamification
 export enum AchievementId {
   FirstPost = "firstPost",

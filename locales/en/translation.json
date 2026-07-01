@@ -83,7 +83,8 @@
       "optimizePerPlatform": "Adapt copy for each platform before publishing",
       "loadingAccounts": "Loading accounts…",
       "noAccounts": "No connected accounts.",
-      "connectAccounts": "Connect accounts"
+      "connectAccounts": "Connect accounts",
+      "qualityGateHint": "Publishing only runs when the quality gate score is ≥ {{min}}."
     },
     "techRadar": {
       "title": "Tech Radar",
@@ -233,6 +234,13 @@
     "empty": {
       "title": "Calendar is empty",
       "hint": "Use “Fill week” above or click AI Ideas on a day."
+    },
+    "slot": {
+      "generate": "Generate",
+      "edit": "Edit",
+      "generateNow": "Generate now",
+      "bannerLabel": "Generating from calendar slot",
+      "bannerHint": "After generation, content is added to scheduled posts and the slot is removed from the plan."
     }
   },
   "topicAssistant": {

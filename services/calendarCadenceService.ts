@@ -98,7 +98,7 @@ function formatDateYMD(d: Date): string {
   return d.toISOString().split('T')[0];
 }
 
-function slotFormat(slotType: 'post' | 'reel' | 'story'): GenerationType {
+export function slotFormat(slotType: 'post' | 'reel' | 'story'): GenerationType {
   if (slotType === 'reel') return GenerationType.Video;
   return GenerationType.PostWithImage;
 }

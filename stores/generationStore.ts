@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { GenerationResult, AppError, FormData, RepurposedContent, SentimentAnalysisResult, SEOAnalysisResult, PerformancePrediction } from '../types';
+import type { GenerationResult, AppError, FormData, RepurposedContent, SentimentAnalysisResult, SEOAnalysisResult, PerformancePrediction, CalendarSlotContext } from '../types';
 import type { VideoStoryProgressStatus } from '../services/videoStoryService';
 
 type GenerationState = {
@@ -35,6 +35,7 @@ type GenerationState = {
   isOptimizingMultiPlatform: boolean;
   hookVariations: string[];
   isSuggestingHooks: boolean;
+  pendingCalendarSlot: CalendarSlotContext | null;
 
   // Actions
   startGeneration: (formData: FormData) => void;
@@ -92,6 +93,8 @@ type GenerationState = {
   startHookSuggestions: () => void;
   hookSuggestionsSuccess: (hooks: string[]) => void;
   applyHook: (newHook: string) => void;
+  setPendingCalendarSlot: (slot: CalendarSlotContext | null) => void;
+  clearPendingCalendarSlot: () => void;
 };
 
 const initialGenerationState = {
@@ -126,6 +129,7 @@ const initialGenerationState = {
   isOptimizingMultiPlatform: false,
   hookVariations: [],
   isSuggestingHooks: false,
+  pendingCalendarSlot: null,
 };
 
 export const useGenerationStore = create<GenerationState>()(
@@ -225,6 +229,8 @@ export const useGenerationStore = create<GenerationState>()(
     }
     return { result: { ...state.result, postText: newText } };
   }),
+  setPendingCalendarSlot: (slot) => set({ pendingCalendarSlot: slot }),
+  clearPendingCalendarSlot: () => set({ pendingCalendarSlot: null }),
   clearResult: () => set({ 
     result: null, 
     error: null, 

@@ -19,7 +19,13 @@ import { showSuccess, showWarning } from '../../utils/errorHandler';
 import { isQuotaDepleted } from '../../utils/chunkReload';
 import { clearOnboardingPendingFirstGenerate } from '../../utils/onboarding';
 import { overlayLogoOnImage } from '../../utils/imageBranding';
-import { canAutoPublish, autoPublishToConnectedAccounts } from '../../services/autoPublishService';
+import { canAutoPublish, autoPublishToConnectedAccounts, getPublishablePostText } from '../../services/autoPublishService';
+import {
+    scorePostContent,
+    passesAutoPublishQualityGate,
+    AUTO_PUBLISH_MIN_SCORE,
+} from '../../services/contentScoringService';
+import { fulfillCalendarSlot, parseSlotScheduleTimestamp } from '../../services/calendarSlotService';
 import type { ApiErrorHandler, ToastFn } from './types';
 
 interface GenerationHandlerDeps {
@@ -49,6 +55,31 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
     const runAutoPublishIfEnabled = async (finalResult: GenerationResult, formData: FormData) => {
         if (!user?.id || !canAutoPublish(finalResult, formData)) return;
 
+        const publishText = getPublishablePostText(finalResult);
+        if (publishText.length >= 60) {
+            genActions.setProgress('Sprawdzanie bramy jakości przed publikacją…');
+            try {
+                const qualityScore = await scorePostContent(publishText, formData.platform, user.id, {
+                    hasHashtags: (finalResult.hashtags?.length ?? 0) > 0 || publishText.includes('#'),
+                    hasEmojis: /[\u{1F300}-\u{1FAFF}]/u.test(publishText),
+                    targetAudience: formData.audience,
+                });
+                if (!passesAutoPublishQualityGate(qualityScore)) {
+                    showWarning(
+                        'Auto-publikacja wstrzymana',
+                        `Ocena ${qualityScore.overall}/100 — popraw treść w bramie jakości (min. ${AUTO_PUBLISH_MIN_SCORE}).`
+                    );
+                    return;
+                }
+            } catch {
+                showWarning(
+                    'Auto-publikacja wstrzymana',
+                    'Nie udało się ocenić treści — opublikuj ręcznie po sprawdzeniu jakości.'
+                );
+                return;
+            }
+        }
+
         genActions.setProgress('Publikowanie na połączonych kontach…');
         try {
             const summary = await autoPublishToConnectedAccounts(finalResult, formData, user.id);
@@ -76,6 +107,34 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             }
         } catch (error) {
             handleApiError(error, 'errors.unknownError');
+        }
+    };
+
+    const fulfillPendingCalendarSlot = async (finalResult: GenerationResult, formData: FormData) => {
+        const slot = useGenerationStore.getState().pendingCalendarSlot;
+        if (!slot || !user) return;
+
+        useGenerationStore.getState().clearPendingCalendarSlot();
+        try {
+            await fulfillCalendarSlot(slot, formData, finalResult, user.id, {
+                addOrUpdateScheduledPost: dataActions.addOrUpdateScheduledPost,
+                removeIntelligentCalendarPlanItem: dataActions.removeIntelligentCalendarPlanItem,
+            });
+            showSuccess(
+                'Slot kalendarza zrealizowany',
+                `Zaplanowano na ${new Date(parseSlotScheduleTimestamp(slot.date, slot.time)).toLocaleString('pl-PL', {
+                    weekday: 'short',
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                })}`
+            );
+        } catch {
+            showWarning(
+                'Treść wygenerowana',
+                'Nie udało się automatycznie dodać do kalendarza — zaplanuj ręcznie z wyniku.'
+            );
         }
     };
 
@@ -171,6 +230,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 genActions.generationSuccess(multiVariantResult);
                 markOnboardingFirstPostDone();
                 addToast('3 warianty posta wygenerowane! Wybierz najlepszy hook.', NotificationType.Success);
+                await fulfillPendingCalendarSlot(multiVariantResult, formData);
                 return;
             }
 
@@ -209,6 +269,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 genActions.generationSuccess(omnichannelResult);
                 markOnboardingFirstPostDone();
                 addToast('Omnichannel wygenerowany pomyślnie!', NotificationType.Success);
+                await fulfillPendingCalendarSlot(omnichannelResult, formData);
                 await runAutoPublishIfEnabled(omnichannelResult, formData);
                 return;
             }
@@ -309,6 +370,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 genActions.generationSuccess(videoResult);
                 markOnboardingFirstPostDone();
                 addToast('Wideo (Placeholder) wygenerowane pomyślnie!', NotificationType.Success);
+                await fulfillPendingCalendarSlot(videoResult, formData);
                 return;
             }
 
@@ -424,6 +486,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             markOnboardingFirstPostDone();
 
             showSuccess('Treść wygenerowana pomyślnie!', 'Możesz ją teraz edytować lub zapisać');
+            await fulfillPendingCalendarSlot(finalResult, formData);
             await runAutoPublishIfEnabled(finalResult, formData);
         } catch (error) {
             const errorPayload = handleApiError(error, 'errors.generation_failed');

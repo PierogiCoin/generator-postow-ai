@@ -36,6 +36,11 @@ import {
   loadCalendarCadencePrefs,
   saveCalendarCadencePrefs,
 } from '../utils/calendarCadencePrefs';
+import {
+  buildCalendarSlotContext,
+  buildPrefillFromCalendarSlot,
+} from '../services/calendarSlotService';
+import { useGenerationStore } from '../stores/generationStore';
 
 const WEEK_DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
 
@@ -184,6 +189,10 @@ export const ContentCalendar: React.FC = () => {
   };
 
   const handleSelectSuggestion = (suggestion: CalendarSuggestion | IntelligentCalendarPlanItem) => {
+    if ('id' in suggestion && suggestion.id) {
+      handleGenerateForSlot(suggestion as IntelligentCalendarPlanItem, false);
+      return;
+    }
     navigate('/generator', {
       state: {
         prefillData: {
@@ -191,6 +200,19 @@ export const ContentCalendar: React.FC = () => {
           generationType: suggestion.format,
           platform: suggestion.platform,
         },
+      },
+    });
+    setSuggestionDate(null);
+  };
+
+  const handleGenerateForSlot = (item: IntelligentCalendarPlanItem, autoGenerate = true) => {
+    const calendarSlot = buildCalendarSlotContext(item);
+    useGenerationStore.getState().setPendingCalendarSlot(calendarSlot);
+    navigate('/generator', {
+      state: {
+        prefillData: buildPrefillFromCalendarSlot(item),
+        calendarSlot,
+        autoGenerateSlot: autoGenerate,
       },
     });
     setSuggestionDate(null);
@@ -425,12 +447,12 @@ export const ContentCalendar: React.FC = () => {
                     draggable
                     onDragStart={(e) => handleDragStart(e, item.id, 'plan')}
                     onDragEnd={handleDragEnd}
-                    className="w-full text-left group relative p-2 rounded-xl bg-transparent border border-dashed border-cyan-500/40 hover:border-cyan-500 hover:bg-cyan-500/5 cursor-grab active:cursor-grabbing transition-all"
+                    className="group/slot w-full text-left relative p-2 rounded-xl bg-transparent border border-dashed border-cyan-500/40 hover:border-cyan-500 hover:bg-cyan-500/5 cursor-grab active:cursor-grabbing transition-all"
                   >
-                    <div className="flex items-center gap-1.5" onClick={() => handleSelectSuggestion(item)}>
+                    <div className="flex items-center gap-1.5">
                       <span className="text-[10px] shrink-0">{slotTypeBadge(item.slotType)}</span>
                       <Icon className="w-3.5 h-3.5 flex-shrink-0 text-cyan-500" />
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold truncate text-slate-855 dark:text-white uppercase tracking-tighter">
                           {item.topic}
                         </p>
@@ -439,6 +461,29 @@ export const ContentCalendar: React.FC = () => {
                           {t('calendar.suggestion')}
                         </p>
                       </div>
+                    </div>
+                    <div className="mt-1.5 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover/slot:opacity-100 sm:group-focus-within/slot:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGenerateForSlot(item, false);
+                        }}
+                        className="flex-1 text-[8px] font-bold uppercase tracking-wide px-1.5 py-1 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 hover:border-cyan-500 text-slate-600 dark:text-slate-300"
+                      >
+                        {t('calendar.slot.edit', 'Edytuj')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGenerateForSlot(item, true);
+                        }}
+                        className="flex-1 text-[8px] font-bold uppercase tracking-wide px-1.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center gap-0.5"
+                      >
+                        <SparklesIcon className="w-2.5 h-2.5" />
+                        {t('calendar.slot.generate', 'Generuj')}
+                      </button>
                     </div>
                   </div>
                 );

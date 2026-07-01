@@ -66,10 +66,17 @@ import { OnboardingFirstPostBanner } from './inputForm/OnboardingFirstPostBanner
 interface InputFormProps {
   prefillData: Partial<FormData> | null;
   onPrefillConsumed: () => void;
+  autoGenerateSlot?: boolean;
+  onAutoGenerateConsumed?: () => void;
 }
 
 
-export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillConsumed }) => {
+export const InputForm: React.FC<InputFormProps> = ({
+  prefillData,
+  onPrefillConsumed,
+  autoGenerateSlot = false,
+  onAutoGenerateConsumed,
+}) => {
   const { t } = useTranslation();
   const { user, userPlan, currentTeamId } = useAuth();
   const { addToast } = useNotifications();
@@ -204,17 +211,20 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
   };
 
   useEffect(() => {
-    if (prefillData) {
-      setFormData(prev => normalizeFormData({
-        ...prev,
-        ...prefillData,
-        topic: prefillData.topic || prev.topic || '',
-        platform: prefillData.platform || prev.platform,
-        generationType: prefillData.generationType || prev.generationType,
-      }));
-      onPrefillConsumed();
+    if (!prefillData) return;
+    const next = normalizeFormData({
+      ...prefillData,
+      topic: prefillData.topic || '',
+      platform: prefillData.platform,
+      generationType: prefillData.generationType,
+    });
+    setFormData((prev) => normalizeFormData({ ...prev, ...next }));
+    onPrefillConsumed();
+    if (autoGenerateSlot && stripTopicHtml(next.topic || '').trim()) {
+      handlers.handleGenerate(next);
+      onAutoGenerateConsumed?.();
     }
-  }, [prefillData, onPrefillConsumed]);
+  }, [prefillData, autoGenerateSlot, onPrefillConsumed, onAutoGenerateConsumed]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

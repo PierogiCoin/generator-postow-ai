@@ -88,6 +88,7 @@ type DataState = {
   // Intelligent Calendar
   setIntelligentCalendarPlan: (plan: IntelligentCalendarPlanItem[] | null) => void;
   updateIntelligentCalendarPlanItemDate: (itemId: string, newDate: string) => void;
+  removeIntelligentCalendarPlanItem: (itemId: string) => Promise<void>;
   clearIntelligentCalendarPlan: () => void;
 
   // AI Strategist
@@ -297,6 +298,11 @@ export const useDataStore = create<DataState>()(
     );
     await calendarPlanService.saveCalendarPlan(updated);
     set({ intelligentCalendarPlan: updated });
+  },
+  removeIntelligentCalendarPlanItem: async (itemId) => {
+    const updated = (get().intelligentCalendarPlan || []).filter((item) => item.id !== itemId);
+    await calendarPlanService.saveCalendarPlan(updated);
+    set({ intelligentCalendarPlan: updated.length > 0 ? updated : null });
   },
   clearIntelligentCalendarPlan: async () => {
     await calendarPlanService.clearCalendarPlans();

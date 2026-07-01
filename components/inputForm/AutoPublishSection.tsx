@@ -5,6 +5,7 @@ import type { FormData } from '../../types';
 import type { SocialConnection } from '../../types/socialPublishing';
 import { socialConnectionsService } from '../../services/socialConnectionsService';
 import { socialPlatformToPlatform } from '../../services/autoPublishService';
+import { AUTO_PUBLISH_MIN_SCORE } from '../../services/contentScoringService';
 import { useUIStore } from '../../stores/uiStore';
 
 const PLATFORM_ICONS: Record<string, string> = {
@@ -103,6 +104,13 @@ export const AutoPublishSection: React.FC<AutoPublishSectionProps> = ({
 
       {formData.autoPublishToConnected && (
         <div className="space-y-3 animate-fade-in">
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+            {t(
+              'form.autoPublish.qualityGateHint',
+              'Publikacja nastąpi tylko przy ocenie ≥ {{min}} w bramie jakości.',
+              { min: AUTO_PUBLISH_MIN_SCORE }
+            )}
+          </p>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
