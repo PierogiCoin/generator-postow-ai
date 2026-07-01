@@ -3,6 +3,28 @@ import { apiKey, openai, luma, replicate, supabase, costTracker } from '../lib/c
 import { resolveFrontendUrl, resolvePublicBackendUrl } from '../lib/publicUrl.js';
 import { facebookConfig, linkedInConfig, tiktokConfig, twitterConfig } from '../config/social.js';
 
+function stripeEnvStatus() {
+  const priceIds = [
+    'STRIPE_CREATOR_PRICE_ID',
+    'STRIPE_PRO_PRICE_ID',
+    'STRIPE_BUSINESS_PRICE_ID',
+    'STRIPE_AGENCY_PRICE_ID',
+    'STRIPE_ENTERPRISE_PRICE_ID',
+  ];
+  const configuredPrices = priceIds.filter((key) => Boolean(process.env[key]));
+  return {
+    secretKey: Boolean(process.env.STRIPE_SECRET_KEY),
+    webhookSecret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
+    priceIdsConfigured: configuredPrices.length,
+    priceIdsTotal: priceIds.length,
+    ready: Boolean(
+      process.env.STRIPE_SECRET_KEY &&
+        process.env.STRIPE_WEBHOOK_SECRET &&
+        configuredPrices.length >= 2
+    ),
+  };
+}
+
 export function createHealthRouter(): Router {
   const router = Router();
 
@@ -28,6 +50,7 @@ export function createHealthRouter(): Router {
           facebook: Boolean(facebookConfig.appId && facebookConfig.appSecret),
           tiktok: Boolean(tiktokConfig.clientKey && tiktokConfig.clientSecret),
         },
+        stripe: stripeEnvStatus(),
       },
       apis: {
         gemini: !!apiKey,

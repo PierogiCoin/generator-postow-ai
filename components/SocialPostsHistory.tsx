@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     X, Heart, MessageCircle, Share2, Eye, TrendingUp,
-    Loader2, ExternalLink, Image as ImageIcon, RefreshCw, BarChart2, Sparkles, ChevronDown, ChevronUp
+    Loader2, ExternalLink, Image as ImageIcon, RefreshCw, BarChart2, Sparkles, ChevronDown, ChevronUp, Calendar
 } from 'lucide-react';
 import { generatePostMortem } from '../services/postMortemService';
 import type { PostMortemReport } from '../services/postMortemService';
+import {
+    buildCalendarItemFromPostMortem,
+    mergePostMortemIntoPlan,
+} from '../services/postMortemCalendarService';
 import { getApiBaseUrl } from '../services/apiClient';
+import { useDataStore } from '../stores/dataStore';
+import { useNotifications } from '../hooks/useNotifications';
+import { NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
 
 interface PostMetric {
@@ -62,6 +70,9 @@ function timeAgo(date: Date): string {
 export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
     connection, isOpen, onClose, userId
 }) => {
+    const navigate = useNavigate();
+    const { intelligentCalendarPlan, setIntelligentCalendarPlan } = useDataStore();
+    const { addToast } = useNotifications();
     const [posts, setPosts] = useState<PostMetric[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -123,6 +134,27 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
             setMortemLoadingId(null);
         }
     }, [userId, connection, mortems, mortemLoadingId]);
+
+    const handleAddMortemToCalendar = useCallback(async (post: PostMetric, report: PostMortemReport) => {
+        if (!connection) return;
+        const item = buildCalendarItemFromPostMortem(report, {
+            content: post.content,
+            publishedAt: new Date(post.publishedAt),
+        }, connection.platform);
+        if (!item) {
+            addToast('Nieobsługiwana platforma dla kalendarza', NotificationType.Error);
+            return;
+        }
+        const merged = mergePostMortemIntoPlan(intelligentCalendarPlan, item);
+        if (merged.length === (intelligentCalendarPlan?.length || 0)) {
+            addToast('Ten slot jest już w kalendarzu', NotificationType.Info);
+            return;
+        }
+        await setIntelligentCalendarPlan(merged);
+        addToast('Dodano follow-up do kalendarza', NotificationType.Success);
+        onClose();
+        navigate('/calendar');
+    }, [connection, intelligentCalendarPlan, setIntelligentCalendarPlan, addToast, onClose, navigate]);
 
     if (!isOpen || !connection) return null;
 
@@ -339,6 +371,14 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                                                                 <p className="text-indigo-600 dark:text-indigo-400">"{m.suggestedImprovedHook}"</p>
                                                             </div>
                                                         )}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => void handleAddMortemToCalendar(post, m)}
+                                                            className="w-full mt-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors"
+                                                        >
+                                                            <Calendar className="w-3.5 h-3.5" />
+                                                            Dodaj follow-up do kalendarza
+                                                        </button>
                                                     </div>
                                                 );
                                             })()}
