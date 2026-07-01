@@ -11,6 +11,10 @@ import {
   ContentLanguage,
 } from '../../types';
 
+import { loadAutoPublishPrefs } from '../../utils/autoPublishPrefs';
+
+const savedAutoPublish = typeof window !== 'undefined' ? loadAutoPublishPrefs() : { autoPublishToConnected: false, autoOptimizePerPlatform: true };
+
 export const DEFAULT_FORM_DATA: FormData = {
   topic: '',
   audience: '',
@@ -30,6 +34,8 @@ export const DEFAULT_FORM_DATA: FormData = {
   copywritingFramework: CopywritingFramework.Auto,
   generationMode: GenerationMode.Single,
   contentLanguage: ContentLanguage.Polish,
+  autoPublishToConnected: savedAutoPublish.autoPublishToConnected,
+  autoOptimizePerPlatform: savedAutoPublish.autoOptimizePerPlatform,
 };
 
 /** Uzupełnia brakujące pola (stare szablony, historia, persisted state). */

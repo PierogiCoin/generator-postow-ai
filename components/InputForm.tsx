@@ -56,6 +56,8 @@ import { InputFormAdvancedOptions } from './inputForm/InputFormAdvancedOptions';
 import { InputFormModals } from './inputForm/InputFormModals';
 import { InputFormModeToggle } from './inputForm/InputFormModeToggle';
 import { InputFormQuickFlow } from './inputForm/InputFormQuickFlow';
+import { AutoPublishSection } from './inputForm/AutoPublishSection';
+import { saveAutoPublishPrefs } from '../utils/autoPublishPrefs';
 import { getStoredInputFormMode, setStoredInputFormMode, stripTopicHtml, type InputFormMode } from '../utils/inputFormMode';
 import { isOnboardingPendingFirstGenerate } from '../utils/onboarding';
 import { OnboardingFirstPostBanner } from './inputForm/OnboardingFirstPostBanner';
@@ -102,6 +104,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
   const [isAssistantModalOpen, setIsAssistantModalOpen] = useState(false);
   const [isReverseImageOpen, setIsReverseImageOpen] = useState(false);
   const [isTrendAnalysisOpen, setIsTrendAnalysisOpen] = useState(false);
+  const [isTechRadarOpen, setIsTechRadarOpen] = useState(false);
   const [isScheduleOptimizerOpen, setIsScheduleOptimizerOpen] = useState(false);
   const [isAIWorkflowOpen, setIsAIWorkflowOpen] = useState(false);
   const [isContentSafetyOpen, setIsContentSafetyOpen] = useState(false);
@@ -128,6 +131,46 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
       if (draftSavedTimeout.current) clearTimeout(draftSavedTimeout.current);
     };
   }, []);
+
+  const showAutoPublishOption = useMemo(
+    () =>
+      ![GenerationType.ABTest, GenerationType.Idea, GenerationType.Campaign, GenerationType.Video].includes(
+        formData.generationType
+      ) && formData.generationMode !== GenerationMode.MultiVariant,
+    [formData.generationType, formData.generationMode]
+  );
+
+  const handleAutoPublishToggle = (enabled: boolean) => {
+    setFormData((p) => {
+      const next = { ...p, autoPublishToConnected: enabled };
+      saveAutoPublishPrefs({
+        autoPublishToConnected: enabled,
+        autoOptimizePerPlatform: next.autoOptimizePerPlatform !== false,
+      });
+      return next;
+    });
+  };
+
+  const handleAutoOptimizeToggle = (enabled: boolean) => {
+    setFormData((p) => {
+      const next = { ...p, autoOptimizePerPlatform: enabled };
+      saveAutoPublishPrefs({
+        autoPublishToConnected: Boolean(next.autoPublishToConnected),
+        autoOptimizePerPlatform: enabled,
+      });
+      return next;
+    });
+  };
+
+  const autoPublishSection = showAutoPublishOption ? (
+    <AutoPublishSection
+      formData={formData}
+      userId={user?.id}
+      disabled={isLoading}
+      onToggleAutoPublish={handleAutoPublishToggle}
+      onToggleAutoOptimize={handleAutoOptimizeToggle}
+    />
+  ) : null;
 
   const generationTypeConfig: Record<GenerationType, { label: string; icon: React.FC<any>; description: string }> = {
     [GenerationType.PostWithImage]: { label: t('generationTypes.PostWithImage'), icon: PhotoIcon, description: 'Post z grafiką AI' },
@@ -363,6 +406,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
       createAiToolPanels({
         setIsReverseImageOpen,
         setIsTrendAnalysisOpen,
+        setIsTechRadarOpen,
         setIsScheduleOptimizerOpen,
         setIsAIWorkflowOpen,
         setIsContentSafetyOpen,
@@ -379,7 +423,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
   return (
     <>
       <div id="input-form-anchor">
-      <ModernCard className="p-8 glass-premium rounded-[2.5rem] border border-white/10">
+      <ModernCard className="p-4 sm:p-6 lg:p-8 glass-premium rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] border border-white/10">
         {showFirstPostBanner && (
           <OnboardingFirstPostBanner onDismiss={() => setShowFirstPostBanner(false)} />
         )}
@@ -415,6 +459,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
             isDraftSaved={isDraftSaved}
             duplicateCheck={duplicateCheck}
             onDismissDuplicate={() => setDuplicateCheck(null)}
+            autoPublishSection={autoPublishSection}
           />
         ) : (
         <form onSubmit={handleSubmit} className="space-y-10">
@@ -750,6 +795,8 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
               </div>
             </div>
 
+            {autoPublishSection}
+
             <div className="flex flex-col sm:flex-row gap-6 pt-6">
               <ModernButton
                 onClick={handleSaveDraft}
@@ -807,6 +854,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
         isAssistantModalOpen={isAssistantModalOpen}
         isReverseImageOpen={isReverseImageOpen}
         isTrendAnalysisOpen={isTrendAnalysisOpen}
+        isTechRadarOpen={isTechRadarOpen}
         isScheduleOptimizerOpen={isScheduleOptimizerOpen}
         isAIWorkflowOpen={isAIWorkflowOpen}
         isContentSafetyOpen={isContentSafetyOpen}
@@ -820,6 +868,7 @@ export const InputForm: React.FC<InputFormProps> = ({ prefillData, onPrefillCons
         onCloseAssistant={() => setIsAssistantModalOpen(false)}
         onCloseReverseImage={() => setIsReverseImageOpen(false)}
         onCloseTrendAnalysis={() => setIsTrendAnalysisOpen(false)}
+        onCloseTechRadar={() => setIsTechRadarOpen(false)}
         onCloseScheduleOptimizer={() => setIsScheduleOptimizerOpen(false)}
         onCloseAIWorkflow={() => setIsAIWorkflowOpen(false)}
         onCloseContentSafety={() => setIsContentSafetyOpen(false)}

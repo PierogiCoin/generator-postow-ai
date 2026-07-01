@@ -77,6 +77,29 @@
       "aiTools": "AI Tools",
       "duplicateWarning": "Similar post in history"
     },
+    "autoPublish": {
+      "title": "Auto-publish",
+      "description": "After generation, content is published to connected accounts automatically.",
+      "optimizePerPlatform": "Adapt copy for each platform before publishing",
+      "loadingAccounts": "Loading accounts…",
+      "noAccounts": "No connected accounts.",
+      "connectAccounts": "Connect accounts"
+    },
+    "techRadar": {
+      "title": "Tech Radar",
+      "description": "Fresh news from Google Search for your niche — ready post angles.",
+      "nichePlaceholder": "e.g. AI marketing, SaaS, cybersecurity",
+      "nicheRequired": "Enter a niche or topic",
+      "search": "Search news",
+      "searching": "Searching…",
+      "refresh": "Refresh",
+      "found": "Found {{count}} stories",
+      "error": "News search failed",
+      "updated": "Last search",
+      "sources": "Google sources",
+      "useAsTopic": "Use as post topic",
+      "empty": "Enter a niche and click Search news."
+    },
     "template": {
       "label": "Template",
       "tooltip": "Select an existing template to quickly fill the form. You can also save the current settings as a new template for future use.",
@@ -177,7 +200,40 @@
     "suggestion": "AI Suggestion",
     "useIdea": "Use Idea",
     "planActive": "An AI-generated strategic plan is active. These are suggestions you can generate.",
-    "clearStrategicPlan": "Clear Strategic Plan"
+    "clearStrategicPlan": "Clear Strategic Plan",
+    "cadence": {
+      "label": "Cadence template",
+      "starter": "Starter (1 post/day)",
+      "starterDesc": "Mon–Fri: 1 post. Weekend: 1 BTS post.",
+      "growth": "Growth (2 posts + reel)",
+      "growthDesc": "Mon–Fri: 2 posts + reel. Sat–Sun: post + reel.",
+      "aggressive": "Aggressive (3 slots + reel)",
+      "aggressiveDesc": "Mon–Fri: 2 posts + story + reel. High-intensity growth."
+    },
+    "fill": {
+      "title": "Fill calendar",
+      "subtitle": "Pick a cadence template and AI will fill the week with slots (posts + reels).",
+      "weekTheme": "Week theme",
+      "weekThemePlaceholder": "e.g. Summer collection 2025",
+      "fillWeek": "Fill week",
+      "filling": "Generating…",
+      "themeRequired": "Enter a week theme",
+      "success": "Added {{count}} slots to the calendar",
+      "error": "Could not fill the calendar"
+    },
+    "audit": {
+      "title": "Day audit",
+      "score": "Score",
+      "open": "Day audit",
+      "fillMissing": "Fill missing slots",
+      "filling": "Filling…",
+      "noMissing": "No slots to fill",
+      "filled": "Filled {{count}} slot(s)"
+    },
+    "empty": {
+      "title": "Calendar is empty",
+      "hint": "Use “Fill week” above or click AI Ideas on a day."
+    }
   },
   "topicAssistant": {
     "title": "Topic Assistant",
@@ -193,7 +249,14 @@
   "generatorView": {
     "viewingHistory": "You are viewing a saved item.",
     "backToGenerator": "Back to Generator",
-    "viewingBanner": "Viewing a post from {{date}}"
+    "viewingBanner": "Viewing a post from {{date}}",
+    "generating": "Generating AI content…",
+    "generatingHint": "Creating content tailored to your brand. This usually takes a few seconds.",
+    "mobileTabForm": "Form",
+    "mobileTabResult": "Result",
+    "mobileNav": "Generator navigation",
+    "openSidebar": "Open sidebar",
+    "closeSidebar": "Close sidebar"
   },
   "generationTypes": {
     "PostWithImage": "Post + Image",
@@ -305,6 +368,17 @@
       "media": "Media",
       "publish": "Publish",
       "analysis": "Analysis"
+    },
+    "qualityGate": {
+      "title": "Quality gate",
+      "ready": "Post is ready to publish.",
+      "improve": "A few tweaks will boost reach.",
+      "weak": "Worth improving before publishing.",
+      "suggestions": "Suggestions",
+      "autoFix": "Auto-fix",
+      "fixing": "Fixing…",
+      "fixed": "Post has been improved",
+      "error": "Could not score content"
     },
     "actions": {
       "copy": "Copy",

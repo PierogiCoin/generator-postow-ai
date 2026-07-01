@@ -166,6 +166,11 @@ export interface FormData {
   /** Język wygenerowanego opisu posta */
   contentLanguage: ContentLanguage;
 
+  /** Po wygenerowaniu — automatyczna publikacja na połączonych kontach */
+  autoPublishToConnected?: boolean;
+  /** Przed publikacją dostosuj treść per platforma (multi-platform optimizer) */
+  autoOptimizePerPlatform?: boolean;
+
   // Internal: visual vibe analysis result passed between generation steps
   _visualVibe?: string;
 }
@@ -512,6 +517,9 @@ export interface IntelligentCalendarPlanItem {
   format: GenerationType;
   strategy: string;
   suggestedTone?: Tone;
+  /** post | reel | story — slot w szablonie cadence */
+  slotType?: 'post' | 'reel' | 'story';
+  contentIntent?: 'educational' | 'entertaining' | 'inspirational' | 'promotional' | 'community' | 'behind-the-scenes';
 }
 
 // Types for Gamification

@@ -7,8 +7,10 @@ import { TopicAssistantModal } from '../TopicAssistantModal';
 import { ReverseImageModal } from '../ReverseImageModal';
 import { SectionErrorBoundary } from '../ErrorBoundary';
 import { FeaturePanelModal } from '../ui/FeaturePanelModal';
+import { stripTopicHtml } from '../../utils/inputFormMode';
 
 const TrendAnalysisPanel = lazy(() => import('../TrendAnalysisPanel').then((m) => ({ default: m.TrendAnalysisPanel })));
+const TechRadarPanel = lazy(() => import('./TechRadarPanel').then((m) => ({ default: m.TechRadarPanel })));
 const ScheduleOptimizer = lazy(() => import('../ScheduleOptimizer').then((m) => ({ default: m.ScheduleOptimizer })));
 const AIWorkflowPanel = lazy(() => import('../AIWorkflowPanel').then((m) => ({ default: m.AIWorkflowPanel })));
 const ContentSafetyPanel = lazy(() => import('../ContentSafetyPanel').then((m) => ({ default: m.ContentSafetyPanel })));
@@ -29,6 +31,7 @@ export interface InputFormModalsProps {
   isAssistantModalOpen: boolean;
   isReverseImageOpen: boolean;
   isTrendAnalysisOpen: boolean;
+  isTechRadarOpen: boolean;
   isScheduleOptimizerOpen: boolean;
   isAIWorkflowOpen: boolean;
   isContentSafetyOpen: boolean;
@@ -42,6 +45,7 @@ export interface InputFormModalsProps {
   onCloseAssistant: () => void;
   onCloseReverseImage: () => void;
   onCloseTrendAnalysis: () => void;
+  onCloseTechRadar: () => void;
   onCloseScheduleOptimizer: () => void;
   onCloseAIWorkflow: () => void;
   onCloseContentSafety: () => void;
@@ -71,6 +75,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   isAssistantModalOpen,
   isReverseImageOpen,
   isTrendAnalysisOpen,
+  isTechRadarOpen,
   isScheduleOptimizerOpen,
   isAIWorkflowOpen,
   isContentSafetyOpen,
@@ -84,6 +89,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onCloseAssistant,
   onCloseReverseImage,
   onCloseTrendAnalysis,
+  onCloseTechRadar,
   onCloseScheduleOptimizer,
   onCloseAIWorkflow,
   onCloseContentSafety,
@@ -130,6 +136,30 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
       platform={formData.platform}
       brandVoice={brandVoiceDescription}
     />
+    {isTechRadarOpen && (
+      <SectionErrorBoundary sectionName="Tech Radar">
+        <FeaturePanelModal
+          open={isTechRadarOpen}
+          onClose={onCloseTechRadar}
+          sectionName="Tech Radar"
+          maxWidthClass="max-w-3xl"
+        >
+          <TechRadarPanel
+            niche={
+              formData.audience ||
+              localStorage.getItem('userNiche') ||
+              stripTopicHtml(formData.topic) ||
+              'technologia i innowacje'
+            }
+            platform={formData.platform}
+            onSelectTopic={(topic) => {
+              onTrendSelect(topic);
+              onCloseTechRadar();
+            }}
+          />
+        </FeaturePanelModal>
+      </SectionErrorBoundary>
+    )}
     {isTrendAnalysisOpen && (
       <SectionErrorBoundary sectionName="Trend Analysis">
         <FeaturePanelModal

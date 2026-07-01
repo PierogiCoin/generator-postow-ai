@@ -33,6 +33,7 @@ export interface InputFormQuickFlowProps {
   isDraftSaved: boolean;
   duplicateCheck: DuplicateCheckResult | null;
   onDismissDuplicate: () => void;
+  autoPublishSection?: React.ReactNode;
 }
 
 export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
@@ -51,6 +52,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   isDraftSaved,
   duplicateCheck,
   onDismissDuplicate,
+  autoPublishSection,
 }) => {
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
@@ -244,6 +246,8 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
               {t('form.quick.switchToAdvanced', 'Przełącz na tryb zaawansowany')}
             </button>
           </p>
+
+          {autoPublishSection}
 
           <div className="flex flex-col sm:flex-row gap-4">
             <ModernButton type="button" variant="secondary" onClick={goBack} fullWidth>

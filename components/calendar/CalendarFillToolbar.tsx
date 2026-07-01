@@ -1,0 +1,114 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { SparklesIcon } from '../icons/SparklesIcon';
+import { ModernButton } from '../ui/ModernButton';
+import { Platform } from '../../types';
+import {
+  CADENCE_PRESETS,
+  type CadencePresetId,
+} from '../../services/calendarCadenceService';
+import { PLATFORMS } from '../../constants';
+
+interface CalendarFillToolbarProps {
+  presetId: CadencePresetId;
+  weekTheme: string;
+  platform: Platform;
+  isFilling: boolean;
+  onPresetChange: (id: CadencePresetId) => void;
+  onThemeChange: (theme: string) => void;
+  onPlatformChange: (platform: Platform) => void;
+  onFillWeek: () => void;
+}
+
+export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
+  presetId,
+  weekTheme,
+  platform,
+  isFilling,
+  onPresetChange,
+  onThemeChange,
+  onPlatformChange,
+  onFillWeek,
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="mb-6 p-4 md:p-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 space-y-4 relative z-10">
+      <div>
+        <h3 className="text-sm font-black uppercase tracking-tight text-slate-800 dark:text-white">
+          {t('calendar.fill.title', 'Wypełnij kalendarz')}
+        </h3>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          {t('calendar.fill.subtitle', 'Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).')}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            {t('calendar.cadence.label', 'Szablon cadence')}
+          </label>
+          <select
+            value={presetId}
+            onChange={(e) => onPresetChange(e.target.value as CadencePresetId)}
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold"
+          >
+            {(Object.keys(CADENCE_PRESETS) as CadencePresetId[]).map((id) => (
+              <option key={id} value={id}>
+                {t(CADENCE_PRESETS[id].labelKey, id)}
+              </option>
+            ))}
+          </select>
+          <p className="text-[10px] text-slate-500 leading-snug">
+            {t(CADENCE_PRESETS[presetId].descriptionKey, '')}
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            {t('calendar.fill.weekTheme', 'Temat tygodnia')}
+          </label>
+          <input
+            type="text"
+            value={weekTheme}
+            onChange={(e) => onThemeChange(e.target.value)}
+            placeholder={t('calendar.fill.weekThemePlaceholder', 'np. Letnia kolekcja 2025')}
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+            {t('form.platform.label', 'Platforma')}
+          </label>
+          <select
+            value={platform}
+            onChange={(e) => onPlatformChange(e.target.value as Platform)}
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold"
+          >
+            {PLATFORMS.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="flex items-end">
+          <ModernButton
+            type="button"
+            variant="gradient"
+            fullWidth
+            disabled={isFilling || !weekTheme.trim()}
+            onClick={onFillWeek}
+            icon={<SparklesIcon className="w-5 h-5" />}
+          >
+            {isFilling
+              ? t('calendar.fill.filling', 'Generowanie…')
+              : t('calendar.fill.fillWeek', 'Wypełnij tydzień')}
+          </ModernButton>
+        </div>
+      </div>
+    </div>
+  );
+};

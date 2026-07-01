@@ -107,7 +107,11 @@ export const MultiPlatformOptimizer: React.FC<MultiPlatformOptimizerProps> = ({
 
   const handleOptimize = async () => {
     if (selectedPlatforms.length === 0) return;
-    await onOptimize(selectedPlatforms);
+    try {
+      await onOptimize(selectedPlatforms);
+    } catch {
+      // Błąd obsługiwany w onOptimize (toast)
+    }
   };
 
   const handleSelectAll = () => {

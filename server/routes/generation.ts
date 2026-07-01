@@ -35,7 +35,7 @@ export function createGenerationRouter(): Router {
     modelName: string,
     contents: unknown,
     config: Record<string, unknown> | undefined
-  ): Promise<string> {
+  ): Promise<{ text: string; candidates?: unknown; usageMetadata?: unknown }> {
     const genModel = genAI.getGenerativeModel({
       model: modelName,
       systemInstruction: config?.systemInstruction as string | undefined,
@@ -50,6 +50,8 @@ export function createGenerationRouter(): Router {
       responseMimeType: config?.responseMimeType as string | undefined,
     };
 
+    const tools = config?.tools as unknown[] | undefined;
+
     let finalContents = contents;
     if (typeof contents === 'string') {
       finalContents = [{ role: 'user', parts: [{ text: contents }] }];
@@ -61,18 +63,24 @@ export function createGenerationRouter(): Router {
           genModel.generateContent({
             contents: finalContents,
             generationConfig,
+            ...(tools?.length ? { tools } : {}),
           }),
-          90000,
+          120000,
           'Text generation timed out'
         ),
       { maxRetries: 3, baseDelay: 1000 }
     );
 
     const response = await result.response;
-    return response.text();
+    return {
+      text: response.text(),
+      candidates: response.candidates,
+      usageMetadata: response.usageMetadata,
+    };
   }
 
   function modelsWithFallback(modelName: string): string[] {
+    if (modelName.includes('2.0') || modelName.includes('2.5')) return [modelName];
     if (modelName.includes('lite')) return [modelName];
     if (modelName.includes('pro')) return [modelName, 'gemini-flash-lite-latest'];
     return ['gemini-flash-lite-latest', 'gemini-flash-latest'];
@@ -189,11 +197,15 @@ router.post('/api/generate-content', textLimiter, validateRequest(textGeneration
     let lastError: unknown;
     for (const modelName of candidates) {
       try {
-        const text = await runTextGeneration(modelName, contents, config);
+        const result = await runTextGeneration(modelName, contents, config);
         if (modelName !== primaryModel) {
           logger.info(`[generate-content] Fallback ${primaryModel} → ${modelName} succeeded`);
         }
-        return res.json({ text });
+        return res.json({
+          text: result.text,
+          ...(result.candidates ? { candidates: result.candidates } : {}),
+          ...(result.usageMetadata ? { usageMetadata: result.usageMetadata } : {}),
+        });
       } catch (error) {
         lastError = error;
         if (!isGeminiQuotaError(error) || modelName === candidates[candidates.length - 1]) {
@@ -933,48 +945,80 @@ router.post('/api/generate-video-story', expensiveLimiter, validateRequest(video
   }
 });
 
-// 🚀 Multi-Platform Optimizer (Poprawiony pod API Key) - with text limiter + validation
+// 🚀 Multi-Platform Optimizer — równoległe wywołania Gemini (szybsze niż sekwencja)
 router.post('/api/optimize-multi-platform', textLimiter, validateRequest(multiPlatformSchema), async (req, res) => {
-  try {
-    const { originalText, targetPlatforms, tone, hashtags = [] } = req.body; // Already validated
+  const PLATFORM_CHAR_LIMITS: Record<string, number> = {
+    Facebook: 63206,
+    Instagram: 2200,
+    TikTok: 2200,
+    X: 280,
+    LinkedIn: 3000,
+    YouTube: 5000,
+  };
 
-    const optimizations = [];
-
-    for (const platform of targetPlatforms) {
-      const systemPrompt = `You are a social media expert. Optimize this post for ${platform} (Tone: ${tone}).
+  async function optimizeOnePlatform(
+    platform: string,
+    originalText: string,
+    tone: string
+  ) {
+    const systemPrompt = `You are a social media expert. Optimize this post for ${platform} (Tone: ${tone}).
       Original: "${originalText}"
       Return ONLY valid JSON: { "text": "...", "hashtags": [], "tips": [] }`;
 
-      try {
-        const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-        const result = await model.generateContent(systemPrompt);
-        const response = await result.response;
-        let text = response.text().trim();
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const result = await retryWithBackoff(
+      () =>
+        withTimeout(
+          model.generateContent(systemPrompt),
+          75_000,
+          `Optimization timed out for ${platform}`
+        ),
+      { maxRetries: 2, baseDelay: 1000 }
+    );
+    const response = await result.response;
+    let text = response.text().trim().replace(/```json/g, '').replace(/```/g, '');
+    const aiResult = JSON.parse(text) as { text: string; hashtags?: string[]; tips?: string[] };
 
-        // Czyszczenie markdown JSON
-        text = text.replace(/```json/g, '').replace(/```/g, '');
+    return {
+      platform,
+      text: aiResult.text,
+      hashtags: aiResult.hashtags || [],
+      characterCount: aiResult.text.length,
+      characterLimit: PLATFORM_CHAR_LIMITS[platform] ?? 2200,
+      tips: aiResult.tips || [],
+      engagement: { score: 85, prediction: 'Wysoki potencjał (AI)' },
+    };
+  }
 
-        const aiResult = JSON.parse(text);
+  try {
+    const { originalText, targetPlatforms, tone } = req.body;
 
-        optimizations.push({
-          platform,
-          text: aiResult.text,
-          hashtags: aiResult.hashtags || [],
-          characterCount: aiResult.text.length,
-          tips: aiResult.tips || [],
-          engagement: { score: 85, prediction: "Wysoki potencjał (AI Studio)" }
-        });
+    const settled = await Promise.allSettled(
+      targetPlatforms.map((platform: string) =>
+        optimizeOnePlatform(platform, originalText, tone)
+      )
+    );
 
-      } catch (e) {
-        logger.error(`Optimization failed for ${platform}`, e);
+    const optimizations = settled
+      .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof optimizeOnePlatform>>> => r.status === 'fulfilled')
+      .map((r) => r.value);
+
+    settled.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        logger.error(`Optimization failed for ${targetPlatforms[i]}`, r.reason);
       }
+    });
+
+    if (optimizations.length === 0) {
+      res.status(500).json({ message: 'Nie udało się zoptymalizować żadnej platformy. Spróbuj ponownie.' });
+      return;
     }
 
     res.json(optimizations);
-
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as { message?: string };
     logger.error('Error in /api/optimize-multi-platform:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: err.message || 'Optymalizacja multi-platform nie powiodła się' });
   }
 });
 

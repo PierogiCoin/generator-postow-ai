@@ -19,6 +19,7 @@ import { showSuccess, showWarning } from '../../utils/errorHandler';
 import { isQuotaDepleted } from '../../utils/chunkReload';
 import { clearOnboardingPendingFirstGenerate } from '../../utils/onboarding';
 import { overlayLogoOnImage } from '../../utils/imageBranding';
+import { canAutoPublish, autoPublishToConnectedAccounts } from '../../services/autoPublishService';
 import type { ApiErrorHandler, ToastFn } from './types';
 
 interface GenerationHandlerDeps {
@@ -43,6 +44,39 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
 
     const markOnboardingFirstPostDone = () => {
         if (user?.id) clearOnboardingPendingFirstGenerate(user.id);
+    };
+
+    const runAutoPublishIfEnabled = async (finalResult: GenerationResult, formData: FormData) => {
+        if (!user?.id || !canAutoPublish(finalResult, formData)) return;
+
+        genActions.setProgress('Publikowanie na połączonych kontach…');
+        try {
+            const summary = await autoPublishToConnectedAccounts(finalResult, formData, user.id);
+
+            if (summary.published.length > 0) {
+                const names = summary.published.map((p) => p.platform).join(', ');
+                showSuccess(
+                    `Opublikowano na ${summary.published.length} kontach`,
+                    names
+                );
+            }
+
+            if (summary.skipped.length > 0 && summary.published.length === 0) {
+                showWarning(
+                    'Brak publikacji',
+                    summary.skipped.map((s) => `${s.platform}: ${s.reason}`).join(' · ')
+                );
+            }
+
+            if (summary.failed.length > 0) {
+                showWarning(
+                    summary.published.length > 0 ? 'Część publikacji nie powiodła się' : 'Automatyczna publikacja nie powiodła się',
+                    summary.failed.map((f) => `${f.platform}: ${f.error}`).join(' · ')
+                );
+            }
+        } catch (error) {
+            handleApiError(error, 'errors.unknownError');
+        }
     };
 
     const handleGenerate = useCallback(async (rawFormData: FormData) => {
@@ -175,6 +209,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 genActions.generationSuccess(omnichannelResult);
                 markOnboardingFirstPostDone();
                 addToast('Omnichannel wygenerowany pomyślnie!', NotificationType.Success);
+                await runAutoPublishIfEnabled(omnichannelResult, formData);
                 return;
             }
 
@@ -389,6 +424,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             markOnboardingFirstPostDone();
 
             showSuccess('Treść wygenerowana pomyślnie!', 'Możesz ją teraz edytować lub zapisać');
+            await runAutoPublishIfEnabled(finalResult, formData);
         } catch (error) {
             const errorPayload = handleApiError(error, 'errors.generation_failed');
             genActions.generationFailure(errorPayload);

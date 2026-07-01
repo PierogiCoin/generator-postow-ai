@@ -22,6 +22,8 @@ import {
 import { Platform, ContentType, Tone, NotificationType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
+import { useDataStore } from '../stores/dataStore';
+import { convertWeekPlanToCalendarItems, mergeCalendarPlans } from '../services/calendarCadenceService';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { ChatBubbleIcon } from './icons/ChatBubbleIcon';
@@ -165,6 +167,19 @@ export const AIWorkflowPanel: React.FC<AIWorkflowPanelProps> = ({
       notifications.addToast('Plan zapisany!', NotificationType.Success);
     }
   }, [weekPlan, notifications]);
+
+  const handlePushWeekToCalendar = useCallback(async () => {
+    if (!weekPlan) return;
+    const monday = new Date();
+    const dow = monday.getDay();
+    monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1));
+    monday.setHours(0, 0, 0, 0);
+
+    const items = convertWeekPlanToCalendarItems(weekPlan.posts, platform, monday);
+    const { intelligentCalendarPlan, setIntelligentCalendarPlan } = useDataStore.getState();
+    await setIntelligentCalendarPlan(mergeCalendarPlans(intelligentCalendarPlan, items));
+    notifications.addToast(`Dodano ${items.length} pozycji do kalendarza`, NotificationType.Success);
+  }, [weekPlan, platform, notifications]);
 
   const handleGenerateFullPost = useCallback(async (post: DailyPost, index: number) => {
     if (!user?.id) return;
@@ -496,16 +511,26 @@ export const AIWorkflowPanel: React.FC<AIWorkflowPanelProps> = ({
             </div>
           ) : weekPlan ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
                 <h3 className="font-bold text-slate-900 dark:text-white">
                   📅 Plan: {weekPlan.theme}
                 </h3>
-                <button
-                  onClick={handleSaveWeekPlan}
-                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Zapisz plan
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handlePushWeekToCalendar()}
+                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Dodaj do kalendarza
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveWeekPlan}
+                    className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    Zapisz plan
+                  </button>
+                </div>
               </div>
 
               {weekPlan.posts.map((post, index) => (

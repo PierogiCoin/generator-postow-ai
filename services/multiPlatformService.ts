@@ -1,6 +1,6 @@
 import { Platform, Tone } from '../types';
 import type { PlatformOptimization } from '../components/MultiPlatformOptimizer';
-import { getApiBaseUrl } from './apiClient';
+import { getApiBaseUrl, getLongRunningApiBaseUrl } from './apiClient';
 
 export interface MultiPlatformRequest {
   originalText: string;
@@ -10,14 +10,24 @@ export interface MultiPlatformRequest {
   hashtags?: string[];
 }
 
+/** ~45s base + 25s per platform, max 3 min — multi-platform to kilka wywołań Gemini */
+export function getMultiPlatformTimeoutMs(platformCount: number): number {
+  const count = Math.max(1, platformCount);
+  return Math.min(180_000, 45_000 + count * 25_000);
+}
+
 export const optimizeForPlatforms = async (
   request: MultiPlatformRequest,
   userId?: string
 ): Promise<PlatformOptimization[]> => {
+  const platformCount = request.targetPlatforms.length;
+  const timeoutMs = getMultiPlatformTimeoutMs(platformCount);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutSec = Math.round(timeoutMs / 1000);
+
   try {
-    const response = await fetch(`${getApiBaseUrl()}/api/optimize-multi-platform`, {
+    const response = await fetch(`${getLongRunningApiBaseUrl()}/api/optimize-multi-platform`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,10 +41,17 @@ export const optimizeForPlatforms = async (
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Nie udało się zoptymalizować dla platform');
     }
-    return response.json();
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('Nie udało się zoptymalizować żadnej platformy. Spróbuj ponownie z mniejszą liczbą platform.');
+    }
+    return data;
   } catch (err) {
-    if (err instanceof Error && err.name === 'AbortError')
-      throw new Error('Przekroczono czas oczekiwania (30s). Spróbuj ponownie.');
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(
+        `Przekroczono czas oczekiwania (${timeoutSec}s). Wybierz mniej platform lub spróbuj ponownie.`
+      );
+    }
     throw err;
   } finally {
     clearTimeout(timeout);
@@ -187,7 +204,7 @@ export const generateABTestVariants = async (
   userId?: string
 ): Promise<{ variantA: string; variantB: string }> => {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000);
+  const timeout = setTimeout(() => controller.abort(), 60_000);
   try {
     const response = await fetch(`${getApiBaseUrl()}/api/generate-ab-variants`, {
       method: 'POST',

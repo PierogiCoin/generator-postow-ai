@@ -80,6 +80,29 @@
       "aiTools": "Narzędzia AI",
       "duplicateWarning": "Podobny post w historii"
     },
+    "autoPublish": {
+      "title": "Automatyczna publikacja",
+      "description": "Po wygenerowaniu treść trafi od razu na połączone konta.",
+      "optimizePerPlatform": "Dostosuj treść do każdej platformy przed publikacją",
+      "loadingAccounts": "Ładowanie kont…",
+      "noAccounts": "Brak połączonych kont.",
+      "connectAccounts": "Połącz konta"
+    },
+    "techRadar": {
+      "title": "Tech Radar",
+      "description": "Aktualne newsy z Google Search dopasowane do Twojej niszy — gotowe kąty na post.",
+      "nichePlaceholder": "np. AI w marketingu, SaaS, cyberbezpieczeństwo",
+      "nicheRequired": "Podaj niszę lub temat",
+      "search": "Szukaj newsów",
+      "searching": "Szukam…",
+      "refresh": "Odśwież",
+      "found": "Znaleziono {{count}} newsów",
+      "error": "Błąd wyszukiwania newsów",
+      "updated": "Ostatnie wyszukiwanie",
+      "sources": "źródeł w Google",
+      "useAsTopic": "Użyj jako temat posta",
+      "empty": "Wpisz niszę i kliknij „Szukaj newsów”."
+    },
     "template": {
       "label": "Szablon",
       "tooltip": "Wybierz istniejący szablon, aby szybko wypełnić formularz. Możesz również zapisać bieżące ustawienia jako nowy szablon do przyszłego użytku.",
@@ -180,7 +203,40 @@
     "suggestion": "Sugestia AI",
     "useIdea": "Użyj pomysłu",
     "planActive": "Aktywny jest plan strategiczny wygenerowany przez AI. To są sugestie, które możesz wygenerować.",
-    "clearStrategicPlan": "Wyczyść Plan Strategiczny"
+    "clearStrategicPlan": "Wyczyść Plan Strategiczny",
+    "cadence": {
+      "label": "Szablon cadence",
+      "starter": "Starter (1 post/dzień)",
+      "starterDesc": "Pn–Pt: 1 post. Weekend: 1 post BTS.",
+      "growth": "Growth (2 posty + rolka)",
+      "growthDesc": "Pn–Pt: 2 posty + rolka. Sob–Ndz: post + rolka.",
+      "aggressive": "Agresywny (3 sloty + rolka)",
+      "aggressiveDesc": "Pn–Pt: 2 posty + story + rolka. Intensywny growth."
+    },
+    "fill": {
+      "title": "Wypełnij kalendarz",
+      "subtitle": "Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).",
+      "weekTheme": "Temat tygodnia",
+      "weekThemePlaceholder": "np. Letnia kolekcja 2025",
+      "fillWeek": "Wypełnij tydzień",
+      "filling": "Generowanie…",
+      "themeRequired": "Podaj temat tygodnia",
+      "success": "Dodano {{count}} slotów do kalendarza",
+      "error": "Nie udało się wypełnić kalendarza"
+    },
+    "audit": {
+      "title": "Audyt dnia",
+      "score": "Wynik",
+      "open": "Audyt dnia",
+      "fillMissing": "Uzupełnij brakujące sloty",
+      "filling": "Uzupełnianie…",
+      "noMissing": "Brak slotów do uzupełnienia",
+      "filled": "Uzupełniono {{count}} slot(ów)"
+    },
+    "empty": {
+      "title": "Kalendarz jest pusty",
+      "hint": "Użyj „Wypełnij tydzień” powyżej lub kliknij AI Ideas na wybranym dniu."
+    }
   },
   "topicAssistant": {
     "title": "Asystent Tematu",
@@ -196,7 +252,14 @@
   "generatorView": {
     "viewingHistory": "Przeglądasz zapisany element.",
     "backToGenerator": "Wróć do generatora",
-    "viewingBanner": "Przeglądasz post z dnia {{date}}"
+    "viewingBanner": "Przeglądasz post z dnia {{date}}",
+    "generating": "Generowanie treści AI…",
+    "generatingHint": "Tworzymy treść dopasowaną do Twojej marki. Zwykle trwa to kilkanaście sekund.",
+    "mobileTabForm": "Formularz",
+    "mobileTabResult": "Wynik",
+    "mobileNav": "Nawigacja generatora",
+    "openSidebar": "Otwórz panel boczny",
+    "closeSidebar": "Zamknij panel"
   },
   "generationTypes": {
     "PostWithImage": "Post + Obraz",
@@ -309,6 +372,17 @@
       "media": "Media",
       "publish": "Publikacja",
       "analysis": "Analiza"
+    },
+    "qualityGate": {
+      "title": "Brama jakości",
+      "ready": "Post gotowy do publikacji.",
+      "improve": "Kilka poprawek zwiększy zasięg.",
+      "weak": "Warto poprawić przed publikacją.",
+      "suggestions": "Sugestie",
+      "autoFix": "Popraw automatycznie",
+      "fixing": "Poprawianie…",
+      "fixed": "Post został poprawiony",
+      "error": "Nie udało się ocenić treści"
     },
     "actions": {
       "copy": "Kopiuj",

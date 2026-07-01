@@ -20,6 +20,7 @@ export interface AiToolPanel {
 export interface AiToolPanelOpeners {
   setIsReverseImageOpen: (open: boolean) => void;
   setIsTrendAnalysisOpen: (open: boolean) => void;
+  setIsTechRadarOpen: (open: boolean) => void;
   setIsScheduleOptimizerOpen: (open: boolean) => void;
   setIsAIWorkflowOpen: (open: boolean) => void;
   setIsContentSafetyOpen: (open: boolean) => void;
@@ -39,6 +40,14 @@ export function createAiToolPanels(openers: AiToolPanelOpeners): AiToolPanel[] {
       icon: PhotoIcon,
       iconGradient: 'from-purple-500 to-pink-500',
       onClick: () => openers.setIsReverseImageOpen(true),
+    },
+    {
+      id: 'tech-radar',
+      title: 'Tech Radar',
+      description: 'Aktualne newsy z Google Search',
+      icon: GlobeIcon,
+      iconGradient: 'from-cyan-500 to-blue-600',
+      onClick: () => openers.setIsTechRadarOpen(true),
     },
     {
       id: 'trends',

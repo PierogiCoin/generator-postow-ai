@@ -26,7 +26,8 @@ const PreviewPopover = lazy(() => import('./PreviewPopover').then((m) => ({ defa
 
 // UX/UI Components
 import { LoadingOverlay, SkeletonCard } from './ui/LoadingStates';
-import { showSuccess, showError, showWarning } from '../utils/errorHandler';
+import { showSuccess, showError } from '../utils/errorHandler';
+import { parseUserFacingError } from '../utils/userFacingError';
 import { ClockIcon } from './icons/ClockIcon';
 import { StarIcon } from './icons/StarIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
@@ -65,30 +66,15 @@ export const GeneratorView: React.FC = () => {
         inspiration, selectInspiration, clearHistory, removeFavorite, clearFavorites,
         saveTemplate, deleteTemplate, removeDraft
     } = useDataStore();
-    const { result, isLoading, isOptimizingMultiPlatform } = useGenerationStore();
+    const { result, isLoading, isOptimizingMultiPlatform, generationProgress } = useGenerationStore();
     const { setIsPricingModalOpen, setIsSocialConnectionsModalOpen } = useUIStore();
     const { confirm, confirmDialogProps } = useConfirm();
 
     const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<any>(null);
-    const [generationProgress, setGenerationProgress] = useState(0);
-
-    // Simulate generation progress
-    useEffect(() => {
-        if (isLoading) {
-            setGenerationProgress(0);
-            const interval = setInterval(() => {
-                setGenerationProgress(prev => {
-                    if (prev >= 90) return prev;
-                    return prev + Math.random() * 15;
-                });
-            }, 800);
-            return () => clearInterval(interval);
-        } else {
-            setGenerationProgress(100);
-            const timeout = setTimeout(() => setGenerationProgress(0), 1000);
-            return () => clearTimeout(timeout);
-        }
-    }, [isLoading]);
+    const [isMobile, setIsMobile] = useState(() =>
+        typeof window !== 'undefined' && window.innerWidth < 1024
+    );
+    const [mobilePanel, setMobilePanel] = useState<'form' | 'result'>('form');
 
     // Handlers
     const notificationSystem = useNotifications();
@@ -101,10 +87,31 @@ export const GeneratorView: React.FC = () => {
     const [popover, setPopover] = useState<{ item: CampaignHistoryItem | Draft | ScheduledPost, rect: DOMRect } | null>(null);
 
     useEffect(() => {
+        const mq = window.matchMedia('(max-width: 1023px)');
+        const update = () => setIsMobile(mq.matches);
+        update();
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
+
+    useEffect(() => {
         const handleResize = () => setIsSidebarOpen(window.innerWidth > 1024);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        if (result && !isLoading && isMobile) {
+            setMobilePanel('result');
+            setIsSidebarOpen(false);
+        }
+    }, [result, isLoading, isMobile]);
+
+    useEffect(() => {
+        if (inspiration && isMobile) {
+            setMobilePanel('result');
+        }
+    }, [inspiration, isMobile]);
 
     useEffect(() => {
         if (location.state?.prefillData) {
@@ -144,14 +151,19 @@ export const GeneratorView: React.FC = () => {
 
     const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business].includes(userPlan);
 
+    const isResultVisible = !!result || !!inspiration;
+
     const sidebarTabs = useMemo(() => [
-        { id: 'history', label: t('sidebar.tabs.history'), icon: ClockIcon },
-        { id: 'drafts', label: t('sidebar.tabs.drafts'), icon: DocumentPlusIcon },
-        { id: 'favorites', label: t('sidebar.tabs.favorites'), icon: StarIcon },
-        { id: 'scheduled', label: t('sidebar.tabs.scheduled'), icon: CalendarIcon },
-        { id: 'stats', label: t('sidebar.tabs.stats'), icon: ChartBarIcon },
-        ...(user ? [{ id: 'subscription', label: t('sidebar.tabs.subscription'), icon: CreditCardIcon }] : []),
-    ], [t, user]);
+        { id: 'history' as const, label: t('sidebar.tabs.history'), icon: ClockIcon, badge: history.length },
+        { id: 'drafts' as const, label: t('sidebar.tabs.drafts'), icon: DocumentPlusIcon, badge: drafts.length },
+        { id: 'favorites' as const, label: t('sidebar.tabs.favorites'), icon: StarIcon, badge: favorites.length },
+        { id: 'scheduled' as const, label: t('sidebar.tabs.scheduled'), icon: CalendarIcon, badge: scheduledPosts.length },
+        { id: 'stats' as const, label: t('sidebar.tabs.stats'), icon: ChartBarIcon },
+        ...(user ? [{ id: 'subscription' as const, label: t('sidebar.tabs.subscription'), icon: CreditCardIcon }] : []),
+    ], [t, user, history.length, drafts.length, favorites.length, scheduledPosts.length]);
+
+    const showFormColumn = !isResultVisible || !isMobile || mobilePanel === 'form';
+    const showResultColumn = isResultVisible && (!isMobile || mobilePanel === 'result');
 
     const handleReturnToGenerator = useCallback(() => {
         selectInspiration(null);
@@ -259,8 +271,6 @@ export const GeneratorView: React.FC = () => {
         }
     };
 
-    const isResultVisible = !!result || !!inspiration;
-
     return (
         <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 min-h-[calc(100vh-140px)] relative">
             <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -269,7 +279,17 @@ export const GeneratorView: React.FC = () => {
             </div>
 
             <ConfirmDialog {...confirmDialogProps} />
-            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-500 ease-in-out ${isSidebarOpen ? 'translate-x-0 w-[360px] xl:w-[400px]' : '-translate-x-full w-0'}`}>
+
+            {isSidebarOpen && (
+                <button
+                    type="button"
+                    aria-label={t('generatorView.closeSidebar', 'Zamknij panel')}
+                    className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
+
+            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-300 ease-out ${isSidebarOpen ? 'translate-x-0 w-[min(360px,92vw)] xl:w-[400px]' : '-translate-x-full w-0'}`}>
                 <div className={`h-full flex flex-col glass-premium rounded-[2.5rem] overflow-hidden transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     <div className="p-6 lg:p-8 pb-4 flex-shrink-0 flex items-center justify-between border-b border-white/5">
                         <div className="flex items-center gap-3">
@@ -289,21 +309,26 @@ export const GeneratorView: React.FC = () => {
 
                     <div className="px-6 py-4 flex-shrink-0">
                         <div className="grid grid-cols-6 gap-1.5 p-1.5 bg-slate-100/50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/50 dark:border-white/5">
-                            {sidebarTabs.map(tab => (
+                            {sidebarTabs.map(tab => {
+                                const badge = 'badge' in tab && tab.badge ? tab.badge : 0;
+                                const badgeLabel = badge > 99 ? '99+' : String(badge);
+                                return (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveSidebarTab(tab.id as SidebarTab)}
                                     title={tab.label}
-                                    className={`relative p-2.5 rounded-xl transition flex items-center justify-center ${activeSidebarTab === tab.id 
-                                        ? 'bg-white dark:bg-slate-800 shadow-md text-cyan-500 border border-slate-200/10 scale-105' 
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-100/40 dark:hover:bg-white/5'}`}
+                                    className={`relative p-2.5 rounded-xl transition-colors flex items-center justify-center ${activeSidebarTab === tab.id 
+                                        ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400 border border-slate-200/60 dark:border-white/10' 
+                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/5'}`}
                                 >
-                                    <tab.icon className={`w-4 h-4 ${activeSidebarTab === tab.id ? 'text-cyan-500 scale-110' : ''}`} />
-                                    {activeSidebarTab === tab.id && (
-                                        <span className="absolute -bottom-0.5 w-1 h-1 bg-cyan-500 rounded-full" />
+                                    <tab.icon className="w-4 h-4" />
+                                    {badge > 0 && (
+                                        <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                                            {badgeLabel}
+                                        </span>
                                     )}
                                 </button>
-                            ))}
+                            );})}
                         </div>
                     </div>
 
@@ -317,24 +342,56 @@ export const GeneratorView: React.FC = () => {
 
             {isLoading && (
                 <LoadingOverlay
-                    message="Generowanie treści AI..."
-                    submessage="Tworzymy unikalne treści dopasowane do Twojej marki..."
-                    progress={generationProgress}
+                    message={generationProgress || t('generatorView.generating', 'Generowanie treści AI…')}
+                    submessage={t('generatorView.generatingHint', 'Tworzymy treść dopasowaną do Twojej marki. Zwykle trwa to kilkanaście sekund.')}
                 />
             )}
 
-            <div className="flex-grow relative z-10">
+            <div className="flex-grow relative z-10 min-w-0">
                 {!isSidebarOpen && (
                     <button
+                        type="button"
                         onClick={() => setIsSidebarOpen(true)}
-                        className="fixed bottom-24 left-6 lg:left-8 z-[60] w-14 h-14 bg-white/80 dark:bg-slate-900/80 border border-slate-200/50 dark:border-white/5 rounded-2xl shadow-xl flex items-center justify-center text-slate-400 hover:text-cyan-500 hover:scale-110 transition-all backdrop-blur-xl group overflow-hidden neon-glow-cyan"
+                        aria-label={t('generatorView.openSidebar', 'Otwórz panel boczny')}
+                        className="fixed bottom-24 left-4 sm:left-6 z-[60] w-12 h-12 sm:w-14 sm:h-14 bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-lg flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-colors backdrop-blur-md"
                     >
-                        <SidebarIcon className="w-6 h-6 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" />
+                        <SidebarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                 )}
 
-                <div className={`max-w-7xl mx-auto transition-all duration-500 ease-in-out ${isResultVisible ? 'grid gap-8 lg:grid-cols-[1.1fr,1.2fr]' : 'flex justify-center'}`}>
-                    <div className={`w-full transition-all duration-750 ${isResultVisible ? '' : 'max-w-4xl'}`}>
+                <div className={`max-w-7xl mx-auto transition-all duration-300 ${isResultVisible && !isMobile ? 'grid gap-8 lg:grid-cols-[1.1fr,1.2fr]' : ''}`}>
+                    {isResultVisible && isMobile && (
+                        <div
+                            className="lg:hidden sticky top-[4.5rem] z-30 mb-4 flex p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm"
+                            role="tablist"
+                            aria-label={t('generatorView.mobileNav', 'Nawigacja generatora')}
+                        >
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={mobilePanel === 'form'}
+                                onClick={() => setMobilePanel('form')}
+                                className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-colors ${mobilePanel === 'form' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                            >
+                                {t('generatorView.mobileTabForm', 'Formularz')}
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={mobilePanel === 'result'}
+                                onClick={() => setMobilePanel('result')}
+                                className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${mobilePanel === 'result' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                            >
+                                {t('generatorView.mobileTabResult', 'Wynik')}
+                                {result && !isLoading && (
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" aria-hidden />
+                                )}
+                            </button>
+                        </div>
+                    )}
+
+                    {showFormColumn && (
+                    <div className={`w-full ${!isResultVisible ? 'max-w-4xl mx-auto' : ''}`}>
                         {showOnboardingGuide && user && (
                             <OnboardingGuide
                                 userId={user.id}
@@ -369,9 +426,10 @@ export const GeneratorView: React.FC = () => {
                             <InputForm prefillData={prefillData} onPrefillConsumed={onPrefillConsumed} />
                         </Suspense>
                     </div>
+                    )}
 
-                    {isResultVisible && (
-                        <div id="generation-result" className="space-y-8 animate-fade-in-right">
+                    {showResultColumn && (
+                        <div id="generation-result" className="space-y-6 lg:space-y-8 animate-fade-in">
                             {isLoading ? (
                                 <SkeletonCard />
                             ) : (
@@ -388,15 +446,37 @@ export const GeneratorView: React.FC = () => {
                                         originalPlatform={result.platform}
                                         tone={result.metadata.tone}
                                         onOptimize={async (platforms) => {
-                                            if (!user) return [];
-                                            const { optimizeForPlatforms } = await import('../services/multiPlatformService');
-                                            return optimizeForPlatforms({
-                                                originalText: result.postText,
-                                                originalPlatform: result.platform,
-                                                targetPlatforms: platforms,
-                                                tone: result.metadata.tone,
-                                                hashtags: result.hashtags
-                                            }, user.id);
+                                            if (!user || !result) return [];
+                                            const {
+                                                startMultiPlatformOptimization,
+                                                multiPlatformSuccess,
+                                                multiPlatformFailure,
+                                            } = useGenerationStore.getState();
+                                            try {
+                                                startMultiPlatformOptimization();
+                                                const { optimizeForPlatforms } = await import('../services/multiPlatformService');
+                                                const optimizations = await optimizeForPlatforms({
+                                                    originalText: result.postText,
+                                                    originalPlatform: result.platform,
+                                                    targetPlatforms: platforms,
+                                                    tone: result.metadata.tone,
+                                                    hashtags: result.hashtags,
+                                                }, user.id);
+                                                setMultiPlatformOptimizations(optimizations);
+                                                multiPlatformSuccess();
+                                                showSuccess(
+                                                    `Zoptymalizowano dla ${optimizations.length} platform`,
+                                                    optimizations.length < platforms.length
+                                                        ? 'Część platform nie powiodła się — pokazujemy dostępne wyniki.'
+                                                        : undefined
+                                                );
+                                                return optimizations;
+                                            } catch (error: unknown) {
+                                                multiPlatformFailure();
+                                                const parsed = parseUserFacingError(error);
+                                                showError(parsed.message, parsed.title);
+                                                return [];
+                                            }
                                         }}
                                         isOptimizing={isOptimizingMultiPlatform}
                                         optimizations={multiPlatformOptimizations}

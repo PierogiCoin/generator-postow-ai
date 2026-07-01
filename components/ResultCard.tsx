@@ -63,6 +63,7 @@ import { PerformancePredictionDisplay } from './resultCard/PerformancePrediction
 import { ABTestResultDisplay } from './resultCard/ABTestResultDisplay';
 import { ResultPrimaryActions } from './resultCard/ResultPrimaryActions';
 import { ResultCardTabBar, type ResultCardTab } from './resultCard/ResultCardTabBar';
+import { QualityGatePanel } from './resultCard/QualityGatePanel';
 
 interface ResultCardProps {
     historyResult?: GenerationResult | null;
@@ -286,6 +287,24 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                 onCopy={handleCopy}
                                 isCopied={isCopied}
                                 onOpenCreativeStudio={handleOpenCreativeStudio}
+                            />
+                        )}
+
+                        {formData && result.postText?.trim() && (
+                            <QualityGatePanel
+                                postText={result.postText}
+                                platform={formData.platform}
+                                userId={user?.id}
+                                hashtags={result.hashtags}
+                                audience={formData.audience}
+                                isBusy={isLoading || isRegenerating}
+                                onAutoFix={async (prompt) => {
+                                    await appHandlers.handleRegenerateWithFeedback(prompt);
+                                    notificationSystem.addToast(
+                                        t('resultCard.qualityGate.fixed', 'Post został poprawiony'),
+                                        NotificationType.Success
+                                    );
+                                }}
                             />
                         )}
 

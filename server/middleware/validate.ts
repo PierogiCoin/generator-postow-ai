@@ -14,6 +14,7 @@ export const textGenerationSchema = z.object({
       stopSequences: z.array(z.string()).optional(),
       systemInstruction: z.string().max(10000).optional(),
       responseMimeType: z.string().optional(),
+      tools: z.array(z.record(z.string(), z.unknown())).optional(),
     })
     .optional(),
 });
