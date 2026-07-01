@@ -29,7 +29,7 @@ import {
     ensureCalendarSlotQuality,
     formatSlotQualityMessage,
 } from '../../services/calendarSlotQualityService';
-import { fulfillCalendarSlot, parseSlotScheduleTimestamp } from '../../services/calendarSlotService';
+import { fulfillCalendarSlot, parseSlotScheduleTimestamp, buildCalendarSlotContext, buildPrefillFromCalendarSlot } from '../../services/calendarSlotService';
 import type { ApiErrorHandler, ToastFn } from './types';
 
 interface GenerationHandlerDeps {
@@ -41,6 +41,7 @@ interface GenerationHandlerDeps {
 export const useGenerationHandlers = ({ addToast, t, handleApiError }: GenerationHandlerDeps) => {
     const { user, userPlan } = useAuth();
     const abortControllerRef = useRef<AbortController | null>(null);
+    const handleGenerateRef = useRef<((formData: FormData) => Promise<void>) | undefined>(undefined);
 
     const genActions = useGenerationStore.getState();
     const dataActions = useDataStore.getState();
@@ -114,6 +115,36 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         }
     };
 
+    const finishCalendarBatchIfDone = () => {
+        const { calendarBatchQueue, calendarBatchTotal, clearCalendarBatch } = useGenerationStore.getState();
+        if (calendarBatchQueue.length === 0 && calendarBatchTotal > 0) {
+            showSuccess(
+                'Dzień uzupełniony',
+                `Przetworzono ${calendarBatchTotal} slot(ów) kalendarza.`
+            );
+            clearCalendarBatch();
+        }
+    };
+
+    const continueCalendarBatch = async () => {
+        const store = useGenerationStore.getState();
+        if (!store.calendarBatchQueue.length || !user) {
+            finishCalendarBatchIfDone();
+            return;
+        }
+
+        const [next, ...rest] = store.calendarBatchQueue;
+        store.setCalendarBatchQueue(rest);
+        const slotIndex = store.calendarBatchTotal - rest.length;
+
+        store.setPendingCalendarSlot(buildCalendarSlotContext(next));
+        store.setProgress(
+            `Slot ${slotIndex}/${store.calendarBatchTotal}: ${next.topic.replace(/<[^>]*>/g, '').slice(0, 48)}…`
+        );
+
+        await handleGenerateRef.current?.(normalizeFormData(buildPrefillFromCalendarSlot(next)));
+    };
+
     const fulfillPendingCalendarSlot = async (finalResult: GenerationResult, formData: FormData) => {
         const slot = useGenerationStore.getState().pendingCalendarSlot;
         if (!slot || !user) return;
@@ -139,6 +170,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                     'Slot nie zaplanowany',
                     formatSlotQualityMessage(quality.score, quality.improved, quality.attempts)
                 );
+                await continueCalendarBatch();
                 return;
             }
 
@@ -160,11 +192,13 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                     minute: '2-digit',
                 })}`
             );
+            await continueCalendarBatch();
         } catch {
             showWarning(
                 'Treść wygenerowana',
                 'Nie udało się automatycznie dodać do kalendarza — zaplanuj ręcznie z wyniku.'
             );
+            await continueCalendarBatch();
         }
     };
 
@@ -521,6 +555,10 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         } catch (error) {
             const errorPayload = handleApiError(error, 'errors.generation_failed');
             genActions.generationFailure(errorPayload);
+            if (useGenerationStore.getState().calendarBatchTotal > 0) {
+                useGenerationStore.getState().clearCalendarBatch();
+                showWarning('Przerwano generowanie dnia', errorPayload.message);
+            }
         } finally {
             genActions.setProgress(null);
         }
@@ -536,6 +574,8 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         learnedInsights,
         canGenerate,
     ]);
+
+    handleGenerateRef.current = handleGenerate;
 
     const handleRetry = useCallback(() => {
         const { lastFormData } = useGenerationStore.getState();

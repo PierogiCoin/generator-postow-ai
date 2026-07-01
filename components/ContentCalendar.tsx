@@ -41,6 +41,10 @@ import {
   buildPrefillFromCalendarSlot,
 } from '../services/calendarSlotService';
 import { useGenerationStore } from '../stores/generationStore';
+import {
+  countDayGenerationGaps,
+  listSlotsNeedingGeneration,
+} from '../services/calendarDayBatchService';
 
 const WEEK_DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
 
@@ -135,6 +139,7 @@ export const ContentCalendar: React.FC = () => {
   );
   const [isFilling, setIsFilling] = useState(false);
   const [isFillingDay, setIsFillingDay] = useState(false);
+  const [isGeneratingDay, setIsGeneratingDay] = useState(false);
 
   const [suggestions, setSuggestions] = useState<CalendarSuggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -296,6 +301,57 @@ export const ContentCalendar: React.FC = () => {
       addToast(e instanceof Error ? e.message : 'Błąd uzupełniania', NotificationType.Error);
     } finally {
       setIsFillingDay(false);
+    }
+  };
+
+  const handleGenerateAllMissingDay = async () => {
+    if (!user?.id || !auditDate) return;
+
+    setIsGeneratingDay(true);
+    try {
+      const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
+      let plan = intelligentCalendarPlan || [];
+
+      const missing = await generateMissingDaySlots(
+        auditDate,
+        presetId,
+        plan,
+        weekTheme.trim() || 'Treść tygodnia',
+        platform,
+        niche,
+        user.id
+      );
+
+      if (missing.length > 0) {
+        plan = mergeCalendarPlans(plan, missing);
+        await setIntelligentCalendarPlan(plan);
+      }
+
+      const toGenerate = listSlotsNeedingGeneration(auditDate, plan, scheduledPosts);
+
+      if (toGenerate.length === 0) {
+        addToast(t('calendar.audit.noGenerate', 'Brak slotów do wygenerowania'), NotificationType.Info);
+        return;
+      }
+
+      const [first, ...rest] = toGenerate;
+      useGenerationStore.getState().setCalendarBatchQueue(rest, toGenerate.length);
+
+      addToast(
+        t('calendar.audit.generateAllStarted', 'Generuję {{count}} slot(ów)…', { count: toGenerate.length }),
+        NotificationType.Info
+      );
+
+      setAuditDate(null);
+      handleGenerateForSlot(first, true);
+    } catch (e: unknown) {
+      useGenerationStore.getState().clearCalendarBatch();
+      addToast(
+        e instanceof Error ? e.message : t('calendar.audit.generateAllError', 'Błąd generowania dnia'),
+        NotificationType.Error
+      );
+    } finally {
+      setIsGeneratingDay(false);
     }
   };
 
@@ -611,9 +667,16 @@ export const ContentCalendar: React.FC = () => {
             day: 'numeric',
             month: 'long',
           })}
+          generateGapCount={countDayGenerationGaps(
+            auditDate,
+            intelligentCalendarPlan,
+            scheduledPosts
+          )}
           onClose={() => setAuditDate(null)}
           onFillMissing={handleFillMissingDay}
+          onGenerateAll={handleGenerateAllMissingDay}
           isFilling={isFillingDay}
+          isGenerating={isGeneratingDay}
         />
       )}
 

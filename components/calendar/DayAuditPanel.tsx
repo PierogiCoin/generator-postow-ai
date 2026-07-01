@@ -3,13 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { XMarkIcon } from '../icons/XMarkIcon';
 import type { DayAudit } from '../../services/calendarCadenceService';
 import { SparklesIcon } from '../icons/SparklesIcon';
+import { CalendarIcon } from '../icons/CalendarIcon';
 
 interface DayAuditPanelProps {
   audit: DayAudit;
   dateLabel: string;
+  generateGapCount: number;
   onClose: () => void;
   onFillMissing: () => void;
+  onGenerateAll: () => void;
   isFilling: boolean;
+  isGenerating: boolean;
 }
 
 function scoreColor(score: number): string {
@@ -21,15 +25,19 @@ function scoreColor(score: number): string {
 export const DayAuditPanel: React.FC<DayAuditPanelProps> = ({
   audit,
   dateLabel,
+  generateGapCount,
   onClose,
   onFillMissing,
+  onGenerateAll,
   isFilling,
+  isGenerating,
 }) => {
   const { t } = useTranslation();
   const hasGaps =
     audit.slotsFilled.post < audit.slotsTarget.post ||
     audit.slotsFilled.reel < audit.slotsTarget.reel ||
     audit.slotsFilled.story < audit.slotsTarget.story;
+  const busy = isFilling || isGenerating;
 
   return (
     <div
@@ -83,19 +91,37 @@ export const DayAuditPanel: React.FC<DayAuditPanelProps> = ({
           </ul>
         )}
 
-        {hasGaps && (
-          <button
-            type="button"
-            disabled={isFilling}
-            onClick={onFillMissing}
-            className="mt-5 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-sm font-bold transition disabled:opacity-50"
-          >
-            <SparklesIcon className="w-4 h-4" />
-            {isFilling
-              ? t('calendar.audit.filling', 'Uzupełnianie…')
-              : t('calendar.audit.fillMissing', 'Uzupełnij brakujące sloty')}
-          </button>
-        )}
+        <div className="mt-5 flex flex-col gap-2">
+          {hasGaps && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onFillMissing}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-sm font-bold transition disabled:opacity-50 border border-slate-200 dark:border-slate-700"
+            >
+              <SparklesIcon className="w-4 h-4 text-cyan-500" />
+              {isFilling
+                ? t('calendar.audit.filling', 'Uzupełnianie…')
+                : t('calendar.audit.fillMissing', 'Uzupełnij brakujące sloty')}
+            </button>
+          )}
+
+          {generateGapCount > 0 && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onGenerateAll}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-sm font-bold transition disabled:opacity-50"
+            >
+              <CalendarIcon className="w-4 h-4" />
+              {isGenerating
+                ? t('calendar.audit.generatingAll', 'Uruchamianie…')
+                : t('calendar.audit.generateAll', 'Generuj wszystkie braki ({{count}})', {
+                    count: generateGapCount,
+                  })}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -7,12 +7,16 @@ import { SparklesIcon } from '../icons/SparklesIcon';
 
 interface CalendarSlotBannerProps {
   slot: CalendarSlotContext;
+  batchIndex?: number;
+  batchTotal?: number;
   onGenerate?: () => void;
   isGenerating?: boolean;
 }
 
 export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
   slot,
+  batchIndex,
+  batchTotal,
   onGenerate,
   isGenerating,
 }) => {
@@ -28,7 +32,12 @@ export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
-            {t('calendar.slot.bannerLabel', 'Generowanie ze slotu kalendarza')}
+            {batchTotal && batchTotal > 1
+              ? t('calendar.slot.batchLabel', 'Batch dnia {{current}}/{{total}}', {
+                  current: batchIndex ?? 1,
+                  total: batchTotal,
+                })
+              : t('calendar.slot.bannerLabel', 'Generowanie ze slotu kalendarza')}
           </p>
           <p className="mt-1 font-bold text-slate-900 dark:text-white truncate">
             <span className="mr-1.5">{slotTypeBadge(slot.slotType)}</span>

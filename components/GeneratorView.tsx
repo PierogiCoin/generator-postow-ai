@@ -67,7 +67,7 @@ export const GeneratorView: React.FC = () => {
         inspiration, selectInspiration, clearHistory, removeFavorite, clearFavorites,
         saveTemplate, deleteTemplate, removeDraft
     } = useDataStore();
-    const { result, isLoading, isOptimizingMultiPlatform, generationProgress, pendingCalendarSlot } = useGenerationStore();
+    const { result, isLoading, isOptimizingMultiPlatform, generationProgress, pendingCalendarSlot, calendarBatchQueue, calendarBatchTotal } = useGenerationStore();
     const { setIsPricingModalOpen, setIsSocialConnectionsModalOpen } = useUIStore();
     const { confirm, confirmDialogProps } = useConfirm();
 
@@ -434,7 +434,16 @@ export const GeneratorView: React.FC = () => {
                         )}
                         {pendingCalendarSlot && (
                             <div className="mb-6">
-                                <CalendarSlotBanner slot={pendingCalendarSlot} isGenerating={isLoading} />
+                                <CalendarSlotBanner
+                                    slot={pendingCalendarSlot}
+                                    batchIndex={
+                                        calendarBatchTotal > 0
+                                            ? calendarBatchTotal - calendarBatchQueue.length
+                                            : undefined
+                                    }
+                                    batchTotal={calendarBatchTotal > 1 ? calendarBatchTotal : undefined}
+                                    isGenerating={isLoading}
+                                />
                             </div>
                         )}
                         <Suspense fallback={<SkeletonCard />}>

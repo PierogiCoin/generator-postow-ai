@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { GenerationResult, AppError, FormData, RepurposedContent, SentimentAnalysisResult, SEOAnalysisResult, PerformancePrediction, CalendarSlotContext } from '../types';
+import type { GenerationResult, AppError, FormData, RepurposedContent, SentimentAnalysisResult, SEOAnalysisResult, PerformancePrediction, CalendarSlotContext, IntelligentCalendarPlanItem } from '../types';
 import type { VideoStoryProgressStatus } from '../services/videoStoryService';
 
 type GenerationState = {
@@ -36,6 +36,8 @@ type GenerationState = {
   hookVariations: string[];
   isSuggestingHooks: boolean;
   pendingCalendarSlot: CalendarSlotContext | null;
+  calendarBatchQueue: IntelligentCalendarPlanItem[];
+  calendarBatchTotal: number;
 
   // Actions
   startGeneration: (formData: FormData) => void;
@@ -95,6 +97,8 @@ type GenerationState = {
   applyHook: (newHook: string) => void;
   setPendingCalendarSlot: (slot: CalendarSlotContext | null) => void;
   clearPendingCalendarSlot: () => void;
+  setCalendarBatchQueue: (items: IntelligentCalendarPlanItem[], total?: number) => void;
+  clearCalendarBatch: () => void;
 };
 
 const initialGenerationState = {
@@ -130,6 +134,8 @@ const initialGenerationState = {
   hookVariations: [],
   isSuggestingHooks: false,
   pendingCalendarSlot: null,
+  calendarBatchQueue: [],
+  calendarBatchTotal: 0,
 };
 
 export const useGenerationStore = create<GenerationState>()(
@@ -231,6 +237,12 @@ export const useGenerationStore = create<GenerationState>()(
   }),
   setPendingCalendarSlot: (slot) => set({ pendingCalendarSlot: slot }),
   clearPendingCalendarSlot: () => set({ pendingCalendarSlot: null }),
+  setCalendarBatchQueue: (items, total) =>
+    set((state) => ({
+      calendarBatchQueue: items,
+      calendarBatchTotal: total !== undefined ? total : state.calendarBatchTotal,
+    })),
+  clearCalendarBatch: () => set({ calendarBatchQueue: [], calendarBatchTotal: 0 }),
   clearResult: () => set({ 
     result: null, 
     error: null, 

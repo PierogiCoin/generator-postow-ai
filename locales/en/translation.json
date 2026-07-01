@@ -232,7 +232,12 @@
       "fillMissing": "Fill missing slots",
       "filling": "Filling…",
       "noMissing": "No slots to fill",
-      "filled": "Filled {{count}} slot(s)"
+      "filled": "Filled {{count}} slot(s)",
+      "generateAll": "Generate all gaps ({{count}})",
+      "generateAllStarted": "Generating {{count}} slot(s)…",
+      "generateAllError": "Day generation failed",
+      "generatingAll": "Starting…",
+      "noGenerate": "No slots to generate"
     },
     "empty": {
       "title": "Calendar is empty",
@@ -243,7 +248,8 @@
       "edit": "Edit",
       "generateNow": "Generate now",
       "bannerLabel": "Generating from calendar slot",
-      "bannerHint": "After generation, content passes the quality gate (up to 2 auto-fixes), then is added to scheduled posts."
+      "bannerHint": "After generation, content passes the quality gate (up to 2 auto-fixes), then is added to scheduled posts.",
+      "batchLabel": "Day batch {{current}}/{{total}}"
     }
   },
   "topicAssistant": {

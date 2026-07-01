@@ -235,7 +235,12 @@
       "fillMissing": "Uzupełnij brakujące sloty",
       "filling": "Uzupełnianie…",
       "noMissing": "Brak slotów do uzupełnienia",
-      "filled": "Uzupełniono {{count}} slot(ów)"
+      "filled": "Uzupełniono {{count}} slot(ów)",
+      "generateAll": "Generuj wszystkie braki ({{count}})",
+      "generateAllStarted": "Generuję {{count}} slot(ów)…",
+      "generateAllError": "Błąd generowania dnia",
+      "generatingAll": "Uruchamianie…",
+      "noGenerate": "Brak slotów do wygenerowania"
     },
     "empty": {
       "title": "Kalendarz jest pusty",
@@ -246,7 +251,8 @@
       "edit": "Edytuj",
       "generateNow": "Generuj teraz",
       "bannerLabel": "Generowanie ze slotu kalendarza",
-      "bannerHint": "Po wygenerowaniu treść przejdzie bramę jakości (auto-poprawka do 2×), potem trafi do zaplanowanych publikacji."
+      "bannerHint": "Po wygenerowaniu treść przejdzie bramę jakości (auto-poprawka do 2×), potem trafi do zaplanowanych publikacji.",
+      "batchLabel": "Batch dnia {{current}}/{{total}}"
     }
   },
   "topicAssistant": {
