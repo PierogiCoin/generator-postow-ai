@@ -243,7 +243,7 @@
       "edit": "Edit",
       "generateNow": "Generate now",
       "bannerLabel": "Generating from calendar slot",
-      "bannerHint": "After generation, content is added to scheduled posts and the slot is removed from the plan."
+      "bannerHint": "After generation, content passes the quality gate (up to 2 auto-fixes), then is added to scheduled posts."
     }
   },
   "topicAssistant": {

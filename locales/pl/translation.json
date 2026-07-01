@@ -246,7 +246,7 @@
       "edit": "Edytuj",
       "generateNow": "Generuj teraz",
       "bannerLabel": "Generowanie ze slotu kalendarza",
-      "bannerHint": "Po wygenerowaniu treść trafi do zaplanowanych publikacji, a slot zniknie z planu."
+      "bannerHint": "Po wygenerowaniu treść przejdzie bramę jakości (auto-poprawka do 2×), potem trafi do zaplanowanych publikacji."
     }
   },
   "topicAssistant": {

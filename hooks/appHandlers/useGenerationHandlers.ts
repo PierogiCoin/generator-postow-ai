@@ -25,6 +25,10 @@ import {
     passesAutoPublishQualityGate,
     AUTO_PUBLISH_MIN_SCORE,
 } from '../../services/contentScoringService';
+import {
+    ensureCalendarSlotQuality,
+    formatSlotQualityMessage,
+} from '../../services/calendarSlotQualityService';
 import { fulfillCalendarSlot, parseSlotScheduleTimestamp } from '../../services/calendarSlotService';
 import type { ApiErrorHandler, ToastFn } from './types';
 
@@ -114,15 +118,41 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         const slot = useGenerationStore.getState().pendingCalendarSlot;
         if (!slot || !user) return;
 
-        useGenerationStore.getState().clearPendingCalendarSlot();
+        let resultToSchedule = finalResult;
+
         try {
-            await fulfillCalendarSlot(slot, formData, finalResult, user.id, {
+            genActions.setProgress('Ocena jakości przed planowaniem slotu…');
+            const quality = await ensureCalendarSlotQuality(resultToSchedule, formData, user.id, {
+                regenerateText: (text, feedback) =>
+                    geminiService.regenerateWithFeedback(text, feedback, user.id),
+                onProgress: (msg) => genActions.setProgress(msg),
+            });
+
+            resultToSchedule = quality.result;
+
+            if (quality.improved) {
+                genActions.updateResultText(quality.result.postText);
+            }
+
+            if (!quality.scheduledAllowed) {
+                showWarning(
+                    'Slot nie zaplanowany',
+                    formatSlotQualityMessage(quality.score, quality.improved, quality.attempts)
+                );
+                return;
+            }
+
+            await fulfillCalendarSlot(slot, formData, resultToSchedule, user.id, {
                 addOrUpdateScheduledPost: dataActions.addOrUpdateScheduledPost,
                 removeIntelligentCalendarPlanItem: dataActions.removeIntelligentCalendarPlanItem,
             });
+
+            useGenerationStore.getState().clearPendingCalendarSlot();
+
+            const detail = formatSlotQualityMessage(quality.score, quality.improved, quality.attempts);
             showSuccess(
                 'Slot kalendarza zrealizowany',
-                `Zaplanowano na ${new Date(parseSlotScheduleTimestamp(slot.date, slot.time)).toLocaleString('pl-PL', {
+                `${detail} Termin: ${new Date(parseSlotScheduleTimestamp(slot.date, slot.time)).toLocaleString('pl-PL', {
                     weekday: 'short',
                     day: 'numeric',
                     month: 'short',

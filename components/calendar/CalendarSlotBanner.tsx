@@ -49,7 +49,7 @@ export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
             {t(
               'calendar.slot.bannerHint',
-              'Po wygenerowaniu treść trafi do zaplanowanych publikacji, a slot zniknie z planu.'
+              'Po wygenerowaniu treść przejdzie bramę jakości (auto-poprawka do 2×), potem trafi do zaplanowanych publikacji.'
             )}
           </p>
         </div>
