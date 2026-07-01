@@ -10,8 +10,13 @@ import {
     Platform,
     OmnichannelPost,
     PerformancePrediction,
-    CopywritingFramework
+    CopywritingFramework,
+    VisualStyle,
 } from '../types';
+import {
+    buildPlatformImagePrompt,
+    resolveAspectRatioForPlatform,
+} from '../utils/platformVisualSpec';
 
 
 /**
@@ -330,34 +335,32 @@ export const generatePostDetails = async (
             imageStyle = `${brandVoice.visualStyle}, ${imageStyle}`;
         }
 
-        const platformContext = formData.platform === 'Facebook'
-            ? 'optimized for Facebook feed (high contrast, readable text overlay if any, 1200x630px ratio preferred)'
-            : formData.platform === 'Instagram'
-            ? 'optimized for Instagram feed (square or portrait, vibrant colors, lifestyle aesthetic)'
-            : formData.platform === 'LinkedIn'
-            ? 'optimized for LinkedIn (professional, clean, business-appropriate)'
-            : formData.platform === 'TikTok'
-            ? 'optimized for TikTok thumbnail (bold, eye-catching, 9:16 vertical)'
-            : '';
-
-        let imagePrompt = `High quality social media photo for: "${postText.substring(0, 200)}". Style: ${imageStyle}. ${platformContext}`;
-
+        let mascotPrompt: string | undefined;
         if (formData.useMascot === true && brandVoice?.mascotDescription) {
-            imagePrompt += ` \nFEATURED MASCOT: You MUST include the brand mascot "${brandVoice.mascotName || 'the mascot'}" in this image. Description: ${brandVoice.mascotDescription}.`;
+            mascotPrompt = `FEATURED MASCOT: You MUST include the brand mascot "${brandVoice.mascotName || 'the mascot'}" in this image. Description: ${brandVoice.mascotDescription}.`;
         } else if (formData.useMascot === "auto" && brandVoice?.mascotDescription && postText.toLowerCase().includes((brandVoice.mascotName || 'maskotka').toLowerCase())) {
-            imagePrompt += ` \nFEATURED MASCOT: The user mentioned the mascot. Include it: ${brandVoice.mascotDescription}.`;
-        }
-
-        if (visualVibe) {
-            imagePrompt += ` Maintain the following visual style: ${visualVibe}.`;
+            mascotPrompt = `FEATURED MASCOT: The user mentioned the mascot. Include it: ${brandVoice.mascotDescription}.`;
         }
 
         const postMortemImageHint = insights?.find((i: any) => i.imagePromptSuggestion);
-        if (postMortemImageHint) {
-            imagePrompt += ` PROVEN STYLE: ${(postMortemImageHint as any).imagePromptSuggestion}`;
-        }
+        const imagePrompt = buildPlatformImagePrompt({
+            postText,
+            platform: formData.platform,
+            imageStyle,
+            visualVibe,
+            mascotPrompt,
+            postMortemHint: postMortemImageHint
+                ? (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion
+                : undefined,
+        });
 
-        const imageResponse = await generateImages(imagePrompt, { aspectRatio: formData.aspectRatio || "1:1" }, userId).catch(() => null);
+        const aspectRatio = resolveAspectRatioForPlatform(
+            formData.platform,
+            formData.aspectRatio,
+            formData.visualStyle as VisualStyle
+        );
+
+        const imageResponse = await generateImages(imagePrompt, { aspectRatio }, userId).catch(() => null);
         if (!imageResponse) {
             try {
                 const details = await generateJson<any>({

@@ -6,9 +6,10 @@ import type {
   IntelligentCalendarPlanItem,
   ScheduledPost,
 } from '../types';
-import { GenerationType, Tone } from '../types';
+import { GenerationType, Tone, VisualStyle } from '../types';
 import { slotFormat } from './calendarCadenceService';
 import { normalizeFormData } from '../components/inputForm/defaultFormData';
+import { getPlatformVisualSpec } from '../utils/platformVisualSpec';
 
 const INTENT_TONE: Record<NonNullable<IntelligentCalendarPlanItem['contentIntent']>, Tone> = {
   educational: Tone.Professional,
@@ -74,13 +75,12 @@ export function buildPrefillFromCalendarSlot(item: IntelligentCalendarPlanItem):
     ],
   };
 
-  if (slotType === 'story') {
-    prefill.aspectRatio = '9:16';
-    prefill.generationType = GenerationType.PostWithImage;
-  }
-  if (slotType === 'reel') {
-    prefill.aspectRatio = '9:16';
-    prefill.generationType = GenerationType.Video;
+  if (slotType === 'story' || slotType === 'reel') {
+    const spec = getPlatformVisualSpec(item.platform);
+    prefill.aspectRatio =
+      slotType === 'reel' ? '9:16' : spec.allowedAspectRatios.includes('9:16') ? '9:16' : spec.defaultAspectRatio;
+    prefill.generationType = slotType === 'reel' ? GenerationType.Video : GenerationType.PostWithImage;
+    prefill.visualStyle = VisualStyle.PlatformSpecific;
   }
 
   return prefill;

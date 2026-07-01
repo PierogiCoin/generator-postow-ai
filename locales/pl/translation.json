@@ -177,6 +177,9 @@
       "standard": "Standardowy",
       "photo": "Zdjęcie"
     },
+    "platformVisual": {
+      "hint": "Styl dopasowany do platformy:"
+    },
     "imageForVideo": {
       "label": "Obraz początkowy dla wideo",
       "tooltip": "Prześlij obraz, który będzie pierwszą klatką Twojego wideo. AI ożywi go."

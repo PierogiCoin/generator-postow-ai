@@ -61,6 +61,7 @@ import { saveAutoPublishPrefs } from '../utils/autoPublishPrefs';
 import { getStoredInputFormMode, setStoredInputFormMode, stripTopicHtml, type InputFormMode } from '../utils/inputFormMode';
 import { isOnboardingPendingFirstGenerate } from '../utils/onboarding';
 import { OnboardingFirstPostBanner } from './inputForm/OnboardingFirstPostBanner';
+import { getPlatformVisualSpec, isAspectRatioAllowedForPlatform } from '../utils/platformVisualSpec';
 
 
 interface InputFormProps {
@@ -295,7 +296,14 @@ export const InputForm: React.FC<InputFormProps> = ({
           newGenerationType = GenerationType.PostWithImage;
         }
       }
-      return { ...prev, platform: newPlatform, generationType: newGenerationType };
+      const spec = getPlatformVisualSpec(newPlatform);
+      const aspectRatio =
+        prev.visualStyle === VisualStyle.PlatformSpecific
+          ? spec.defaultAspectRatio
+          : prev.aspectRatio && isAspectRatioAllowedForPlatform(newPlatform, prev.aspectRatio)
+            ? prev.aspectRatio
+            : spec.defaultAspectRatio;
+      return { ...prev, platform: newPlatform, generationType: newGenerationType, aspectRatio };
     });
   };
 
@@ -713,8 +721,18 @@ export const InputForm: React.FC<InputFormProps> = ({
               isSuggestingStyle={isSuggestingStyle}
               aiToolPanels={aiToolPanels}
               onInputChange={handleInputChange}
-              onVisualStyleSelect={(v) => setFormData((p) => ({ ...p, visualStyle: v }))}
+              onVisualStyleSelect={(v) =>
+                setFormData((p) => ({
+                  ...p,
+                  visualStyle: v,
+                  aspectRatio:
+                    v === VisualStyle.PlatformSpecific
+                      ? getPlatformVisualSpec(p.platform).defaultAspectRatio
+                      : p.aspectRatio,
+                }))
+              }
               onAspectRatioSelect={(ratio) => setFormData((p) => ({ ...p, aspectRatio: ratio }))}
+              platform={formData.platform}
             />
           )}
 
