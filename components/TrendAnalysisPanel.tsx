@@ -13,6 +13,7 @@ import {
   storeAlerts,
   getStoredAlerts,
 } from '../services/trendAnalysisService';
+import { fetchIntelligenceTrends } from '../services/intelligenceService';
 import { Platform, NotificationType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
@@ -79,6 +80,9 @@ export const TrendAnalysisPanel: React.FC<TrendAnalysisPanelProps> = ({
   const [selectedTrend, setSelectedTrend] = useState<TrendData | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [editableNiche, setEditableNiche] = useState(niche);
+  const [contentGaps, setContentGaps] = useState<string[]>([]);
+  const [avoidTopics, setAvoidTopics] = useState<string[]>([]);
+  const [trendSources, setTrendSources] = useState<{ title: string; url: string }[]>([]);
 
   // Load cached data on mount
   useEffect(() => {
@@ -103,13 +107,19 @@ export const TrendAnalysisPanel: React.FC<TrendAnalysisPanelProps> = ({
     try {
       const currentNiche = editableNiche.trim() || niche;
       // Run all analyses in parallel
-      const [trendsData, nicheData] = await Promise.all([
+      const [trendsData, nicheData, intelTrends] = await Promise.all([
         analyzeTrends(currentNiche, platform, user.id),
         analyzeNiche(currentNiche, [platform], user.id),
+        fetchIntelligenceTrends(currentNiche, platform, user.id, 'deep').catch(() => null),
       ]);
 
       setTrends(trendsData);
       setNicheAnalysis(nicheData);
+      if (intelTrends) {
+        setContentGaps(intelTrends.contentGaps || []);
+        setAvoidTopics(intelTrends.avoidTopics || []);
+        setTrendSources(intelTrends.sources || []);
+      }
       cacheTrendAnalysis(currentNiche, platform, trendsData);
       setLastUpdated(new Date());
 
@@ -233,6 +243,38 @@ export const TrendAnalysisPanel: React.FC<TrendAnalysisPanelProps> = ({
             {/* Trends Tab */}
             {activeTab === 'trends' && (
               <div className="space-y-4">
+                {contentGaps.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                    <h3 className="text-sm font-black uppercase tracking-wider text-amber-800 dark:text-amber-200 mb-2 flex items-center gap-2">
+                      <LightbulbIcon className="w-4 h-4" />
+                      Luki treści (live search)
+                    </h3>
+                    <ul className="space-y-1">
+                      {contentGaps.map((gap) => (
+                        <li key={gap} className="text-sm text-amber-900 dark:text-amber-100 flex gap-2">
+                          <span>💡</span>
+                          <button
+                            type="button"
+                            onClick={() => handleUseTopic(gap)}
+                            className="text-left hover:underline"
+                          >
+                            {gap}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    {avoidTopics.length > 0 && (
+                      <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-3">
+                        Unikaj: {avoidTopics.join(' · ')}
+                      </p>
+                    )}
+                    {trendSources.length > 0 && (
+                      <p className="text-[10px] text-amber-600/70 mt-2">
+                        Źródła: {trendSources.slice(0, 3).map((s) => s.title).join(' · ')}
+                      </p>
+                    )}
+                  </div>
+                )}
                 {trends.length === 0 ? (
                   <div className="text-center py-12">
                     <TrendingUpIcon className="w-16 h-16 mx-auto mb-4 text-slate-300" />

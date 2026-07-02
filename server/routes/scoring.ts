@@ -2,6 +2,7 @@ import { Router } from 'express';
 import logger, { logRequest, logCost } from '../logger.js';
 import { scoreContent, compareWithBenchmark, quickValidate } from '../contentScoring.js';
 import { creditGate } from '../middleware/credits.js';
+import { getAuthUserId } from '../middleware/supabaseAuth.js';
 
 export function createScoringRouter(): Router {
   const router = Router();
@@ -10,7 +11,7 @@ router.post('/api/score-content', ...creditGate('sentimentAnalysis'), async (req
 
   try {
     const { content, platform, context } = req.body;
-    const userId = req.headers['x-user-id'] as string || 'anon';
+    const userId = getAuthUserId(req);
 
     // Walidacja
     if (!content || !platform) {
@@ -56,7 +57,7 @@ router.post('/api/benchmark-content', ...creditGate('contentOptimization'), asyn
 
   try {
     const { content, platform, niche } = req.body;
-    const userId = req.headers['x-user-id'] as string || 'anon';
+    const userId = getAuthUserId(req);
 
     if (!content || !platform || !niche) {
       return res.status(400).json({

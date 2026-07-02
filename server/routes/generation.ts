@@ -20,6 +20,7 @@ import {
 } from '../middleware/validate.js';
 import { textLimiter, streamLimiter, expensiveLimiter } from '../middleware/rateLimiter.js';
 import { creditGate, videoStoryCreditCost } from '../middleware/credits.js';
+import { requireSupabaseAuth, getAuthUserId } from '../middleware/supabaseAuth.js';
 import { PRICING } from '../stripe.js';
 import {
   createVideoJob,
@@ -103,7 +104,7 @@ router.post('/api/generate-batch', textLimiter, ...creditGate('generatePost', (r
 ), async (req, res) => {
   try {
     const { topic, platforms, style = 'Professional', tone = 'Casual' } = req.body;
-    const userId = req.headers['x-user-id'] as string || 'anon';
+    const userId = getAuthUserId(req);
 
     if (!topic || !platforms || !Array.isArray(platforms)) {
       return res.status(400).json({ message: 'Missing topic or platforms array' });
@@ -323,7 +324,7 @@ router.post('/api/generate', textLimiter, ...creditGate('generatePost'), async (
 router.post('/api/generate-images', expensiveLimiter, ...creditGate('generateImage'), validateRequest(imageGenerationSchema), async (req, res) => {
   try {
     const { prompt, config } = req.body;
-    const userId = req.header('x-user-id') || 'unknown';
+    const userId = getAuthUserId(req);
     const apiKey = process.env.GOOGLE_API_KEY || process.env.VITE_API_KEY;
 
     if (!apiKey) {
@@ -393,7 +394,7 @@ router.post('/api/generate-images', expensiveLimiter, ...creditGate('generateIma
     });
 
   } catch (error: any) {
-    logger.error('[Imagen] Generation failed', { error: error.message, userId: req.header('x-user-id') || 'unknown' });
+    logger.error('[Imagen] Generation failed', { error: error.message, userId: getAuthUserId(req) });
     const axiosMsg = error.response?.data?.error?.message || error.message || 'Image generation failed';
     const status = isGeminiQuotaError(error) || error.response?.status === 429 ? 429 : 500;
     const message = isGeminiQuotaError(error) || error.response?.status === 429
@@ -408,10 +409,13 @@ router.post('/api/generate-images', expensiveLimiter, ...creditGate('generateIma
 
 
 // 🎬 SMART VIDEO ROUTER (Veo / Luma / Replicate) — sync lub async + polling statusu
-router.get('/api/video-story-status/:jobId', (req, res) => {
+router.get('/api/video-story-status/:jobId', requireSupabaseAuth, (req, res) => {
   const job = getVideoJob(req.params.jobId);
   if (!job) {
     return res.status(404).json({ message: 'Nie znaleziono zadania generowania wideo' });
+  }
+  if (job.userId !== getAuthUserId(req)) {
+    return res.status(403).json({ message: 'Brak dostępu do tego zadania' });
   }
   return res.json(job);
 });
@@ -439,7 +443,7 @@ router.post('/api/generate-video-story', expensiveLimiter, ...creditGate('genera
 
   try {
     const { postText, platform, style, prompt, needsAudio = false, aspectRatio: aspectRatioBody, provider: providerBody = 'auto', async: useAsync = false } = req.body;
-    const userId = req.header('x-user-id') || 'unknown';
+    const userId = getAuthUserId(req);
 
     const platformVertical = ['TikTok', 'Instagram', 'YouTube Shorts', 'Reels'].includes(platform);
     const aspectRatio: '9:16' | '16:9' | '1:1' =
@@ -930,7 +934,7 @@ router.post('/api/generate-video-story', expensiveLimiter, ...creditGate('genera
     logger.error('[Smart Video Router] Generation failed', {
       error: err.message,
       stack: err.stack,
-      userId: req.header('x-user-id') || 'unknown',
+      userId: getAuthUserId(req),
       platform: req.body.platform
     });
     if (isGeminiQuotaError(error)) {

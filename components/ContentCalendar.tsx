@@ -43,6 +43,13 @@ import {
   countDayGenerationGaps,
   listSlotsNeedingGeneration,
 } from '../services/calendarDayBatchService';
+import { getTrackedCompetitors } from '../services/competitorService';
+import {
+  analyzeScheduleGaps,
+  getCachedGapHours,
+  type GapSlotResult,
+} from '../services/intelligenceService';
+import { IntelligenceGapStrip } from './intelligence/IntelligenceGapStrip';
 
 const WEEK_DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
 
@@ -109,6 +116,10 @@ export const ContentCalendar: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [calendarView, setCalendarView] = useState<'month' | 'week'>('month');
   const autoSuggestRef = useRef<string | null>(null);
+  const gapWarmRef = useRef(false);
+  const [gapSlots, setGapSlots] = useState<GapSlotResult[]>([]);
+  const [gapRecommendation, setGapRecommendation] = useState('');
+  const [isLoadingGaps, setIsLoadingGaps] = useState(false);
   const [hoveredPost, setHoveredPost] = useState<{
     post: ScheduledPost;
     pos: { top: number; left: number };
@@ -157,6 +168,50 @@ export const ContentCalendar: React.FC = () => {
     }
     return currentDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
   }, [calendarView, currentDate, weekStartDate]);
+
+  const getUserNiche = useCallback((): string => {
+    if (!user?.id) return 'marketing cyfrowy';
+    return (
+      localStorage.getItem(`userNiche_${user.id}`) ||
+      localStorage.getItem('userNiche') ||
+      weekTheme.trim() ||
+      'marketing cyfrowy'
+    );
+  }, [user?.id, weekTheme]);
+
+  const warmGapIntelligence = useCallback(async () => {
+    if (!user?.id) return;
+
+    const cached = getCachedGapHours(user.id, platform);
+    if (cached?.length) {
+      setGapSlots(cached);
+      return;
+    }
+
+    setIsLoadingGaps(true);
+    try {
+      const handles = getTrackedCompetitors(user.id)
+        .filter((c) => c.platform === platform)
+        .map((c) => c.handle);
+      const result = await analyzeScheduleGaps(getUserNiche(), platform, user.id, {
+        competitorHandles: handles,
+      });
+      setGapSlots(result.gapSlots || []);
+      setGapRecommendation(result.recommendation || '');
+    } catch {
+      // cicho — strip pokaże CTA
+    } finally {
+      setIsLoadingGaps(false);
+    }
+  }, [user?.id, platform, getUserNiche]);
+
+  useEffect(() => {
+    if (!user?.id || gapWarmRef.current) return;
+    gapWarmRef.current = true;
+    const cached = getCachedGapHours(user.id, platform);
+    if (cached?.length) setGapSlots(cached);
+    void warmGapIntelligence();
+  }, [user?.id, platform, warmGapIntelligence]);
 
   const openDay = useCallback((date: Date) => {
     setSelectedDay(date);
@@ -210,7 +265,7 @@ export const ContentCalendar: React.FC = () => {
           .map((h) => h.formData?.topic || '')
           .filter(Boolean)
           .join(', ');
-        const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
+        const niche = getUserNiche();
         if (!user) throw new Error('Musisz być zalogowany, aby użyć sugestii kalendarza.');
         const result = await generateCalendarSuggestions(date, niche, historySummary, user.id);
         setSuggestions(result);
@@ -239,7 +294,8 @@ export const ContentCalendar: React.FC = () => {
     const item = buildPlanItemFromSuggestion(
       suggestion,
       selectedDay,
-      intelligentCalendarPlan || []
+      intelligentCalendarPlan || [],
+      user.id
     );
     const merged = mergeCalendarPlans(intelligentCalendarPlan, [item]);
     await setIntelligentCalendarPlan(merged);
@@ -251,7 +307,8 @@ export const ContentCalendar: React.FC = () => {
     const item = buildPlanItemFromSuggestion(
       suggestion,
       selectedDay,
-      intelligentCalendarPlan || []
+      intelligentCalendarPlan || [],
+      user.id
     );
     const merged = mergeCalendarPlans(intelligentCalendarPlan, [item]);
     await setIntelligentCalendarPlan(merged);
@@ -289,7 +346,7 @@ export const ContentCalendar: React.FC = () => {
     setIsFilling(true);
     try {
       const start = getWeekStart();
-      const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
+      const niche = getUserNiche();
       const previousTopics = (intelligentCalendarPlan || []).map((p) => p.topic);
 
       const newPlan = await generateCadenceWeekPlan(
@@ -323,7 +380,7 @@ export const ContentCalendar: React.FC = () => {
 
     setIsFillingDay(true);
     try {
-      const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
+      const niche = getUserNiche();
       const missing = await generateMissingDaySlots(
         selectedDay,
         presetId,
@@ -357,7 +414,7 @@ export const ContentCalendar: React.FC = () => {
 
     setIsGeneratingDay(true);
     try {
-      const niche = localStorage.getItem('userNiche') || 'marketing cyfrowy';
+      const niche = getUserNiche();
       let plan = intelligentCalendarPlan || [];
 
       const missing = await generateMissingDaySlots(
@@ -686,6 +743,21 @@ export const ContentCalendar: React.FC = () => {
           persistPrefs({ platform: p });
         }}
         onFillWeek={handleFillWeek}
+      />
+
+      <IntelligenceGapStrip
+        gapSlots={gapSlots}
+        recommendation={gapRecommendation}
+        isLoading={isLoadingGaps}
+        onRefresh={() => void warmGapIntelligence()}
+        onSelectSlot={(slot) => {
+          addToast(
+            t('calendar.intelligence.slotHint', 'Preferowany slot: {{label}} — użyj przy planowaniu dnia', {
+              label: slot.label,
+            }),
+            NotificationType.Info
+          );
+        }}
       />
 
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4 relative z-10">

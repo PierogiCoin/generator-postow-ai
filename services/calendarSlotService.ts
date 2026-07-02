@@ -7,11 +7,12 @@ import type {
   IntelligentCalendarPlanItem,
   ScheduledPost,
 } from '../types';
-import { GenerationType, Tone, VisualStyle } from '../types';
+import { GenerationType, Tone, VisualStyle, Platform } from '../types';
 import { slotFormat } from './calendarCadenceService';
 import { normalizeFormData } from '../components/inputForm/defaultFormData';
 import { getPlatformVisualSpec } from '../utils/platformVisualSpec';
 import { useGenerationStore } from '../stores/generationStore';
+import { getPreferredGapTimes } from './intelligenceService';
 
 function formatDateYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -22,13 +23,20 @@ const DEFAULT_SLOT_TIMES = ['09:00', '12:00', '15:00', '18:00'] as const;
 /** Domyślna godzina slotu — unika kolizji z istniejącymi slotami tego dnia */
 export function defaultSlotTimeForDay(
   date: Date,
-  existingPlanItems: IntelligentCalendarPlanItem[] = []
+  existingPlanItems: IntelligentCalendarPlanItem[] = [],
+  userId?: string,
+  platform?: Platform
 ): string {
   const dateStr = formatDateYMD(date);
   const taken = new Set(
     existingPlanItems.filter((p) => p.date === dateStr && p.time).map((p) => p.time!)
   );
-  for (const t of DEFAULT_SLOT_TIMES) {
+
+  const gapTimes =
+    userId && platform ? getPreferredGapTimes(userId, platform) : [];
+  const candidates = gapTimes.length > 0 ? [...gapTimes, ...DEFAULT_SLOT_TIMES] : [...DEFAULT_SLOT_TIMES];
+
+  for (const t of candidates) {
     if (!taken.has(t)) return t;
   }
   return '14:00';
@@ -37,7 +45,8 @@ export function defaultSlotTimeForDay(
 export function buildPlanItemFromSuggestion(
   suggestion: CalendarSuggestion,
   date: Date,
-  existingPlanItems: IntelligentCalendarPlanItem[] = []
+  existingPlanItems: IntelligentCalendarPlanItem[] = [],
+  userId?: string
 ): IntelligentCalendarPlanItem {
   const slotType =
     suggestion.format === GenerationType.Video
@@ -49,7 +58,7 @@ export function buildPlanItemFromSuggestion(
   return {
     id: uuidv4(),
     date: formatDateYMD(date),
-    time: defaultSlotTimeForDay(date, existingPlanItems),
+    time: defaultSlotTimeForDay(date, existingPlanItems, userId, suggestion.platform),
     platform: suggestion.platform,
     topic: suggestion.topic,
     format: suggestion.format,

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getApiBaseUrl } from '../services/apiClient';
+import { getApiBaseUrl, getApiAuthHeaders } from '../services/apiClient';
 
 export const SocialAuthCallback: React.FC = () => {
     const { platform } = useParams<{ platform: string }>();
@@ -34,12 +34,14 @@ export const SocialAuthCallback: React.FC = () => {
             try {
                 setStatus(`Łączenie z platformą ${platform}...`);
 
+                const authHeaders = await getApiAuthHeaders(user.id);
                 const response = await fetch(`${getApiBaseUrl()}/api/social/callback/${platform}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-user-id': user.id
+                        ...authHeaders,
                     },
+                    credentials: 'include',
                     body: JSON.stringify({ code, state, oauth_token, oauth_verifier })
                 });
 

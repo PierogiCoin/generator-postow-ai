@@ -1,6 +1,11 @@
 import { callApi } from './apiClient';
 import { Platform } from '../types';
 import { STORAGE_KEYS } from '../utils/storageUtils';
+import {
+  analyzeCompetitorDeep,
+  type DeepCompetitorAnalysis,
+  type IntelligenceSource,
+} from './intelligenceService';
 
 export interface TrackedCompetitor {
   id: string;
@@ -25,7 +30,11 @@ export interface CompetitorAnalysis {
   strengths: string[];
   weaknesses: string[];
   opportunities: string[];
+  contentGaps?: string[];
   summary: string;
+  estimated?: boolean;
+  sources?: IntelligenceSource[];
+  recentNewsAngles?: { title: string; angle: string; url?: string }[];
 }
 
 const STORAGE_KEY = STORAGE_KEYS.COMPETITORS;
@@ -113,6 +122,53 @@ export function updateCompetitorAnalysis(id: string, analysis: CompetitorAnalysi
 }
 
 export async function analyzeCompetitor(
+  handle: string,
+  platform: Platform,
+  niche: string,
+  userId: string
+): Promise<CompetitorAnalysis> {
+  try {
+    const { analysis, sources } = await analyzeCompetitorDeep(handle, platform, niche, userId);
+    return mapDeepAnalysis(analysis, sources);
+  } catch {
+    return analyzeCompetitorLegacy(handle, platform, niche, userId);
+  }
+}
+
+function mapDeepAnalysis(analysis: DeepCompetitorAnalysis, sources: IntelligenceSource[]): CompetitorAnalysis {
+  const timingGaps =
+    analysis.timingGaps?.length > 0
+      ? analysis.timingGaps
+      : (analysis.hourlyActivity || [])
+          .filter((h) => h.density <= 3)
+          .slice(0, 5)
+          .map((h) => {
+            const days = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+            return `${days[h.weekday] ?? '?'} ${String(h.hour).padStart(2, '0')}:00 — niska aktywność (${h.density}/10)`;
+          });
+
+  return {
+    topHashtags: analysis.topHashtags || [],
+    hashtagStrategy: analysis.hashtagStrategy || '',
+    hashtagPatterns: analysis.hashtagPatterns || [],
+    hashtagRecommendations: analysis.hashtagRecommendations || [],
+    bestPostingTimes: analysis.bestPostingTimes || [],
+    worstPostingTimes: analysis.worstPostingTimes || [],
+    timingGaps,
+    timingRecommendation: analysis.timingRecommendation || '',
+    contentThemes: analysis.contentThemes || [],
+    strengths: analysis.strengths || [],
+    weaknesses: analysis.weaknesses || [],
+    opportunities: analysis.opportunities || [],
+    contentGaps: analysis.contentGaps || [],
+    summary: analysis.summary || '',
+    estimated: analysis.estimated,
+    sources,
+    recentNewsAngles: analysis.recentNewsAngles,
+  };
+}
+
+async function analyzeCompetitorLegacy(
   handle: string,
   platform: Platform,
   niche: string,

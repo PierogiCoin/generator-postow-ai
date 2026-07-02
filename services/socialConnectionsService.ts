@@ -1,5 +1,5 @@
 import { getSupabase } from './supabaseClient';
-import { getApiBaseUrl } from './apiClient';
+import { getApiBaseUrl, getApiAuthHeaders } from './apiClient';
 import type { SocialConnection, SocialPost, SocialPlatform } from '../types/socialPublishing';
 
 export const socialConnectionsService = {
@@ -37,8 +37,9 @@ export const socialConnectionsService = {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
         try {
+            const headers = await getApiAuthHeaders(userId);
             const response = await fetch(`${getApiBaseUrl()}/api/social/auth/${platform}`, {
-                headers: { 'x-user-id': userId },
+                headers,
                 signal: controller.signal,
             });
             if (!response.ok) throw new Error(`Failed to get auth URL: ${response.statusText}`);
@@ -60,8 +61,9 @@ export const socialConnectionsService = {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 15000);
         try {
+            const headers = await getApiAuthHeaders(userId);
             const response = await fetch(`${getApiBaseUrl()}/api/social/aggregate-history`, {
-                headers: { 'x-user-id': userId },
+                headers,
                 signal: controller.signal,
             });
             if (!response.ok) {

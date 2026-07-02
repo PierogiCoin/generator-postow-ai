@@ -1,5 +1,8 @@
 import { callApi } from './apiClient';
 import { STORAGE_KEYS } from '../utils/storageUtils';
+import { analyzeScheduleGaps, type GapSlotResult } from './intelligenceService';
+import { getTrackedCompetitors } from './competitorService';
+import { Platform } from '../types';
 
 /**
  * Auto-Schedule Optimization Service
@@ -39,6 +42,8 @@ export interface WeeklySchedule {
   peakActivityHours: string[];
   offPeakHours: string[];
   seasonalNotes?: string;
+  competitorGapSlots?: GapSlotResult[];
+  gapRecommendation?: string;
 }
 
 export interface ContentCalendarSuggestion {
@@ -68,6 +73,25 @@ export async function analyzeOptimalPostingTimes(
     profession?: string;
   }
 ): Promise<WeeklySchedule> {
+  const competitors = getTrackedCompetitors(userId)
+    .filter((c) => c.platform === platform)
+    .map((c) => c.handle);
+
+  let gapSlots: GapSlotResult[] = [];
+  let gapRecommendation = '';
+
+  try {
+    const gapAnalysis = await analyzeScheduleGaps(niche, platform as Platform, userId, {
+      competitorHandles: competitors,
+      timezone: targetTimezone,
+      contentType,
+    });
+    gapSlots = gapAnalysis.gapSlots || [];
+    gapRecommendation = gapAnalysis.recommendation || '';
+  } catch {
+    // kontynuuj z samym AI schedule
+  }
+
   const schedulePrompt = `Analyze optimal posting times for:
 
 NICHE: ${niche}
@@ -75,6 +99,9 @@ PLATFORM: ${platform}
 CONTENT TYPE: ${contentType}
 TIMEZONE: ${targetTimezone}
 ${audienceDemographics ? `AUDIENCE: ${JSON.stringify(audienceDemographics)}` : ''}
+${competitors.length ? `COMPETITORS TO AVOID: ${competitors.map((h) => `@${h}`).join(', ')}` : ''}
+${gapSlots.length ? `COMPETITOR GAP HOURS (prioritize these): ${gapSlots.slice(0, 6).map((g) => g.label).join(', ')}` : ''}
+${gapRecommendation ? `STRATEGY: ${gapRecommendation}` : ''}
 
 Provide a comprehensive posting schedule analysis:
 
@@ -108,7 +135,45 @@ Format as structured data.`;
     systemInstruction: "You are a social media timing expert with deep knowledge of platform algorithms and audience psychology. Provide specific, actionable time recommendations with realistic engagement predictions.",
   }, userId);
 
-  return parseWeeklySchedule(response.text || response, niche, platform, contentType, targetTimezone);
+  const schedule = parseWeeklySchedule(response.text || response, niche, platform, contentType, targetTimezone);
+
+  if (gapSlots.length > 0) {
+    schedule.competitorGapSlots = gapSlots;
+    schedule.gapRecommendation = gapRecommendation;
+    schedule.optimalSlots = mergeGapSlotsIntoSchedule(schedule.optimalSlots, gapSlots);
+  }
+
+  return schedule;
+}
+
+function mergeGapSlotsIntoSchedule(
+  existing: OptimalTimeSlot[],
+  gaps: GapSlotResult[]
+): OptimalTimeSlot[] {
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const monFirst = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  const fromGaps: OptimalTimeSlot[] = gaps.slice(0, 5).map((g) => ({
+    day: monFirst[g.weekday] || dayNames[g.weekday] || 'Monday',
+    dayOfWeek: g.weekday === 6 ? 0 : g.weekday + 1,
+    time: g.time,
+    score: g.gapScore,
+    confidence: g.gapScore >= 8 ? 'high' : g.gapScore >= 6 ? 'medium' : 'low',
+    predictedEngagement: 3 + g.gapScore * 0.5,
+    predictedReach: 800 + g.gapScore * 400,
+    reasoning: g.reason,
+    factors: {
+      audienceActivity: g.userPerformance || 7,
+      competitionLevel: Math.max(1, g.competitorDensity),
+      algorithmFavorability: g.gapScore,
+      contentTypeMatch: g.gapScore,
+    },
+    alternatives: [],
+  }));
+
+  const seen = new Set(existing.map((s) => `${s.day}-${s.time}`));
+  const merged = [...fromGaps.filter((s) => !seen.has(`${s.day}-${s.time}`)), ...existing];
+  return merged.sort((a, b) => b.score - a.score).slice(0, 10);
 }
 
 /**
@@ -196,6 +261,26 @@ export async function analyzeCompetitorTiming(
   gapsToExploit: string[];
   recommendation: string;
 }> {
+  try {
+    const niche = typeof localStorage !== 'undefined'
+      ? localStorage.getItem('userNiche') || 'marketing'
+      : 'marketing';
+    const analysis = await analyzeScheduleGaps(niche, platform as Platform, userId, {
+      competitorHandles,
+      contentType: 'post',
+    });
+    return {
+      theirBestTimes: analysis.gapSlots
+        .filter((g) => g.competitorDensity >= 7)
+        .map((g) => g.label),
+      theirWorstTimes: analysis.aiTimingGaps.slice(0, 5),
+      gapsToExploit: analysis.gapSlots.map((g) => `${g.label} — ${g.reason}`),
+      recommendation: analysis.recommendation,
+    };
+  } catch {
+    // legacy fallback
+  }
+
   const competitorPrompt = `Analyze posting patterns for competitors on ${platform}:
 
 COMPETITORS: ${competitorHandles.join(', ')}

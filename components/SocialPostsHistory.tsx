@@ -10,7 +10,7 @@ import {
     buildCalendarItemFromPostMortem,
     mergePostMortemIntoPlan,
 } from '../services/postMortemCalendarService';
-import { getApiBaseUrl } from '../services/apiClient';
+import { getApiBaseUrl, getApiAuthHeaders } from '../services/apiClient';
 import { useDataStore } from '../stores/dataStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationType } from '../types';
@@ -85,8 +85,10 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
         setLoading(true);
         setError(null);
         try {
+            const headers = await getApiAuthHeaders(userId);
             const res = await fetch(`${getApiBaseUrl()}/api/social/history/${connection.id}`, {
-                headers: { 'x-user-id': userId },
+                headers,
+                credentials: 'include',
                 signal,
             });
             if (!res.ok) {

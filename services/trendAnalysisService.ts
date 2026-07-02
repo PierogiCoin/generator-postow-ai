@@ -1,5 +1,7 @@
 import { callApi } from './apiClient';
 import { STORAGE_KEYS } from '../utils/storageUtils';
+import { fetchIntelligenceTrends, type IntelligenceTrend } from './intelligenceService';
+import { Platform } from '../types';
 
 /**
  * Trend Analysis Service
@@ -53,6 +55,49 @@ export interface TrendAlert {
  * Analyzes current trends in a specific niche/topic
  */
 export async function analyzeTrends(
+  niche: string,
+  platform: string,
+  userId: string,
+  depth: 'quick' | 'deep' = 'deep'
+): Promise<TrendData[]> {
+  try {
+    const result = await fetchIntelligenceTrends(
+      niche,
+      platform as Platform,
+      userId,
+      depth
+    );
+    if (result.trends?.length) {
+      return result.trends.map(mapIntelligenceTrend);
+    }
+  } catch {
+    // fallback poniżej
+  }
+
+  return analyzeTrendsLegacy(niche, platform, userId, depth);
+}
+
+function mapIntelligenceTrend(t: IntelligenceTrend, index: number): TrendData {
+  return {
+    id: `trend_${Date.now()}_${index}`,
+    topic: t.topic,
+    category: t.category || 'general',
+    momentum: t.momentum,
+    engagementScore: t.engagementScore,
+    volumeScore: t.volumeScore,
+    competitionLevel: t.competitionLevel,
+    predictedLifespan: t.predictedLifespan,
+    relatedHashtags: t.relatedHashtags || [],
+    bestPlatforms: t.bestPlatforms || [],
+    contentIdeas: t.contentIdeas || [],
+    whyItsTrending: t.contentGap
+      ? `${t.whyItsTrending} | Luka: ${t.contentGap}`
+      : t.whyItsTrending,
+    actionUrgency: t.actionUrgency,
+  };
+}
+
+async function analyzeTrendsLegacy(
   niche: string,
   platform: string,
   userId: string,

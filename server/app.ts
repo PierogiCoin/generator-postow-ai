@@ -11,6 +11,7 @@ import { createCostsRouter } from './routes/costs.js';
 import { createScoringRouter } from './routes/scoring.js';
 import { createVideoRouter } from './routes/video.js';
 import { createMiscRouter } from './routes/misc.js';
+import { createIntelligenceRouter } from './routes/intelligence.js';
 import paymentsRouter, { stripeWebhookHandler } from './routes/payments.js';
 
 const NOT_FOUND_ENDPOINTS = [
@@ -23,6 +24,11 @@ const NOT_FOUND_ENDPOINTS = [
   'POST /api/optimize-multi-platform',
   'POST /api/score-content',
   'POST /api/benchmark-content',
+  'POST /api/intelligence/news',
+  'POST /api/intelligence/trends',
+  'POST /api/intelligence/competitor',
+  'POST /api/intelligence/schedule-gaps',
+  'GET /api/social/best-times',
   'POST /api/social/post-mortem',
   'GET /api/costs/user/:userId',
   'GET /api/costs/daily',
@@ -57,6 +63,7 @@ export function createApp(): express.Application {
   app.use(createGenerationRouter());
   app.use('/api/costs', createCostsRouter());
   app.use(createScoringRouter());
+  app.use(createIntelligenceRouter());
   app.use(createVideoRouter());
   app.use(createMiscRouter());
 

@@ -20,6 +20,8 @@ import { AlertTriangleIcon } from './icons/AlertTriangleIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { RefreshCwIcon } from './icons/RefreshCwIcon';
 import { StarIcon } from './icons/StarIcon';
+import { fetchUserBestTimes, type HeatmapCell } from '../services/intelligenceService';
+import { PostingHeatmap } from './intelligence/PostingHeatmap';
 
 interface ScheduleOptimizerProps {
   niche: string;
@@ -74,8 +76,26 @@ export const ScheduleOptimizer: React.FC<ScheduleOptimizerProps> = ({
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('optimal');
   const [timezone, setTimezone] = useState<string>(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const [heatmapCells, setHeatmapCells] = useState<HeatmapCell[]>([]);
+  const [heatmapSamples, setHeatmapSamples] = useState(0);
+  const [isLoadingHeatmap, setIsLoadingHeatmap] = useState(false);
 
-  // Load cached data on mount
+  const loadHeatmap = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoadingHeatmap(true);
+    try {
+      const data = await fetchUserBestTimes(user.id, timezone);
+      setHeatmapCells(data.heatmap || []);
+      setHeatmapSamples(data.samples || 0);
+    } catch {
+      setHeatmapCells([]);
+      setHeatmapSamples(0);
+    } finally {
+      setIsLoadingHeatmap(false);
+    }
+  }, [user?.id, timezone]);
+
+  // Load cached schedule + heatmap on mount
   useEffect(() => {
     if (niche) {
       const cached = getCachedScheduleAnalysis(niche, platform);
@@ -83,7 +103,8 @@ export const ScheduleOptimizer: React.FC<ScheduleOptimizerProps> = ({
         setSchedule(cached);
       }
     }
-  }, [niche, platform]);
+    void loadHeatmap();
+  }, [niche, platform, loadHeatmap]);
 
   const handleAnalyze = useCallback(async () => {
     if (!user?.id) {
@@ -237,6 +258,8 @@ export const ScheduleOptimizer: React.FC<ScheduleOptimizerProps> = ({
           <div className="flex gap-2">
             {[
               { id: 'optimal', label: 'Optymalne Sloty', icon: TargetIcon },
+              { id: 'gaps', label: 'Luki vs konkurencja', icon: TrendingUpIcon },
+              { id: 'heatmap', label: 'Twoja heatmapa', icon: ClockIcon },
               { id: 'now', label: 'Najlepszy Teraz', icon: StarIcon },
               { id: 'weekly', label: 'Tygodniowy Plan', icon: CalendarIcon },
             ].map((tab) => (
@@ -368,6 +391,77 @@ export const ScheduleOptimizer: React.FC<ScheduleOptimizerProps> = ({
             </div>
           )}
 
+          {/* Competitor gap hours */}
+          {activeTab === 'gaps' && (
+            <div className="space-y-4">
+              {schedule.gapRecommendation && (
+                <p className="text-sm text-slate-600 dark:text-slate-400 p-4 rounded-xl bg-cyan-50 dark:bg-cyan-900/20 border border-cyan-200 dark:border-cyan-800">
+                  {schedule.gapRecommendation}
+                </p>
+              )}
+              {(schedule.competitorGapSlots?.length ?? 0) === 0 ? (
+                <p className="text-sm text-slate-500 italic text-center py-8">
+                  Brak slotów z lukami — dodaj konkurentów w panelu „Konkurenci” i uruchom analizę ponownie.
+                </p>
+              ) : (
+                schedule.competitorGapSlots!.map((gap) => {
+                  const dayNames = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela'];
+                  const day = dayNames[gap.weekday] || gap.label.split(' ')[0];
+                  return (
+                    <div
+                      key={`${gap.weekday}-${gap.hour}`}
+                      className="p-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 cursor-pointer hover:border-cyan-500/60 transition-colors"
+                      onClick={() => onSelectTime(day, gap.time)}
+                    >
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <h3 className="font-bold text-slate-900 dark:text-white">{gap.label}</h3>
+                        <span className="text-xs font-black px-2 py-1 rounded-full bg-cyan-600 text-white">
+                          Luka {gap.gapScore}/10
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-600 dark:text-slate-400">{gap.reason}</p>
+                      <p className="text-xs text-slate-500 mt-2">
+                        Konkurencja: {gap.competitorDensity}/10
+                        {gap.userPerformance ? ` · Twoje wyniki: ${gap.userPerformance}/10` : ''}
+                      </p>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* User posting heatmap */}
+          {activeTab === 'heatmap' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Na podstawie opublikowanych postów zsynchronizowanych z kont social.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void loadHeatmap()}
+                  disabled={isLoadingHeatmap}
+                  className="flex items-center gap-1.5 text-xs font-bold text-amber-600 hover:underline disabled:opacity-50"
+                >
+                  <RefreshCwIcon className={`w-3.5 h-3.5 ${isLoadingHeatmap ? 'animate-spin' : ''}`} />
+                  Odśwież
+                </button>
+              </div>
+              {isLoadingHeatmap ? (
+                <div className="py-12 flex justify-center">
+                  <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : (
+                <PostingHeatmap
+                  cells={heatmapCells}
+                  samples={heatmapSamples}
+                  timezone={timezone}
+                />
+              )}
+            </div>
+          )}
+
           {/* Best Time Now Tab */}
           {activeTab === 'now' && bestTimeNow && (
             <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl border-2 border-green-300 dark:border-green-700">
@@ -474,14 +568,23 @@ export const ScheduleOptimizer: React.FC<ScheduleOptimizerProps> = ({
           )}
         </>
       ) : (
-        <div className="text-center py-12">
-          <ClockIcon className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-          <p className="text-slate-500 dark:text-slate-400 mb-4">
-            Kliknij "Analizuj" aby znaleźć najlepsze czasy publikacji
-          </p>
-          <p className="text-sm text-slate-400">
-            AI przeanalizuje aktywność Twojej grupy docelowej, konkurencję i algorytm platformy
-          </p>
+        <div className="space-y-8">
+          <div className="text-center py-8">
+            <ClockIcon className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+            <p className="text-slate-500 dark:text-slate-400 mb-4">
+              Kliknij &quot;Analizuj&quot; aby znaleźć najlepsze czasy publikacji
+            </p>
+            <p className="text-sm text-slate-400">
+              AI przeanalizuje aktywność Twojej grupy docelowej, konkurencję i algorytm platformy
+            </p>
+          </div>
+          <div className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+            <PostingHeatmap
+              cells={heatmapCells}
+              samples={heatmapSamples}
+              timezone={timezone}
+            />
+          </div>
         </div>
       )}
     </div>

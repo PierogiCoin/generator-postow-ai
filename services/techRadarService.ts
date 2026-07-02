@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { callApi, extractJson } from './apiClient';
+import { fetchIntelligenceNews } from './intelligenceService';
 import type { Platform } from '../types';
 
 const CACHE_KEY = 'so_tech_radar_cache';
@@ -118,6 +119,29 @@ export async function fetchTechRadarNews(
   if (!options?.forceRefresh) {
     const cached = readCache(key);
     if (cached) return cached;
+  }
+
+  try {
+    const intel = await fetchIntelligenceNews(trimmedNiche, platform, userId);
+    const items = normalizeItems(
+      (intel.items || []).map((item) => ({
+        ...item,
+        id: undefined,
+      })),
+      intel.sources || []
+    );
+    if (items.length > 0) {
+      const result: TechRadarResult = {
+        items,
+        niche: trimmedNiche,
+        searchedAt: intel.searchedAt || new Date().toISOString(),
+        sources: intel.sources || [],
+      };
+      writeCache(key, result);
+      return result;
+    }
+  } catch {
+    // fallback do bezpośredniego generate-content
   }
 
   const today = new Date().toLocaleDateString('pl-PL', {

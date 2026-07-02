@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { checkCredits, deductCredits, PRICING } from '../stripe.js';
-import { requireSupabaseAuth } from './supabaseAuth.js';
+import { requireSupabaseAuth, assertNoSpoofedUserId } from './supabaseAuth.js';
 import logger from '../logger.js';
 
 type CreditAction = keyof typeof PRICING.costs;
@@ -102,7 +102,7 @@ function deductOnSuccess(): RequestHandler {
 
 /** Auth Supabase + sprawdzenie salda + pobranie kredytów po sukcesie */
 export function creditGate(action: CreditAction, cost?: CostResolver): RequestHandler[] {
-  return [requireSupabaseAuth, requireCredits(action, cost), deductOnSuccess()];
+  return [requireSupabaseAuth, assertNoSpoofedUserId, requireCredits(action, cost), deductOnSuccess()];
 }
 
 export function videoStoryCreditCost(req: Request): number {

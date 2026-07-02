@@ -20,15 +20,14 @@ export class LinkedInPublisher {
     this.config = config;
   }
 
-  async getAuthUrl(): Promise<string> {
+  async getAuthUrl(oauthState: string): Promise<string> {
     const scope = 'w_member_social';
-    const state = Math.random().toString(36).substring(7);
 
     return `https://www.linkedin.com/oauth/v2/authorization?` +
       `response_type=code&` +
       `client_id=${this.config.clientId}&` +
       `redirect_uri=${encodeURIComponent(this.config.redirectUri)}&` +
-      `state=${state}&` +
+      `state=${encodeURIComponent(oauthState)}&` +
       `scope=${scope}`;
   }
 
@@ -606,15 +605,14 @@ export class TikTokPublisher {
     this.config = config;
   }
 
-  static getAuthUrl(clientKey: string, redirectUri: string): string {
+  static getAuthUrl(clientKey: string, redirectUri: string, state: string): string {
     const scope = 'user.info.basic,video.list,video.upload';
-    const state = Math.random().toString(36).substring(7);
     return `https://www.tiktok.com/v2/auth/authorize/` +
       `?client_key=${clientKey}` +
       `&scope=${scope}` +
       `&response_type=code` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-      `&state=${state}`;
+      `&state=${encodeURIComponent(state)}`;
   }
 
   async exchangeCodeForToken(code: string): Promise<{ accessToken: string; refreshToken: string; openId: string; expiresIn: number }> {

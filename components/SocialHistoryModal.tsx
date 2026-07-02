@@ -4,7 +4,7 @@ import {
     X, ExternalLink, Calendar, Loader2, MessageSquare, Heart, Share2,
     BarChart3, AlertCircle, Eye, TrendingUp, RefreshCw, Image as ImageIcon
 } from 'lucide-react';
-import { getApiBaseUrl } from '../services/apiClient';
+import { getApiBaseUrl, getApiAuthHeaders } from '../services/apiClient';
 import type { SocialConnection } from '../types/socialPublishing';
 
 interface PostWithMetrics {
@@ -82,8 +82,10 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
         setIsLoading(true);
         setError(null);
         try {
+            const headers = await getApiAuthHeaders(userId);
             const res = await fetch(`${getApiBaseUrl()}/api/social/history/${connection.id}`, {
-                headers: { 'x-user-id': userId },
+                headers,
+                credentials: 'include',
                 signal,
             });
             if (!res.ok) {

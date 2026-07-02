@@ -10,6 +10,11 @@ import {
   updateCompetitorAnalysis,
   normalizeCompetitorHandle,
 } from '../services/competitorService';
+import {
+  analyzeCompetitorBatch,
+  type IntelligenceSource,
+} from '../services/intelligenceService';
+import { BatchCompetitorSummary, type BatchCompetitorResult } from './intelligence/BatchCompetitorSummary';
 import { showError, showSuccess, showWarning } from '../utils/errorHandler';
 import { parseUserFacingError } from '../utils/userFacingError';
 import { UsersIcon } from './icons/UsersIcon';
@@ -151,6 +156,33 @@ const CompetitorCard: React.FC<{
                 </div>
               </div>
 
+              {(competitor.analysis.contentGaps?.length ?? 0) > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-2">Luki treści (nie poruszają)</h4>
+                  <BulletList items={competitor.analysis.contentGaps!} icon="💡" />
+                </div>
+              )}
+
+              {(competitor.analysis.recentNewsAngles?.length ?? 0) > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Aktualne newsy / kąty</h4>
+                  <ul className="space-y-2">
+                    {competitor.analysis.recentNewsAngles!.map((n) => (
+                      <li key={n.title} className="text-sm text-slate-700 dark:text-slate-300">
+                        <span className="font-medium">{n.title}</span>
+                        {n.angle && <span className="block text-xs text-slate-500 mt-0.5">{n.angle}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(competitor.analysis.sources?.length ?? 0) > 0 && (
+                <p className="text-[10px] text-slate-400">
+                  Źródła wyszukiwania: {competitor.analysis.sources!.slice(0, 3).map((s) => s.title).join(' · ')}
+                </p>
+              )}
+
               {competitor.analysis.hashtagRecommendations.length > 0 && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Rekomendacje hashtagów dla Ciebie</h4>
@@ -184,6 +216,10 @@ export const CompetitorTrackerPanel: React.FC = () => {
   const [competitors, setCompetitors] = useState<TrackedCompetitor[]>([]);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
+  const [batchResult, setBatchResult] = useState<BatchCompetitorResult | null>(null);
+  const [batchSources, setBatchSources] = useState<IntelligenceSource[]>([]);
+  const [batchAnalyzedAt, setBatchAnalyzedAt] = useState<string | null>(null);
 
   const [handle, setHandle] = useState('');
   const [platform, setPlatform] = useState<Platform>(Platform.Instagram);
@@ -279,6 +315,55 @@ export const CompetitorTrackerPanel: React.FC = () => {
     }
   }, [userId, loadCompetitors]);
 
+  const handleBatchAnalyze = useCallback(async () => {
+    if (!userId) {
+      showWarning('Zaloguj się, aby uruchomić analizę.');
+      return;
+    }
+    if (competitors.length === 0) {
+      showWarning('Dodaj przynajmniej jednego konkurenta.');
+      return;
+    }
+
+    const nicheForBatch = niche.trim() || competitors[0]?.niche || 'marketing';
+    const platformForBatch = competitors[0]?.platform || Platform.Instagram;
+    const handles = competitors.map((c) => c.handle);
+
+    setIsBatchAnalyzing(true);
+    try {
+      const [{ batch, sources, analyzedAt }, ...individualResults] = await Promise.all([
+        analyzeCompetitorBatch(handles, platformForBatch, nicheForBatch, userId),
+        ...competitors.map((c) =>
+          analyzeCompetitor(c.handle, c.platform, c.niche, userId).then((analysis) => ({
+            id: c.id,
+            analysis,
+          }))
+        ),
+      ]);
+
+      for (const result of individualResults) {
+        if (result && 'id' in result && result.analysis) {
+          updateCompetitorAnalysis(result.id, result.analysis, userId);
+        }
+      }
+
+      if (isMountedRef.current) {
+        setBatchResult(batch as BatchCompetitorResult);
+        setBatchSources(sources || []);
+        setBatchAnalyzedAt(analyzedAt || new Date().toISOString());
+        loadCompetitors();
+        showSuccess(`Przeanalizowano ${competitors.length} konkurentów + raport grupowy.`);
+      }
+    } catch (err: unknown) {
+      if (isMountedRef.current) {
+        const parsed = parseUserFacingError(err);
+        showError(parsed.message, parsed.title);
+      }
+    } finally {
+      if (isMountedRef.current) setIsBatchAnalyzing(false);
+    }
+  }, [userId, competitors, niche, loadCompetitors]);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
@@ -292,14 +377,35 @@ export const CompetitorTrackerPanel: React.FC = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">Analizuj hashtagi, godziny i strategie treści</p>
           </div>
         </div>
-        <button
-          onClick={() => setShowForm(v => !v)}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
-        >
-          <span className="text-lg leading-none">+</span>
-          Dodaj konkurenta
-        </button>
+        <div className="flex items-center gap-2">
+          {competitors.length > 0 && (
+            <button
+              type="button"
+              onClick={handleBatchAnalyze}
+              disabled={isBatchAnalyzing || analyzingId !== null}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              {isBatchAnalyzing ? 'Analizuję wszystkich…' : 'Analizuj wszystkich'}
+            </button>
+          )}
+          <button
+            onClick={() => setShowForm(v => !v)}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+          >
+            <span className="text-lg leading-none">+</span>
+            Dodaj konkurenta
+          </button>
+        </div>
       </div>
+
+      {batchResult && (
+        <BatchCompetitorSummary
+          batch={batchResult}
+          sources={batchSources}
+          analyzedAt={batchAnalyzedAt || undefined}
+        />
+      )}
 
       {/* Add form */}
       {showForm && (

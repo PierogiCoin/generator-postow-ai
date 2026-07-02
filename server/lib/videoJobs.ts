@@ -14,6 +14,7 @@ export interface VideoJobResult {
 
 export interface VideoJobStatus {
   jobId: string;
+  userId: string;
   stage: VideoJobStage;
   stageLabel: string;
   progress: number;
@@ -59,6 +60,7 @@ export function createVideoJob(userId: string, provider: string): string {
   const now = Date.now();
   jobs.set(jobId, {
     jobId,
+    userId,
     stage: 'queued',
     stageLabel: STAGE_LABELS.queued,
     progress: 2,
