@@ -62,6 +62,7 @@ export interface InputFormModalsProps {
   onReverseImageSelect: (prompt: string, caption?: string) => void;
   onTrendSelect: (topic: string) => void;
   onScheduleSelect: () => void;
+  onAddTechNewsToCalendar?: (items: import('../../services/techRadarService').TechNewsItem[]) => void;
 }
 
 export const InputFormModals: React.FC<InputFormModalsProps> = ({
@@ -106,6 +107,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onReverseImageSelect,
   onTrendSelect,
   onScheduleSelect,
+  onAddTechNewsToCalendar,
 }) => (
   <>
     <SaveTemplateModal
@@ -154,6 +156,10 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
             platform={formData.platform}
             onSelectTopic={(topic) => {
               onTrendSelect(topic);
+              onCloseTechRadar();
+            }}
+            onAddToCalendar={(items) => {
+              onAddTechNewsToCalendar?.(items);
               onCloseTechRadar();
             }}
           />

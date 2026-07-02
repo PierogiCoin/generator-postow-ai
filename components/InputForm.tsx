@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { TONES, CONTENT_TYPES, VISUAL_STYLES, AI_MODELS, GENERATION_TYPES } from '../constants';
 import type { FormData, CustomTemplate, CampaignHistoryItem, FavoritePost, AudiencePersona } from '../types';
 import { Tone, Platform, ContentType, VisualStyle, GenerationType, AIModel, UserPlan, CopywritingFramework, GenerationMode } from '../types';
@@ -62,6 +63,9 @@ import { getStoredInputFormMode, setStoredInputFormMode, stripTopicHtml, type In
 import { isOnboardingPendingFirstGenerate } from '../utils/onboarding';
 import { OnboardingFirstPostBanner } from './inputForm/OnboardingFirstPostBanner';
 import { getPlatformVisualSpec, isAspectRatioAllowedForPlatform } from '../utils/platformVisualSpec';
+import { mergeCalendarPlans } from '../services/calendarCadenceService';
+import { buildTechNewsCalendarItems } from '../services/techRadarCalendar';
+import type { TechNewsItem } from '../services/techRadarService';
 
 
 interface InputFormProps {
@@ -79,6 +83,7 @@ export const InputForm: React.FC<InputFormProps> = ({
   onAutoGenerateConsumed,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user, userPlan, currentTeamId } = useAuth();
   const { addToast } = useNotifications();
   const handlers = useAppHandlers(() => { }, () => { });
@@ -437,6 +442,19 @@ export const InputForm: React.FC<InputFormProps> = ({
     []
   );
 
+  const handleAddTechNewsToCalendar = useCallback(
+    async (newsItems: TechNewsItem[]) => {
+      const { intelligentCalendarPlan, setIntelligentCalendarPlan } = useDataStore.getState();
+      const slots = buildTechNewsCalendarItems(newsItems, formData.platform, 2);
+      await setIntelligentCalendarPlan(mergeCalendarPlans(intelligentCalendarPlan, slots));
+      addToast(
+        t('form.techRadar.calendarAdded', 'Dodano {{count}} sloty newsów do kalendarza', { count: slots.length }),
+        NotificationType.Success
+      );
+      navigate('/calendar');
+    },
+    [formData.platform, addToast, navigate, t]
+  );
 
   return (
     <>
@@ -468,6 +486,7 @@ export const InputForm: React.FC<InputFormProps> = ({
             onSubmit={handleSubmit}
             onSaveDraft={handleSaveDraft}
             onOpenAssistant={() => setIsAssistantModalOpen(true)}
+            onOpenTechRadar={() => setIsTechRadarOpen(true)}
             onSwitchToAdvanced={() => handleModeChange('advanced')}
             onAiAction={(action, text) => {
               void handlers.handleAIAssistantAction(action as Parameters<typeof handlers.handleAIAssistantAction>[0], text, formData.topic, formData);
@@ -915,6 +934,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         }}
         onTrendSelect={(topic) => setFormData((p) => ({ ...p, topic }))}
         onScheduleSelect={() => setIsScheduleOptimizerOpen(false)}
+        onAddTechNewsToCalendar={handleAddTechNewsToCalendar}
       />
     </>
   );

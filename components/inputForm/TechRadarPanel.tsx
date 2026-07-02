@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Globe, RefreshCw, Loader2, ExternalLink, Sparkles } from 'lucide-react';
+import { Globe, RefreshCw, Loader2, ExternalLink, Sparkles, CalendarPlus } from 'lucide-react';
 import type { Platform } from '../../types';
 import {
   fetchTechRadarNews,
@@ -16,12 +16,14 @@ interface TechRadarPanelProps {
   niche: string;
   platform: Platform;
   onSelectTopic: (topic: string, item?: TechNewsItem) => void;
+  onAddToCalendar?: (items: TechNewsItem[]) => void;
 }
 
 export const TechRadarPanel: React.FC<TechRadarPanelProps> = ({
   niche,
   platform,
   onSelectTopic,
+  onAddToCalendar,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -116,6 +118,17 @@ export const TechRadarPanel: React.FC<TechRadarPanelProps> = ({
             <> · {result.sources.length} {t('form.techRadar.sources', 'źródeł w Google')}</>
           )}
         </p>
+      )}
+
+      {result && result.items.length > 0 && onAddToCalendar && (
+        <button
+          type="button"
+          onClick={() => onAddToCalendar(result.items)}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold transition-colors"
+        >
+          <CalendarPlus className="w-4 h-4" />
+          {t('form.techRadar.addToCalendar', 'Dodaj top 2 newsy do kalendarza (ten tydzień)')}
+        </button>
       )}
 
       <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1 custom-scrollbar">

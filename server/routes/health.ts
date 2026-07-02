@@ -11,16 +11,36 @@ function stripeEnvStatus() {
     'STRIPE_AGENCY_PRICE_ID',
     'STRIPE_ENTERPRISE_PRICE_ID',
   ];
+  const creditPackIds = [
+    'STRIPE_CREDITS_SMALL_PRICE_ID',
+    'STRIPE_CREDITS_MEDIUM_PRICE_ID',
+    'STRIPE_CREDITS_LARGE_PRICE_ID',
+    'STRIPE_CREDITS_MEGA_PRICE_ID',
+  ];
   const configuredPrices = priceIds.filter((key) => Boolean(process.env[key]));
+  const configuredCreditPacks = creditPackIds.filter((key) => Boolean(process.env[key]));
+  const secretKey = process.env.STRIPE_SECRET_KEY || '';
+  const liveMode = secretKey.startsWith('sk_live_');
+  const testMode = secretKey.startsWith('sk_test_');
+
   return {
-    secretKey: Boolean(process.env.STRIPE_SECRET_KEY),
+    secretKey: Boolean(secretKey),
+    liveMode,
+    testMode,
     webhookSecret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     priceIdsConfigured: configuredPrices.length,
     priceIdsTotal: priceIds.length,
+    creditPacksConfigured: configuredCreditPacks.length,
+    creditPacksTotal: creditPackIds.length,
     ready: Boolean(
-      process.env.STRIPE_SECRET_KEY &&
+      secretKey &&
         process.env.STRIPE_WEBHOOK_SECRET &&
         configuredPrices.length >= 2
+    ),
+    productionReady: Boolean(
+      liveMode &&
+        process.env.STRIPE_WEBHOOK_SECRET &&
+        configuredPrices.length >= 4
     ),
   };
 }

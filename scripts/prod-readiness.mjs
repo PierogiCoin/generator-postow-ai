@@ -49,7 +49,14 @@ async function main() {
 
   console.log('── Stripe ──\n');
   if (stripe.ready) {
-    console.log('  ✅ STRIPE_SECRET_KEY + webhook + price IDs OK');
+    const mode = stripe.liveMode ? 'LIVE' : stripe.testMode ? 'TEST' : 'unknown';
+    console.log(`  ✅ Stripe skonfigurowany (${mode})`);
+    if (stripe.liveMode && stripe.productionReady) {
+      console.log('  ✅ Gotowe do przyjmowania płatności LIVE');
+    } else if (stripe.testMode) {
+      console.log('  ⚠️  Tryb testowy — przed launch ustaw sk_live_ + webhook LIVE');
+      console.log('     npm run stripe:live-check');
+    }
   } else {
     console.log('  ⚠️  Stripe niekompletny w Railway:');
     console.log(`     STRIPE_SECRET_KEY: ${stripe.secretKey ? '✓' : '✗'}`);

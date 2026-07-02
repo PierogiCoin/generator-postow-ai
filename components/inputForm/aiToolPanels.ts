@@ -43,8 +43,8 @@ export function createAiToolPanels(openers: AiToolPanelOpeners): AiToolPanel[] {
     },
     {
       id: 'tech-radar',
-      title: 'Tech Radar',
-      description: 'Aktualne newsy z Google Search',
+      title: 'Znajdź nowinki w niszy',
+      description: 'Live newsy z Google Search → temat lub kalendarz',
       icon: GlobeIcon,
       iconGradient: 'from-cyan-500 to-blue-600',
       onClick: () => openers.setIsTechRadarOpen(true),

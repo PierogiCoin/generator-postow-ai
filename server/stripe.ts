@@ -2,6 +2,7 @@ import Stripe from 'stripe';
 import { supabase } from './supabase';
 import logger from './logger.js';
 import { buildCreditPacksConfig, buildSubscriptionsConfig } from './lib/pricingConfig.js';
+import { resolveUserIdFromInvoice } from './lib/stripeUserResolve.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-11-20.acacia' as any,
@@ -406,15 +407,7 @@ async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  const subscriptionId =
-    typeof invoice.subscription === 'string'
-      ? invoice.subscription
-      : invoice.subscription?.id;
-
-  if (!subscriptionId) return;
-
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-  const userId = subscription.metadata?.userId;
+  const userId = await resolveUserIdFromInvoice(invoice, stripe);
   if (!userId) return;
 
   const { data: profile } = await supabase
@@ -428,23 +421,34 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     if (planConfig) {
       await supabase
         .from('profiles')
-        .update({ credits: planConfig.credits })
+        .update({
+          credits: planConfig.credits,
+          subscription_status: 'active',
+        })
         .eq('id', userId);
     }
   }
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  const userId = (invoice as any).subscription_details?.metadata?.userId;
-  if (!userId) return;
+  const userId = await resolveUserIdFromInvoice(invoice, stripe);
+  if (!userId) {
+    logger.warn('[Stripe] payment_failed without resolvable user', { invoiceId: invoice.id });
+    return;
+  }
 
-  // Notify user about payment failure
+  await supabase
+    .from('profiles')
+    .update({ subscription_status: 'past_due' })
+    .eq('id', userId);
+
   await supabase.from('notifications').insert({
     user_id: userId,
     type: 'payment_failed',
-    title: 'Payment Failed',
-    message: 'Your subscription payment failed. Please update your payment method.',
-    metadata: { invoiceId: invoice.id }
+    title: 'Płatność nieudana',
+    message:
+      'Nie udało się pobrać opłaty za subskrypcję. Zaktualizuj metodę płatności w ustawieniach konta.',
+    metadata: { invoiceId: invoice.id },
   });
 }
 

@@ -7,6 +7,7 @@ import { PlatformSelector } from '../PlatformSelector';
 import { ToneSelector } from '../ToneSelector';
 import { ContentLanguageSelector } from '../ContentLanguageSelector';
 import { SparklesIcon } from '../icons/SparklesIcon';
+import { GlobeIcon } from '../icons/GlobeIcon';
 import { SaveIcon } from '../icons/SaveIcon';
 import { CheckIcon } from '../icons/CheckIcon';
 import { ModernButton } from '../ui/ModernButton';
@@ -26,6 +27,7 @@ export interface InputFormQuickFlowProps {
   onSubmit: (e: React.FormEvent) => void;
   onSaveDraft: () => void;
   onOpenAssistant: () => void;
+  onOpenTechRadar?: () => void;
   onSwitchToAdvanced: () => void;
   onAiAction: (action: string, text: string) => void;
   aiToolPanels: AiToolPanel[];
@@ -45,6 +47,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   onSubmit,
   onSaveDraft,
   onOpenAssistant,
+  onOpenTechRadar,
   onSwitchToAdvanced,
   onAiAction,
   aiToolPanels,
@@ -124,7 +127,17 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
               </label>
               <Tooltip text={t('form.topic.tooltip', 'Opisz temat — im konkretniej, tym lepszy wynik.')} />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {onOpenTechRadar && (
+                <button
+                  type="button"
+                  onClick={onOpenTechRadar}
+                  className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-900/30 px-3 py-1.5 rounded-xl border border-cyan-100 dark:border-cyan-800/50"
+                >
+                  <GlobeIcon className="w-4 h-4" />
+                  {t('form.techRadar.quickButton', 'Znajdź nowinki w niszy')}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onOpenAssistant}

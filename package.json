@@ -14,7 +14,9 @@
     "test:watch": "vitest",
     "smoke": "node scripts/smoke-prod.mjs",
     "prod:readiness": "node scripts/prod-readiness.mjs",
-    "stripe:bootstrap": "bash scripts/stripe-bootstrap.sh"
+    "stripe:live-check": "node scripts/stripe-live-check.mjs",
+    "stripe:bootstrap": "bash scripts/stripe-bootstrap.sh",
+    "stripe:bootstrap:live": "bash scripts/stripe-bootstrap-live.sh"
   },
   "dependencies": {
     "@google/genai": "1.24.0",
