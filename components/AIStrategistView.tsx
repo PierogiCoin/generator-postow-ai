@@ -87,7 +87,8 @@ const ReportDisplay: React.FC<{
     selectedBrandId?: string;
     onNewAudit: () => void;
 }> = ({ report, selectedBrandId, onNewAudit }) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
     const { setIntelligentCalendarPlan, setActiveBrandVoiceId, intelligentCalendarPlan } = useDataStore();
     const [planImported, setPlanImported] = useState(false);
     const navigate = useNavigate();
@@ -102,9 +103,9 @@ const ReportDisplay: React.FC<{
         navigateToCalendarSlot(item, navigate, true);
     };
 
-    const handleImport = useCallback(() => {
+    const handleImport = useCallback(async () => {
         const merged = mergeCalendarPlans(intelligentCalendarPlan, report.actionablePlan);
-        setIntelligentCalendarPlan(merged);
+        await setIntelligentCalendarPlan(merged);
         setPlanImported(true);
         setTimeout(() => navigate("/calendar"), 1500);
     }, [report.actionablePlan, navigate, intelligentCalendarPlan, setIntelligentCalendarPlan]);
@@ -129,6 +130,7 @@ const ReportDisplay: React.FC<{
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Pillars */}
+                {report.contentPillars?.length > 0 && (
                 <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.pillars')}</h3>
                     <div className="space-y-4">
@@ -137,14 +139,16 @@ const ReportDisplay: React.FC<{
                                 <summary className="font-semibold cursor-pointer">{p.pillar}</summary>
                                 <p className="text-sm text-slate-600 dark:text-slate-400 mt-2">{p.description}</p>
                                 <ul className="list-disc list-inside text-sm mt-2 space-y-1">
-                                    {p.postIdeas.map((idea, i) => <li key={`${p.pillar}-${i}`}>{idea}</li>)}
+                                    {(p.postIdeas ?? []).map((idea, i) => <li key={`${p.pillar}-${i}`}>{idea}</li>)}
                                 </ul>
                             </details>
                         ))}
                     </div>
                 </div>
+                )}
 
                 {/* Persona */}
+                {report.refinedPersona && (
                 <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.persona')}</h3>
                     <h4 className="font-bold text-lg text-blue-700 dark:text-blue-300">{report.refinedPersona.name}, {report.refinedPersona.age}</h4>
@@ -166,6 +170,7 @@ const ReportDisplay: React.FC<{
                         <p className="text-sm mt-3 text-slate-600 dark:text-slate-400 italic">{report.refinedPersona.communicationTips}</p>
                     )}
                 </div>
+                )}
             </div>
 
             {/* Competitive snapshot */}
@@ -191,10 +196,10 @@ const ReportDisplay: React.FC<{
                     </h3>
                     <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">{report.contentAdaptation.notes}</p>
                     <p className="text-xs text-slate-500 mb-3">
-                        Przeanalizowano {report.contentAdaptation.reviewedCount} istniejących pozycji
+                        {t('strategist.report.reviewedCount', { count: report.contentAdaptation.reviewedCount, defaultValue: `Przeanalizowano ${report.contentAdaptation.reviewedCount} istniejących pozycji` })}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        {report.contentAdaptation.buildsOn.length > 0 && (
+                        {(report.contentAdaptation.buildsOn?.length ?? 0) > 0 && (
                             <div>
                                 <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
                                     {t('strategist.report.buildsOn', 'Rozwija')}
@@ -204,7 +209,7 @@ const ReportDisplay: React.FC<{
                                 </ul>
                             </div>
                         )}
-                        {report.contentAdaptation.gapsFilled.length > 0 && (
+                        {(report.contentAdaptation.gapsFilled?.length ?? 0) > 0 && (
                             <div>
                                 <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
                                     {t('strategist.report.gapsFilled', 'Uzupełnia luki')}
@@ -214,7 +219,7 @@ const ReportDisplay: React.FC<{
                                 </ul>
                             </div>
                         )}
-                        {report.contentAdaptation.avoidedRepetition.length > 0 && (
+                        {(report.contentAdaptation.avoidedRepetition?.length ?? 0) > 0 && (
                             <div>
                                 <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
                                     {t('strategist.report.avoided', 'Unika powtórzeń')}
@@ -224,7 +229,7 @@ const ReportDisplay: React.FC<{
                                 </ul>
                             </div>
                         )}
-                        {report.contentAdaptation.complementsScheduled.length > 0 && (
+                        {(report.contentAdaptation.complementsScheduled?.length ?? 0) > 0 && (
                             <div>
                                 <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
                                     {t('strategist.report.complements', 'Uzupełnia kalendarz')}
@@ -256,33 +261,33 @@ const ReportDisplay: React.FC<{
                         </p>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                        {report.intelligenceInsights.trendingTopics.length > 0 && (
+                        {(report.intelligenceInsights.trendingTopics?.length ?? 0) > 0 && (
                             <div>
-                                <h4 className="font-semibold mb-2">Trendy</h4>
+                                <h4 className="font-semibold mb-2">{t('strategist.report.trends', 'Trendy')}</h4>
                                 <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
-                                    {report.intelligenceInsights.trendingTopics.map((t, i) => <li key={`trend-${i}`}>{t}</li>)}
+                                    {report.intelligenceInsights.trendingTopics.map((topic, i) => <li key={`trend-${i}`}>{topic}</li>)}
                                 </ul>
                             </div>
                         )}
-                        {report.intelligenceInsights.contentGaps.length > 0 && (
+                        {(report.intelligenceInsights.contentGaps?.length ?? 0) > 0 && (
                             <div>
-                                <h4 className="font-semibold mb-2">Luki treści</h4>
+                                <h4 className="font-semibold mb-2">{t('strategist.report.contentGaps', 'Luki treści')}</h4>
                                 <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
                                     {report.intelligenceInsights.contentGaps.map((g, i) => <li key={`gap-${i}`}>{g}</li>)}
                                 </ul>
                             </div>
                         )}
-                        {report.intelligenceInsights.optimalPostingSlots.length > 0 && (
+                        {(report.intelligenceInsights.optimalPostingSlots?.length ?? 0) > 0 && (
                             <div>
-                                <h4 className="font-semibold mb-2">Optymalne godziny</h4>
+                                <h4 className="font-semibold mb-2">{t('strategist.report.optimalTimes', 'Optymalne godziny')}</h4>
                                 <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
                                     {report.intelligenceInsights.optimalPostingSlots.map((s, i) => <li key={`slot-${i}`}>{s}</li>)}
                                 </ul>
                             </div>
                         )}
-                        {report.intelligenceInsights.newsAngles.length > 0 && (
+                        {(report.intelligenceInsights.newsAngles?.length ?? 0) > 0 && (
                             <div>
-                                <h4 className="font-semibold mb-2">Kąty z newsów</h4>
+                                <h4 className="font-semibold mb-2">{t('strategist.report.newsAngles', 'Kąty z newsów')}</h4>
                                 <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
                                     {report.intelligenceInsights.newsAngles.map((n, i) => <li key={`news-${i}`}>{n}</li>)}
                                 </ul>
@@ -293,27 +298,29 @@ const ReportDisplay: React.FC<{
             )}
 
             {/* SWOT */}
+            {report.swot && (
             <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.swot')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <h4 className="font-semibold text-green-600 mb-2">{t('strategist.report.strengths')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.strengths.map((s, i) => <li key={`strength-${i}`}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{(report.swot.strengths ?? []).map((s, i) => <li key={`strength-${i}`}>{s}</li>)}</ul>
                     </div>
                     <div>
                         <h4 className="font-semibold text-red-600 mb-2">{t('strategist.report.weaknesses')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.weaknesses.map((s, i) => <li key={`weakness-${i}`}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{(report.swot.weaknesses ?? []).map((s, i) => <li key={`weakness-${i}`}>{s}</li>)}</ul>
                     </div>
                     <div>
                         <h4 className="font-semibold text-blue-600 mb-2">{t('strategist.report.opportunities')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.opportunities.map((s, i) => <li key={`opportunity-${i}`}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{(report.swot.opportunities ?? []).map((s, i) => <li key={`opportunity-${i}`}>{s}</li>)}</ul>
                     </div>
                     <div>
                         <h4 className="font-semibold text-yellow-600 mb-2">{t('strategist.report.threats')}</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm">{report.swot.threats.map((s, i) => <li key={`threat-${i}`}>{s}</li>)}</ul>
+                        <ul className="list-disc list-inside space-y-1 text-sm">{(report.swot.threats ?? []).map((s, i) => <li key={`threat-${i}`}>{s}</li>)}</ul>
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Plan */}
             <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
@@ -328,7 +335,7 @@ const ReportDisplay: React.FC<{
                         <div key={item.id} className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg flex justify-between items-center group">
                             <div className="flex-1">
                                 <p className="text-xs font-bold text-blue-600">
-                                    {new Date(item.date + 'T12:00:00Z').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                    {new Date(item.date + 'T12:00:00Z').toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
                                     {item.time && <span className="ml-2 text-slate-400">@ {item.time}</span>}
                                 </p>
                                 <p className="font-semibold text-sm mt-1">{item.topic}</p>
@@ -343,7 +350,7 @@ const ReportDisplay: React.FC<{
                                         <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 rounded text-emerald-700 dark:text-emerald-300 font-medium">{item.contentIntent}</span>
                                     )}
                                     {item.suggestedTone && (
-                                        <span className="text-[10px] italic text-slate-500 font-medium">Ton: {item.suggestedTone}</span>
+                                        <span className="text-[10px] italic text-slate-500 font-medium">{t('strategist.report.tone', 'Ton')}: {item.suggestedTone}</span>
                                     )}
                                 </div>
                             </div>
@@ -364,7 +371,8 @@ const ReportDisplay: React.FC<{
 }
 
 export const AIStrategistView: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const dateLocale = i18n.language?.startsWith('pl') ? 'pl-PL' : 'en-US';
     const { userPlan, user } = useAuth();
     const { addToast } = useNotifications();
     const handlers = useAppHandlers(addToast, () => { });
@@ -374,10 +382,21 @@ export const AIStrategistView: React.FC = () => {
 
     const formVisible = !strategicAuditReport || showForm;
 
-    useEffect(() => {
-        if (!user || !formVisible) return;
+    const refreshAuditHistory = useCallback(() => {
+        if (!user) return;
         fetchAuditHistory(user.id, 8).then(setAuditHistory).catch(() => setAuditHistory([]));
-    }, [user, formVisible]);
+    }, [user]);
+
+    useEffect(() => {
+        refreshAuditHistory();
+    }, [refreshAuditHistory]);
+
+    // Po wygenerowaniu nowego audytu odśwież listę (zapis do Supabase jest best-effort/async).
+    useEffect(() => {
+        if (!strategicAuditReport) return;
+        const timer = setTimeout(refreshAuditHistory, 1500);
+        return () => clearTimeout(timer);
+    }, [strategicAuditReport, refreshAuditHistory]);
 
     const [goal, setGoal] = useState('');
     const [audience, setAudience] = useState('');
@@ -511,7 +530,7 @@ export const AIStrategistView: React.FC = () => {
                                     key={p}
                                     type="button"
                                     onClick={() => setPlatforms(prev => prev.includes(p) ? prev.filter(pl => pl !== p) : [...prev, p])}
-                                    aria-label={isSelected ? `Deselect ${p}` : `Select ${p}`}
+                                    aria-label={`${p}`}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected ? config.color.replace("bg-", "bg-") + " text-white shadow-sm" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600"}`}
                                 >
                                     <Icon className="w-4 h-4" /> {p}
@@ -558,7 +577,7 @@ export const AIStrategistView: React.FC = () => {
                     <textarea id="competitors" value={competitors} onChange={e => setCompetitors(e.target.value)} rows={3} placeholder={t('strategist.form.competitorsPlaceholder')} className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500" />
                 </div>
                 <div className="flex justify-end">
-                    <button type="submit" disabled={!goal || !audience || platforms.length === 0 || formats.length === 0} aria-label="Generate strategy" className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition disabled:opacity-50">
+                    <button type="submit" disabled={!goal || !audience || platforms.length === 0 || formats.length === 0} aria-label={t('strategist.form.submit')} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition disabled:opacity-50">
                         <SparklesIcon className="w-5 h-5" />
                         {t('strategist.form.submit')}
                     </button>
@@ -583,7 +602,7 @@ export const AIStrategistView: React.FC = () => {
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="min-w-0">
                                         <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                                            {new Date(entry.timestamp).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(entry.timestamp).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </p>
                                         <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 mt-1">
                                             {entry.report.summary}

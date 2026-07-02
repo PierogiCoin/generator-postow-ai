@@ -25,12 +25,24 @@ describe('strategyHelpers', () => {
         actionablePlan: [],
       })
     ).toBe(false);
+    // Niekompletny raport (pusty SWOT, brak filarów) — odrzucony.
     expect(
       isValidStrategicAuditReport({
         summary: 'OK plan',
         contentPillars: [],
         refinedPersona: { name: 'x', age: 1, location: '', jobTitle: '', demographics: '', goals: [], painPoints: [], communicationTips: '' },
         swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
+        competitiveSnapshot: [],
+        actionablePlan: [{ id: '1', date: '2026-07-01', platform: Platform.Facebook, topic: 't', format: GenerationType.PostWithImage, strategy: 's' }],
+      })
+    ).toBe(false);
+    // Kompletny raport — akceptowany.
+    expect(
+      isValidStrategicAuditReport({
+        summary: 'OK plan',
+        contentPillars: [{ pillar: 'Edukacja', description: 'd', postIdeas: ['i'] }],
+        refinedPersona: { name: 'x', age: 1, location: '', jobTitle: '', demographics: '', goals: [], painPoints: [], communicationTips: '' },
+        swot: { strengths: ['s'], weaknesses: [], opportunities: [], threats: [] },
         competitiveSnapshot: [],
         actionablePlan: [{ id: '1', date: '2026-07-01', platform: Platform.Facebook, topic: 't', format: GenerationType.PostWithImage, strategy: 's' }],
       })

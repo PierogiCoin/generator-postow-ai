@@ -273,11 +273,21 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        const a = document.createElement('a');
-                        a.href = generatedVideo.url;
-                        a.download = `video-story-${Date.now()}.mp4`;
-                        a.click();
+                      onClick={async () => {
+                        const filename = `video-story-${Date.now()}.mp4`;
+                        try {
+                          // Pobranie przez blob działa cross-origin (CDN/Supabase) tam, gdzie samo `download` zawodzi.
+                          const res = await fetch(generatedVideo.url);
+                          const blob = await res.blob();
+                          const objectUrl = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = objectUrl;
+                          a.download = filename;
+                          a.click();
+                          URL.revokeObjectURL(objectUrl);
+                        } catch {
+                          window.open(generatedVideo.url, '_blank', 'noopener');
+                        }
                       }}
                       className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition flex items-center justify-center gap-2"
                     >

@@ -1,6 +1,5 @@
 import type {
   BrandVoiceProfile,
-  CampaignHistoryItem,
   AIInsight,
   IntelligentCalendarPlanItem,
   StrategicAuditReport,
@@ -21,27 +20,6 @@ export function frequencyToPlanSlots(frequency: string): number {
     default:
       return 6;
   }
-}
-
-export function buildHistoryContextForAudit(history: CampaignHistoryItem[]): string {
-  const recent = history.slice(0, 15);
-  if (recent.length === 0) return 'Brak historii publikacji.';
-
-  const lines = recent.map((h) => {
-    const topic = (h.formData?.topic || '').replace(/<[^>]*>?/gm, '').trim();
-    const platform = h.formData?.platform || '?';
-    const format = h.formData?.generationType || '?';
-    const tone = h.formData?.tone || '';
-    const perf = h.performance
-      ? `likes:${h.performance.likes ?? 0} comments:${h.performance.comments ?? 0} shares:${h.performance.shares ?? 0}`
-      : '';
-    return `- [${platform}/${format}${tone ? `/${tone}` : ''}] ${topic}${perf ? ` (${perf})` : ''}`;
-  });
-
-  const platforms = [...new Set(recent.map((h) => h.formData?.platform).filter(Boolean))];
-  const formats = [...new Set(recent.map((h) => h.formData?.generationType).filter(Boolean))];
-
-  return `Ostatnie treści (${recent.length}):\n${lines.join('\n')}\n\nDominujące platformy: ${platforms.join(', ') || 'brak'}\nDominujące formaty: ${formats.join(', ') || 'brak'}`;
 }
 
 export function buildBrandContextForAudit(
@@ -82,8 +60,19 @@ export function buildBrandContextForAudit(
 export function isValidStrategicAuditReport(report: StrategicAuditReport | null | undefined): boolean {
   if (!report) return false;
   if (!report.summary?.trim()) return false;
-  if (!report.actionablePlan?.length) return false;
   if (report.summary.toLowerCase().includes('audit failed')) return false;
+  if (!report.actionablePlan?.length) return false;
+  // Persona i SWOT to rdzeń raportu — bez nich audyt jest niekompletny.
+  if (!report.refinedPersona?.name?.trim()) return false;
+  if (!report.swot) return false;
+  const swotFilled = [
+    report.swot.strengths,
+    report.swot.weaknesses,
+    report.swot.opportunities,
+    report.swot.threats,
+  ].some((arr) => Array.isArray(arr) && arr.length > 0);
+  if (!swotFilled) return false;
+  if (!report.contentPillars?.length) return false;
   return true;
 }
 

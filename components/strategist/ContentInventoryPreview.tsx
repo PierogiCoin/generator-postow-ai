@@ -1,13 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ContentInventoryReview } from '../../types';
-
-const STATUS_LABELS: Record<string, string> = {
-  published: 'Opublikowane',
-  scheduled: 'Zaplanowane',
-  planned: 'W kalendarzu',
-  generated: 'Wygenerowane',
-  saved: 'Ulubione',
-};
 
 interface ContentInventoryPreviewProps {
   review: ContentInventoryReview;
@@ -18,10 +11,20 @@ export const ContentInventoryPreview: React.FC<ContentInventoryPreviewProps> = (
   review,
   compact = false,
 }) => {
+  const { t } = useTranslation();
+
+  const STATUS_LABELS: Record<string, string> = {
+    published: t('inventory.status.published', 'Opublikowane'),
+    scheduled: t('inventory.status.scheduled', 'Zaplanowane'),
+    planned: t('inventory.status.planned', 'W kalendarzu'),
+    generated: t('inventory.status.generated', 'Wygenerowane'),
+    saved: t('inventory.status.saved', 'Ulubione'),
+  };
+
   if (review.totalCount === 0) {
     return (
       <div className="p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-600 text-sm text-slate-500">
-        Brak wcześniejszych treści — strategia zostanie zbudowana od zera.
+        {t('inventory.empty', 'Brak wcześniejszych treści — strategia zostanie zbudowana od zera.')}
       </div>
     );
   }
@@ -30,20 +33,20 @@ export const ContentInventoryPreview: React.FC<ContentInventoryPreviewProps> = (
     <div className="p-5 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 rounded-xl space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wide">
-          Przegląd Twoich treści
+          {t('inventory.title', 'Przegląd Twoich treści')}
         </h3>
         <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">
-          {review.totalCount} pozycji
-          {review.upcomingScheduled > 0 && ` · ${review.upcomingScheduled} w kolejce`}
+          {t('inventory.itemCount', { count: review.totalCount, defaultValue: `${review.totalCount} pozycji` })}
+          {review.upcomingScheduled > 0 && ` · ${t('inventory.inQueue', { count: review.upcomingScheduled, defaultValue: `${review.upcomingScheduled} w kolejce` })}`}
         </span>
       </div>
 
       {!compact && review.topPerformers.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold uppercase text-emerald-600 mb-1">Co działało</p>
+          <p className="text-[10px] font-bold uppercase text-emerald-600 mb-1">{t('inventory.whatWorked', 'Co działało')}</p>
           <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
-            {review.topPerformers.map((t, i) => (
-              <li key={`top-${i}`} className="line-clamp-1">• {t}</li>
+            {review.topPerformers.map((tp, i) => (
+              <li key={`top-${i}`} className="line-clamp-1">• {tp}</li>
             ))}
           </ul>
         </div>
@@ -51,7 +54,7 @@ export const ContentInventoryPreview: React.FC<ContentInventoryPreviewProps> = (
 
       {review.coverageGaps.length > 0 && (
         <div>
-          <p className="text-[10px] font-bold uppercase text-amber-600 mb-1">Luki do uzupełnienia</p>
+          <p className="text-[10px] font-bold uppercase text-amber-600 mb-1">{t('inventory.gapsToFill', 'Luki do uzupełnienia')}</p>
           <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1">
             {review.coverageGaps.map((g, i) => (
               <li key={`gap-${i}`}>• {g}</li>

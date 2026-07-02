@@ -707,7 +707,96 @@
     "successTitle": "Done",
     "successMessage": "Video generated successfully!",
     "fallbackTitle": "Video engine changed",
-    "fallbackMessage": "Veo was unavailable — an alternative engine was used."
+    "fallbackMessage": "Veo was unavailable — an alternative engine was used.",
+    "title": "AI Video Stories",
+    "subtitle": "Turn your post into a video story",
+    "applied": "Video attached to the post!",
+    "selectStyle": "Choose a video style",
+    "selectProvider": "AI engine",
+    "preview": "Preview",
+    "selectAndGenerate": "Pick a style and click Generate",
+    "generating": "Generating video...",
+    "download": "Download",
+    "applyToPost": "Use in post",
+    "originalPost": "Original post:",
+    "poweredBy": "Powered by Google Veo & Luma AI",
+    "generate": "Generate video",
+    "providers": {
+      "veo": "Google Veo 3.1",
+      "veoDesc": "Gemini API, native audio, 8s",
+      "luma": "Luma Dream Machine",
+      "lumaDesc": "Any aspect ratio, cinematic",
+      "auto": "Auto",
+      "autoDesc": "Best available provider"
+    },
+    "styles": {
+      "instagramStory": "Instagram Story",
+      "instagramStoryDesc": "9:16, 15s, dynamic transitions",
+      "tiktok": "TikTok Video",
+      "tiktokDesc": "9:16, trendy effects, 30s",
+      "animatedQuote": "Animated Quote",
+      "animatedQuoteDesc": "Elegant motion typography",
+      "kinetic": "Kinetic Typography",
+      "kineticDesc": "Dynamic text with effects",
+      "carousel": "Carousel Slides",
+      "carouselDesc": "Series of slides with key points"
+    }
+  },
+  "repurpose": {
+    "title": "Content Repurposing Engine",
+    "subtitle": "One piece of content → many platforms",
+    "tabs": {
+      "plan": "Multi-Platform",
+      "thread": "X Thread",
+      "video": "Video → Social"
+    },
+    "selectPlatforms": "Select target platforms:",
+    "generating": "Generating...",
+    "generateForN": "Generate for {{count}} platforms",
+    "engagement": "Engagement",
+    "copy": "Copy",
+    "characters": "{{count}} characters",
+    "bestTime": "Best time",
+    "scheduleSuggestion": "Suggested publishing schedule:",
+    "dayShort": "D",
+    "threadLength": "Thread length:",
+    "tweetsCount": "{{count}} tweets",
+    "generatingThread": "Generating thread...",
+    "generateThread": "Generate {{count}}-tweet thread",
+    "predictedActivity": "Predicted activity:",
+    "retweets": "Retweets",
+    "likes": "Likes",
+    "replies": "Replies",
+    "videoInputLabel": "Video transcript or description:",
+    "videoPlaceholder": "Paste the video transcript or describe its content...",
+    "analyzingVideo": "Analyzing video...",
+    "generateFromVideo": "Extract content from video",
+    "keyMoments": "Key moments",
+    "carouselSlides": "Carousel slides",
+    "toast": {
+      "planReady": "Repurposing plan generated!",
+      "planError": "Failed to generate plan",
+      "threadReady": "Thread generated!",
+      "threadError": "Failed to generate thread",
+      "videoReady": "Video content ready!",
+      "videoError": "Failed to analyze video",
+      "copyError": "Failed to copy"
+    }
+  },
+  "inventory": {
+    "empty": "No previous content — the strategy will be built from scratch.",
+    "title": "Your content overview",
+    "itemCount": "{{count}} items",
+    "inQueue": "{{count}} in queue",
+    "whatWorked": "What worked",
+    "gapsToFill": "Gaps to fill",
+    "status": {
+      "published": "Published",
+      "scheduled": "Scheduled",
+      "planned": "In calendar",
+      "generated": "Generated",
+      "saved": "Favorite"
+    }
   },
   "videoKeyModal": {
     "title": "API Key Required",
@@ -868,7 +957,12 @@
       "scheduleRec": "Schedule",
       "generatePost": "Generate this post",
       "dayHour": "Day & Time",
-      "tone": "Suggested Tone"
+      "tone": "Tone",
+      "reviewedCount": "Reviewed {{count}} existing items",
+      "trends": "Trends",
+      "contentGaps": "Content gaps",
+      "optimalTimes": "Optimal times",
+      "newsAngles": "News angles"
     },
     "locked": {
       "title": "Unlock the AI Strategist",

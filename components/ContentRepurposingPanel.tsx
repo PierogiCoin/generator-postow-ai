@@ -5,8 +5,8 @@ import {
   generateThread,
   videoToSocialContent,
   RepurposingPlan,
-  RepurposedContent,
   ThreadGeneratorResult,
+  VideoToSocialResult,
   cacheRepurposingPlan,
   getCachedRepurposingPlan,
 } from '../services/contentRepurposingService';
@@ -17,7 +17,6 @@ import { CollectionIcon } from './icons/CollectionIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
-import { ArrowRightIcon } from './icons/ArrowRightIcon';
 
 interface ContentRepurposingPanelProps {
   sourceContent: string;
@@ -44,6 +43,15 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   [Platform.YouTube]: 'YouTube',
 };
 
+/** Prosty, deterministyczny hash odporny na znaki spoza Latin-1 (btoa wywala się na Unicode). */
+function hashContent(input: string): string {
+  let hash = 5381;
+  for (let i = 0; i < input.length; i++) {
+    hash = ((hash << 5) + hash + input.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(36);
+}
+
 export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = ({
   sourceContent,
   tone,
@@ -60,6 +68,7 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
   );
   const [plan, setPlan] = useState<RepurposingPlan | null>(null);
   const [thread, setThread] = useState<ThreadGeneratorResult | null>(null);
+  const [videoResult, setVideoResult] = useState<VideoToSocialResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [threadLength, setThreadLength] = useState(5);
@@ -71,8 +80,8 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
 
   const handleGeneratePlan = useCallback(async () => {
     if (!user?.id || !sourceContent.trim()) return;
-    
-    const contentHash = btoa(`${sourceContent}-${selectedPlatforms.join(',')}`).slice(0, 20);
+
+    const contentHash = hashContent(`${sourceContent}-${selectedPlatforms.join(',')}`);
     const cached = getCachedRepurposingPlan(contentHash);
     if (cached) {
       setPlan(cached);
@@ -90,55 +99,67 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
       );
       setPlan(result);
       cacheRepurposingPlan(contentHash, result);
-      notifications.addToast('Plan repurposingu wygenerowany!', NotificationType.Success);
+      notifications.addToast(t('repurpose.toast.planReady', 'Plan repurposingu wygenerowany!'), NotificationType.Success);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Błąd generowania planu';
+      const errorMessage = error instanceof Error ? error.message : t('repurpose.toast.planError', 'Błąd generowania planu');
       notifications.addToast(errorMessage, NotificationType.Error);
     } finally {
       setIsGenerating(false);
     }
-  }, [sourceContent, selectedPlatforms, tone, user, notifications]);
+  }, [sourceContent, selectedPlatforms, tone, user, notifications, t]);
 
   const handleGenerateThread = useCallback(async () => {
     if (!user?.id || !sourceContent.trim()) return;
 
     setIsGenerating(true);
     try {
-      const result = await generateThread(
-        sourceContent,
-        threadLength,
-        true,
-        tone,
-        user.id
-      );
+      const result = await generateThread(sourceContent, threadLength, true, tone, user.id);
       setThread(result);
-      notifications.addToast('Thread wygenerowany!', NotificationType.Success);
+      notifications.addToast(t('repurpose.toast.threadReady', 'Thread wygenerowany!'), NotificationType.Success);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Błąd generowania threadu';
+      const errorMessage = error instanceof Error ? error.message : t('repurpose.toast.threadError', 'Błąd generowania threadu');
       notifications.addToast(errorMessage, NotificationType.Error);
     } finally {
       setIsGenerating(false);
     }
-  }, [sourceContent, threadLength, tone, user, notifications]);
+  }, [sourceContent, threadLength, tone, user, notifications, t]);
 
-  const handleCopy = (text: string, index: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
+  const handleGenerateVideo = useCallback(async () => {
+    if (!user?.id || !videoUrl.trim()) return;
+
+    setIsGenerating(true);
+    try {
+      const result = await videoToSocialContent(
+        videoUrl,
+        '0:60',
+        [],
+        currentPlatform,
+        user.id
+      );
+      setVideoResult(result);
+      notifications.addToast(t('repurpose.toast.videoReady', 'Treści z wideo gotowe!'), NotificationType.Success);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : t('repurpose.toast.videoError', 'Błąd analizy wideo');
+      notifications.addToast(errorMessage, NotificationType.Error);
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [videoUrl, currentPlatform, user, notifications, t]);
+
+  const handleCopy = useCallback((text: string, index: number) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        setCopiedIndex(index);
+        setTimeout(() => setCopiedIndex(null), 2000);
+      },
+      () => notifications.addToast(t('repurpose.toast.copyError', 'Nie udało się skopiować'), NotificationType.Error)
+    );
+  }, [notifications, t]);
 
   const togglePlatform = (platform: Platform) => {
     setSelectedPlatforms(prev =>
-      prev.includes(platform)
-        ? prev.filter(p => p !== platform)
-        : [...prev, platform]
+      prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
     );
-  };
-
-  const getFormatIcon = (format: string) => {
-    if (format === 'thread') return <CollectionIcon className="w-4 h-4" />;
-    if (format === 'short') return <SparklesIcon className="w-4 h-4" />;
-    return <CollectionIcon className="w-4 h-4" />;
   };
 
   return (
@@ -151,10 +172,10 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              Content Repurposing Engine
+              {t('repurpose.title', 'Content Repurposing Engine')}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Jedna treść → Wiele platform
+              {t('repurpose.subtitle', 'Jedna treść → Wiele platform')}
             </p>
           </div>
         </div>
@@ -163,9 +184,9 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
       {/* Tabs */}
       <div className="flex gap-2">
         {[
-          { id: 'plan', label: 'Multi-Platform', icon: CollectionIcon },
-          { id: 'thread', label: 'X Thread', icon: CollectionIcon },
-          { id: 'video', label: 'Video → Social', icon: SparklesIcon },
+          { id: 'plan', label: t('repurpose.tabs.plan', 'Multi-Platform'), icon: CollectionIcon },
+          { id: 'thread', label: t('repurpose.tabs.thread', 'X Thread'), icon: CollectionIcon },
+          { id: 'video', label: t('repurpose.tabs.video', 'Video → Social'), icon: SparklesIcon },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -185,10 +206,9 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
       {/* Multi-Platform Tab */}
       {activeTab === 'plan' && (
         <div className="space-y-4">
-          {/* Platform Selection */}
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
             <h3 className="font-medium text-slate-700 dark:text-slate-300 mb-3">
-              Wybierz platformy docelowe:
+              {t('repurpose.selectPlatforms', 'Wybierz platformy docelowe:')}
             </h3>
             <div className="flex flex-wrap gap-2">
               {Object.values(Platform).map((platform) => (
@@ -207,7 +227,6 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
             </div>
           </div>
 
-          {/* Generate Button */}
           <button
             onClick={handleGeneratePlan}
             disabled={isGenerating || selectedPlatforms.length === 0}
@@ -218,10 +237,11 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
             ) : (
               <SparklesIcon className="w-5 h-5" />
             )}
-            {isGenerating ? 'Generuję...' : `Generuj dla ${selectedPlatforms.length} platform`}
+            {isGenerating
+              ? t('repurpose.generating', 'Generuję...')
+              : t('repurpose.generateForN', { count: selectedPlatforms.length, defaultValue: `Generuj dla ${selectedPlatforms.length} platform` })}
           </button>
 
-          {/* Results */}
           {plan && (
             <div className="space-y-4">
               {plan.repurposedContent.map((content, index) => (
@@ -247,10 +267,11 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
                           ? 'bg-amber-100 text-amber-700'
                           : 'bg-slate-100 text-slate-700'
                       }`}>
-                        Engagement: {content.estimatedEngagement}
+                        {t('repurpose.engagement', 'Zaangażowanie')}: {content.estimatedEngagement}
                       </span>
                       <button
                         onClick={() => handleCopy(content.content, index)}
+                        aria-label={t('repurpose.copy', 'Kopiuj')}
                         className="p-1.5 text-slate-400 hover:text-violet-500 transition-colors"
                       >
                         {copiedIndex === index ? (
@@ -268,7 +289,7 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
 
                   {content.hashtags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-3">
-                      {content.hashtags.map((tag, i) => (
+                      {content.hashtags.map((tag) => (
                         <span key={`tag-${tag}`} className="text-sm text-violet-600 dark:text-violet-400">
                           #{tag}
                         </span>
@@ -277,25 +298,24 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
                   )}
 
                   <div className="text-xs text-slate-500">
-                    {content.characterCount} characters | Najlepszy czas: {content.bestTimeToPost}
+                    {t('repurpose.characters', { count: content.characterCount, defaultValue: `${content.characterCount} znaków` })} | {t('repurpose.bestTime', 'Najlepszy czas')}: {content.bestTimeToPost}
                   </div>
                 </div>
               ))}
 
-              {/* Content Calendar */}
               {plan.contentCalendar.length > 0 && (
                 <div className="p-4 bg-violet-50 dark:bg-violet-900/20 rounded-xl border border-violet-200 dark:border-violet-800">
                   <h4 className="font-bold text-violet-900 dark:text-violet-200 mb-3">
-                    📅 Sugerowany harmonogram publikacji:
+                    📅 {t('repurpose.scheduleSuggestion', 'Sugerowany harmonogram publikacji:')}
                   </h4>
                   <div className="space-y-2">
-                    {plan.contentCalendar.map((item, i) => (
+                    {plan.contentCalendar.map((item) => (
                       <div
                         key={`calendar-${item.day}-${item.platform}`}
                         className="flex items-center gap-3 p-2 bg-white dark:bg-slate-800 rounded-lg"
                       >
                         <span className="w-8 h-8 flex items-center justify-center bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-300 rounded-full font-bold text-sm">
-                          D{item.day}
+                          {t('repurpose.dayShort', 'D')}{item.day}
                         </span>
                         <span className={`w-2 h-2 rounded-full ${PLATFORM_COLORS[item.platform]}`} />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
@@ -314,10 +334,9 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
       {/* Thread Generator Tab */}
       {activeTab === 'thread' && (
         <div className="space-y-4">
-          {/* Thread Length Selection */}
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
             <h3 className="font-medium text-slate-700 dark:text-slate-300 mb-3">
-              Długość threadu:
+              {t('repurpose.threadLength', 'Długość threadu:')}
             </h3>
             <div className="flex gap-2">
               {[3, 5, 7, 10].map((length) => (
@@ -330,13 +349,12 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
                       : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                   }`}
                 >
-                  {length} tweets
+                  {t('repurpose.tweetsCount', { count: length, defaultValue: `${length} tweetów` })}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Generate Button */}
           <button
             onClick={handleGenerateThread}
             disabled={isGenerating}
@@ -347,10 +365,11 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
             ) : (
               <CollectionIcon className="w-5 h-5" />
             )}
-            {isGenerating ? 'Generuję thread...' : `Generuj ${threadLength}-tweet thread`}
+            {isGenerating
+              ? t('repurpose.generatingThread', 'Generuję thread...')
+              : t('repurpose.generateThread', { count: threadLength, defaultValue: `Generuj ${threadLength}-tweet thread` })}
           </button>
 
-          {/* Thread Results */}
           {thread && (
             <div className="space-y-3">
               {thread.thread.map((tweet, index) => (
@@ -382,6 +401,7 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
                     </div>
                     <button
                       onClick={() => handleCopy(tweet.content, 100 + index)}
+                      aria-label={t('repurpose.copy', 'Kopiuj')}
                       className={`p-1.5 transition-colors ${
                         tweet.isHook ? 'text-slate-400 hover:text-white' : 'text-slate-400 hover:text-violet-500'
                       }`}
@@ -396,33 +416,32 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
                 </div>
               ))}
 
-              {/* Engagement Prediction */}
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                 <h4 className="font-bold text-blue-900 dark:text-blue-200 mb-2">
-                  📊 Przewidywana aktywność:
+                  📊 {t('repurpose.predictedActivity', 'Przewidywana aktywność:')}
                 </h4>
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                       {thread.engagementPredictions.retweets}+
                     </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400">Retweets</div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400">{t('repurpose.retweets', 'Retweety')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                       {thread.engagementPredictions.likes}+
                     </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400">Likes</div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400">{t('repurpose.likes', 'Polubienia')}</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
                       {thread.engagementPredictions.replies}+
                     </div>
-                    <div className="text-xs text-blue-600 dark:text-blue-400">Replies</div>
+                    <div className="text-xs text-blue-600 dark:text-blue-400">{t('repurpose.replies', 'Odpowiedzi')}</div>
                   </div>
                 </div>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-3">
-                  Najlepszy czas publikacji: <strong>{thread.bestPostingTime}</strong>
+                  {t('repurpose.bestTime', 'Najlepszy czas')}: <strong>{thread.bestPostingTime}</strong>
                 </p>
               </div>
             </div>
@@ -435,28 +454,83 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
         <div className="space-y-4">
           <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-xl">
             <h3 className="font-medium text-slate-700 dark:text-slate-300 mb-3">
-              URL wideo lub opis treści:
+              {t('repurpose.videoInputLabel', 'Transkrypcja lub opis wideo:')}
             </h3>
-            <input
-              type="text"
+            <textarea
               value={videoUrl}
               onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="Wklej URL YouTube, TikTok, lub opisz wideo..."
+              rows={4}
+              placeholder={t('repurpose.videoPlaceholder', 'Wklej transkrypcję wideo lub opisz jego treść...')}
               className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
             />
           </div>
 
-          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-            <p className="text-amber-800 dark:text-amber-300 text-sm">
-              🎥 <strong>Funkcja w przygotowaniu:</strong> W przyszłości będziesz mógł:
-            </p>
-            <ul className="mt-2 text-sm text-amber-700 dark:text-amber-400 list-disc list-inside">
-              <li>Wkleić URL YouTube i AI automatycznie wyciągnie kluczowe momenty</li>
-              <li>Generować audiogramy z transkrypcji</li>
-              <li>Tworzyć carousle z najlepszych momentów</li>
-              <li>Automatycznie generować quote cards</li>
-            </ul>
-          </div>
+          <button
+            onClick={handleGenerateVideo}
+            disabled={isGenerating || !videoUrl.trim()}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 text-white font-medium rounded-xl transition-all"
+          >
+            {isGenerating ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <SparklesIcon className="w-5 h-5" />
+            )}
+            {isGenerating ? t('repurpose.analyzingVideo', 'Analizuję wideo...') : t('repurpose.generateFromVideo', 'Wyciągnij treści z wideo')}
+          </button>
+
+          {videoResult && (
+            <div className="space-y-4">
+              {videoResult.keyMoments.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">
+                    ✨ {t('repurpose.keyMoments', 'Kluczowe momenty')}
+                  </h4>
+                  <div className="space-y-2">
+                    {videoResult.keyMoments.map((moment, i) => (
+                      <div key={`moment-${i}`} className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-bold text-violet-600">{moment.timestamp}</span>
+                          <button
+                            onClick={() => handleCopy(moment.socialPost, 200 + i)}
+                            aria-label={t('repurpose.copy', 'Kopiuj')}
+                            className="p-1 text-slate-400 hover:text-violet-500"
+                          >
+                            {copiedIndex === 200 + i ? (
+                              <CheckCircleIcon className="w-4 h-4 text-green-500" />
+                            ) : (
+                              <ClipboardIcon className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{moment.quote}"</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1 whitespace-pre-wrap">{moment.socialPost}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {videoResult.carouselSlides.length > 0 && (
+                <div>
+                  <h4 className="font-bold text-slate-900 dark:text-white mb-2">
+                    📊 {t('repurpose.carouselSlides', 'Slajdy karuzeli')}
+                  </h4>
+                  <div className="space-y-2">
+                    {videoResult.carouselSlides.map((slide) => (
+                      <div key={`slide-${slide.slideNumber}`} className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <p className="font-semibold text-slate-900 dark:text-white text-sm">
+                          {slide.slideNumber}. {slide.headline}
+                        </p>
+                        <ul className="list-disc list-inside text-sm text-slate-600 dark:text-slate-400 mt-1">
+                          {slide.bulletPoints.map((bp, bi) => <li key={`bp-${bi}`}>{bp}</li>)}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -47,7 +47,13 @@ export async function uploadGeneratedImage(imageUrl: string, userId: string): Pr
 
   const supabase = getSupabase();
   const response = await fetch(imageUrl);
+  if (!response.ok) {
+    throw new Error(`Nie udało się odczytać grafiki do uploadu (status ${response.status}).`);
+  }
   const blob = await response.blob();
+  if (!blob.size) {
+    throw new Error('Grafika do uploadu jest pusta.');
+  }
   const ext = blob.type.includes('png') ? 'png' : 'jpg';
   const filePath = `${userId}/posts/${uuidv4()}.${ext}`;
 

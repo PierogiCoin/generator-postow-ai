@@ -273,18 +273,29 @@ export function dedupePlanAgainstInventory(
 
   const skippedTopics: string[] = [];
   const kept: IntelligentCalendarPlanItem[] = [];
+  const keptTopics: string[] = [];
 
   for (const slot of plan) {
-    const check = checkForSimilarContent(slot.topic, historyLike, threshold);
-    if (check.hasSimilar) {
+    const againstInventory = checkForSimilarContent(slot.topic, historyLike, threshold);
+    // Sprawdzamy też podobieństwo do już zaakceptowanych slotów, by nie dublować wewnątrz planu.
+    const againstKept = keptTopics.length
+      ? checkForSimilarContent(
+          slot.topic,
+          keptTopics.map((topic, i) => ({
+            id: `kept-${i}`,
+            formData: { topic, platform: slot.platform },
+            timestamp: Date.now(),
+          })),
+          threshold
+        )
+      : { hasSimilar: false };
+
+    if (againstInventory.hasSimilar || againstKept.hasSimilar) {
       skippedTopics.push(slot.topic);
-      kept.push({
-        ...slot,
-        strategy: `${slot.strategy} [Dopasowanie: nowy kąt — uniknięto powtórzenia z istniejących treści]`,
-      });
-    } else {
-      kept.push(slot);
+      continue;
     }
+    kept.push(slot);
+    keptTopics.push(slot.topic);
   }
 
   return { plan: kept, skippedTopics };

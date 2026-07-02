@@ -191,9 +191,11 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
             genActions.updateResultImage(newImageUrl);
             return;
         }
-        const persisted = (await persistImageUrl(newImageUrl, user.id)) ?? newImageUrl;
+        const persisted = (await persistImageUrl(newImageUrl, user.id, () => {
+            addToast('Grafika zapisana lokalnie — nie udało się przesłać do chmury. Będzie dostępna tylko w tej sesji.', NotificationType.Info);
+        })) ?? newImageUrl;
         genActions.updateResultImage(persisted);
-    }, [user, genActions]);
+    }, [user, genActions, addToast]);
 
     const handleReformatImageForPlatform = useCallback(async (targetPlatform: Platform) => {
         const { result, lastFormData } = useGenerationStore.getState();

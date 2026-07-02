@@ -324,9 +324,14 @@ export const useDataStore = create<DataState>()(
 
   // AI Strategist
   startStrategicAudit: () => set({ isAuditing: true, auditError: null, strategicAuditReport: null }),
-  setStrategicAuditReport: async (report) => {
-    if (report) await strategicAuditService.saveStrategicAudit(report);
+  setStrategicAuditReport: (report) => {
     set({ strategicAuditReport: report, isAuditing: false, auditError: null });
+    if (report) {
+      // Persystencja best-effort — nie blokuje UI ani nie wywraca stanu przy błędzie zapisu.
+      void strategicAuditService.saveStrategicAudit(report).catch((err) => {
+        console.error('Nie udało się zapisać audytu strategicznego:', err);
+      });
+    }
   },
   loadStrategicAuditReport: (report) => set({ strategicAuditReport: report, isAuditing: false, auditError: null }),
   clearStrategicAuditReport: () => set({ strategicAuditReport: null, auditError: null }),

@@ -48,8 +48,9 @@ import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { useUIStore } from './stores/uiStore';
 import { useGenerationStore } from './stores/generationStore';
 import { useDataStore } from './stores/dataStore';
-import type { GenerationResult } from './types';
+import type { GenerationResult, Platform } from './types';
 import { NotificationType, UserPlan } from './types';
+import type { VideoStoryStyle, VideoStoryProvider } from './components/VideoStoryModal';
 import { parseUserFacingError } from './utils/userFacingError';
 import {
   consumePendingCheckoutPlan,
@@ -300,7 +301,7 @@ export const App: React.FC = () => {
     handlers.handleOpenRepurposeModal();
   }
 
-  const handleGenerateVideoStory = async (style: any, provider: 'auto' | 'veo' | 'luma' = 'auto') => {
+  const handleGenerateVideoStory = async (style: VideoStoryStyle, provider: VideoStoryProvider = 'auto') => {
     if (!videoStoryPost || !user) return;
 
     const { startVideoStoryGeneration, setVideoStoryProgress, videoStorySuccess, videoStoryFailure } = useGenerationStore.getState();
@@ -354,11 +355,11 @@ export const App: React.FC = () => {
       ...videoStoryPost,
       videoUrl: generatedVideo.url,
     });
-    notificationSystem.addToast('Wideo przypisane do posta!', NotificationType.Success);
+    notificationSystem.addToast(t('videoStory.applied', 'Wideo przypisane do posta!'), NotificationType.Success);
     handlers.handleCloseVideoStoryModal();
   };
 
-  const handleOptimizeMultiPlatform = async (platforms: any[]) => {
+  const handleOptimizeMultiPlatform = async (platforms: Platform[]) => {
     if (!result || !user) return;
 
     const { startMultiPlatformOptimization, multiPlatformSuccess, multiPlatformFailure } = useGenerationStore.getState();
