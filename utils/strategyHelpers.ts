@@ -33,7 +33,7 @@ export function buildHistoryContextForAudit(history: CampaignHistoryItem[]): str
     const format = h.formData?.generationType || '?';
     const tone = h.formData?.tone || '';
     const perf = h.performance
-      ? `engagement:${h.performance.engagement ?? 'n/a'}`
+      ? `likes:${h.performance.likes ?? 0} comments:${h.performance.comments ?? 0} shares:${h.performance.shares ?? 0}`
       : '';
     return `- [${platform}/${format}${tone ? `/${tone}` : ''}] ${topic}${perf ? ` (${perf})` : ''}`;
   });

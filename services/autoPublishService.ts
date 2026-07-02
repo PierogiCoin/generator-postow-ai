@@ -9,6 +9,7 @@ import { SocialConnection, SocialPlatform } from '../types/socialPublishing';
 import { socialConnectionsService } from './socialConnectionsService';
 import { callApi } from './apiClient';
 import { resolveCtaUrl } from '../utils/publishCaption';
+import { getPlatformCharacterLimit, optimizeForPlatforms } from './multiPlatformService';
 
 export const PLATFORM_TO_SOCIAL: Partial<Record<Platform, SocialPlatform>> = {
   [Platform.Facebook]: SocialPlatform.Facebook,

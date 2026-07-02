@@ -812,7 +812,23 @@
       "audiencePlaceholder": "e.g., Tech-savvy millennials, small business owners",
       "competitorsLabel": "Competitors' social media URLs (optional, one per line)",
       "competitorsPlaceholder": "https://instagram.com/competitor1\nhttps://linkedin.com/company/competitor2",
+      "brandProfileLabel": "Selected Brand Profile",
+      "brandProfilePlaceholder": "-- Select a profile (optional) --",
+      "frequencyLabel": "Publishing frequency",
+      "formatsLabel": "Preferred formats",
+      "formatPost": "Images / Posts",
+      "formatVideo": "Video / Reels",
+      "formatIdea": "Ideas only (text)",
+      "freqDaily": "Daily",
+      "freq3perWeek": "3 times a week",
+      "freq2perWeek": "2 times a week",
+      "freqWeekly": "Once a week",
+      "platformsLabel": "Target platforms (multiple)",
       "submit": "Start Strategic Analysis"
+    },
+    "history": {
+      "title": "Previous audits",
+      "open": "Open"
     },
     "loading": {
       "title": "AI is conducting your strategic audit...",
@@ -823,7 +839,7 @@
         "Evaluating competitive landscape...",
         "Formulating core content pillars...",
         "Refining your audience persona...",
-        "Building your 30-day action plan..."
+        "Building your 14-day action plan..."
       ]
     },
     "report": {
@@ -842,7 +858,17 @@
       "planImported": "Plan added to calendar!",
       "newAudit": "New audit",
       "personaGoals": "Audience goals",
-      "personaPain": "Pain points"
+      "personaPain": "Pain points",
+      "adaptation": "Adapted to your content",
+      "buildsOn": "Builds on",
+      "gapsFilled": "Fills gaps",
+      "avoided": "Avoids repetition",
+      "complements": "Complements calendar",
+      "intelligence": "Live intelligence",
+      "scheduleRec": "Schedule",
+      "generatePost": "Generate this post",
+      "dayHour": "Day & Time",
+      "tone": "Suggested Tone"
     },
     "locked": {
       "title": "Unlock the AI Strategist",

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ContentInventoryReview } from '../types';
+import type { ContentInventoryReview } from '../../types';
 
 const STATUS_LABELS: Record<string, string> = {
   published: 'Opublikowane',

@@ -25,6 +25,7 @@ import {
     analyzeContentInventory,
     buildContentInventory,
 } from '../services/contentInventoryService';
+import { fetchAuditHistory, type AuditHistoryEntry } from '../services/strategicAuditService';
 
 const AUDIT_STEPS_KEYS = [
     'strategist.loading.steps.0',
@@ -245,13 +246,13 @@ const ReportDisplay: React.FC<{
             {/* Intelligence insights */}
             {report.intelligenceInsights && (
                 <div className="p-6 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Live intelligence</h3>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.intelligence', 'Live intelligence')}</h3>
                     {report.intelligenceInsights.industryPulse && (
                         <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">{report.intelligenceInsights.industryPulse}</p>
                     )}
                     {report.intelligenceInsights.competitorRecommendation && (
                         <p className="text-sm font-medium text-violet-700 dark:text-violet-300 mb-4">
-                            Harmonogram: {report.intelligenceInsights.competitorRecommendation}
+                            {t('strategist.report.scheduleRec', 'Harmonogram')}: {report.intelligenceInsights.competitorRecommendation}
                         </p>
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
@@ -364,11 +365,19 @@ const ReportDisplay: React.FC<{
 
 export const AIStrategistView: React.FC = () => {
     const { t } = useTranslation();
-    const { userPlan } = useAuth();
+    const { userPlan, user } = useAuth();
     const { addToast } = useNotifications();
     const handlers = useAppHandlers(addToast, () => { });
-    const { strategicAuditReport, isAuditing, auditError, clearStrategicAuditReport, history, favorites, scheduledPosts, intelligentCalendarPlan } = useDataStore();
+    const { strategicAuditReport, isAuditing, auditError, clearStrategicAuditReport, loadStrategicAuditReport, history, favorites, scheduledPosts, intelligentCalendarPlan } = useDataStore();
     const [showForm, setShowForm] = useState(false);
+    const [auditHistory, setAuditHistory] = useState<AuditHistoryEntry[]>([]);
+
+    const formVisible = !strategicAuditReport || showForm;
+
+    useEffect(() => {
+        if (!user || !formVisible) return;
+        fetchAuditHistory(user.id, 8).then(setAuditHistory).catch(() => setAuditHistory([]));
+    }, [user, formVisible]);
 
     const [goal, setGoal] = useState('');
     const [audience, setAudience] = useState('');
@@ -410,6 +419,11 @@ export const AIStrategistView: React.FC = () => {
     const handleNewAudit = () => {
         clearStrategicAuditReport();
         setShowForm(true);
+    };
+
+    const handleLoadPastAudit = (entry: AuditHistoryEntry) => {
+        loadStrategicAuditReport(entry.report);
+        setShowForm(false);
     };
 
     const handleRetry = () => {
@@ -486,7 +500,7 @@ export const AIStrategistView: React.FC = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Platformy docelowe (wiele)</label>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t('strategist.form.platformsLabel', 'Platformy docelowe (wiele)')}</label>
                     <div className="flex flex-wrap gap-3">
                         {Object.values(Platform).map(p => {
                             const config = platformConfig[p];
@@ -552,6 +566,38 @@ export const AIStrategistView: React.FC = () => {
 
                 <ContentInventoryPreview review={inventoryPreview} />
             </form>
+
+            {auditHistory.length > 0 && (
+                <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                        {t('strategist.history.title', 'Poprzednie audyty')}
+                    </h3>
+                    <div className="space-y-2">
+                        {auditHistory.map((entry) => (
+                            <button
+                                key={entry.id}
+                                type="button"
+                                onClick={() => handleLoadPastAudit(entry)}
+                                className="w-full text-left p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition group"
+                            >
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                                            {new Date(entry.timestamp).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </p>
+                                        <p className="text-sm text-slate-700 dark:text-slate-300 line-clamp-2 mt-1">
+                                            {entry.report.summary}
+                                        </p>
+                                    </div>
+                                    <span className="shrink-0 text-xs font-semibold text-slate-400 group-hover:text-blue-500 transition">
+                                        {t('strategist.history.open', 'Otwórz')} →
+                                    </span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

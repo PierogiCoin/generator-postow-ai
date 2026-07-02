@@ -828,7 +828,12 @@
       "freq3perWeek": "3 razy w tygodniu",
       "freq2perWeek": "2 razy w tygodniu",
       "freqWeekly": "Raz w tygodniu",
+      "platformsLabel": "Platformy docelowe (wiele)",
       "submit": "Rozpocznij Analizę Strategiczną"
+    },
+    "history": {
+      "title": "Poprzednie audyty",
+      "open": "Otwórz"
     },
     "loading": {
       "title": "AI przeprowadza audyt strategiczny...",
@@ -860,6 +865,8 @@
       "personaGoals": "Cele odbiorcy",
       "personaPain": "Problemy i bóle",
       "adaptation": "Dopasowanie do Twoich treści",
+      "intelligence": "Dane na żywo",
+      "scheduleRec": "Harmonogram",
       "buildsOn": "Rozwija",
       "gapsFilled": "Uzupełnia luki",
       "avoided": "Unika powtórzeń",

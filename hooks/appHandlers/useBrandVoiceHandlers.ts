@@ -191,7 +191,7 @@ export const useBrandVoiceHandlers = ({ addToast, t, handleApiError }: BrandVoic
             if (analyzed.length === 0) {
                 addToast(
                     'Brak przeanalizowanych konkurentów. Najpierw uruchom analizę w zakładce Konkurencja.',
-                    NotificationType.Warning
+                    NotificationType.Info
                 );
                 return;
             }

@@ -19,6 +19,25 @@ export const fetchLatestAudit = async (userId: string): Promise<StrategicAuditRe
     return data.report;
 };
 
+export interface AuditHistoryEntry {
+    id: string;
+    timestamp: string;
+    report: StrategicAuditReport;
+}
+
+export const fetchAuditHistory = async (userId: string, limit = 10): Promise<AuditHistoryEntry[]> => {
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+        .from('strategic_audits')
+        .select('id, timestamp, report')
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false })
+        .limit(limit);
+
+    if (error || !data) return [];
+    return data as AuditHistoryEntry[];
+};
+
 export const saveStrategicAudit = async (report: StrategicAuditReport): Promise<void> => {
     const supabase = getSupabase();
     const { data: { user } } = await supabase.auth.getUser();

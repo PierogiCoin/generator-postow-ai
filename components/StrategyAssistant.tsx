@@ -76,10 +76,10 @@ export const StrategyAssistant: React.FC = () => {
             </div>
 
             <div className="mt-6 pt-6 border-t border-indigo-100 dark:border-indigo-900/50 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-400">Te wskazówki są generowane na bieżąco na podstawie Twojej treści i historii.</p>
+                <p className="text-[10px] font-bold text-slate-400">Wskazówki na podstawie Twojej treści i historii — pełną strategię AI znajdziesz w Strategiście.</p>
                 <div className="flex items-center gap-1 text-indigo-600">
-                    <SparklesIcon className="w-3 h-3 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">AI Live</span>
+                    <SparklesIcon className="w-3 h-3" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Wskazówki</span>
                 </div>
             </div>
         </div>

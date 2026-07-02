@@ -4,7 +4,7 @@ import {
   isValidStrategicAuditReport,
   normalizeActionablePlan,
 } from '../utils/strategyHelpers';
-import { GenerationType } from '../types';
+import { GenerationType, Platform } from '../types';
 
 describe('strategyHelpers', () => {
   it('maps frequency to slot counts', () => {
@@ -32,14 +32,14 @@ describe('strategyHelpers', () => {
         refinedPersona: { name: 'x', age: 1, location: '', jobTitle: '', demographics: '', goals: [], painPoints: [], communicationTips: '' },
         swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
         competitiveSnapshot: [],
-        actionablePlan: [{ id: '1', date: '2026-07-01', platform: 'Facebook' as const, topic: 't', format: GenerationType.PostWithImage, strategy: 's' }],
+        actionablePlan: [{ id: '1', date: '2026-07-01', platform: Platform.Facebook, topic: 't', format: GenerationType.PostWithImage, strategy: 's' }],
       })
     ).toBe(true);
   });
 
   it('normalizes actionable plan items', () => {
     const plan = normalizeActionablePlan(
-      [{ id: '', date: '2026-07-01', platform: 'Instagram' as const, topic: 'Hook', format: GenerationType.Video, strategy: 'why' }],
+      [{ id: '', date: '2026-07-01', platform: Platform.Instagram, topic: 'Hook', format: GenerationType.Video, strategy: 'why' }],
       [GenerationType.Video, GenerationType.PostWithImage]
     );
     expect(plan[0].slotType).toBe('reel');
