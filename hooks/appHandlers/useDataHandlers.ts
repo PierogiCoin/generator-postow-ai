@@ -14,6 +14,14 @@ import {
 } from '../../types';
 import { NotificationType } from '../../types';
 import * as geminiService from '../../services/geminiService';
+import { socialConnectionsService } from '../../services/socialConnectionsService';
+import {
+    buildBrandContextForAudit,
+} from '../../utils/strategyHelpers';
+import {
+    analyzeContentInventory,
+    buildContentInventory,
+} from '../../services/contentInventoryService';
 import type { ApiErrorHandler, ToastFn } from './types';
 
 interface DataHandlerDeps {
@@ -94,25 +102,46 @@ export const useDataHandlers = ({ addToast, handleApiError }: DataHandlerDeps) =
         if (!user) return;
         dataActions.startStrategicAudit();
         try {
-            const { history, brandVoiceProfiles } = useDataStore.getState();
+            const {
+                history,
+                brandVoiceProfiles,
+                learnedInsights,
+                favorites,
+                scheduledPosts,
+                intelligentCalendarPlan,
+            } = useDataStore.getState();
             const selectedProfile = brandVoiceProfiles.find(p => p.id === brandProfileId);
-            const historySummary = history
-                .slice(0, 10)
-                .map(h => (h.formData?.topic || '').replace(/<[^>]*>?/gm, ''))
-                .filter(Boolean)
-                .join('; ');
+            const brandContext = buildBrandContextForAudit(selectedProfile, learnedInsights);
+
+            let publishedPosts: Awaited<ReturnType<typeof socialConnectionsService.getAggregateHistory>> = [];
+            try {
+                publishedPosts = await socialConnectionsService.getAggregateHistory(user.id);
+            } catch {
+                // opcjonalne — bez połączonych kont
+            }
+
+            const inventoryItems = buildContentInventory({
+                history,
+                favorites,
+                scheduledPosts,
+                calendarPlan: intelligentCalendarPlan,
+                publishedPosts,
+                targetPlatforms: _platforms,
+            });
+            const contentInventory = analyzeContentInventory(inventoryItems, _platforms);
+
             const report = await geminiService.generateStrategicAudit(
                 goal,
                 audience,
                 competitors,
-                historySummary,
+                contentInventory,
                 user,
-                selectedProfile?.settings,
+                brandContext,
                 preferences,
                 _platforms
             );
             dataActions.setStrategicAuditReport(report);
-            addToast('Audyt strategiczny został pomyślnie wygenerowany!', NotificationType.Success);
+            addToast('Audyt strategiczny gotowy — plan treści w raporcie.', NotificationType.Success);
         } catch (e) {
             const errorPayload = handleApiError(e, 'errors.generation_failed');
             dataActions.setAuditError(errorPayload);

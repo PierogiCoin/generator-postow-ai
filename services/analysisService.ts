@@ -8,9 +8,20 @@ import {
     GenerationResult,
     FormData,
     User,
-    Platform
+    Platform,
+    GenerationType,
+    ContentInventoryReview,
 } from '../types';
 import { gatherStrategicIntelligenceContext } from './strategicIntelligenceContext';
+import {
+    frequencyToPlanSlots,
+    isValidStrategicAuditReport,
+    normalizeActionablePlan,
+} from '../utils/strategyHelpers';
+import {
+    buildInventoryPromptForAudit,
+    dedupePlanAgainstInventory,
+} from './contentInventoryService';
 
 /**
  * Analysis Service
@@ -85,13 +96,13 @@ export const getStrategicContentIdeas = async (
     try {
         return await generateJson<StrategicIdea[]>({
             model: "gemini-flash-latest",
-            contents: `Generate 5 strategic, high-growth content ideas for ${niche} specifically tailored for ${platform || 'cross-platform deployment'}. 
-            Each idea must have: 
-            - id (uuid), 
-            - title (hook focus), 
-            - description (content core), 
-            - reason (why this works/strategy).
-            Return as a JSON array of objects.`,
+            contents: `Generate 5 strategic, high-growth content ideas for "${niche}" on ${platform || 'cross-platform'}.
+            Each idea MUST match this JSON schema:
+            - title: catchy hook (string)
+            - type: exactly one of "Trending" | "Content Gap" | "Evergreen"
+            - strategy: 1-2 sentences why this works and how to execute
+            - sources: array of { "uri": "https://...", "title": "source name" } (can be empty array)
+            Return as JSON array of 5 objects.`,
         }, userId);
     } catch {
         return [];
@@ -114,14 +125,17 @@ export const generateStrategicAudit = async (
     goal: string,
     audience: string,
     competitors: string[],
-    historySummary: string,
+    contentInventory: ContentInventoryReview,
     user: User,
-    brandProfile?: any,
+    brandProfile?: Record<string, unknown>,
     preferences?: { frequency: string; formats: string[] },
     platforms?: Platform[]
 ): Promise<StrategicAuditReport> => {
-    const primaryPlatform = platforms?.[0] || Platform.Facebook;
+    const targetPlatforms = platforms?.length ? platforms : [Platform.Facebook];
     const niche = goal.trim() || audience.trim() || 'marketing';
+    const planSlots = frequencyToPlanSlots(preferences?.frequency || '3_times_week');
+    const allowedFormats = (preferences?.formats?.length ? preferences.formats : ['PostWithImage']) as string[];
+    const inventoryPrompt = buildInventoryPromptForAudit(contentInventory);
 
     let intelligenceBlock = '';
     let intelligenceInsights: StrategicAuditReport['intelligenceInsights'];
@@ -133,7 +147,7 @@ export const generateStrategicAudit = async (
             goal,
             audience,
             competitors,
-            platforms: platforms?.length ? platforms : [primaryPlatform],
+            platforms: targetPlatforms,
         });
         intelligenceBlock = ctx.promptBlock;
         intelligenceInsights = ctx.insights;
@@ -141,65 +155,104 @@ export const generateStrategicAudit = async (
         // intelligence opcjonalne
     }
 
-    try {
-        const report = await generateJson<StrategicAuditReport>({
-            model: "gemini-pro-latest",
-            contents: `You are a top-tier digital strategy consultant and content architect. 
-            Perform a deep STRATEGIC AUDIT and create a CONTENT PLAN for:
-            
-            - BRAND CONTEXT: ${brandProfile ? JSON.stringify(brandProfile) : "Not specified"}
+    const today = new Date();
+    const startDate = today.toISOString().slice(0, 10);
+    const endDate = new Date(today.getTime() + 13 * 86400000).toISOString().slice(0, 10);
+
+    const report = await generateJson<StrategicAuditReport>({
+        model: "gemini-pro-latest",
+        contents: `You are a top-tier digital strategy consultant and content architect.
+            Perform a deep STRATEGIC AUDIT and create an ACTIONABLE CONTENT PLAN.
+
+            INPUTS:
+            - BRAND CONTEXT: ${JSON.stringify(brandProfile || {})}
             - BRAND GOAL: "${goal}"
             - TARGET AUDIENCE: "${audience}"
             - KEY COMPETITORS: [${competitors.join(', ')}]
-            - TARGET PLATFORMS: [${(platforms || [primaryPlatform]).join(', ')}]
-            - BRAND HISTORY: "${historySummary}"
-            - PREFERENCES: Frequency: ${preferences?.frequency || 'Standard'}, Formats: ${preferences?.formats?.join(', ') || 'Mixed'}
-            
-            LIVE INTELLIGENCE (Google Search + analytics — priorytet przy planie i SWOT):
+            - TARGET PLATFORMS: [${targetPlatforms.join(', ')}]
+            - EXISTING CONTENT INVENTORY (MUST adapt strategy to this — do not repeat topics):
+            ${inventoryPrompt}
+            - PUBLISHING FREQUENCY: ${preferences?.frequency || '3_times_week'}
+            - ALLOWED FORMATS: ${allowedFormats.join(', ')}
+
+            ADAPTATION RULES (MANDATORY):
+            - actionablePlan topics MUST be distinct from existingTopics in inventory
+            - Fill coverageGaps from inventory (missing platforms/formats)
+            - Build on topPerformers with NEW angles — sequels, not copies
+            - Complement scheduled/planned items — do not duplicate calendar queue
+            - Address repetitiveThemes by varying format or hook
+            - In contentAdaptation explain what you reviewed and how plan differs
+
+            PLAN CONSTRAINTS (MANDATORY):
+            - Generate EXACTLY ${planSlots} items in actionablePlan
+            - Date range: ${startDate} to ${endDate} (spread evenly, skip days if frequency is low)
+            - Rotate platforms from TARGET PLATFORMS — do not use only one platform
+            - Each item MUST include: id (uuid), date (YYYY-MM-DD), time (HH:mm from intelligence), platform, topic, format, strategy, suggestedTone
+            - Each item MUST include slotType: "post" | "reel" | "story" and contentIntent: educational|entertaining|inspirational|promotional|community|behind-the-scenes
+            - format must be one of ALLOWED FORMATS only
+            - Use optimalPostingSlots from intelligence for "time" field
+
+            LIVE INTELLIGENCE (prioritize over generic advice):
             ${intelligenceBlock || 'Brak danych intelligence — oprzyj się na wiedzy branżowej.'}
-            
-            Użyj optimalPostingSlots z intelligence w polu "time" actionablePlan.
-            Wpleć contentGaps i trendingTopics w filary treści i opportunities w SWOT.
-            
-            Produce a comprehensive report in JSON format:
+
+            Weave contentGaps and trendingTopics into contentPillars and SWOT opportunities.
+            competitiveSnapshot must analyze each listed competitor with concrete differentiation.
+
+            Return JSON:
             {
-                "summary": "Detailed high-level vision and strategic direction",
-                "contentPillars": [
-                    { "pillar": "Name", "description": "Why this pillar?", "postIdeas": ["Idea 1", "Idea 2"] }
-                ],
+                "summary": "Strategic vision (3-5 sentences, concrete KPIs)",
+                "contentPillars": [{ "pillar": "Name", "description": "Why", "postIdeas": ["..."] }],
                 "refinedPersona": {
-                    "name": "Persona Name", "age": 35, "location": "City", "jobTitle": "Role", 
-                    "demographics": "Details", "goals": [], "painPoints": [], "communicationTips": "Tips"
+                    "name": "", "age": 35, "location": "", "jobTitle": "",
+                    "demographics": "", "goals": [], "painPoints": [], "communicationTips": ""
                 },
                 "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
-                "competitiveSnapshot": [ { "competitor": "Name", "analysis": "Detailed comparison" } ],
-                "actionablePlan": [
-                    { 
-                        "id": "uuid", 
-                        "date": "YYYY-MM-DD", 
-                        "time": "HH:mm",
-                        "platform": "Facebook|Instagram|TikTok|X|LinkedIn", 
-                        "topic": "Catchy Topic/Hook", 
-                        "format": "PostWithImage|Video|Idea", 
-                        "strategy": "Why this at this time?",
-                        "suggestedTone": "Professional|Casual|Witty|Inspirational|Persuasive"
-                    }
-                ]
+                "competitiveSnapshot": [{ "competitor": "Name", "analysis": "..." }],
+                "contentAdaptation": {
+                    "reviewedCount": ${contentInventory.totalCount},
+                    "buildsOn": ["topics/styles to continue"],
+                    "gapsFilled": ["what the plan adds vs inventory"],
+                    "avoidedRepetition": ["topics deliberately skipped"],
+                    "complementsScheduled": ["how plan fits queue"],
+                    "notes": "2-3 sentences summary"
+                },
+                "actionablePlan": [...]
             }
-            
-            Return exactly as JSON. Plan na 7-14 dni. Platformy w actionablePlan = TARGET PLATFORMS.`,
-        }, user.id);
 
-        return { ...report, intelligenceInsights };
-    } catch {
-        return {
-            summary: "Audit failed to generate correctly. Please try more specific input.",
-            contentPillars: [],
-            refinedPersona: { name: audience, age: 30, location: "", jobTitle: "", demographics: "", goals: [], painPoints: [], communicationTips: "" },
-            swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
-            competitiveSnapshot: [],
-            actionablePlan: [],
-            intelligenceInsights,
-        };
+            Language: Polish for all user-facing text. Return exactly as JSON.`,
+    }, user.id);
+
+    const { plan: dedupedPlan, skippedTopics } = dedupePlanAgainstInventory(
+        report.actionablePlan || [],
+        contentInventory
+    );
+
+    const adaptation = report.contentAdaptation || {
+        reviewedCount: contentInventory.totalCount,
+        buildsOn: contentInventory.topPerformers.slice(0, 3),
+        gapsFilled: contentInventory.coverageGaps,
+        avoidedRepetition: skippedTopics,
+        complementsScheduled: contentInventory.upcomingScheduled > 0
+            ? [`Uwzględniono ${contentInventory.upcomingScheduled} zaplanowanych slotów`]
+            : [],
+        notes: 'Strategia dopasowana do istniejących treści.',
+    };
+
+    if (skippedTopics.length) {
+        adaptation.avoidedRepetition = [...new Set([...adaptation.avoidedRepetition, ...skippedTopics])];
     }
+
+    const normalized: StrategicAuditReport = {
+        ...report,
+        actionablePlan: normalizeActionablePlan(dedupedPlan, allowedFormats as GenerationType[]),
+        contentInventory,
+        contentAdaptation: adaptation,
+        intelligenceInsights,
+    };
+
+    if (!isValidStrategicAuditReport(normalized)) {
+        throw new Error('Model zwrócił niekompletny raport strategiczny. Spróbuj ponownie z bardziej szczegółowymi danymi.');
+    }
+
+    return normalized;
 };

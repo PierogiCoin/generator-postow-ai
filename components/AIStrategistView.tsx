@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +20,11 @@ import { CheckIcon } from './icons/CheckIcon';
 import { PostIcon } from './icons/PostIcon';
 import { LinkIcon } from './icons/LinkIcon';
 import { ErrorDisplay } from './ErrorDisplay';
+import { ContentInventoryPreview } from './strategist/ContentInventoryPreview';
+import {
+    analyzeContentInventory,
+    buildContentInventory,
+} from '../services/contentInventoryService';
 
 const AUDIT_STEPS_KEYS = [
     'strategist.loading.steps.0',
@@ -76,7 +81,11 @@ const LoadingState: React.FC = () => {
     );
 };
 
-const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: string }> = ({ report, selectedBrandId }) => {
+const ReportDisplay: React.FC<{
+    report: StrategicAuditReport;
+    selectedBrandId?: string;
+    onNewAudit: () => void;
+}> = ({ report, selectedBrandId, onNewAudit }) => {
     const { t } = useTranslation();
     const { setIntelligentCalendarPlan, setActiveBrandVoiceId, intelligentCalendarPlan } = useDataStore();
     const [planImported, setPlanImported] = useState(false);
@@ -93,15 +102,23 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
     };
 
     const handleImport = useCallback(() => {
-        setIntelligentCalendarPlan(report.actionablePlan);
+        const merged = mergeCalendarPlans(intelligentCalendarPlan, report.actionablePlan);
+        setIntelligentCalendarPlan(merged);
         setPlanImported(true);
         setTimeout(() => navigate("/calendar"), 1500);
-    }, [report.actionablePlan, navigate]);
+    }, [report.actionablePlan, navigate, intelligentCalendarPlan, setIntelligentCalendarPlan]);
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="text-center">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t('strategist.report.title')}</h1>
+                <button
+                    type="button"
+                    onClick={onNewAudit}
+                    className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                >
+                    {t('strategist.report.newAudit', 'Nowy audyt')}
+                </button>
             </div>
             {/* Summary */}
             <div className="p-6 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 rounded-r-lg">
@@ -132,8 +149,98 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
                     <h4 className="font-bold text-lg text-blue-700 dark:text-blue-300">{report.refinedPersona.name}, {report.refinedPersona.age}</h4>
                     <p className="text-sm font-medium">{report.refinedPersona.jobTitle} @ {report.refinedPersona.location}</p>
                     <p className="text-sm mt-2">{report.refinedPersona.demographics}</p>
+                    {report.refinedPersona.goals?.length > 0 && (
+                        <div className="mt-4">
+                            <p className="text-xs font-bold uppercase text-slate-500 mb-1">{t('strategist.report.personaGoals', 'Cele')}</p>
+                            <ul className="list-disc list-inside text-sm space-y-1">{report.refinedPersona.goals.map((g, i) => <li key={`goal-${i}`}>{g}</li>)}</ul>
+                        </div>
+                    )}
+                    {report.refinedPersona.painPoints?.length > 0 && (
+                        <div className="mt-3">
+                            <p className="text-xs font-bold uppercase text-slate-500 mb-1">{t('strategist.report.personaPain', 'Bóle')}</p>
+                            <ul className="list-disc list-inside text-sm space-y-1">{report.refinedPersona.painPoints.map((p, i) => <li key={`pain-${i}`}>{p}</li>)}</ul>
+                        </div>
+                    )}
+                    {report.refinedPersona.communicationTips && (
+                        <p className="text-sm mt-3 text-slate-600 dark:text-slate-400 italic">{report.refinedPersona.communicationTips}</p>
+                    )}
                 </div>
             </div>
+
+            {/* Competitive snapshot */}
+            {report.competitiveSnapshot?.length > 0 && (
+                <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.competitors')}</h3>
+                    <div className="space-y-4">
+                        {report.competitiveSnapshot.map((c, i) => (
+                            <div key={`comp-${i}`} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                <h4 className="font-semibold text-slate-900 dark:text-white">{c.competitor}</h4>
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{c.analysis}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Content adaptation */}
+            {report.contentAdaptation && (
+                <div className="p-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                        {t('strategist.report.adaptation', 'Dopasowanie do Twoich treści')}
+                    </h3>
+                    <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">{report.contentAdaptation.notes}</p>
+                    <p className="text-xs text-slate-500 mb-3">
+                        Przeanalizowano {report.contentAdaptation.reviewedCount} istniejących pozycji
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        {report.contentAdaptation.buildsOn.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+                                    {t('strategist.report.buildsOn', 'Rozwija')}
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.contentAdaptation.buildsOn.map((b, i) => <li key={`build-${i}`}>{b}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {report.contentAdaptation.gapsFilled.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+                                    {t('strategist.report.gapsFilled', 'Uzupełnia luki')}
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.contentAdaptation.gapsFilled.map((g, i) => <li key={`gf-${i}`}>{g}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {report.contentAdaptation.avoidedRepetition.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+                                    {t('strategist.report.avoided', 'Unika powtórzeń')}
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.contentAdaptation.avoidedRepetition.map((a, i) => <li key={`av-${i}`}>{a}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {report.contentAdaptation.complementsScheduled.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold text-emerald-700 dark:text-emerald-400 mb-1">
+                                    {t('strategist.report.complements', 'Uzupełnia kalendarz')}
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.contentAdaptation.complementsScheduled.map((c, i) => <li key={`cs-${i}`}>{c}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                    {report.contentInventory && (
+                        <div className="mt-4">
+                            <ContentInventoryPreview review={report.contentInventory} compact />
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Intelligence insights */}
             {report.intelligenceInsights && (
@@ -224,9 +331,16 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
                                     {item.time && <span className="ml-2 text-slate-400">@ {item.time}</span>}
                                 </p>
                                 <p className="font-semibold text-sm mt-1">{item.topic}</p>
-                                <div className="flex items-center gap-2 mt-1">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{item.strategy}</p>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
                                     <span className="text-[10px] px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 font-medium uppercase">{item.platform}</span>
                                     <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 rounded text-blue-600 dark:text-blue-300 font-medium uppercase">{item.format}</span>
+                                    {item.slotType && (
+                                        <span className="text-[10px] px-1.5 py-0.5 bg-violet-100 dark:bg-violet-900/40 rounded text-violet-600 dark:text-violet-300 font-medium uppercase">{item.slotType}</span>
+                                    )}
+                                    {item.contentIntent && (
+                                        <span className="text-[10px] px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 rounded text-emerald-700 dark:text-emerald-300 font-medium">{item.contentIntent}</span>
+                                    )}
                                     {item.suggestedTone && (
                                         <span className="text-[10px] italic text-slate-500 font-medium">Ton: {item.suggestedTone}</span>
                                     )}
@@ -253,7 +367,8 @@ export const AIStrategistView: React.FC = () => {
     const { userPlan } = useAuth();
     const { addToast } = useNotifications();
     const handlers = useAppHandlers(addToast, () => { });
-    const { strategicAuditReport, isAuditing, auditError } = useDataStore();
+    const { strategicAuditReport, isAuditing, auditError, clearStrategicAuditReport, history, favorites, scheduledPosts, intelligentCalendarPlan } = useDataStore();
+    const [showForm, setShowForm] = useState(false);
 
     const [goal, setGoal] = useState('');
     const [audience, setAudience] = useState('');
@@ -261,8 +376,19 @@ export const AIStrategistView: React.FC = () => {
     const [selectedBrandId, setSelectedBrandId] = useState<string>('');
     const [frequency, setFrequency] = useState('3_times_week');
     const [formats, setFormats] = useState<GenerationType[]>([GenerationType.PostWithImage, GenerationType.Video]);
-    const [platforms, setPlatforms] = useState<Platform[]>([Platform.Facebook]); // NEW
-    const [lastSubmittedData, setLastSubmittedData] = useState<{ goal: string; audience: string; competitors: string[]; brandId?: string, preferences: { frequency: string; formats: GenerationType[] }, platforms: Platform[] } | null>(null); // UPDATED
+    const [platforms, setPlatforms] = useState<Platform[]>([Platform.Facebook]);
+    const [lastSubmittedData, setLastSubmittedData] = useState<{ goal: string; audience: string; competitors: string[]; brandId?: string, preferences: { frequency: string; formats: GenerationType[] }, platforms: Platform[] } | null>(null);
+
+    const inventoryPreview = useMemo(() => {
+        const items = buildContentInventory({
+            history,
+            favorites,
+            scheduledPosts,
+            calendarPlan: intelligentCalendarPlan,
+            targetPlatforms: platforms,
+        });
+        return analyzeContentInventory(items, platforms);
+    }, [history, favorites, scheduledPosts, intelligentCalendarPlan, platforms]);
 
     const { brandVoiceProfiles } = useDataStore();
 
@@ -277,8 +403,14 @@ export const AIStrategistView: React.FC = () => {
         const competitorList = competitors.split("\n").filter(c => c.trim() !== "");
         const currentPreferences = { frequency, formats };
         setLastSubmittedData({ goal, audience, competitors: competitorList, brandId: selectedBrandId, preferences: currentPreferences, platforms: platforms }); // UPDATED
+        setShowForm(false);
         handlers.handleRunStrategicAudit(goal, audience, competitorList, selectedBrandId, currentPreferences, platforms); // UPDATED
     }
+
+    const handleNewAudit = () => {
+        clearStrategicAuditReport();
+        setShowForm(true);
+    };
 
     const handleRetry = () => {
         if (lastSubmittedData) {
@@ -305,8 +437,14 @@ export const AIStrategistView: React.FC = () => {
         return <LoadingState />;
     }
 
-    if (strategicAuditReport) {
-        return <ReportDisplay report={strategicAuditReport} selectedBrandId={lastSubmittedData?.brandId || selectedBrandId} />;
+    if (strategicAuditReport && !showForm) {
+        return (
+            <ReportDisplay
+                report={strategicAuditReport}
+                selectedBrandId={lastSubmittedData?.brandId || selectedBrandId}
+                onNewAudit={handleNewAudit}
+            />
+        );
     }
 
     return (
@@ -411,6 +549,8 @@ export const AIStrategistView: React.FC = () => {
                         {t('strategist.form.submit')}
                     </button>
                 </div>
+
+                <ContentInventoryPreview review={inventoryPreview} />
             </form>
         </div>
     );

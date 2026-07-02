@@ -98,6 +98,7 @@ type DataState = {
   // AI Strategist
   startStrategicAudit: () => void;
   setStrategicAuditReport: (report: StrategicAuditReport) => void;
+  clearStrategicAuditReport: () => void;
   setAuditError: (error: AppError) => void;
 };
 
@@ -326,6 +327,7 @@ export const useDataStore = create<DataState>()(
     if (report) await strategicAuditService.saveStrategicAudit(report);
     set({ strategicAuditReport: report, isAuditing: false, auditError: null });
   },
+  clearStrategicAuditReport: () => set({ strategicAuditReport: null, auditError: null }),
   setAuditError: (error) => set({ isAuditing: false, auditError: error }),
 }), {
   name: 'data-storage',

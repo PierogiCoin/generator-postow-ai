@@ -839,7 +839,7 @@
         "Ocena otoczenia konkurencyjnego...",
         "Formułowanie głównych filarów treści...",
         "Dopracowywanie persony Twoich odbiorców...",
-        "Budowanie 30-dniowego planu działania..."
+        "Budowanie 14-dniowego planu działania..."
       ]
     },
     "report": {
@@ -854,8 +854,16 @@
       "threats": "Zagrożenia",
       "competitors": "Przegląd Konkurencji",
       "plan": "Strategiczny Plan Treści",
-      "importPlan": "Zaimportuj Plan do Kalendarza",
-      "planImported": "Plan zaimportowany!",
+      "importPlan": "Dodaj plan do kalendarza",
+      "planImported": "Plan dodany do kalendarza!",
+      "newAudit": "Nowy audyt",
+      "personaGoals": "Cele odbiorcy",
+      "personaPain": "Problemy i bóle",
+      "adaptation": "Dopasowanie do Twoich treści",
+      "buildsOn": "Rozwija",
+      "gapsFilled": "Uzupełnia luki",
+      "avoided": "Unika powtórzeń",
+      "complements": "Uzupełnia kalendarz",
       "dayHour": "Dzień i Godzina",
       "tone": "Sugerowany Ton",
       "generatePost": "Generuj ten post"

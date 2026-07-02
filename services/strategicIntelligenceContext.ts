@@ -43,6 +43,7 @@ export async function gatherStrategicIntelligenceContext(
 }> {
   const primaryPlatform = input.platforms[0] || Platform.Instagram;
   const niche = input.niche.trim() || input.goal.trim() || input.audience.trim() || 'marketing';
+  const platformsForIntel = input.platforms.slice(0, 3);
 
   let trackedHandles: string[] = [];
   try {
@@ -61,8 +62,10 @@ export async function gatherStrategicIntelligenceContext(
 
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-  const [trendsRes, gapsRes, bestTimesRes, newsRes, batchRes, singleRes] = await Promise.allSettled([
-    fetchIntelligenceTrends(niche, primaryPlatform, input.userId, 'quick'),
+  const [trendsResults, gapsRes, bestTimesRes, newsRes, batchRes, singleRes] = await Promise.allSettled([
+    Promise.allSettled(
+      platformsForIntel.map((p) => fetchIntelligenceTrends(niche, p, input.userId, 'quick'))
+    ),
     analyzeScheduleGaps(niche, primaryPlatform, input.userId, {
       competitorHandles,
       timezone,
@@ -78,10 +81,29 @@ export async function gatherStrategicIntelligenceContext(
       : Promise.resolve(null),
   ]);
 
-  const trends =
-    trendsRes.status === 'fulfilled'
-      ? trendsRes.value
+  const perPlatformTrends: Record<string, { topics: string[]; gaps: string[] }> = {};
+  if (trendsResults.status === 'fulfilled') {
+    for (let i = 0; i < platformsForIntel.length; i++) {
+      const res = trendsResults.value[i];
+      const platform = platformsForIntel[i];
+      if (res.status === 'fulfilled') {
+        const data = res.value;
+        perPlatformTrends[platform] = {
+          topics: (data.trends as IntelligenceTrend[])
+            .slice(0, 4)
+            .map((t) => `${t.topic} (${t.momentum})`),
+          gaps: (data.contentGaps || []).slice(0, 4),
+        };
+      }
+    }
+  }
+
+  const primaryTrendsRes =
+    trendsResults.status === 'fulfilled' && trendsResults.value[0]?.status === 'fulfilled'
+      ? trendsResults.value[0].value
       : { trends: [], contentGaps: [], avoidTopics: [], sources: [] };
+
+  const trends = primaryTrendsRes;
 
   const gaps = gapsRes.status === 'fulfilled' ? gapsRes.value : null;
   const bestTimes = bestTimesRes.status === 'fulfilled' ? bestTimesRes.value : null;
@@ -98,9 +120,12 @@ export async function gatherStrategicIntelligenceContext(
 
   const contentGaps = [
     ...(trends.contentGaps || []),
+    ...Object.entries(perPlatformTrends).flatMap(([p, d]) =>
+      d.gaps.map((g) => `[${p}] ${g}`)
+    ),
     ...((batch?.contentGaps as string[]) || []),
     ...(single?.contentGaps || []),
-  ].slice(0, 8);
+  ].slice(0, 10);
 
   const gapSlots = gaps?.gapSlots?.slice(0, 6).map((g) => `${g.label} (${g.time})`) || [];
   const topSlots =
@@ -138,6 +163,8 @@ export async function gatherStrategicIntelligenceContext(
   const promptBlock = JSON.stringify(
     {
       primaryPlatform,
+      allTargetPlatforms: input.platforms,
+      perPlatformTrends,
       competitorHandles,
       trendingTopics,
       contentGaps,

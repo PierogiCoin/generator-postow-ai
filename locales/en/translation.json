@@ -837,9 +837,12 @@
       "opportunities": "Opportunities",
       "threats": "Threats",
       "competitors": "Competitive Snapshot",
-      "plan": "30-Day Actionable Content Plan",
-      "importPlan": "Import Plan to Calendar",
-      "planImported": "Plan Imported!"
+      "plan": "14-Day Actionable Content Plan",
+      "importPlan": "Add plan to calendar",
+      "planImported": "Plan added to calendar!",
+      "newAudit": "New audit",
+      "personaGoals": "Audience goals",
+      "personaPain": "Pain points"
     },
     "locked": {
       "title": "Unlock the AI Strategist",

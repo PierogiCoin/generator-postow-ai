@@ -586,6 +586,41 @@ export interface StrategicIdea {
 }
 
 
+export interface StrategistContentItem {
+  id: string;
+  source: 'history' | 'favorite' | 'scheduled' | 'calendar' | 'published';
+  topic: string;
+  platform?: Platform;
+  format?: GenerationType;
+  tone?: string;
+  status: 'published' | 'scheduled' | 'planned' | 'generated' | 'saved';
+  date?: string;
+  engagementScore?: number;
+  snippet?: string;
+}
+
+export interface ContentInventoryReview {
+  items: StrategistContentItem[];
+  existingTopics: string[];
+  topPerformers: string[];
+  coverageGaps: string[];
+  repetitiveThemes: string[];
+  upcomingScheduled: number;
+  byPlatform: Record<string, number>;
+  byFormat: Record<string, number>;
+  byStatus: Record<string, number>;
+  totalCount: number;
+}
+
+export interface ContentAdaptationSummary {
+  reviewedCount: number;
+  buildsOn: string[];
+  gapsFilled: string[];
+  avoidedRepetition: string[];
+  complementsScheduled: string[];
+  notes: string;
+}
+
 // Types for AI Strategist / Auditor
 export interface ContentPillar {
   pillar: string;
@@ -612,6 +647,10 @@ export interface StrategicAuditReport {
   swot: SWOTAnalysis;
   competitiveSnapshot: CompetitiveSnapshot[];
   actionablePlan: IntelligentCalendarPlanItem[];
+  /** Przegląd istniejących treści użyty przy audycie */
+  contentInventory?: ContentInventoryReview;
+  /** Jak strategia dopasowano do historii postów */
+  contentAdaptation?: ContentAdaptationSummary;
   /** Dane z modułu intelligence (trendy, luki, godziny) */
   intelligenceInsights?: {
     trendingTopics: string[];
