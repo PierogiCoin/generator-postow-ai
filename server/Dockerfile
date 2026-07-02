@@ -1,11 +1,18 @@
 FROM node:22-alpine
 
-WORKDIR /app
+# Mirror repo layout: server/, config/, types.ts (required by lib/pricingConfig.ts)
+WORKDIR /workspace
 
-COPY server/package.json server/package-lock.json* ./
+COPY server/package.json server/package-lock.json* ./server/
+WORKDIR /workspace/server
 RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
 
-COPY server/ .
+WORKDIR /workspace
+COPY config ./config
+COPY types.ts ./types.ts
+COPY server ./server
+
+WORKDIR /workspace/server
 
 ENV NODE_ENV=production
 EXPOSE 3001

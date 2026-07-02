@@ -1,8 +1,13 @@
-import {
-  SUBSCRIPTION_PLANS,
-  CREDIT_PACKS,
-  type PlanStripeKey,
-} from '../../config/subscriptionPlans.js';
+import type { PlanStripeKey } from '../../config/subscriptionPlans.js';
+import * as subscriptionPlansModule from '../../config/subscriptionPlans.js';
+
+/** tsx/Node ESM: named exports may appear on `default` when loading cross-root .ts files */
+const subscriptionPlans =
+  'SUBSCRIPTION_PLANS' in subscriptionPlansModule
+    ? subscriptionPlansModule
+    : (subscriptionPlansModule as { default: typeof subscriptionPlansModule }).default;
+
+const { SUBSCRIPTION_PLANS, CREDIT_PACKS } = subscriptionPlans;
 
 function readStripePrice(envKey: string | null): string | null {
   if (!envKey) return null;
