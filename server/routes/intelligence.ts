@@ -20,6 +20,12 @@ import {
   type HeatmapCell,
 } from '../lib/schedulingAnalytics.js';
 import { supabase } from '../lib/clients.js';
+import {
+  buildIntelligenceCacheKey,
+  getIntelligenceCache,
+  setIntelligenceCache,
+  INTELLIGENCE_CACHE_TTL,
+} from '../lib/intelligenceCache.js';
 
 const newsSchema = z.object({
   niche: z.string().min(2).max(200),
@@ -101,6 +107,12 @@ export function createIntelligenceRouter(): Router {
     async (req, res) => {
       try {
         const { niche, platform, language = 'pl' } = req.body;
+        const cacheKey = buildIntelligenceCacheKey('news', { niche, platform, language });
+        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+        if (cached) {
+          return res.json({ ...cached, cached: true });
+        }
+
         const prompt = `Jesteś analitykiem newsów i social media. Użyj Google Search.
 
 DATA: ${todayPl()}
@@ -136,12 +148,14 @@ Zwróć WYŁĄCZNIE JSON:
           }
         );
 
-        res.json({
+        const payload = {
           items: Array.isArray(data.items) ? data.items : [],
           industryPulse: data.industryPulse || '',
           sources,
           searchedAt: new Date().toISOString(),
-        });
+        };
+        setIntelligenceCache(cacheKey, payload, INTELLIGENCE_CACHE_TTL.news);
+        res.json(payload);
       } catch (error: unknown) {
         logger.error('[intelligence/news]', error);
         res.status(500).json({
@@ -160,6 +174,11 @@ Zwróć WYŁĄCZNIE JSON:
       try {
         const { niche, platform, depth = 'deep' } = req.body;
         const count = depth === 'quick' ? 5 : 7;
+        const cacheKey = buildIntelligenceCacheKey('trends', { niche, platform, depth });
+        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+        if (cached) {
+          return res.json({ ...cached, cached: true });
+        }
 
         const prompt = `Jesteś analitykiem trendów social media. Użyj Google Search.
 
@@ -201,13 +220,15 @@ JSON:
           systemInstruction: 'Ekspert trendów. Konkretne, aktualne dane z wyszukiwania. JSON tylko.',
         });
 
-        res.json({
+        const payload = {
           trends: Array.isArray(data.trends) ? data.trends : [],
           contentGaps: data.contentGaps || [],
           avoidTopics: data.avoidTopics || [],
           sources,
           analyzedAt: new Date().toISOString(),
-        });
+        };
+        setIntelligenceCache(cacheKey, payload, INTELLIGENCE_CACHE_TTL.trends);
+        res.json(payload);
       } catch (error: unknown) {
         logger.error('[intelligence/trends]', error);
         res.status(500).json({
@@ -226,6 +247,11 @@ JSON:
       try {
         const handle = normalizeHandle(req.body.handle);
         const { platform, niche } = req.body;
+        const cacheKey = buildIntelligenceCacheKey('competitor', { handle, platform, niche });
+        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+        if (cached) {
+          return res.json({ ...cached, cached: true });
+        }
 
         const prompt = `Jesteś analitykiem competitive intelligence. Użyj Google Search.
 
@@ -269,11 +295,13 @@ weekday: 0=Pon … 6=Ndz. density 1=niska aktywność, 10=peak konkurencji.`;
             'Competitive intelligence. Konkretne, actionable insights. Godziny w formacie 24h. JSON only.',
         });
 
-        res.json({
+        const payload = {
           analysis: { ...data, handle, platform },
           sources,
           analyzedAt: new Date().toISOString(),
-        });
+        };
+        setIntelligenceCache(cacheKey, payload, INTELLIGENCE_CACHE_TTL.competitor);
+        res.json(payload);
       } catch (error: unknown) {
         logger.error('[intelligence/competitor]', error);
         res.status(500).json({
@@ -295,6 +323,15 @@ weekday: 0=Pon … 6=Ndz. density 1=niska aktywność, 10=peak konkurencji.`;
       try {
         const handles = (req.body.handles as string[]).map(normalizeHandle);
         const { platform, niche } = req.body;
+        const cacheKey = buildIntelligenceCacheKey('competitor-batch', {
+          handles: handles.sort().join(','),
+          platform,
+          niche,
+        });
+        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+        if (cached) {
+          return res.json({ ...cached, cached: true });
+        }
 
         const prompt = `Analityk competitive intelligence. Użyj Google Search.
 
@@ -325,11 +362,13 @@ JSON:
           systemInstruction: 'Porównawcza analiza wielu kont. JSON only.',
         });
 
-        res.json({
+        const payload = {
           batch: data,
           sources,
           analyzedAt: new Date().toISOString(),
-        });
+        };
+        setIntelligenceCache(cacheKey, payload, INTELLIGENCE_CACHE_TTL.competitorBatch);
+        res.json(payload);
       } catch (error: unknown) {
         logger.error('[intelligence/competitor-batch]', error);
         res.status(500).json({
@@ -355,6 +394,20 @@ JSON:
           timezone = 'Europe/Warsaw',
           contentType = 'post',
         } = req.body;
+
+        const handlesKey = [...(competitorHandles as string[])].map(normalizeHandle).sort().join(',');
+        const cacheKey = buildIntelligenceCacheKey('schedule-gaps', {
+          userId,
+          niche,
+          platform,
+          timezone,
+          contentType,
+          handles: handlesKey,
+        });
+        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+        if (cached) {
+          return res.json({ ...cached, cached: true });
+        }
 
         const userHeatmap = await fetchUserHeatmap(userId, timezone);
         const userTopSlots = await fetchTopSlots(userId, timezone, 8);
@@ -456,7 +509,7 @@ JSON:
 
         const gapSlots = computeGapSlots(competitorHourly, userHeatmap, 14);
 
-        res.json({
+        const payload = {
           timezone,
           niche,
           platform,
@@ -472,7 +525,9 @@ JSON:
           recommendation: aiRecommendation,
           sources,
           computedAt: new Date().toISOString(),
-        });
+        };
+        setIntelligenceCache(cacheKey, payload, INTELLIGENCE_CACHE_TTL.scheduleGaps);
+        res.json(payload);
       } catch (error: unknown) {
         logger.error('[intelligence/schedule-gaps]', error);
         res.status(500).json({

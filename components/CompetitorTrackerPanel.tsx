@@ -3,7 +3,7 @@ import { Platform } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import {
   TrackedCompetitor,
-  getTrackedCompetitors,
+  fetchTrackedCompetitors,
   addTrackedCompetitor,
   removeTrackedCompetitor,
   analyzeCompetitor,
@@ -228,8 +228,14 @@ export const CompetitorTrackerPanel: React.FC = () => {
 
   const userId = user?.id;
 
-  const loadCompetitors = useCallback(() => {
-    setCompetitors(getTrackedCompetitors(userId));
+  const loadCompetitors = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const list = await fetchTrackedCompetitors(userId);
+      if (isMountedRef.current) setCompetitors(list);
+    } catch {
+      if (isMountedRef.current) setCompetitors([]);
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -267,9 +273,9 @@ export const CompetitorTrackerPanel: React.FC = () => {
 
     setIsAdding(true);
     try {
-      const newComp = addTrackedCompetitor(trimmedHandle, platform, trimmedNiche, userId);
+      const newComp = await addTrackedCompetitor(trimmedHandle, platform, trimmedNiche, userId);
       if (isMountedRef.current) {
-        loadCompetitors();
+        await loadCompetitors();
         setHandle('');
         setShowForm(false);
         showSuccess(`Dodano @${newComp.handle}`, 'Kliknij „Analizuj”, aby wygenerować raport.');
@@ -282,9 +288,14 @@ export const CompetitorTrackerPanel: React.FC = () => {
     }
   }, [handle, platform, niche, userId, loadCompetitors]);
 
-  const handleRemove = useCallback((id: string) => {
-    removeTrackedCompetitor(id, userId);
-    if (isMountedRef.current) loadCompetitors();
+  const handleRemove = useCallback(async (id: string) => {
+    if (!userId) return;
+    try {
+      await removeTrackedCompetitor(id, userId);
+      if (isMountedRef.current) await loadCompetitors();
+    } catch (err: unknown) {
+      showWarning(err instanceof Error ? err.message : 'Nie udało się usunąć konkurenta.');
+    }
   }, [userId, loadCompetitors]);
 
   const handleAnalyze = useCallback(async (competitor: TrackedCompetitor) => {
@@ -300,9 +311,9 @@ export const CompetitorTrackerPanel: React.FC = () => {
         competitor.niche,
         userId
       );
-      updateCompetitorAnalysis(competitor.id, analysis, userId);
+      await updateCompetitorAnalysis(competitor.id, analysis, userId);
       if (isMountedRef.current) {
-        loadCompetitors();
+        await loadCompetitors();
         showSuccess(`Analiza @${competitor.handle} gotowa!`);
       }
     } catch (err: unknown) {
@@ -343,7 +354,7 @@ export const CompetitorTrackerPanel: React.FC = () => {
 
       for (const result of individualResults) {
         if (result && 'id' in result && result.analysis) {
-          updateCompetitorAnalysis(result.id, result.analysis, userId);
+          await updateCompetitorAnalysis(result.id, result.analysis, userId);
         }
       }
 
@@ -351,7 +362,7 @@ export const CompetitorTrackerPanel: React.FC = () => {
         setBatchResult(batch as BatchCompetitorResult);
         setBatchSources(sources || []);
         setBatchAnalyzedAt(analyzedAt || new Date().toISOString());
-        loadCompetitors();
+        await loadCompetitors();
         showSuccess(`Przeanalizowano ${competitors.length} konkurentów + raport grupowy.`);
       }
     } catch (err: unknown) {

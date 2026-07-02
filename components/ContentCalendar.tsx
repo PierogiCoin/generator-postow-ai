@@ -43,7 +43,7 @@ import {
   countDayGenerationGaps,
   listSlotsNeedingGeneration,
 } from '../services/calendarDayBatchService';
-import { getTrackedCompetitors } from '../services/competitorService';
+import { fetchTrackedCompetitors } from '../services/competitorService';
 import {
   analyzeScheduleGaps,
   getCachedGapHours,
@@ -190,7 +190,8 @@ export const ContentCalendar: React.FC = () => {
 
     setIsLoadingGaps(true);
     try {
-      const handles = getTrackedCompetitors(user.id)
+      const competitors = await fetchTrackedCompetitors(user.id);
+      const handles = competitors
         .filter((c) => c.platform === platform)
         .map((c) => c.handle);
       const result = await analyzeScheduleGaps(getUserNiche(), platform, user.id, {

@@ -1,7 +1,7 @@
 import { callApi } from './apiClient';
 import { STORAGE_KEYS } from '../utils/storageUtils';
 import { analyzeScheduleGaps, type GapSlotResult } from './intelligenceService';
-import { getTrackedCompetitors } from './competitorService';
+import { fetchTrackedCompetitors } from './competitorService';
 import { Platform } from '../types';
 
 /**
@@ -73,7 +73,7 @@ export async function analyzeOptimalPostingTimes(
     profession?: string;
   }
 ): Promise<WeeklySchedule> {
-  const competitors = getTrackedCompetitors(userId)
+  const competitors = (await fetchTrackedCompetitors(userId))
     .filter((c) => c.platform === platform)
     .map((c) => c.handle);
 

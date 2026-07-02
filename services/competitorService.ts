@@ -1,6 +1,7 @@
 import { callApi } from './apiClient';
 import { Platform } from '../types';
 import { STORAGE_KEYS } from '../utils/storageUtils';
+import { getSupabase } from './supabaseClient';
 import {
   analyzeCompetitorDeep,
   type DeepCompetitorAnalysis,
@@ -39,20 +40,30 @@ export interface CompetitorAnalysis {
 
 const STORAGE_KEY = STORAGE_KEYS.COMPETITORS;
 const MAX_COMPETITORS = 25;
+const MIGRATION_FLAG = 'so_competitors_migrated_v1';
+
+type CompetitorRow = {
+  id: string;
+  user_id: string;
+  handle: string;
+  platform: string;
+  niche: string;
+  analysis: CompetitorAnalysis | null;
+  last_analyzed_at: string | null;
+  added_at: string;
+};
 
 function storageKey(userId?: string): string {
   return userId ? `${STORAGE_KEY}_${userId}` : STORAGE_KEY;
 }
 
-function readCompetitors(userId?: string): TrackedCompetitor[] {
+function readLocalCompetitors(userId?: string): TrackedCompetitor[] {
   try {
     const key = storageKey(userId);
     let raw = localStorage.getItem(key);
     if (!raw && userId) {
       raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        localStorage.setItem(key, raw);
-      }
+      if (raw) localStorage.setItem(key, raw);
     }
     const parsed = JSON.parse(raw || '[]');
     return Array.isArray(parsed) ? parsed : [];
@@ -61,64 +72,147 @@ function readCompetitors(userId?: string): TrackedCompetitor[] {
   }
 }
 
+function rowToCompetitor(row: CompetitorRow): TrackedCompetitor {
+  return {
+    id: row.id,
+    handle: row.handle,
+    platform: row.platform as Platform,
+    niche: row.niche,
+    addedAt: row.added_at,
+    lastAnalyzedAt: row.last_analyzed_at ?? undefined,
+    analysis: row.analysis ?? undefined,
+  };
+}
+
+async function migrateLocalCompetitorsIfNeeded(userId: string): Promise<void> {
+  if (typeof localStorage === 'undefined') return;
+  const flagKey = `${MIGRATION_FLAG}_${userId}`;
+  if (localStorage.getItem(flagKey)) return;
+
+  const local = readLocalCompetitors(userId);
+  const supabase = getSupabase();
+
+  if (local.length > 0) {
+    const rows = local.map((c) => ({
+      user_id: userId,
+      handle: c.handle,
+      platform: c.platform,
+      niche: c.niche,
+      analysis: c.analysis ?? null,
+      last_analyzed_at: c.lastAnalyzedAt ?? null,
+      added_at: c.addedAt,
+    }));
+
+    const { error } = await supabase
+      .from('tracked_competitors')
+      .upsert(rows, { onConflict: 'user_id,platform,handle' });
+
+    if (!error) {
+      localStorage.removeItem(storageKey(userId));
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }
+
+  localStorage.setItem(flagKey, '1');
+}
+
+export async function fetchTrackedCompetitors(userId: string): Promise<TrackedCompetitor[]> {
+  await migrateLocalCompetitorsIfNeeded(userId);
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('tracked_competitors')
+    .select('*')
+    .eq('user_id', userId)
+    .order('added_at', { ascending: false });
+
+  if (error) {
+    console.warn('[competitors] Supabase fetch failed, falling back to localStorage', error.message);
+    return readLocalCompetitors(userId);
+  }
+
+  return (data as CompetitorRow[]).map(rowToCompetitor);
+}
+
+/** @deprecated Użyj fetchTrackedCompetitors — synchroniczny odczyt tylko z localStorage */
 export function getTrackedCompetitors(userId?: string): TrackedCompetitor[] {
-  return readCompetitors(userId);
+  return readLocalCompetitors(userId);
 }
 
-export function saveTrackedCompetitors(competitors: TrackedCompetitor[], userId?: string): void {
-  localStorage.setItem(storageKey(userId), JSON.stringify(competitors));
-}
-
-export function normalizeCompetitorHandle(handle: string): string {
-  return handle.trim().replace(/^@+/, '').replace(/\s+/g, '');
-}
-
-export function addTrackedCompetitor(
+export async function addTrackedCompetitor(
   handle: string,
   platform: Platform,
   niche: string,
-  userId?: string
-): TrackedCompetitor {
-  const competitors = readCompetitors(userId);
-  if (competitors.length >= MAX_COMPETITORS) {
-    throw new Error(`Możesz śledzić maksymalnie ${MAX_COMPETITORS} konkurentów. Usuń jednego, aby dodać nowego.`);
-  }
+  userId: string
+): Promise<TrackedCompetitor> {
+  await migrateLocalCompetitorsIfNeeded(userId);
 
   const normalizedHandle = normalizeCompetitorHandle(handle);
   const normalizedNiche = niche.trim();
 
-  const duplicate = competitors.find(
-    c => c.handle.toLowerCase() === normalizedHandle.toLowerCase() && c.platform === platform
+  const existing = await fetchTrackedCompetitors(userId);
+  if (existing.length >= MAX_COMPETITORS) {
+    throw new Error(`Możesz śledzić maksymalnie ${MAX_COMPETITORS} konkurentów. Usuń jednego, aby dodać nowego.`);
+  }
+
+  const duplicate = existing.find(
+    (c) => c.handle.toLowerCase() === normalizedHandle.toLowerCase() && c.platform === platform
   );
   if (duplicate) {
     throw new Error('Ten konkurent jest już na liście.');
   }
 
-  const newCompetitor: TrackedCompetitor = {
-    id: `comp_${Date.now()}`,
-    handle: normalizedHandle,
-    platform,
-    niche: normalizedNiche,
-    addedAt: new Date().toISOString(),
-  };
-  competitors.push(newCompetitor);
-  saveTrackedCompetitors(competitors, userId);
-  return newCompetitor;
-}
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from('tracked_competitors')
+    .insert({
+      user_id: userId,
+      handle: normalizedHandle,
+      platform,
+      niche: normalizedNiche,
+    })
+    .select('*')
+    .single();
 
-export function removeTrackedCompetitor(id: string, userId?: string): void {
-  const competitors = readCompetitors(userId).filter(c => c.id !== id);
-  saveTrackedCompetitors(competitors, userId);
-}
-
-export function updateCompetitorAnalysis(id: string, analysis: CompetitorAnalysis, userId?: string): void {
-  const competitors = readCompetitors(userId);
-  const idx = competitors.findIndex(c => c.id === id);
-  if (idx !== -1) {
-    competitors[idx].analysis = analysis;
-    competitors[idx].lastAnalyzedAt = new Date().toISOString();
-    saveTrackedCompetitors(competitors, userId);
+  if (error) {
+    if (error.code === '23505') throw new Error('Ten konkurent jest już na liście.');
+    throw new Error(error.message);
   }
+
+  return rowToCompetitor(data as CompetitorRow);
+}
+
+export async function removeTrackedCompetitor(id: string, userId: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from('tracked_competitors')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
+}
+
+export async function updateCompetitorAnalysis(
+  id: string,
+  analysis: CompetitorAnalysis,
+  userId: string
+): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from('tracked_competitors')
+    .update({
+      analysis,
+      last_analyzed_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .eq('user_id', userId);
+
+  if (error) throw new Error(error.message);
+}
+
+export function normalizeCompetitorHandle(handle: string): string {
+  return handle.trim().replace(/^@+/, '').replace(/\s+/g, '');
 }
 
 export async function analyzeCompetitor(
