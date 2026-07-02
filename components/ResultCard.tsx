@@ -1,8 +1,8 @@
 import { CreativeCanvas } from './ui/CreativeCanvas';
 import { StreamingText } from './ui/StreamingText';
 import { suggestImageLayouts } from '../services/mediaService';
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { toPng } from 'html-to-image';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { formatPublishCaption, resolveCtaUrl } from '../utils/publishCaption';
 import { useTranslation } from 'react-i18next';
 import type { GenerationResult, IdeaResult, VideoScript, SentimentAnalysisResult, FormData, AppError, SEOAnalysisResult, UserPlan, User, AIAssistantAction, CampaignHistoryItem, FavoritePost, TeamMemberRole, PostApprovalStatus, PerformancePrediction, PredictionTip, PostPerformanceData } from '../types';
 import { Tone, UserPlan as UserPlanEnum, GenerationType, NotificationType } from '../types';
@@ -64,6 +64,9 @@ import { ABTestResultDisplay } from './resultCard/ABTestResultDisplay';
 import { ResultPrimaryActions } from './resultCard/ResultPrimaryActions';
 import { ResultCardTabBar, type ResultCardTab } from './resultCard/ResultCardTabBar';
 import { QualityGatePanel } from './resultCard/QualityGatePanel';
+import { ResultMediaPanel } from './resultCard/ResultMediaPanel';
+import { ContentRepurposingPanel } from './ContentRepurposingPanel';
+import { VisualStudioModal } from './VisualStudioModal';
 
 interface ResultCardProps {
     historyResult?: GenerationResult | null;
@@ -94,10 +97,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
         isAssistantLoading,
         isRegenerating,
         hookVariations,
-        isSuggestingHooks
+        isSuggestingHooks,
+        isRegeneratingImage,
     } = useGenerationStore();
 
     const [isCreativeStudioOpen, setIsCreativeStudioOpen] = useState(false);
+    const [isVisualStudioOpen, setIsVisualStudioOpen] = useState(false);
     interface SuggestedLayout {
   text: string;
   position?: string;
@@ -127,6 +132,22 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
 
     const activeProfile = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
 
+    const publishCaptionPreview = useMemo(() => {
+        if (!result) return '';
+        const ctaUrl = resolveCtaUrl(result.ctaUrl, activeProfile?.settings?.websiteUrl);
+        return formatPublishCaption({
+            postText: result.postText,
+            hashtags: result.hashtags,
+            callToAction: result.callToAction,
+            ctaUrl,
+        });
+    }, [result, activeProfile?.settings?.websiteUrl]);
+
+    const resolvedCtaUrl = useMemo(
+        () => resolveCtaUrl(result?.ctaUrl, activeProfile?.settings?.websiteUrl),
+        [result?.ctaUrl, activeProfile?.settings?.websiteUrl]
+    );
+
     const handleCopy = () => {
         if (result) {
             let textToCopy = result.postText;
@@ -140,9 +161,7 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
     };
 
     const handleApplyImageEdit = (newImageUrl: string) => {
-        if (result) {
-            appHandlers.handleSetResult({ ...result, imageUrl: newImageUrl });
-        }
+        void appHandlers.handleApplyImageEdit(newImageUrl);
     };
 
     const handleUpdateResult = (updatedResult: GenerationResult) => {
@@ -331,7 +350,14 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                     <PostPreview
                                         result={result}
                                         formData={formData}
-                                        onEditImage={() => {}}
+                                        onEditImage={() => {
+                                            setActiveTab('media');
+                                            if (result.imageUrl) {
+                                                setIsVisualStudioOpen(true);
+                                            } else {
+                                                void handleOpenCreativeStudio();
+                                            }
+                                        }}
                                         onUpdateResult={handleUpdateResult}
                                         onAIAssistantAction={appHandlers.handleAIAssistantAction}
                                         isAssistantLoading={isAssistantLoading}
@@ -355,6 +381,15 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                                     {t('resultCard.hooks.generate', 'Generuj alternatywy')}
                                                 </button>
                                             )}
+                                            {hookVariations.length > 0 && !isSuggestingHooks && (
+                                                <button
+                                                    type="button"
+                                                    onClick={appHandlers.handleSuggestHooks}
+                                                    className="text-[10px] font-black uppercase text-slate-500 hover:text-blue-600"
+                                                >
+                                                    {t('resultCard.hooks.refresh', 'Nowe hooki')}
+                                                </button>
+                                            )}
                                         </div>
 
                                         {isSuggestingHooks && (
@@ -369,17 +404,31 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                         {hookVariations.length > 0 && (
                                             <div className="grid grid-cols-1 gap-2">
                                                 {hookVariations.map((hook, idx) => (
-                                                    <button
+                                                    <div
                                                         key={idx}
-                                                        type="button"
-                                                        onClick={() => appHandlers.handleApplyHook(hook)}
-                                                        className="text-left p-3 text-xs bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-blue-500 hover:shadow-md transition-all group relative pr-10"
+                                                        className="flex flex-col sm:flex-row gap-2 p-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-xl"
                                                     >
-                                                        <span className="line-clamp-2">{hook}</span>
-                                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <CheckIcon className="w-4 h-4 text-green-500" />
-                                                        </div>
-                                                    </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => appHandlers.handleApplyHook(hook)}
+                                                            className="flex-1 text-left text-xs hover:text-blue-600 transition-colors"
+                                                        >
+                                                            <span className="line-clamp-2">{hook}</span>
+                                                            <span className="text-[9px] font-black uppercase text-slate-400 mt-1 block">
+                                                                {t('resultCard.hooks.applyText', 'Tylko tekst')}
+                                                            </span>
+                                                        </button>
+                                                        {result.imageUrl && formData && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => void appHandlers.handleApplyHookWithNewImage(hook)}
+                                                                disabled={isRegeneratingImage}
+                                                                className="shrink-0 px-3 py-2 text-[10px] font-black uppercase rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                                                            >
+                                                                {t('resultCard.hooks.applyWithImage', 'Hook + grafika')}
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 ))}
                                             </div>
                                         )}
@@ -389,50 +438,65 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                         )}
 
                         {activeTab === 'media' && (
-                            <div className="space-y-6 animate-fade-in">
-                                {result.imageUrl ? (
-                                    <div className="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                                        <img
-                                            src={result.imageUrl}
-                                            alt={t('resultCard.media.previewAlt', 'Podgląd grafiki')}
-                                            className="w-full max-h-[420px] object-contain mx-auto"
-                                        />
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
-                                        {t('resultCard.media.noImage', 'Brak grafiki w tym wyniku.')}
-                                    </p>
-                                )}
+                            <ResultMediaPanel
+                                result={result}
+                                isRegeneratingImage={isRegeneratingImage}
+                                onRegenerateImage={(prompt) => void appHandlers.handleRegenerateImage(prompt)}
+                                onOpenAiStudio={() => setIsVisualStudioOpen(true)}
+                                onOpenCreativeStudio={() => void handleOpenCreativeStudio()}
+                                onReformatForPlatform={(p) => void appHandlers.handleReformatImageForPlatform(p)}
+                            />
+                        )}
 
-                                {result.visualStrategyTips && (
-                                    <div className="p-5 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-3xl">
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <CameraIcon className="w-4 h-4 text-indigo-500" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                                                {t('resultCard.media.visualConcept', 'Koncepcja wizualna')}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
-                                            {result.visualStrategyTips}
-                                        </p>
-                                    </div>
-                                )}
-
-                                {result.imageUrl && (
-                                    <ModernButton
-                                        onClick={handleOpenCreativeStudio}
-                                        variant="gradient"
-                                        fullWidth
-                                        icon={<SparklesIcon className="w-5 h-5" />}
-                                    >
-                                        {t('resultCard.media.magicDesign', 'Magic Design — edytuj grafikę')}
-                                    </ModernButton>
-                                )}
+                        {activeTab === 'repurpose' && formData && (
+                            <div className="animate-fade-in">
+                                <ContentRepurposingPanel
+                                    sourceContent={result.postText}
+                                    tone={formData.tone}
+                                    currentPlatform={result.platform}
+                                    initialVideoUrl={result.videoUrl ?? undefined}
+                                />
                             </div>
                         )}
 
                         {activeTab === 'publish' && (
                             <div className="space-y-6 animate-fade-in">
+                                {(result.callToAction || resolvedCtaUrl) && (
+                                    <div className="p-5 bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50 rounded-3xl space-y-3">
+                                        <div className="flex items-center gap-2">
+                                            <RocketLaunchIcon className="w-4 h-4 text-blue-500" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
+                                                {t('resultCard.publish.ctaPreview', 'CTA i link')}
+                                            </span>
+                                        </div>
+                                        {result.callToAction && (
+                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{result.callToAction}</p>
+                                        )}
+                                        {resolvedCtaUrl && (
+                                            <a
+                                                href={resolvedCtaUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs font-semibold text-blue-600 dark:text-blue-400 break-all hover:underline"
+                                            >
+                                                {resolvedCtaUrl}
+                                            </a>
+                                        )}
+                                        <p className="text-[10px] text-slate-500 font-medium">
+                                            {t('resultCard.publish.ctaHint', 'Link zostanie dołączony do opisu na Facebooku i innych platformach.')}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+                                        {t('resultCard.publish.captionPreview', 'Podgląd publikacji')}
+                                    </p>
+                                    <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                                        {publishCaptionPreview}
+                                    </p>
+                                </div>
+
                                 {result.suggestedPostingTime && (
                                     <div className="p-5 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50 rounded-3xl">
                                         <div className="flex items-center gap-2 mb-3">
@@ -557,7 +621,31 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                     initialText={suggestedLayouts[0]?.text || result.postText.substring(0, 30)}
                     logoUrl={activeProfile?.settings?.logoUrl}
                     mascotUrl={activeProfile?.settings?.mascotUrl}
+                    onExport={(dataUrl) => {
+                        handleApplyImageEdit(dataUrl);
+                        notificationSystem.addToast(
+                            t('resultCard.media.saved', 'Grafika zapisana do posta'),
+                            NotificationType.Success
+                        );
+                    }}
                     onClose={() => setIsCreativeStudioOpen(false)}
+                />
+            )}
+
+            {isVisualStudioOpen && result?.imageUrl && user && (
+                <VisualStudioModal
+                    isOpen={isVisualStudioOpen}
+                    onClose={() => setIsVisualStudioOpen(false)}
+                    originalImageUrl={result.imageUrl}
+                    user={user}
+                    onApply={(newImageUrl) => {
+                        handleApplyImageEdit(newImageUrl);
+                        setIsVisualStudioOpen(false);
+                        notificationSystem.addToast(
+                            t('resultCard.media.aiSaved', 'Edycja AI zapisana'),
+                            NotificationType.Success
+                        );
+                    }}
                 />
             )}
 

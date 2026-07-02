@@ -22,7 +22,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationType } from '../types';
 import { PhotoIcon } from './icons/PhotoIcon';
-
+import { computeBrandVoiceCompleteness } from '../utils/brandVoiceLearn';
+import { UsersIcon } from './icons/UsersIcon';
 
 interface BrandVoiceManagerModalProps {
     isOpen: boolean;
@@ -32,8 +33,10 @@ interface BrandVoiceManagerModalProps {
     onDelete: (id: string) => void;
     onSetActive: (id: string | null) => void;
     activeId: string | null;
-    onLearnFromFavorites: () => Promise<void>;
-    onLearnFromHistory?: () => Promise<void>;
+    onLearnFromFavorites: (mergeIntoProfileId?: string | null) => Promise<void>;
+    onLearnFromHistory?: (mergeIntoProfileId?: string | null) => Promise<void>;
+    onLearnFromCompetitors?: (mergeIntoProfileId?: string | null) => Promise<void>;
+    onExtractFromUrl?: (url: string, mergeIntoProfileId?: string | null) => Promise<void>;
     isLearningStyle: boolean;
 }
 
@@ -52,8 +55,20 @@ const emptyProfile: Partial<BrandVoiceProfile> = {
         mascotName: '',
         mascotDescription: '',
         includeMascotInGeneration: false,
+        websiteUrl: '',
+        visualStyle: '',
+        brandColors: [],
+        logoPosition: 'bottom-right',
+        logoSizePercent: 13,
     }
 };
+
+const LOGO_POSITIONS = [
+    { id: 'top-left' as const, label: '↖ Góra lewo' },
+    { id: 'top-right' as const, label: '↗ Góra prawo' },
+    { id: 'bottom-left' as const, label: '↙ Dół lewo' },
+    { id: 'bottom-right' as const, label: '↘ Dół prawo' },
+];
 
 const ARCHETYPES = [
     { id: ToneArchetype.Expert, icon: BriefcaseIcon, label: 'Ekspert', desc: 'Autorytet i wiedza' },
@@ -176,6 +191,8 @@ const ProfileForm: React.FC<{
         onSave(formData);
     };
 
+    const completeness = computeBrandVoiceCompleteness(formData.settings);
+
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="flex items-center justify-between">
@@ -186,6 +203,19 @@ const ProfileForm: React.FC<{
                     <ModernButton onClick={onCancel} variant="ghost" size="sm">Anuluj</ModernButton>
                     <ModernButton onClick={() => onSave(formData)} variant="primary" size="sm">Zapisz Profil</ModernButton>
                 </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kompletność profilu</span>
+                    <span className="text-sm font-black text-blue-600">{completeness.score}%</span>
+                </div>
+                <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-600 transition-all" style={{ width: `${completeness.score}%` }} />
+                </div>
+                {completeness.missing.length > 0 && (
+                    <p className="text-[10px] text-slate-500 mt-2">Brakuje: {completeness.missing.slice(0, 4).join(', ')}</p>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -217,6 +247,51 @@ const ProfileForm: React.FC<{
                                 placeholder="Czym zajmuje się Twoja marka? Jaka jest jej misja?"
                             />
                         </div>
+                        <ModernInput
+                            label="URL strony (link w CTA)"
+                            name="websiteUrl"
+                            value={formData.settings.websiteUrl || ''}
+                            onChange={handleChange}
+                            placeholder="https://twojafirma.pl"
+                        />
+                        <ModernInput
+                            label="Słowa kluczowe marki"
+                            name="keywords"
+                            value={formData.settings.keywords}
+                            onChange={handleChange}
+                            placeholder="np. jakość, lokalnie, tradycja, rodzinna atmosfera"
+                        />
+                        <ModernInput
+                            label="Unikaj (słowa i tematy)"
+                            name="avoid"
+                            value={formData.settings.avoid}
+                            onChange={handleChange}
+                            placeholder="np. tanio, promocja -50%, agresywna sprzedaż"
+                        />
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Styl wizualny grafik (AI)</label>
+                            <textarea
+                                name="visualStyle"
+                                value={formData.settings.visualStyle || ''}
+                                onChange={handleChange}
+                                rows={2}
+                                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm focus:border-blue-500 transition-all outline-none"
+                                placeholder="np. jasne zdjęcia, minimalistyczny styl, kolory marki, ciepłe światło"
+                            />
+                        </div>
+                        <ModernInput
+                            label="Kolory marki (hex, po przecinku)"
+                            name="brandColors"
+                            value={(formData.settings.brandColors || []).join(', ')}
+                            onChange={(e) => {
+                                const colors = e.target.value.split(',').map((c) => c.trim()).filter(Boolean);
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    settings: { ...prev.settings, brandColors: colors },
+                                }));
+                            }}
+                            placeholder="#1a56db, #f59e0b"
+                        />
                     </div>
 
                     <div className="space-y-4">
@@ -277,6 +352,42 @@ const ProfileForm: React.FC<{
                                         <p className="text-[10px] text-slate-500">PNG, JPG lub SVG (max 2MB)</p>
                                     </div>
                                 </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-white/50 uppercase tracking-widest">Pozycja logo</label>
+                                        <select
+                                            value={formData.settings.logoPosition || 'bottom-right'}
+                                            onChange={(e) => setFormData((prev) => ({
+                                                ...prev,
+                                                settings: {
+                                                    ...prev.settings,
+                                                    logoPosition: e.target.value as BrandVoiceProfile['settings']['logoPosition'],
+                                                },
+                                            }))}
+                                            className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-xs text-white"
+                                        >
+                                            {LOGO_POSITIONS.map((p) => (
+                                                <option key={p.id} value={p.id}>{p.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black text-white/50 uppercase tracking-widest">
+                                            Rozmiar logo ({formData.settings.logoSizePercent ?? 13}%)
+                                        </label>
+                                        <input
+                                            type="range"
+                                            min={8}
+                                            max={22}
+                                            value={formData.settings.logoSizePercent ?? 13}
+                                            onChange={(e) => setFormData((prev) => ({
+                                                ...prev,
+                                                settings: { ...prev.settings, logoSizePercent: Number(e.target.value) },
+                                            }))}
+                                            className="w-full accent-blue-500"
+                                        />
+                                    </div>
+                                </div>
                             </div>
                             <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
@@ -334,30 +445,85 @@ const ProfileForm: React.FC<{
                     </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 md:col-span-2">
                     <label className="text-xs font-black uppercase tracking-widest text-slate-500">Przykłady (Long-term Learn)</label>
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-6 bg-green-50/50 dark:bg-green-900/10 rounded-3xl border border-green-100 dark:border-green-800/30">
                             <p className="text-xs font-black text-green-700 dark:text-green-400 uppercase tracking-widest mb-4">Używaj takich sformułowań:</p>
                             <div className="space-y-3">
                                 {formData.settings.examplesToFollow?.map((ex, i) => (
-                                    <div key={`example-${i}`} className="flex gap-2">
+                                    <div key={`follow-${i}`} className="flex gap-2">
                                         <input value={ex} onChange={e => handleExampleChange('examplesToFollow', i, e.target.value)} className="flex-grow bg-white dark:bg-slate-900 border-none rounded-xl p-2 text-xs" />
-                                        <button onClick={() => removeExample('examplesToFollow', i)} aria-label="Remove example" className="text-red-400 hover:text-red-600">&times;</button>
+                                        <button type="button" onClick={() => removeExample('examplesToFollow', i)} aria-label="Usuń przykład" className="text-red-400 hover:text-red-600">&times;</button>
                                     </div>
                                 ))}
-                                <button onClick={() => addExample('examplesToFollow')} aria-label="Add example" className="text-[10px] font-black text-green-600 uppercase">+ Dodaj przykład</button>
+                                <button type="button" onClick={() => addExample('examplesToFollow')} className="text-[10px] font-black text-green-600 uppercase">+ Dodaj przykład</button>
+                            </div>
+                        </div>
+                        <div className="p-6 bg-red-50/50 dark:bg-red-900/10 rounded-3xl border border-red-100 dark:border-red-800/30">
+                            <p className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-widest mb-4">Unikaj takich sformułowań:</p>
+                            <div className="space-y-3">
+                                {formData.settings.examplesToAvoid?.map((ex, i) => (
+                                    <div key={`avoid-${i}`} className="flex gap-2">
+                                        <input value={ex} onChange={e => handleExampleChange('examplesToAvoid', i, e.target.value)} className="flex-grow bg-white dark:bg-slate-900 border-none rounded-xl p-2 text-xs" />
+                                        <button type="button" onClick={() => removeExample('examplesToAvoid', i)} aria-label="Usuń przykład" className="text-red-400 hover:text-red-600">&times;</button>
+                                    </div>
+                                ))}
+                                <button type="button" onClick={() => addExample('examplesToAvoid')} className="text-[10px] font-black text-red-600 uppercase">+ Dodaj przykład</button>
                             </div>
                         </div>
                     </div>
+                    {(formData.settings.successPatterns?.length ?? 0) > 0 && (
+                        <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-800/30">
+                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">Wzorce sukcesu (z analizy postów)</p>
+                            <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1 list-disc pl-4">
+                                {formData.settings.successPatterns?.map((p, i) => (
+                                    <li key={`pattern-${i}`}>{p}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {formData.settings.competitorIntel && (
+                        <div className="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 space-y-3">
+                            <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-widest flex items-center gap-2">
+                                <UsersIcon className="w-4 h-4" />
+                                Intel konkurencji
+                                <span className="text-slate-400 font-normal normal-case">
+                                    ({formData.settings.competitorIntel.trackedHandles.join(', ')})
+                                </span>
+                            </p>
+                            <p className="text-xs text-slate-700 dark:text-slate-300">{formData.settings.competitorIntel.summary}</p>
+                            {formData.settings.competitorIntel.exploitGaps.length > 0 && (
+                                <div>
+                                    <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1">Luki do wykorzystania</p>
+                                    <ul className="text-xs text-slate-600 dark:text-slate-400 list-disc pl-4 space-y-0.5">
+                                        {formData.settings.competitorIntel.exploitGaps.slice(0, 5).map((g, i) => (
+                                            <li key={`gap-${i}`}>{g}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {formData.settings.competitorIntel.avoidCompetitorPatterns.length > 0 && (
+                                <div>
+                                    <p className="text-[10px] font-bold text-red-600 uppercase mb-1">Nie kopiuj u konkurentów</p>
+                                    <ul className="text-xs text-slate-600 dark:text-slate-400 list-disc pl-4 space-y-0.5">
+                                        {formData.settings.competitorIntel.avoidCompetitorPatterns.slice(0, 4).map((g, i) => (
+                                            <li key={`avoid-${i}`}>{g}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 };
 
-export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ isOpen, onClose, profiles, onSave, onDelete, onSetActive, activeId, onLearnFromFavorites, onLearnFromHistory, isLearningStyle }) => {
+export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ isOpen, onClose, profiles, onSave, onDelete, onSetActive, activeId, onLearnFromFavorites, onLearnFromHistory, onLearnFromCompetitors, onExtractFromUrl, isLearningStyle }) => {
     const [editingProfile, setEditingProfile] = useState<Partial<BrandVoiceProfile> | null>(null);
+    const [extractUrl, setExtractUrl] = useState('');
     const { t } = useTranslation();
     const { confirm, confirmDialogProps } = useConfirm();
 
@@ -370,6 +536,66 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
     const handleSave = (profileData: BrandVoiceProfile) => {
         onSave(profileData);
         setEditingProfile(null);
+    };
+
+    const handleLearnHistory = async () => {
+        if (!onLearnFromHistory) return;
+        if (activeId) {
+            const merge = await confirm({
+                title: 'Ucz się z historii',
+                message: 'Uzupełnić aktywny profil (zachowując logo i URL), czy utworzyć nowy?',
+                confirmLabel: 'Uzupełnij aktywny',
+                cancelLabel: 'Nowy profil',
+            });
+            await onLearnFromHistory(merge ? activeId : null);
+        } else {
+            await onLearnFromHistory(null);
+        }
+    };
+
+    const handleLearnFavorites = async () => {
+        if (activeId) {
+            const merge = await confirm({
+                title: 'Ucz się z ulubionych',
+                message: 'Uzupełnić aktywny profil, czy utworzyć nowy?',
+                confirmLabel: 'Uzupełnij aktywny',
+                cancelLabel: 'Nowy profil',
+            });
+            await onLearnFromFavorites(merge ? activeId : null);
+        } else {
+            await onLearnFromFavorites(null);
+        }
+    };
+
+    const handleExtract = async () => {
+        if (!onExtractFromUrl || !extractUrl.trim()) return;
+        if (activeId) {
+            const merge = await confirm({
+                title: 'Import ze strony',
+                message: 'Uzupełnić aktywny profil danymi ze strony?',
+                confirmLabel: 'Uzupełnij aktywny',
+                cancelLabel: 'Nowy profil',
+            });
+            await onExtractFromUrl(extractUrl.trim(), merge ? activeId : null);
+        } else {
+            await onExtractFromUrl(extractUrl.trim(), null);
+        }
+        setExtractUrl('');
+    };
+
+    const handleLearnCompetitors = async () => {
+        if (!onLearnFromCompetitors) return;
+        if (activeId) {
+            const merge = await confirm({
+                title: 'Ucz się z konkurencji',
+                message: 'Uzupełnić aktywny profil Brand Voice danymi z analizy konkurentów?',
+                confirmLabel: 'Uzupełnij aktywny',
+                cancelLabel: 'Nowy profil',
+            });
+            await onLearnFromCompetitors(merge ? activeId : null);
+        } else {
+            await onLearnFromCompetitors(null);
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -420,7 +646,27 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                         <ProfileForm profile={editingProfile} onSave={handleSave} onCancel={() => setEditingProfile(null)} />
                     ) : (
                         <div className="space-y-8">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                            {onExtractFromUrl && (
+                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
+                                    <input
+                                        type="url"
+                                        value={extractUrl}
+                                        onChange={(e) => setExtractUrl(e.target.value)}
+                                        placeholder="https://twojafirma.pl — importuj styl ze strony"
+                                        className="flex-grow bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500"
+                                    />
+                                    <ModernButton
+                                        onClick={() => void handleExtract()}
+                                        disabled={isLearningStyle || !extractUrl.trim()}
+                                        variant="secondary"
+                                        loading={isLearningStyle}
+                                    >
+                                        Importuj ze strony
+                                    </ModernButton>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <button
                                     onClick={() => setEditingProfile(emptyProfile)}
                                     className="p-8 bg-blue-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 group"
@@ -432,7 +678,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                 </button>
 
                                 <button
-                                    onClick={onLearnFromHistory}
+                                    onClick={() => void handleLearnHistory()}
                                     disabled={isLearningStyle}
                                     className="p-8 bg-white dark:bg-slate-800 rounded-[2rem] border-2 border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 hover:border-blue-500 transition-all group"
                                 >
@@ -443,7 +689,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                 </button>
 
                                 <button
-                                    onClick={onLearnFromFavorites}
+                                    onClick={() => void handleLearnFavorites()}
                                     disabled={isLearningStyle}
                                     className="p-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-purple-500/20 group"
                                 >
@@ -452,6 +698,19 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                     </div>
                                     <span className="font-black uppercase tracking-widest text-sm text-white">Ucz się z Ulubionych</span>
                                 </button>
+
+                                {onLearnFromCompetitors && (
+                                    <button
+                                        onClick={() => void handleLearnCompetitors()}
+                                        disabled={isLearningStyle}
+                                        className="p-8 bg-gradient-to-br from-cyan-600 to-indigo-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-cyan-500/20 group"
+                                    >
+                                        <div className="p-3 bg-white/20 rounded-2xl group-hover:scale-110 transition-transform">
+                                            <UsersIcon className="w-8 h-8" />
+                                        </div>
+                                        <span className="font-black uppercase tracking-widest text-sm text-white text-center">Ucz się z Konkurencji</span>
+                                    </button>
+                                )}
                             </div>
 
                             <div className="space-y-4">
@@ -475,6 +734,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                                     <div>
                                                         <p className="font-black uppercase tracking-tight text-slate-900 dark:text-white">{profile.name}</p>
                                                         <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{profile.settings.archetype || 'Expert'}</p>
+                                                        <p className="text-[10px] text-slate-400">{computeBrandVoiceCompleteness(profile.settings).score}% kompletny</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">

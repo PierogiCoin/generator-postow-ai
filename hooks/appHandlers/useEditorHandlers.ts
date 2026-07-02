@@ -1,9 +1,14 @@
 import { useCallback } from 'react';
 import { useGenerationStore } from '../../stores/generationStore';
+import { useDataStore } from '../../stores/dataStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { AIAssistantAction, FormData, GenerationResult } from '../../types';
 import { NotificationType } from '../../types';
 import * as geminiService from '../../services/geminiService';
+import { regeneratePostImage, regeneratePostImageForPlatform, supportsImageGeneration } from '../../services/imageRegenerationService';
+import { applyBrandLogoToImage, shouldApplyBrandLogo } from '../../utils/brandImagePipeline';
+import { persistImageUrl } from '../../utils/persistImageUrl';
+import { Platform } from '../../types';
 import type { ApiErrorHandler, ToastFn } from './types';
 
 interface EditorHandlerDeps {
@@ -137,6 +142,94 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
         addToast('Nagłówek został podmieniony!', NotificationType.Success);
     }, [genActions, addToast]);
 
+    const handleRegenerateImage = useCallback(async (customInstruction?: string) => {
+        const { result, lastFormData } = useGenerationStore.getState();
+        if (!result || !lastFormData || !user) return;
+        if (!supportsImageGeneration(lastFormData)) {
+            addToast('Ten typ generacji nie obsługuje grafiki.', NotificationType.Error);
+            return;
+        }
+
+        genActions.startImageRegeneration();
+        try {
+            const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore.getState();
+            const brandVoice = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId) ?? null;
+
+            let imageUrl = await regeneratePostImage(result.postText, lastFormData, user.id, {
+                brandVoice,
+                customInstruction,
+                variationSeed: Date.now(),
+            });
+
+            if (shouldApplyBrandLogo(lastFormData.includeLogo) && brandVoice?.settings) {
+                imageUrl = await applyBrandLogoToImage(imageUrl, brandVoice.settings);
+            }
+
+            imageUrl = (await persistImageUrl(imageUrl, user.id)) ?? imageUrl;
+
+            genActions.updateResultImage(imageUrl);
+            addToast('Nowa grafika została wygenerowana!', NotificationType.Success);
+        } catch (e) {
+            handleApiError(e, 'errors.generation_failed');
+        } finally {
+            genActions.finishImageRegeneration();
+        }
+    }, [user, genActions, addToast, handleApiError]);
+
+    const handleApplyHookWithNewImage = useCallback(async (newHook: string) => {
+        genActions.applyHook(newHook);
+        const { result, lastFormData } = useGenerationStore.getState();
+        if (!result || !lastFormData || !user || !supportsImageGeneration(lastFormData)) {
+            addToast('Hook zastosowany.', NotificationType.Success);
+            return;
+        }
+        await handleRegenerateImage(`Visual must match this new opening hook: "${newHook.trim()}"`);
+    }, [genActions, user, addToast, handleRegenerateImage]);
+
+    const handleApplyImageEdit = useCallback(async (newImageUrl: string) => {
+        if (!user) {
+            genActions.updateResultImage(newImageUrl);
+            return;
+        }
+        const persisted = (await persistImageUrl(newImageUrl, user.id)) ?? newImageUrl;
+        genActions.updateResultImage(persisted);
+    }, [user, genActions]);
+
+    const handleReformatImageForPlatform = useCallback(async (targetPlatform: Platform) => {
+        const { result, lastFormData } = useGenerationStore.getState();
+        if (!result || !lastFormData || !user) return;
+        if (!result.imageUrl) {
+            addToast('Brak grafiki do przetworzenia.', NotificationType.Error);
+            return;
+        }
+
+        genActions.startImageRegeneration();
+        try {
+            const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore.getState();
+            const brandVoice = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId) ?? null;
+
+            let imageUrl = await regeneratePostImageForPlatform(
+                result.postText,
+                lastFormData,
+                targetPlatform,
+                user.id,
+                { brandVoice }
+            );
+
+            if (shouldApplyBrandLogo(lastFormData.includeLogo) && brandVoice?.settings) {
+                imageUrl = await applyBrandLogoToImage(imageUrl, brandVoice.settings);
+            }
+            imageUrl = (await persistImageUrl(imageUrl, user.id)) ?? imageUrl;
+
+            genActions.updateResultImage(imageUrl);
+            addToast(`Grafika dostosowana do ${targetPlatform}!`, NotificationType.Success);
+        } catch (e) {
+            handleApiError(e, 'errors.generation_failed');
+        } finally {
+            genActions.finishImageRegeneration();
+        }
+    }, [user, genActions, addToast, handleApiError]);
+
     const handleToggleLiveAssistant = useCallback(() => {
         genActions.toggleLiveAssistant();
     }, [genActions]);
@@ -154,6 +247,10 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
         handleAnalyzeSEO,
         handleSuggestHooks,
         handleApplyHook,
+        handleApplyHookWithNewImage,
+        handleRegenerateImage,
+        handleApplyImageEdit,
+        handleReformatImageForPlatform,
         handleToggleLiveAssistant,
         handleAddHashtag,
         handleRevertAIAction: genActions.revertAIAction,

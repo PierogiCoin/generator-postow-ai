@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type ResultCardTab = 'content' | 'media' | 'publish' | 'analysis';
+export type ResultCardTab = 'content' | 'media' | 'repurpose' | 'publish' | 'analysis';
 
 interface ResultCardTabBarProps {
   active: ResultCardTab;
@@ -11,6 +11,7 @@ interface ResultCardTabBarProps {
 const TABS: { id: ResultCardTab; labelKey: string; fallback: string }[] = [
   { id: 'content', labelKey: 'resultCard.tabs.content', fallback: 'Treść' },
   { id: 'media', labelKey: 'resultCard.tabs.media', fallback: 'Media' },
+  { id: 'repurpose', labelKey: 'resultCard.tabs.repurpose', fallback: 'Formaty' },
   { id: 'publish', labelKey: 'resultCard.tabs.publish', fallback: 'Publikacja' },
   { id: 'analysis', labelKey: 'resultCard.tabs.analysis', fallback: 'Analiza' },
 ];

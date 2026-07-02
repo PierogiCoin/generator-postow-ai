@@ -361,7 +361,24 @@ router.post('/api/generate-images', expensiveLimiter, ...creditGate('generateIma
     }
 
     const mimeType = response.data?.predictions?.[0]?.mimeType || 'image/jpeg';
-    const finalImageUrl = `data:${mimeType};base64,${base64Image}`;
+    let finalImageUrl = `data:${mimeType};base64,${base64Image}`;
+
+    try {
+      const buffer = Buffer.from(base64Image, 'base64');
+      const ext = mimeType.includes('png') ? 'png' : 'jpg';
+      const fileName = `generated_images/${userId}_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from('generated_content')
+        .upload(fileName, buffer, { contentType: mimeType, upsert: true });
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage.from('generated_content').getPublicUrl(fileName);
+        finalImageUrl = urlData.publicUrl;
+      }
+    } catch (uploadErr: unknown) {
+      logger.warn('[Imagen] Storage upload failed, returning data URL', {
+        error: uploadErr instanceof Error ? uploadErr.message : String(uploadErr),
+      });
+    }
 
     const duration = Date.now() - startTime;
     const estimatedCost = COST_ESTIMATES['dalle-standard'] || 0.04; // Adjust cost tracking as needed for Imagen

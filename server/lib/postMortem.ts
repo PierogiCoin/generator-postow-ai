@@ -1,6 +1,7 @@
 import logger from '../logger.js';
 import { genAI, supabase } from './clients.js';
 import { computeEngagementSummary } from './socialHelpers.js';
+import { mergePostMortemIntoBrandVoice } from './brandVoiceSync.js';
 
 export const POST_MORTEM_CUTOFF_HOURS = 48;
 export const POST_MORTEM_BATCH = 8;
@@ -88,6 +89,7 @@ export async function processPostMortems(): Promise<void> {
         const analysis = await runPostMortemAnalysis(userPosts);
         const ids = userPosts.map((p) => p.id);
         await persistPostMortemAnalysis(ids, analysis);
+        await mergePostMortemIntoBrandVoice(userId, analysis);
         logger.info('[PostMortem] Saved analysis', { userId, posts: ids.length });
       } catch (userErr: unknown) {
         const message = userErr instanceof Error ? userErr.message : String(userErr);

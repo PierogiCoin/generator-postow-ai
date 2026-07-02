@@ -133,8 +133,27 @@ export const VisualStudioModal: React.FC<VisualStudioModalProps> = ({
 
       ctx.drawImage(img, -naturalWidth / 2, -naturalHeight / 2, naturalWidth, naturalHeight);
 
-      // Here we would also draw the text nodes...
-      // but for this MVP we just return the filtered image.
+      ctx.filter = 'none';
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+      const scaleX = canvas.width / (containerRef.current?.clientWidth || canvas.width);
+      const scaleY = canvas.height / (containerRef.current?.clientHeight || canvas.height);
+
+      for (const node of textNodes) {
+        const x = (node.x / 100) * canvas.width;
+        const y = (node.y / 100) * canvas.height;
+        const fontSize = Math.max(12, node.fontSize * Math.min(scaleX, scaleY));
+        ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+        ctx.fillStyle = node.color;
+        ctx.textAlign = node.textAlign;
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur = Math.max(4, fontSize * 0.15);
+        ctx.shadowOffsetY = Math.max(1, fontSize * 0.05);
+        const lines = node.text.split('\n');
+        lines.forEach((line, i) => {
+          ctx.fillText(line, x, y + i * (fontSize * 1.2));
+        });
+      }
 
       const dataUrl = canvas.toDataURL('image/png');
       onApply(dataUrl);

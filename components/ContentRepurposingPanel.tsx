@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   generateRepurposingPlan,
@@ -23,6 +23,7 @@ interface ContentRepurposingPanelProps {
   sourceContent: string;
   tone: Tone;
   currentPlatform: Platform;
+  initialVideoUrl?: string;
 }
 
 const PLATFORM_COLORS: Record<Platform, string> = {
@@ -47,6 +48,7 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
   sourceContent,
   tone,
   currentPlatform,
+  initialVideoUrl,
 }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -61,7 +63,11 @@ export const ContentRepurposingPanel: React.FC<ContentRepurposingPanelProps> = (
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [threadLength, setThreadLength] = useState(5);
-  const [videoUrl, setVideoUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState(initialVideoUrl || '');
+
+  useEffect(() => {
+    if (initialVideoUrl) setVideoUrl(initialVideoUrl);
+  }, [initialVideoUrl]);
 
   const handleGeneratePlan = useCallback(async () => {
     if (!user?.id || !sourceContent.trim()) return;

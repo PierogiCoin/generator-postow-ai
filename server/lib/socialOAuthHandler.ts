@@ -15,7 +15,7 @@ import {
 } from '../config/social.js';
 import { consumeTwitterOAuthContext } from '../lib/twitterOAuthStore.js';
 import { verifyOAuthState } from '../lib/oauthState.js';
-import { resolveFrontendUrl } from '../lib/publicUrl.js';
+import { resolveFrontendUrl, resolveOAuthCallbackUrl } from '../lib/publicUrl.js';
 
 export type OAuthCallbackParams = {
   code?: string;
@@ -97,7 +97,7 @@ export async function processSocialOAuthCallback(
         facebookConfig.appId,
         facebookConfig.appSecret,
         params.code,
-        facebookConfig.redirectUri
+        resolveOAuthCallbackUrl('instagram')
       );
       const igPublisher = new InstagramPublisher(igTokens.accessToken);
       const igAccount = await igPublisher.findFirstInstagramAccount();

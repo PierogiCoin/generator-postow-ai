@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { toPng } from 'html-to-image';
 import { ModernButton } from './ModernButton';
 import { SparklesIcon } from '../icons/SparklesIcon';
 import { XMarkIcon } from '../icons/XMarkIcon';
@@ -55,6 +56,24 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
     const [draggingType, setDraggingType] = useState<'text' | 'logo' | 'mascot' | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = async () => {
+        if (!containerRef.current || !onExport) return;
+        setIsExporting(true);
+        try {
+            const dataUrl = await toPng(containerRef.current, {
+                cacheBust: true,
+                pixelRatio: 2,
+            });
+            onExport(dataUrl);
+            onClose();
+        } catch {
+            // export failed silently — user can retry
+        } finally {
+            setIsExporting(false);
+        }
+    };
 
     const handleMouseDown = (e: React.MouseEvent, type: 'text' | 'logo' | 'mascot', id?: string) => {
         if (id) setActiveLayerId(id);
@@ -186,11 +205,11 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
                         <ModernButton
                             variant="gradient"
                             fullWidth
-                            onClick={() => {
-                                // Tu będzie logika eksportu canvas
-                            }}
+                            loading={isExporting}
+                            disabled={!onExport || isExporting}
+                            onClick={() => void handleExport()}
                         >
-                            Gotowe, pobierz post
+                            Zapisz grafikę do posta
                         </ModernButton>
                     </div>
                 </div>

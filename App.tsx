@@ -348,6 +348,16 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleApplyVideoToPost = () => {
+    if (!generatedVideo || !videoStoryPost) return;
+    useGenerationStore.getState().setResult({
+      ...videoStoryPost,
+      videoUrl: generatedVideo.url,
+    });
+    notificationSystem.addToast('Wideo przypisane do posta!', NotificationType.Success);
+    handlers.handleCloseVideoStoryModal();
+  };
+
   const handleOptimizeMultiPlatform = async (platforms: any[]) => {
     if (!result || !user) return;
 
@@ -548,6 +558,8 @@ export const App: React.FC = () => {
               activeId={activeBrandVoiceId}
               onLearnFromFavorites={handlers.handleLearnFromFavorites}
               onLearnFromHistory={handlers.handleLearnFromHistory}
+              onLearnFromCompetitors={handlers.handleLearnFromCompetitors}
+              onExtractFromUrl={handlers.handleExtractFromUrl}
               isLearningStyle={isLearningStyle}
             />
           </ModalErrorBoundary>
@@ -574,6 +586,7 @@ export const App: React.FC = () => {
             <VideoStoryModal
               isOpen={isVideoStoryModalOpen}
               onClose={handlers.handleCloseVideoStoryModal}
+              onApplyToPost={handleApplyVideoToPost}
               post={videoStoryPost}
               onGenerate={handleGenerateVideoStory}
               isGenerating={isGeneratingVideoStory}

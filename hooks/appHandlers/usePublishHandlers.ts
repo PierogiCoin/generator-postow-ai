@@ -3,6 +3,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { GenerationResult } from '../../types';
 import { NotificationType } from '../../types';
+import { formatPublishCaption, resolveCtaUrl } from '../../utils/publishCaption';
 import type { ApiErrorHandler, NotificationFn, ToastFn } from './types';
 
 interface PublishHandlerDeps {
@@ -37,10 +38,17 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
             }
 
             const { callApi } = await import('../../services/apiClient');
+            const { brandVoiceProfiles, activeBrandVoiceId } = await import('../../stores/dataStore').then(m => m.useDataStore.getState());
+            const brandVoice = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
+            const ctaUrl = resolveCtaUrl(result.ctaUrl, brandVoice?.settings?.websiteUrl);
+
             const publishResult = await callApi('social/publish', {
                 connectionId: connection.id,
                 postText: result.postText,
                 imageUrl: result.imageUrl,
+                hashtags: result.hashtags,
+                callToAction: result.callToAction,
+                ctaUrl,
             }, user.id);
 
             if (publishResult.success) {

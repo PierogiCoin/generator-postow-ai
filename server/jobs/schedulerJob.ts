@@ -7,6 +7,7 @@ import {
 } from '../socialPublishing.js';
 import { supabase } from '../lib/clients.js';
 import { fetchTopSlots, nextOccurrenceForSlot, type Slot } from '../lib/schedulingAnalytics.js';
+import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js';
 
 let schedulerBlockedUntil: number | null = null;
 
@@ -117,15 +118,28 @@ async function processScheduledPosts() {
 
         const postText = post.result?.postText || post.form_data?.topic || '';
         const imageUrl = post.result?.imageUrl;
+        const caption = formatPublishCaption({
+          postText,
+          hashtags: post.result?.hashtags,
+          callToAction: post.result?.callToAction,
+          ctaUrl: normalizeCtaUrl(post.result?.ctaUrl),
+        });
+        const linkUrl = normalizeCtaUrl(post.result?.ctaUrl);
 
         let publishResult;
 
         if (platform === 'facebook') {
           const publisher = new FacebookPublisher(connection.access_token);
-          publishResult = await publisher.publishPost(connection.account_id, connection.access_token, postText, imageUrl);
+          publishResult = await publisher.publishPost(
+            connection.account_id,
+            connection.access_token,
+            caption,
+            imageUrl,
+            linkUrl ?? undefined
+          );
         } else if (platform === 'instagram' && imageUrl) {
           const publisher = new InstagramPublisher(connection.access_token);
-          publishResult = await publisher.publishPost(connection.account_id, imageUrl, postText);
+          publishResult = await publisher.publishPost(connection.account_id, imageUrl, caption);
         } else if (platform === 'twitter') {
           const publisher = new TwitterPublisher(
             process.env.TWITTER_APP_KEY || '',
@@ -135,14 +149,14 @@ async function processScheduledPosts() {
           );
           const mIds: string[] = [];
           if (imageUrl) mIds.push(await publisher.uploadMedia(imageUrl));
-          publishResult = await publisher.publishTweet(postText, mIds);
+          publishResult = await publisher.publishTweet(caption, mIds);
         } else if (platform === 'linkedin') {
           const publisher = new LinkedInPublisher({
             clientId: process.env.LINKEDIN_CLIENT_ID || '',
             clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
             redirectUri: process.env.LINKEDIN_REDIRECT_URI || '',
           });
-          publishResult = await publisher.publishPost(connection.access_token, connection.account_id, postText, imageUrl);
+          publishResult = await publisher.publishPost(connection.access_token, connection.account_id, caption, imageUrl);
         }
 
         if (publishResult) {

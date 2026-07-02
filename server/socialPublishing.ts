@@ -347,13 +347,34 @@ export class FacebookPublisher {
     }
   }
 
-  async publishPost(pageId: string, pageAccessToken: string, content: string, imageUrl?: string): Promise<{ id: string; url: string }> {
+  async publishPost(
+    pageId: string,
+    pageAccessToken: string,
+    content: string,
+    imageUrl?: string,
+    linkUrl?: string
+  ): Promise<{ id: string; url: string }> {
+    const normalizedLink = linkUrl?.trim();
+
+    if (!imageUrl && normalizedLink) {
+      const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/feed`, {
+        access_token: pageAccessToken,
+        message: content,
+        link: normalizedLink,
+      });
+      const postId = response.data.id || response.data.post_id;
+      return {
+        id: postId,
+        url: `https://facebook.com/${postId}`,
+      };
+    }
+
     const endpoint = imageUrl
       ? `https://graph.facebook.com/v18.0/${pageId}/photos`
       : `https://graph.facebook.com/v18.0/${pageId}/feed`;
 
-    const postData: any = {
-      access_token: pageAccessToken
+    const postData: Record<string, string> = {
+      access_token: pageAccessToken,
     };
 
     if (imageUrl) {
@@ -367,7 +388,7 @@ export class FacebookPublisher {
 
     return {
       id: response.data.id || response.data.post_id,
-      url: `https://facebook.com/${response.data.id || response.data.post_id}`
+      url: `https://facebook.com/${response.data.id || response.data.post_id}`,
     };
   }
 

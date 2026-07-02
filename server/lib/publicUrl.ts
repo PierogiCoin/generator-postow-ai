@@ -23,6 +23,7 @@ export function resolveOAuthCallbackUrl(platform: string): string {
     linkedin: process.env.LINKEDIN_REDIRECT_URI,
     twitter: process.env.TWITTER_CALLBACK_URL,
     facebook: process.env.FACEBOOK_REDIRECT_URI,
+    instagram: process.env.INSTAGRAM_REDIRECT_URI,
     tiktok: process.env.TIKTOK_REDIRECT_URI,
   }[platform as keyof typeof explicit];
 

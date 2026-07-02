@@ -29,6 +29,7 @@ import {
 import { creditGate } from '../middleware/credits.js';
 import { requireSupabaseAuth, getAuthUserId } from '../middleware/supabaseAuth.js';
 import { signOAuthState } from '../lib/oauthState.js';
+import { resolveOAuthCallbackUrl } from '../lib/publicUrl.js';
 import {
   processSocialOAuthCallback,
   resolveOAuthUserId,
@@ -37,6 +38,7 @@ import {
   redirectAfterOAuthError,
   type OAuthCallbackParams,
 } from '../lib/socialOAuthHandler.js';
+import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js';
 
 export function createSocialRouter(): Router {
   const router = Router();
@@ -69,7 +71,12 @@ export function createSocialRouter(): Router {
           authUrl = FacebookPublisher.getAuthUrl(facebookConfig.appId, facebookConfig.redirectUri, oauthState, false);
           break;
         case 'instagram':
-          authUrl = FacebookPublisher.getAuthUrl(facebookConfig.appId, facebookConfig.redirectUri, oauthState, true);
+          authUrl = FacebookPublisher.getAuthUrl(
+            facebookConfig.appId,
+            resolveOAuthCallbackUrl('instagram'),
+            oauthState,
+            true
+          );
           break;
         case 'tiktok':
           authUrl = TikTokPublisher.getAuthUrl(tiktokConfig.clientKey, tiktokConfig.redirectUri, oauthState);
@@ -348,9 +355,17 @@ export function createSocialRouter(): Router {
 
   router.post('/api/social/publish', ...creditGate('publishPost'), async (req, res) => {
     const userId = getAuthUserId(req);
-    const { connectionId, postText, imageUrl, scheduledPostId } = req.body;
+    const { connectionId, postText, imageUrl, scheduledPostId, hashtags, callToAction, ctaUrl } = req.body;
 
     if (!connectionId || !postText) return res.status(400).json({ error: 'Missing connectionId or postText' });
+
+    const caption = formatPublishCaption({
+      postText,
+      hashtags: Array.isArray(hashtags) ? hashtags : undefined,
+      callToAction: callToAction ?? null,
+      ctaUrl: normalizeCtaUrl(ctaUrl),
+    });
+    const linkUrl = normalizeCtaUrl(ctaUrl);
 
     try {
       const { data: connection, error: connError } = await supabase
@@ -369,13 +384,19 @@ export function createSocialRouter(): Router {
       switch (connection.platform) {
         case 'facebook': {
           const fb = new FacebookPublisher(connection.access_token);
-          publishResult = await fb.publishPost(connection.account_id, connection.access_token, postText, imageUrl);
+          publishResult = await fb.publishPost(
+            connection.account_id,
+            connection.access_token,
+            caption,
+            imageUrl,
+            linkUrl ?? undefined
+          );
           break;
         }
         case 'instagram': {
           const ig = new InstagramPublisher(connection.access_token);
           if (!imageUrl) throw new Error('Instagram wymaga obrazka do publikacji posta.');
-          publishResult = await ig.publishPost(connection.account_id, imageUrl, postText);
+          publishResult = await ig.publishPost(connection.account_id, imageUrl, caption);
           break;
         }
         case 'twitter': {
@@ -390,7 +411,7 @@ export function createSocialRouter(): Router {
             const mediaId = await tw.uploadMedia(imageUrl);
             mediaIds.push(mediaId);
           }
-          publishResult = await tw.publishTweet(postText, mediaIds);
+          publishResult = await tw.publishTweet(caption, mediaIds);
           break;
         }
         case 'linkedin': {
@@ -399,7 +420,7 @@ export function createSocialRouter(): Router {
             clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
             redirectUri: process.env.LINKEDIN_REDIRECT_URI || '',
           });
-          publishResult = await li.publishPost(connection.access_token, connection.account_id, postText, imageUrl);
+          publishResult = await li.publishPost(connection.access_token, connection.account_id, caption, imageUrl);
           break;
         }
         default:

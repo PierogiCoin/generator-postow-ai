@@ -35,6 +35,7 @@ type GenerationState = {
   isOptimizingMultiPlatform: boolean;
   hookVariations: string[];
   isSuggestingHooks: boolean;
+  isRegeneratingImage: boolean;
   pendingCalendarSlot: CalendarSlotContext | null;
   calendarBatchQueue: IntelligentCalendarPlanItem[];
   calendarBatchTotal: number;
@@ -95,6 +96,10 @@ type GenerationState = {
   startHookSuggestions: () => void;
   hookSuggestionsSuccess: (hooks: string[]) => void;
   applyHook: (newHook: string) => void;
+  startImageRegeneration: () => void;
+  finishImageRegeneration: () => void;
+  updateResultImage: (imageUrl: string) => void;
+  updateResultVideo: (videoUrl: string) => void;
   setPendingCalendarSlot: (slot: CalendarSlotContext | null) => void;
   clearPendingCalendarSlot: () => void;
   setCalendarBatchQueue: (items: IntelligentCalendarPlanItem[], total?: number) => void;
@@ -133,6 +138,7 @@ const initialGenerationState = {
   isOptimizingMultiPlatform: false,
   hookVariations: [],
   isSuggestingHooks: false,
+  isRegeneratingImage: false,
   pendingCalendarSlot: null,
   calendarBatchQueue: [],
   calendarBatchTotal: 0,
@@ -225,16 +231,24 @@ export const useGenerationStore = create<GenerationState>()(
   applyHook: (newHook) => set(state => {
     if (!state.result) return {};
     const text = state.result.postText;
-    const sentenceEndMatch = text.match(/[.!?](\s|$)/);
-    let newText = text;
-    if (sentenceEndMatch) {
-       const index = sentenceEndMatch.index! + 1;
-       newText = newHook + text.substring(index);
+    const paragraphs = text.split(/\n\n+/);
+    const first = paragraphs[0] ?? '';
+    const sentenceEnd = first.search(/[.!?](\s|$)/);
+    if (sentenceEnd >= 0) {
+      paragraphs[0] = newHook.trim() + first.slice(sentenceEnd + 1);
     } else {
-       newText = newHook + "\n\n" + text;
+      paragraphs[0] = newHook.trim();
     }
-    return { result: { ...state.result, postText: newText } };
+    return { result: { ...state.result, postText: paragraphs.join('\n\n') } };
   }),
+  startImageRegeneration: () => set({ isRegeneratingImage: true }),
+  finishImageRegeneration: () => set({ isRegeneratingImage: false }),
+  updateResultImage: (imageUrl) => set(state =>
+    state.result ? { result: { ...state.result, imageUrl } } : {}
+  ),
+  updateResultVideo: (videoUrl) => set(state =>
+    state.result ? { result: { ...state.result, videoUrl } } : {}
+  ),
   setPendingCalendarSlot: (slot) => set({ pendingCalendarSlot: slot }),
   clearPendingCalendarSlot: () => set({ pendingCalendarSlot: null }),
   setCalendarBatchQueue: (items, total) =>
@@ -281,6 +295,7 @@ export const useGenerationStore = create<GenerationState>()(
       state.isSuggestingHashtags = false;
       state.isSuggestingAudio = false;
       state.isSuggestingHooks = false;
+      state.isRegeneratingImage = false;
       state.isGeneratingVideoStory = false;
       state.videoStoryProgress = null;
       state.isOptimizingMultiPlatform = false;

@@ -21,6 +21,10 @@ export const learnBrandVoiceFromHistory = async (userId: string): Promise<any> =
     return await callApi('brand-voice/learn', {}, userId);
 };
 
+export const extractBrandVoiceFromUrl = async (url: string, userId: string): Promise<any> => {
+    return await callApi('brand-voice/extract-url', { url }, userId);
+};
+
 // Individual exports for explicit usage if preferred
 import * as Content from './contentService';
 import * as Media from './mediaService';

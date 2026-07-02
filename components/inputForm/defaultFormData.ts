@@ -30,7 +30,7 @@ export const DEFAULT_FORM_DATA: FormData = {
   campaignDuration: 7,
   campaignPlatforms: [Platform.Facebook],
   useMascot: 'auto',
-  includeLogo: false,
+  includeLogo: true,
   copywritingFramework: CopywritingFramework.Auto,
   generationMode: GenerationMode.Single,
   contentLanguage: ContentLanguage.Polish,

@@ -1,12 +1,98 @@
 import { Router } from 'express';
+import axios from 'axios';
 import logger from '../logger.js';
 import { genAI, supabase } from '../lib/clients.js';
 import { syncUserSocialPosts } from '../socialSync.js';
 import { FacebookPublisher, InstagramPublisher } from '../socialPublishing.js';
 import { creditGate } from '../middleware/credits.js';
 
+function normalizeWebsiteUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed.replace(/^\/+/, '')}`;
+}
+
+function extractMeta(html: string, property: string): string | null {
+  const re = new RegExp(
+    `<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']+)["']`,
+    'i'
+  );
+  const m = html.match(re);
+  return m?.[1]?.trim() || null;
+}
+
+function extractHtmlSignals(html: string): Record<string, string | null> {
+  const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || null;
+  return {
+    title,
+    description:
+      extractMeta(html, 'og:description') ||
+      extractMeta(html, 'description'),
+    ogImage: extractMeta(html, 'og:image'),
+    themeColor: extractMeta(html, 'theme-color'),
+  };
+}
+
 export function createBrandVoiceRouter(): Router {
   const router = Router();
+
+router.post('/api/brand-voice/extract-url', ...creditGate('brandVoiceAnalysis'), async (req, res) => {
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: 'User ID required' });
+
+  const { url } = req.body as { url?: string };
+  if (!url?.trim()) return res.status(400).json({ error: 'Brak URL strony' });
+
+  const websiteUrl = normalizeWebsiteUrl(url);
+
+  try {
+    const pageRes = await axios.get<string>(websiteUrl, {
+      timeout: 12000,
+      maxRedirects: 5,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BrandVoiceBot/1.0)' },
+      responseType: 'text',
+      validateStatus: (s) => s < 500,
+    });
+
+    if (pageRes.status >= 400) {
+      return res.status(400).json({ error: `Nie udało się pobrać strony (HTTP ${pageRes.status})` });
+    }
+
+    const signals = extractHtmlSignals(pageRes.data.slice(0, 120_000));
+    const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+    const prompt = `Na podstawie metadanych strony marki wygeneruj profil Brand Voice w JSON.
+URL: ${websiteUrl}
+Tytuł: ${signals.title || 'brak'}
+Opis: ${signals.description || 'brak'}
+Obraz OG: ${signals.ogImage || 'brak'}
+Kolor motywu: ${signals.themeColor || 'brak'}
+
+Zwróć JSON:
+- brandName
+- description (2-3 zdania)
+- keywords (10 słów po przecinku)
+- tone (Professional|Casual|Witty|Inspirational|Persuasive)
+- avoid (słowa/tematy do unikania)
+- visualStyle (styl grafik AI)
+- brandColors (tablica 2-4 hex kolorów marki, np. ["#1a56db","#f59e0b"])
+- websiteUrl ("${websiteUrl}")
+- examplesToFollow (3 krótkie przykładowe hooki w stylu marki)
+- examplesToAvoid (3 rzeczy do unikania)`;
+
+    const result = await model.generateContent(prompt);
+    const parsed = JSON.parse(result.response.text().replace(/```json|```/g, '').trim());
+    parsed.websiteUrl = websiteUrl;
+    parsed.extractedFromUrl = true;
+    if (signals.ogImage && !parsed.logoUrl) parsed.logoUrl = signals.ogImage;
+
+    res.json(parsed);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Ekstrakcja nie powiodła się';
+    logger.error('[BrandVoice] extract-url failed:', error);
+    res.status(500).json({ error: message });
+  }
+});
+
 router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async (req, res) => {
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'User ID required' });
@@ -111,6 +197,7 @@ router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async
     - examplesToAvoid (array z 3 rzeczami, których ta marka powinna unikać),
     - avoid (lista słów/tematów do unikania po przecinku),
     - visualStyle (krótka instrukcja stylu wizualnego dla generatora obrazów AI, np. "jasne, minimalistyczne zdjęcia w stylu skandynawskim" lub "dynamiczne ujęcia, nasycone kolory, styl sportowy"),
+    - successPatterns (array z 3-5 konkretnymi technikami copy, które działają w tych postach),
     - profileName (proponowana nazwa profilu, np. "Profil Firmowy [Nazwa]")`;
 
     const result = await model.generateContent(prompt);

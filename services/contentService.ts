@@ -17,6 +17,20 @@ import {
     buildPlatformImagePrompt,
     resolveAspectRatioForPlatform,
 } from '../utils/platformVisualSpec';
+import { normalizeCtaUrl } from '../utils/publishCaption';
+import { buildCompetitorPromptBlock } from '../utils/competitorBrandVoice';
+
+function attachBrandCtaUrl(
+    details: Record<string, unknown>,
+    brandVoice: BrandVoiceData | null
+): { ctaUrl?: string } {
+    if (details.ctaUrl && typeof details.ctaUrl === 'string') {
+        const normalized = normalizeCtaUrl(details.ctaUrl);
+        return normalized ? { ctaUrl: normalized } : {};
+    }
+    const fromBrand = normalizeCtaUrl(brandVoice?.websiteUrl);
+    return fromBrand ? { ctaUrl: fromBrand } : {};
+}
 
 
 /**
@@ -167,6 +181,11 @@ YOUTUBE STYLE GUIDELINES:
             systemInstruction += ` \nMASCOT: YOU MUST INCLUDE the brand mascot "${brandVoice.mascotName || 'the mascot'}" in this post. Mascot description: "${brandVoice.mascotDescription}". URL: ${brandVoice.mascotUrl || 'N/A'}. Explain how the mascot interacts with the content.`;
         } else if (formData.useMascot === "auto" && brandVoice.mascotDescription) {
             systemInstruction += ` \nMASCOT SUGGESTION: The brand has a mascot "${brandVoice.mascotName || 'the mascot'}" (${brandVoice.mascotDescription}). Decide if including the mascot would increase engagement for this specific topic. If yes, incorporate it creatively.`;
+        }
+
+        const competitorBlock = buildCompetitorPromptBlock(brandVoice);
+        if (competitorBlock) {
+            systemInstruction += competitorBlock;
         }
     }
     if (insights && insights.length > 0) {
@@ -336,6 +355,9 @@ export const generatePostDetails = async (
         if (brandVoice?.visualStyle) {
             imageStyle = `${brandVoice.visualStyle}, ${imageStyle}`;
         }
+        if (brandVoice?.brandColors?.length) {
+            imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}`;
+        }
 
         let mascotPrompt: string | undefined;
         if (formData.useMascot === true && brandVoice?.mascotDescription) {
@@ -404,10 +426,10 @@ export const generatePostDetails = async (
 
                 CRITICAL: Return ONLY valid JSON.`,
             }, userId);
-            return { imageUrl, ...details };
+            return { imageUrl, ...details, ...attachBrandCtaUrl(details, brandVoice) };
 
         } catch (e) {
-            return { imageUrl, hashtags: [] };
+            return { imageUrl, hashtags: [], ...attachBrandCtaUrl({}, brandVoice) };
         }
     }
 

@@ -8,7 +8,7 @@ import {
 import { SocialConnection, SocialPlatform } from '../types/socialPublishing';
 import { socialConnectionsService } from './socialConnectionsService';
 import { callApi } from './apiClient';
-import { optimizeForPlatforms, getPlatformCharacterLimit } from './multiPlatformService';
+import { resolveCtaUrl } from '../utils/publishCaption';
 
 export const PLATFORM_TO_SOCIAL: Partial<Record<Platform, SocialPlatform>> = {
   [Platform.Facebook]: SocialPlatform.Facebook,
@@ -83,7 +83,8 @@ async function publishOne(
   connection: SocialConnection,
   postText: string,
   imageUrl: string | null | undefined,
-  userId: string
+  userId: string,
+  extras?: { hashtags?: string[]; callToAction?: string | null; ctaUrl?: string | null }
 ): Promise<{ url?: string }> {
   if (connection.platform === SocialPlatform.Instagram && !imageUrl) {
     throw new Error('Instagram wymaga obrazka do publikacji');
@@ -95,6 +96,9 @@ async function publishOne(
       connectionId: connection.id,
       postText,
       imageUrl: imageUrl || undefined,
+      hashtags: extras?.hashtags,
+      callToAction: extras?.callToAction,
+      ctaUrl: resolveCtaUrl(extras?.ctaUrl),
     },
     userId
   );
@@ -134,11 +138,12 @@ async function publishOmnichannelPosts(
       }
 
       try {
-        const text = truncateForPlatform(
-          formatPostText(ocPost.postText, ocPost.hashtags),
-          ocPost.platform
-        );
-        const pub = await publishOne(conn, text, result.imageUrl, userId);
+        const text = truncateForPlatform(ocPost.postText, ocPost.platform);
+        const pub = await publishOne(conn, text, result.imageUrl, userId, {
+          hashtags: ocPost.hashtags,
+          callToAction: result.callToAction,
+          ctaUrl: result.ctaUrl,
+        });
         out.published.push({
           platform: ocPost.platform,
           accountName: conn.accountName,
@@ -227,13 +232,16 @@ async function publishStandardPost(
       }
 
       const optimized = platformTexts.get(platform);
-      const rawText = optimized
-        ? formatPostText(optimized.text, optimized.hashtags)
-        : formatPostText(result.postText, result.hashtags);
+      const rawText = optimized?.text ?? result.postText;
+      const hashtags = optimized?.hashtags ?? result.hashtags;
       const text = truncateForPlatform(rawText, platform);
 
       try {
-        const pub = await publishOne(conn, text, result.imageUrl, userId);
+        const pub = await publishOne(conn, text, result.imageUrl, userId, {
+          hashtags,
+          callToAction: result.callToAction,
+          ctaUrl: result.ctaUrl,
+        });
         out.published.push({ platform: label, accountName: conn.accountName, url: pub.url });
       } catch (e) {
         out.failed.push({

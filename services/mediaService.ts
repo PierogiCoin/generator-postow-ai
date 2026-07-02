@@ -1,5 +1,6 @@
 import { Modality, GenerateContentResponse } from '@google/genai';
 import { callApi, generateContent } from './apiClient';
+import { mapAspectRatioToApi, type VisualAspectRatio } from '../utils/platformVisualSpec';
 
 /**
  * Media Service
@@ -12,13 +13,14 @@ export const generateImages = async (prompt: string, config: {
     aspectRatio?: string;
     safetyFilterLevel?: string;
 } = {}, userId?: string) => {
+    const apiRatio = mapAspectRatioToApi(config.aspectRatio as VisualAspectRatio | undefined);
     return await callApi("generate-images", {
         model: "imagen-4.0-generate-001",
         prompt: prompt,
         config: {
             numberOfImages: config.numberOfImages || 1,
             outputMimeType: config.outputMimeType || "image/jpeg",
-            aspectRatio: config.aspectRatio || "1:1",
+            aspectRatio: apiRatio,
             safetyFilterLevel: config.safetyFilterLevel || "BLOCK_MEDIUM_AND_ABOVE",
         },
     }, userId);

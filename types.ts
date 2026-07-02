@@ -207,6 +207,8 @@ export interface GenerationResult {
   hashtags: string[];
   adHeadline: string | null;
   callToAction: string | null;
+  /** Link docelowy CTA (np. strona marki) — używany przy publikacji */
+  ctaUrl?: string | null;
   imageUrl: string | null;
   videoUrl?: string | null;
   videoTitle?: string | null;
@@ -391,6 +393,8 @@ export interface BrandVoiceSettings {
 
   // Branding Assets
   logoUrl?: string;
+  logoPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  logoSizePercent?: number;
   mascotUrl?: string;
   mascotName?: string;
   mascotDescription?: string;
@@ -400,6 +404,20 @@ export interface BrandVoiceSettings {
   websiteUrl?: string;
   brandColors?: string[];
   extractedFromUrl?: boolean;
+
+  /** Wnioski z modułu śledzenia konkurencji */
+  competitorIntel?: CompetitorBrandIntel;
+}
+
+export interface CompetitorBrandIntel {
+  summary: string;
+  differentiationAngles: string[];
+  avoidCompetitorPatterns: string[];
+  exploitGaps: string[];
+  hashtagHints: string[];
+  timingHints: string[];
+  trackedHandles: string[];
+  lastSyncedAt: string;
 }
 
 export type BrandVoiceData = BrandVoiceSettings;

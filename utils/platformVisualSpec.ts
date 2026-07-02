@@ -175,3 +175,11 @@ export function isAspectRatioAllowedForPlatform(
 ): boolean {
   return getPlatformVisualSpec(platform).allowedAspectRatios.includes(ratio);
 }
+
+/** Imagen API obsługuje tylko 1:1, 16:9, 9:16 — mapujemy pozostałe proporcje UI. */
+export function mapAspectRatioToApi(ratio?: VisualAspectRatio): '1:1' | '16:9' | '9:16' {
+  if (ratio === '16:9') return '16:9';
+  if (ratio === '9:16' || ratio === '3:4') return '9:16';
+  if (ratio === '4:3') return '16:9';
+  return '1:1';
+}

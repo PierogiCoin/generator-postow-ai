@@ -18,7 +18,9 @@ import { normalizeFormData } from '../../components/inputForm/defaultFormData';
 import { showSuccess, showWarning } from '../../utils/errorHandler';
 import { isQuotaDepleted } from '../../utils/chunkReload';
 import { clearOnboardingPendingFirstGenerate } from '../../utils/onboarding';
-import { overlayLogoOnImage } from '../../utils/imageBranding';
+import { applyBrandLogoToImage, shouldApplyBrandLogo } from '../../utils/brandImagePipeline';
+import { persistImageUrl } from '../../utils/persistImageUrl';
+import { normalizeCtaUrl } from '../../utils/publishCaption';
 import { canAutoPublish, autoPublishToConnectedAccounts, getPublishablePostText } from '../../services/autoPublishService';
 import {
     scorePostContent,
@@ -534,13 +536,21 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 );
             }
 
-            if (formData.includeLogo && activeBrandVoice?.settings?.logoUrl && details.imageUrl) {
-                genActions.setProgress('Nakładanie Logo Marki...');
+            if (shouldApplyBrandLogo(formData.includeLogo) && activeBrandVoice?.settings?.logoUrl && details.imageUrl) {
+                genActions.setProgress('Nakładanie logo marki...');
                 try {
-                    details.imageUrl = await overlayLogoOnImage(details.imageUrl, activeBrandVoice.settings.logoUrl);
+                    details.imageUrl = await applyBrandLogoToImage(details.imageUrl, activeBrandVoice.settings);
                 } catch {
                     // Użyj oryginalnego obrazu przy błędzie brandingu
                 }
+            }
+
+            if (details.imageUrl && user.id) {
+                details.imageUrl = (await persistImageUrl(details.imageUrl, user.id)) ?? details.imageUrl;
+            }
+
+            if (!details.ctaUrl && activeBrandVoice?.settings?.websiteUrl) {
+                details.ctaUrl = normalizeCtaUrl(activeBrandVoice.settings.websiteUrl) ?? undefined;
             }
 
             genActions.setResultDetails(details);

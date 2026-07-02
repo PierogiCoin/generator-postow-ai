@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, Video, Download, Instagram, Share2, Loader2 } from 'lucide-react';
+import { X, Instagram, Video, Download, Sparkles, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { GenerationResult } from '../types';
 import type { VideoStoryProgressStatus } from '../services/videoStoryService';
@@ -8,6 +8,7 @@ import { VideoStoryProgress } from './VideoStoryProgress';
 interface VideoStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onApplyToPost?: () => void;
   post: GenerationResult | null;
   onGenerate: (style: VideoStoryStyle, provider: VideoStoryProvider) => Promise<void>;
   isGenerating: boolean;
@@ -40,6 +41,7 @@ interface StyleOption {
 export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
   isOpen,
   onClose,
+  onApplyToPost,
   post,
   onGenerate,
   isGenerating,
@@ -268,15 +270,30 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
                     />
                   </div>
                   
-                  <div className="flex gap-2">
-                    <button className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition flex items-center justify-center gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const a = document.createElement('a');
+                        a.href = generatedVideo.url;
+                        a.download = `video-story-${Date.now()}.mp4`;
+                        a.click();
+                      }}
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition flex items-center justify-center gap-2"
+                    >
                       <Download className="w-4 h-4" />
                       {t('videoStory.download', 'Pobierz')}
                     </button>
-                    <button className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center justify-center gap-2">
-                      <Share2 className="w-4 h-4" />
-                      {t('videoStory.share', 'Udostępnij')}
-                    </button>
+                    {onApplyToPost && (
+                      <button
+                        type="button"
+                        onClick={onApplyToPost}
+                        className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition flex items-center justify-center gap-2 font-semibold"
+                      >
+                        <Video className="w-4 h-4" />
+                        {t('videoStory.applyToPost', 'Użyj w poście')}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

@@ -777,7 +777,7 @@ export const InputForm: React.FC<InputFormProps> = ({
               <div className="p-5 bg-blue-500/5 border-2 border-blue-500/10 rounded-3xl animate-fade-in">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Wykorzystaj Aktywa Marki</h4>
-                  <Tooltip text="Włącz opcje poniżej, aby AI uwzględniło Twoje logo lub maskotkę w treści posta." />
+                  <Tooltip text="Logo z profilu Brand Voice jest automatycznie nakładane na każdą grafikę (prawy dolny róg). Wyłącz, jeśli chcesz sam dodać logo w edytorze." />
                 </div>
                 <div className="flex flex-wrap gap-4">
                   <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-2 rounded-xl">

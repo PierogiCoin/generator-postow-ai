@@ -17,8 +17,12 @@ import {
 import { BatchCompetitorSummary, type BatchCompetitorResult } from './intelligence/BatchCompetitorSummary';
 import { showError, showSuccess, showWarning } from '../utils/errorHandler';
 import { parseUserFacingError } from '../utils/userFacingError';
+import { useAppHandlers } from '../hooks/useAppHandlers';
+import { useNotifications } from '../hooks/useNotifications';
+import { useDataStore } from '../stores/dataStore';
 import { UsersIcon } from './icons/UsersIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { IdentificationIcon } from './icons/IdentificationIcon';
 import { TrashIcon } from './icons/TrashIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
@@ -212,6 +216,9 @@ const CompetitorCard: React.FC<{
 export const CompetitorTrackerPanel: React.FC = () => {
   const { user } = useAuth();
   const isMountedRef = useRef(true);
+  const notificationSystem = useNotifications();
+  const appHandlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
+  const { activeBrandVoiceId, isLearningStyle } = useDataStore();
 
   const [competitors, setCompetitors] = useState<TrackedCompetitor[]>([]);
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
@@ -375,6 +382,16 @@ export const CompetitorTrackerPanel: React.FC = () => {
     }
   }, [userId, competitors, niche, loadCompetitors]);
 
+  const analyzedCount = competitors.filter((c) => c.analysis).length;
+
+  const handleApplyToBrandVoice = useCallback(async () => {
+    if (analyzedCount === 0) {
+      showWarning('Najpierw przeanalizuj przynajmniej jednego konkurenta.');
+      return;
+    }
+    await appHandlers.handleLearnFromCompetitors(activeBrandVoiceId, batchResult);
+  }, [analyzedCount, appHandlers, activeBrandVoiceId, batchResult]);
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
@@ -388,7 +405,18 @@ export const CompetitorTrackerPanel: React.FC = () => {
             <p className="text-sm text-slate-500 dark:text-slate-400">Analizuj hashtagi, godziny i strategie treści</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {analyzedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => void handleApplyToBrandVoice()}
+              disabled={isLearningStyle || isBatchAnalyzing}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+            >
+              <IdentificationIcon className="w-4 h-4" />
+              {isLearningStyle ? 'Aktualizuję Brand Voice…' : 'Zastosuj do Brand Voice'}
+            </button>
+          )}
           {competitors.length > 0 && (
             <button
               type="button"
@@ -411,11 +439,22 @@ export const CompetitorTrackerPanel: React.FC = () => {
       </div>
 
       {batchResult && (
-        <BatchCompetitorSummary
-          batch={batchResult}
-          sources={batchSources}
-          analyzedAt={batchAnalyzedAt || undefined}
-        />
+        <div className="space-y-3">
+          <BatchCompetitorSummary
+            batch={batchResult}
+            sources={batchSources}
+            analyzedAt={batchAnalyzedAt || undefined}
+          />
+          <button
+            type="button"
+            onClick={() => void handleApplyToBrandVoice()}
+            disabled={isLearningStyle}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-bold rounded-xl transition-colors"
+          >
+            <IdentificationIcon className="w-5 h-5" />
+            Zastosuj raport grupowy + analizy do Brand Voice
+          </button>
+        </div>
       )}
 
       {/* Add form */}
