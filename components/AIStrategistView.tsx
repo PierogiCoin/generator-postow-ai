@@ -135,6 +135,55 @@ const ReportDisplay: React.FC<{ report: StrategicAuditReport; selectedBrandId?: 
                 </div>
             </div>
 
+            {/* Intelligence insights */}
+            {report.intelligenceInsights && (
+                <div className="p-6 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">Live intelligence</h3>
+                    {report.intelligenceInsights.industryPulse && (
+                        <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">{report.intelligenceInsights.industryPulse}</p>
+                    )}
+                    {report.intelligenceInsights.competitorRecommendation && (
+                        <p className="text-sm font-medium text-violet-700 dark:text-violet-300 mb-4">
+                            Harmonogram: {report.intelligenceInsights.competitorRecommendation}
+                        </p>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        {report.intelligenceInsights.trendingTopics.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold mb-2">Trendy</h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.intelligenceInsights.trendingTopics.map((t, i) => <li key={`trend-${i}`}>{t}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {report.intelligenceInsights.contentGaps.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold mb-2">Luki treści</h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.intelligenceInsights.contentGaps.map((g, i) => <li key={`gap-${i}`}>{g}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {report.intelligenceInsights.optimalPostingSlots.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold mb-2">Optymalne godziny</h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.intelligenceInsights.optimalPostingSlots.map((s, i) => <li key={`slot-${i}`}>{s}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                        {report.intelligenceInsights.newsAngles.length > 0 && (
+                            <div>
+                                <h4 className="font-semibold mb-2">Kąty z newsów</h4>
+                                <ul className="list-disc list-inside space-y-1 text-slate-600 dark:text-slate-400">
+                                    {report.intelligenceInsights.newsAngles.map((n, i) => <li key={`news-${i}`}>{n}</li>)}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* SWOT */}
             <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.swot')}</h3>

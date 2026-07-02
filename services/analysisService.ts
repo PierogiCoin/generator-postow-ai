@@ -10,6 +10,7 @@ import {
     User,
     Platform
 } from '../types';
+import { gatherStrategicIntelligenceContext } from './strategicIntelligenceContext';
 
 /**
  * Analysis Service
@@ -116,10 +117,32 @@ export const generateStrategicAudit = async (
     historySummary: string,
     user: User,
     brandProfile?: any,
-    preferences?: { frequency: string; formats: string[] }
+    preferences?: { frequency: string; formats: string[] },
+    platforms?: Platform[]
 ): Promise<StrategicAuditReport> => {
+    const primaryPlatform = platforms?.[0] || Platform.Facebook;
+    const niche = goal.trim() || audience.trim() || 'marketing';
+
+    let intelligenceBlock = '';
+    let intelligenceInsights: StrategicAuditReport['intelligenceInsights'];
+
     try {
-        return await generateJson<StrategicAuditReport>({
+        const ctx = await gatherStrategicIntelligenceContext({
+            userId: user.id,
+            niche,
+            goal,
+            audience,
+            competitors,
+            platforms: platforms?.length ? platforms : [primaryPlatform],
+        });
+        intelligenceBlock = ctx.promptBlock;
+        intelligenceInsights = ctx.insights;
+    } catch {
+        // intelligence opcjonalne
+    }
+
+    try {
+        const report = await generateJson<StrategicAuditReport>({
             model: "gemini-pro-latest",
             contents: `You are a top-tier digital strategy consultant and content architect. 
             Perform a deep STRATEGIC AUDIT and create a CONTENT PLAN for:
@@ -128,8 +151,15 @@ export const generateStrategicAudit = async (
             - BRAND GOAL: "${goal}"
             - TARGET AUDIENCE: "${audience}"
             - KEY COMPETITORS: [${competitors.join(', ')}]
+            - TARGET PLATFORMS: [${(platforms || [primaryPlatform]).join(', ')}]
             - BRAND HISTORY: "${historySummary}"
             - PREFERENCES: Frequency: ${preferences?.frequency || 'Standard'}, Formats: ${preferences?.formats?.join(', ') || 'Mixed'}
+            
+            LIVE INTELLIGENCE (Google Search + analytics — priorytet przy planie i SWOT):
+            ${intelligenceBlock || 'Brak danych intelligence — oprzyj się na wiedzy branżowej.'}
+            
+            Użyj optimalPostingSlots z intelligence w polu "time" actionablePlan.
+            Wpleć contentGaps i trendingTopics w filary treści i opportunities w SWOT.
             
             Produce a comprehensive report in JSON format:
             {
@@ -147,7 +177,7 @@ export const generateStrategicAudit = async (
                     { 
                         "id": "uuid", 
                         "date": "YYYY-MM-DD", 
-                        "time": "HH:mm (based on audience activity)",
+                        "time": "HH:mm",
                         "platform": "Facebook|Instagram|TikTok|X|LinkedIn", 
                         "topic": "Catchy Topic/Hook", 
                         "format": "PostWithImage|Video|Idea", 
@@ -157,10 +187,11 @@ export const generateStrategicAudit = async (
                 ]
             }
             
-            Return exactly as JSON. Ensure the plan reflects the requested frequency and mix of video/graphics. 
-            The plan should cover the next 7-14 days. Tones must be one of the listed enums.`,
+            Return exactly as JSON. Plan na 7-14 dni. Platformy w actionablePlan = TARGET PLATFORMS.`,
         }, user.id);
-    } catch (e) {
+
+        return { ...report, intelligenceInsights };
+    } catch {
         return {
             summary: "Audit failed to generate correctly. Please try more specific input.",
             contentPillars: [],
@@ -168,6 +199,7 @@ export const generateStrategicAudit = async (
             swot: { strengths: [], weaknesses: [], opportunities: [], threats: [] },
             competitiveSnapshot: [],
             actionablePlan: [],
+            intelligenceInsights,
         };
     }
 };

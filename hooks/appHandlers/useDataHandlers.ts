@@ -108,7 +108,8 @@ export const useDataHandlers = ({ addToast, handleApiError }: DataHandlerDeps) =
                 historySummary,
                 user,
                 selectedProfile?.settings,
-                preferences
+                preferences,
+                _platforms
             );
             dataActions.setStrategicAuditReport(report);
             addToast('Audyt strategiczny został pomyślnie wygenerowany!', NotificationType.Success);

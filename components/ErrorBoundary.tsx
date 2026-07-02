@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { reportError } from '../utils/errorReporting';
 // Placeholder icons since they may not exist
 const ExclamationTriangleIcon = ({ className }: { className?: string }) => <div className={className}>⚠️</div>;
 const ArrowPathIcon = ({ className }: { className?: string }) => <div className={className}>🔄</div>;
@@ -51,10 +52,10 @@ export class ErrorBoundary extends Component<Props, State> {
       this.props.onError(error, errorInfo);
     }
 
-    // In production, you could send error to logging service
-    if (process.env.NODE_ENV === 'production') {
-      // Example: sendErrorToService(error, errorInfo, this.state.errorId);
-    }
+    reportError(error, {
+      componentStack: errorInfo.componentStack,
+      errorId: this.state.errorId,
+    });
   }
 
   handleReset = () => {

@@ -594,4 +594,16 @@ export interface StrategicAuditReport {
   swot: SWOTAnalysis;
   competitiveSnapshot: CompetitiveSnapshot[];
   actionablePlan: IntelligentCalendarPlanItem[];
+  /** Dane z modułu intelligence (trendy, luki, godziny) */
+  intelligenceInsights?: {
+    trendingTopics: string[];
+    contentGaps: string[];
+    optimalPostingSlots: string[];
+    competitorRecommendation?: string;
+    industryPulse?: string;
+    newsAngles: string[];
+    avoidTopics?: string[];
+    competitorHandles: string[];
+    primaryPlatform: Platform;
+  };
 }

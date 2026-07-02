@@ -1,25 +1,46 @@
 /**
  * Opcjonalne raportowanie błędów — włącz przez VITE_SENTRY_DSN w produkcji.
- * Bez DSN: log do konsoli (zero dodatkowych zależności).
  */
-export function reportError(error: unknown, context?: Record<string, unknown>): void {
-  const dsn = import.meta.env.VITE_SENTRY_DSN as string | undefined;
-  const message = error instanceof Error ? error.message : String(error);
+import * as Sentry from '@sentry/react';
 
-  if (import.meta.env.DEV) {
-    console.error('[errorReporting]', message, context, error);
-    return;
-  }
-
-  if (dsn) {
-    // Hook pod przyszły @sentry/react — bez wymuszania instalacji pakietu
-    console.error('[Sentry-ready]', message, context);
-  }
-}
+let sentryReady = false;
 
 export function initErrorReporting(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || sentryReady) return;
+
+  const dsn = (import.meta.env.VITE_SENTRY_DSN as string | undefined)?.trim();
+
+  if (dsn && import.meta.env.PROD) {
+    Sentry.init({
+      dsn,
+      environment: import.meta.env.MODE,
+      tracesSampleRate: 0.1,
+      sendDefaultPii: false,
+    });
+    sentryReady = true;
+  }
+
   window.addEventListener('unhandledrejection', (event) => {
     reportError(event.reason, { type: 'unhandledrejection' });
   });
 }
+
+export function reportError(error: unknown, context?: Record<string, unknown>): void {
+  if (import.meta.env.DEV) {
+    console.error('[errorReporting]', error, context);
+    return;
+  }
+
+  if (!sentryReady) return;
+
+  Sentry.withScope((scope) => {
+    if (context) scope.setContext('extra', context);
+    if (error instanceof Error) {
+      Sentry.captureException(error);
+    } else {
+      Sentry.captureMessage(String(error));
+    }
+  });
+}
+
+export { Sentry };
