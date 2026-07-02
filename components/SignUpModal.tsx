@@ -31,6 +31,16 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   const validateField = (name: 'email' | 'password', value: string) => {
     let fieldError = '';
     switch (name) {
@@ -104,10 +114,23 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
       onClick={handleClose}
     >
       <div 
-        className={`bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-8 w-full max-w-md m-4 transform transition-all duration-300 ease-out ${isOpen && !isClosing ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="signup-modal-title"
+        className={`relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-8 w-full max-w-md m-4 transform transition-all duration-300 ease-out ${isOpen && !isClosing ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         onClick={e => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-2">Stwórz swoje konto</h2>
+        <button
+          type="button"
+          onClick={handleClose}
+          aria-label="Zamknij"
+          className="absolute top-4 right-4 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <h2 id="signup-modal-title" className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-2">Stwórz swoje konto</h2>
         <p className="text-center text-slate-500 dark:text-slate-400 mb-6">Zacznij generować niesamowite treści w kilka sekund.</p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -123,7 +146,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               onChange={e => setEmail(e.target.value)}
               onBlur={handleBlur}
               required
-              className={`w-full bg-slate-50 dark:bg-slate-900 border rounded-md p-2.5 focus:ring-2 focus:border-blue-500 transition ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'}`}
+              className={`w-full bg-slate-50 dark:bg-slate-900 border rounded-md py-3 px-3 focus:ring-2 focus:border-blue-500 transition ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'}`}
               placeholder="ty@example.com"
               aria-invalid={!!validationErrors.email}
               aria-describedby="signup-email-error"
@@ -142,7 +165,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               onBlur={handleBlur}
               required
               minLength={6}
-              className={`w-full bg-slate-50 dark:bg-slate-900 border rounded-md p-2.5 focus:ring-2 focus:border-blue-500 transition ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'}`}
+              className={`w-full bg-slate-50 dark:bg-slate-900 border rounded-md py-3 px-3 focus:ring-2 focus:border-blue-500 transition ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'}`}
               placeholder="•••••••• (min. 6 znaków)"
               aria-invalid={!!validationErrors.password}
               aria-describedby="signup-password-error"

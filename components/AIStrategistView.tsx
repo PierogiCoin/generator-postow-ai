@@ -357,7 +357,7 @@ const ReportDisplay: React.FC<{
                             <button
                                 onClick={() => handleGenerateClick(item)}
                                 aria-label={t('strategist.report.generatePost')}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-sm"
+                                className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-sm shrink-0"
                                 title={t('strategist.report.generatePost')}
                             >
                                 <PostIcon className="w-4 h-4" />

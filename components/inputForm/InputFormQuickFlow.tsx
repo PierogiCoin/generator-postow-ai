@@ -79,7 +79,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       {/* Step indicator */}
-      <nav aria-label="Kroki formularza" className="flex items-center justify-center gap-2 sm:gap-4">
+      <nav aria-label="Kroki formularza" className="flex items-center justify-center gap-1.5 sm:gap-4 flex-wrap">
         {STEPS.map((s, i) => {
           const active = step === s.id;
           const done = step > s.id;
@@ -95,7 +95,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 onClick={() => {
                   if (s.id < step || (s.id === 2 && canGoStep2) || s.id === 1) setStep(s.id);
                 }}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-full text-[11px] sm:text-xs font-bold transition-all ${
                   active
                     ? 'bg-indigo-600 text-white shadow-md'
                     : done
@@ -110,7 +110,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 >
                   {done ? '✓' : s.id}
                 </span>
-                <span className="hidden sm:inline">{s.label}</span>
+                <span>{s.label}</span>
               </button>
             </React.Fragment>
           );

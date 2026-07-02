@@ -188,6 +188,7 @@ const PLATFORM_NAMES: Record<string, string> = {
 };
 
 const SocialMediaSection: React.FC = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { setIsSocialConnectionsModalOpen } = useUIStore();
     const [connections, setConnections] = useState<SocialConnection[]>([]);
@@ -223,10 +224,14 @@ const SocialMediaSection: React.FC = () => {
 
             <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Social Intelligence</h3>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard.social.title', 'Social Intelligence')}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Auto-Publish: Active</span>
+                        <div className={`w-1.5 h-1.5 rounded-full ${connections.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            {connections.length > 0
+                                ? t('dashboard.social.autoPublishActive', 'Auto-Publikacja: Aktywna')
+                                : t('dashboard.social.noConnections', 'Brak połączonych kont')}
+                        </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -365,23 +370,23 @@ export const DashboardView: React.FC = () => {
                         <div className="flex items-center gap-2 flex-wrap">
                             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl">
                                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
-                                System Online
+                                {t('dashboard.systemOnline')}
                             </div>
                             <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 rounded-full text-cyan-400 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl">
                                 <SparklesIcon className="w-3.5 h-3.5" />
                                 AI v2.0
                             </div>
                             {streak.currentStreak > 0 && (
-                                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/10 border border-amber-400/20 rounded-full text-amber-300 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl" title={`Najdłuższy streak: ${streak.longestStreak} dni`}>
-                                    🔥 {streak.currentStreak} {streak.currentStreak === 1 ? 'dzień' : 'dni'} z rzędu
+                                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/10 border border-amber-400/20 rounded-full text-amber-300 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
+                                    🔥 {t('dashboard.streakDays', { count: streak.currentStreak })}
                                 </div>
                             )}
                         </div>
                         <h1 className="text-4xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none font-sans">
-                            Witaj, <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 font-extrabold">{user.name.split(' ')[0]}</span>.
+                            {t('dashboard.welcome')}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 font-extrabold">{user.name.split(' ')[0]}</span>.
                         </h1>
                         <p className="text-lg text-slate-650 dark:text-slate-300 max-w-2xl leading-relaxed">
-                            Twoja inteligencja społecznościowa czeka. Algorytmy przeanalizowały {stats?.totalGenerations || 0} postów i są gotowe na nowe wyzwania.
+                            {t('dashboard.subtitle', { count: stats?.totalGenerations || 0 })}
                         </p>
                         <div className="flex flex-wrap gap-4 pt-2">
                             <button
@@ -389,14 +394,14 @@ export const DashboardView: React.FC = () => {
                                 className="px-6 py-3.5 bg-gradient-to-r from-fuchsia-500 to-indigo-650 text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:opacity-90 transition-all shadow-lg active:scale-95 flex items-center gap-2.5"
                             >
                                 <Plus className="w-4 h-4" />
-                                Nowy Projekt
+                                {t('dashboard.newProject')}
                             </button>
                             <button
                                 onClick={() => setIsCommandPaletteOpen(true)}
                                 className="px-6 py-3.5 bg-white/5 border border-white/10 text-slate-800 dark:text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-white/10 transition-all backdrop-blur flex items-center gap-2.5"
                             >
                                 <Zap className="w-4 h-4 text-amber-400" />
-                                Szybkie Akcje
+                                {t('dashboard.quickActions')}
                             </button>
                         </div>
                     </div>
@@ -408,28 +413,28 @@ export const DashboardView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <StatCard
                     icon={RocketLaunchIcon}
-                    label="AI Generations"
+                    label={t('dashboard.stats.generations')}
                     value={stats?.totalGenerations || 0}
                     color="bg-cyan-500/10 border border-cyan-500/20"
-                    trend="+12% today"
+                    trend={t('dashboard.stats.generationsTrend')}
                     glowClass="neon-glow-cyan"
                     iconColor="text-cyan-500"
                 />
                 <StatCard
                     icon={CalendarIcon}
-                    label="Scheduled Postings"
+                    label={t('dashboard.stats.scheduled')}
                     value={scheduledThisWeek}
                     color="bg-fuchsia-500/10 border border-fuchsia-500/20"
-                    trend="Automated"
+                    trend={t('dashboard.stats.scheduledTrend')}
                     glowClass="neon-glow-pink"
                     iconColor="text-fuchsia-500"
                 />
                 <StatCard
                     icon={ClipboardDocumentListIcon}
-                    label="Active Drafts"
+                    label={t('dashboard.stats.drafts')}
                     value={drafts.length}
                     color="bg-lime-500/10 border border-lime-500/20"
-                    trend="Ready to Ship"
+                    trend={t('dashboard.stats.draftsTrend')}
                     glowClass="neon-glow-lime"
                     iconColor="text-lime-500"
                 />
@@ -451,7 +456,7 @@ export const DashboardView: React.FC = () => {
                             <div className="w-10 h-10 bg-fuchsia-500/10 rounded-xl flex items-center justify-center border border-fuchsia-500/25">
                                 <CalendarIcon className="w-5 h-5 text-fuchsia-500" />
                             </div>
-                            Nadchodzące Posty
+                            {t('dashboard.upcomingPosts')}
                         </h3>
 
                         {scheduledPosts.filter(p => p.status === 'scheduled').length > 0 ? (

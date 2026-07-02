@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SparklesIcon } from '../icons/SparklesIcon';
+import { ChevronDownIcon } from '../icons/ChevronDownIcon';
 import { ModernButton } from '../ui/ModernButton';
 import { Platform } from '../../types';
 import {
@@ -31,19 +32,30 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
   onFillWeek,
 }) => {
   const { t } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 640 : true
+  );
 
   return (
-    <div className="mb-6 p-4 md:p-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 space-y-4 relative z-10">
-      <div>
-        <h3 className="text-sm font-black uppercase tracking-tight text-slate-800 dark:text-white">
-          {t('calendar.fill.title', 'Wypełnij kalendarz')}
-        </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          {t('calendar.fill.subtitle', 'Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).')}
-        </p>
-      </div>
+    <div className="mb-6 p-4 md:p-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 relative z-10">
+      <button
+        type="button"
+        onClick={() => setIsExpanded((v) => !v)}
+        className="w-full flex items-center justify-between gap-3 text-left sm:cursor-default"
+        aria-expanded={isExpanded}
+      >
+        <div>
+          <h3 className="text-sm font-black uppercase tracking-tight text-slate-800 dark:text-white">
+            {t('calendar.fill.title', 'Wypełnij kalendarz')}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {t('calendar.fill.subtitle', 'Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).')}
+          </p>
+        </div>
+        <ChevronDownIcon className={`w-5 h-5 shrink-0 text-slate-400 transition-transform sm:hidden ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 ${isExpanded ? '' : 'hidden sm:grid'}`}>
         <div className="space-y-1.5">
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
             {t('calendar.cadence.label', 'Szablon cadence')}
@@ -51,7 +63,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
           <select
             value={presetId}
             onChange={(e) => onPresetChange(e.target.value as CadencePresetId)}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-sm font-semibold"
           >
             {(Object.keys(CADENCE_PRESETS) as CadencePresetId[]).map((id) => (
               <option key={id} value={id}>
@@ -73,7 +85,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
             value={weekTheme}
             onChange={(e) => onThemeChange(e.target.value)}
             placeholder={t('calendar.fill.weekThemePlaceholder', 'np. Letnia kolekcja 2025')}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-sm"
           />
         </div>
 
@@ -84,7 +96,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
           <select
             value={platform}
             onChange={(e) => onPlatformChange(e.target.value as Platform)}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-sm font-semibold"
           >
             {PLATFORMS.map((p) => (
               <option key={p} value={p}>

@@ -76,6 +76,12 @@ function auditScoreClass(score: number): string {
   return 'bg-red-500/90 text-white';
 }
 
+function auditScoreLabel(score: number, t: (key: string, fallback: string) => string): string {
+  if (score >= 80) return t('calendar.audit.good', 'Dobry');
+  if (score >= 50) return t('calendar.audit.medium', 'Średni');
+  return t('calendar.audit.poor', 'Słaby');
+}
+
 function isToday(date: Date): boolean {
   const now = new Date();
   return (
@@ -115,7 +121,9 @@ export const ContentCalendar: React.FC = () => {
   const [suggestions, setSuggestions] = useState<CalendarSuggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-  const [calendarView, setCalendarView] = useState<'month' | 'week'>('month');
+  const [calendarView, setCalendarView] = useState<'month' | 'week'>(() =>
+    typeof window !== 'undefined' && window.innerWidth < 640 ? 'week' : 'month'
+  );
   const autoSuggestRef = useRef<string | null>(null);
   const gapWarmRef = useRef(false);
   const [gapSlots, setGapSlots] = useState<GapSlotResult[]>([]);
@@ -590,7 +598,7 @@ export const ContentCalendar: React.FC = () => {
                 openDay(date);
               }}
               className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${auditScoreClass(dayAudit.score)}`}
-              title={t('calendar.audit.open', 'Audyt dnia')}
+              title={`${t('calendar.audit.open', 'Audyt dnia')}: ${dayAudit.score} — ${auditScoreLabel(dayAudit.score, t)}`}
             >
               {dayAudit.score}
             </span>
