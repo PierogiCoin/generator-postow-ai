@@ -27,6 +27,7 @@ import { useAppHandlers } from '../hooks/useAppHandlers';
 
 // Services & Types
 import { getStrategicContentIdeas } from '../services/geminiService';
+import { getUserNiche } from '../utils/userNiche';
 import type { StrategicIdea, Platform as PlatformType } from '../types';
 import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
@@ -76,8 +77,7 @@ const StrategyAssistant: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [retryTrigger, setRetryTrigger] = useState(0);
-    const nicheKey = user ? `userNiche_${user.id}` : 'userNiche';
-    const niche = localStorage.getItem(nicheKey) || localStorage.getItem('userNiche') || 'zrównoważona moda';
+    const niche = getUserNiche(user?.id);
 
     useEffect(() => {
         const fetchIdeas = async () => {

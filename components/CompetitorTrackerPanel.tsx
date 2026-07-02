@@ -20,6 +20,7 @@ import { parseUserFacingError } from '../utils/userFacingError';
 import { useAppHandlers } from '../hooks/useAppHandlers';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDataStore } from '../stores/dataStore';
+import { getUserNiche as getUserNicheShared } from '../utils/userNiche';
 import { UsersIcon } from './icons/UsersIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { IdentificationIcon } from './icons/IdentificationIcon';
@@ -253,11 +254,8 @@ export const CompetitorTrackerPanel: React.FC = () => {
 
   useEffect(() => {
     if (!userId || niche.trim()) return;
-    const storedNiche =
-      localStorage.getItem(`userNiche_${userId}`) ||
-      localStorage.getItem('userNiche') ||
-      '';
-    if (storedNiche) setNiche(storedNiche);
+    const storedNiche = getUserNicheShared(userId, '');
+    if (storedNiche && storedNiche !== 'marketing') setNiche(storedNiche);
   }, [userId, niche]);
 
   const handleAdd = useCallback(async (e?: React.FormEvent) => {

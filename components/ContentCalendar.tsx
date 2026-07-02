@@ -49,6 +49,7 @@ import {
   getCachedGapHours,
   type GapSlotResult,
 } from '../services/intelligenceService';
+import { getUserNiche as getUserNicheShared } from '../utils/userNiche';
 import { IntelligenceGapStrip } from './intelligence/IntelligenceGapStrip';
 
 const WEEK_DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
@@ -169,14 +170,9 @@ export const ContentCalendar: React.FC = () => {
     return currentDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
   }, [calendarView, currentDate, weekStartDate]);
 
-  const getUserNiche = useCallback((): string => {
+  const getUserNicheForCalendar = useCallback((): string => {
     if (!user?.id) return 'marketing cyfrowy';
-    return (
-      localStorage.getItem(`userNiche_${user.id}`) ||
-      localStorage.getItem('userNiche') ||
-      weekTheme.trim() ||
-      'marketing cyfrowy'
-    );
+    return getUserNicheShared(user.id, weekTheme.trim() || 'marketing cyfrowy');
   }, [user?.id, weekTheme]);
 
   const warmGapIntelligence = useCallback(async () => {
@@ -194,7 +190,7 @@ export const ContentCalendar: React.FC = () => {
       const handles = competitors
         .filter((c) => c.platform === platform)
         .map((c) => c.handle);
-      const result = await analyzeScheduleGaps(getUserNiche(), platform, user.id, {
+      const result = await analyzeScheduleGaps(getUserNicheForCalendar(), platform, user.id, {
         competitorHandles: handles,
       });
       setGapSlots(result.gapSlots || []);
@@ -204,7 +200,7 @@ export const ContentCalendar: React.FC = () => {
     } finally {
       setIsLoadingGaps(false);
     }
-  }, [user?.id, platform, getUserNiche]);
+  }, [user?.id, platform, getUserNicheForCalendar]);
 
   useEffect(() => {
     if (!user?.id || gapWarmRef.current) return;
@@ -266,7 +262,7 @@ export const ContentCalendar: React.FC = () => {
           .map((h) => h.formData?.topic || '')
           .filter(Boolean)
           .join(', ');
-        const niche = getUserNiche();
+        const niche = getUserNicheForCalendar();
         if (!user) throw new Error('Musisz być zalogowany, aby użyć sugestii kalendarza.');
         const result = await generateCalendarSuggestions(date, niche, historySummary, user.id);
         setSuggestions(result);
@@ -347,7 +343,7 @@ export const ContentCalendar: React.FC = () => {
     setIsFilling(true);
     try {
       const start = getWeekStart();
-      const niche = getUserNiche();
+      const niche = getUserNicheForCalendar();
       const previousTopics = (intelligentCalendarPlan || []).map((p) => p.topic);
 
       const newPlan = await generateCadenceWeekPlan(
@@ -381,7 +377,7 @@ export const ContentCalendar: React.FC = () => {
 
     setIsFillingDay(true);
     try {
-      const niche = getUserNiche();
+      const niche = getUserNicheForCalendar();
       const missing = await generateMissingDaySlots(
         selectedDay,
         presetId,
@@ -415,7 +411,7 @@ export const ContentCalendar: React.FC = () => {
 
     setIsGeneratingDay(true);
     try {
-      const niche = getUserNiche();
+      const niche = getUserNicheForCalendar();
       let plan = intelligentCalendarPlan || [];
 
       const missing = await generateMissingDaySlots(

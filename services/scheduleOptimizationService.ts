@@ -2,6 +2,7 @@ import { callApi } from './apiClient';
 import { STORAGE_KEYS } from '../utils/storageUtils';
 import { analyzeScheduleGaps, type GapSlotResult } from './intelligenceService';
 import { fetchTrackedCompetitors } from './competitorService';
+import { getUserNiche } from '../utils/userNiche';
 import { Platform } from '../types';
 
 /**
@@ -262,9 +263,7 @@ export async function analyzeCompetitorTiming(
   recommendation: string;
 }> {
   try {
-    const niche = typeof localStorage !== 'undefined'
-      ? localStorage.getItem('userNiche') || 'marketing'
-      : 'marketing';
+    const niche = getUserNiche(userId);
     const analysis = await analyzeScheduleGaps(niche, platform as Platform, userId, {
       competitorHandles,
       contentType: 'post',
