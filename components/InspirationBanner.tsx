@@ -18,7 +18,7 @@ export const InspirationBanner: React.FC<InspirationBannerProps> = ({ inspiratio
           <SparklesIcon className="w-6 h-6 text-blue-600 dark:text-blue-300 flex-shrink-0" />
           {('result' in inspiration) && inspiration.result.imageUrl && (
             <div className="w-12 h-12 rounded-lg overflow-hidden border border-blue-200 dark:border-blue-700 flex-shrink-0 shadow-sm">
-              <img src={inspiration.result.imageUrl} alt="Inspiration" className="w-full h-full object-cover" />
+              <img src={inspiration.result.imageUrl} alt="Inspiration" className="w-full h-full object-cover" loading="lazy" />
             </div>
           )}
           <div className="min-w-0">

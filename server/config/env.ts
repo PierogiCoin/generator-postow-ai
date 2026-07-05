@@ -16,6 +16,10 @@ const envSchema = z
     OPENAI_API_KEY: z.string().optional(),
     LUMA_API_KEY: z.string().optional(),
     REPLICATE_API_TOKEN: z.string().optional(),
+    RESEND_API_KEY: z.string().optional(),
+    EMAIL_FROM: z.string().optional(),
+    EMAIL_FROM_NAME: z.string().optional(),
+    FRONTEND_URL: z.string().optional(),
   })
   .refine((data) => Boolean(data.SUPABASE_URL || data.VITE_SUPABASE_URL), {
     message: 'SUPABASE_URL or VITE_SUPABASE_URL is required',
@@ -32,6 +36,10 @@ export type Env = {
   LUMA_API_KEY?: string;
   REPLICATE_API_TOKEN?: string;
   VITE_SUPABASE_URL?: string;
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  EMAIL_FROM_NAME?: string;
+  FRONTEND_URL?: string;
 };
 
 let cachedEnv: Env | null = null;

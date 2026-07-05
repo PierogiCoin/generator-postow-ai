@@ -8,6 +8,8 @@ import { getPlanByUserPlan } from '../config/subscriptionPlans';
 import { CREDITS_UPDATED_EVENT } from '../utils/creditSync';
 import { useDataStore } from '../stores/dataStore';
 import { clearAllPersistedStores } from '../utils/storageUtils';
+import { emailService } from '../services/emailService';
+import { analytics, AnalyticsEvents } from '../services/analytics';
 
 export interface AuthContextType {
   user: User | null;
@@ -132,6 +134,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setUser(combinedUser);
       setLoading(false); // Show app ASAP
+
+      // Identify user in analytics
+      analytics.identify(sbUser.id, {
+        email: combinedUser.email,
+        plan: combinedUser.plan,
+        credits: combinedUser.credits,
+      });
 
       // 2. Auto-create profile in background if missing
       if (!profileData) {
@@ -288,6 +297,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!supabase) throw new Error('Database unavailable');
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
+    analytics.track(AnalyticsEvents.LOGIN);
   };
 
   const signup = async (email: string, pass: string) => {
@@ -298,9 +308,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       options: { data: { name: email.split('@')[0] } }
     });
     if (error) throw error;
+    // Wyślij welcome email + zaplanuj sekwencję onboarding (nie blokuje rejestracji)
+    emailService.triggerWelcome();
+    analytics.track(AnalyticsEvents.SIGNUP, { email });
   };
 
   const logout = async () => {
+    analytics.track(AnalyticsEvents.LOGOUT);
+    analytics.reset();
     setUser(null);
     // Clear persisted Zustand stores
     clearAllPersistedStores();

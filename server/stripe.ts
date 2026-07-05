@@ -109,6 +109,83 @@ export async function createCheckoutSession(
       : {}),
   });
 
+  // Zaloguj rozpoczęty checkout dla abandoned checkout recovery
+  try {
+    await supabase.from('abandoned_checkouts').upsert({
+      user_id: userId,
+      session_id: session.id,
+      plan: mode === 'subscription' ? 'subscription' : 'credit_pack',
+      price_id: priceId,
+      status: 'pending',
+      created_at: new Date().toISOString(),
+    }, { onConflict: 'session_id' });
+  } catch {
+    // tabela może nie istnieć — ignore
+  }
+
+  return session;
+}
+
+/**
+ * Tworzy checkout session z 7-dniowym darmowym trialem.
+ * Po trialu automatycznie pobiera płatność (nie wymaga ponownej akcji).
+ * Wymaga karty na start.
+ */
+export async function createTrialCheckoutSession(
+  userId: string,
+  priceId: string,
+  trialDays: number = 7
+) {
+  const billingUser = await getBillingUser(userId);
+  let customerId = billingUser.stripeCustomerId;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: billingUser.email,
+      metadata: { userId },
+    });
+    customerId = customer.id;
+
+    await supabase
+      .from('profiles')
+      .update({ stripe_customer_id: customerId })
+      .eq('id', userId);
+  }
+
+  // Sprawdź czy użytkownik już miał trial
+  const { data: existingTrial } = await supabase
+    .from('trial_history')
+    .select('id')
+    .eq('user_id', userId)
+    .limit(1);
+
+  if (existingTrial && existingTrial.length > 0) {
+    throw new Error('Trial już był wykorzystany');
+  }
+
+  const trialEnd = Math.floor(Date.now() / 1000) + trialDays * 24 * 60 * 60;
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'subscription',
+    payment_method_types: ['card'],
+    line_items: [{ price: priceId, quantity: 1 }],
+    subscription_data: {
+      trial_end: trialEnd,
+      metadata: { userId, trial: 'true' },
+    },
+    success_url: `${frontendUrl()}/dashboard?checkout=trial&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${frontendUrl()}/pricing?canceled=1`,
+    metadata: { userId, trial: 'true' },
+  });
+
+  // Zapisz że trial został użyty
+  await supabase.from('trial_history').insert({
+    user_id: userId,
+    trial_days: trialDays,
+    stripe_session_id: session.id,
+  });
+
   return session;
 }
 
@@ -412,20 +489,62 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('plan')
+    .select('plan, credits')
     .eq('id', userId)
     .maybeSingle();
 
   if (profile?.plan) {
     const planConfig = PRICING.subscriptions[profile.plan as keyof typeof PRICING.subscriptions];
     if (planConfig) {
+      // Credit Rollover — loss aversion retention tactic
+      // Niewykorzystane kredyty przechodzą na kolejny miesiąc (max 50% limitu planu)
+      const currentCredits = typeof profile.credits === 'number' ? profile.credits : 0;
+      const unusedCredits = Math.max(0, currentCredits);
+      const rolloverCap = Math.floor(planConfig.credits * 0.5);
+      const rollover = Math.min(unusedCredits, rolloverCap);
+      const newCredits = planConfig.credits + rollover;
+
       await supabase
         .from('profiles')
         .update({
-          credits: planConfig.credits,
+          credits: newCredits,
           subscription_status: 'active',
         })
         .eq('id', userId);
+
+      // Zaloguj rollover do tabeli credit_rollover_log
+      if (rollover > 0) {
+        try {
+          await supabase.from('credit_rollover_log').insert({
+            user_id: userId,
+            rolled_over: rollover,
+            previous_balance: currentCredits,
+            new_balance: newCredits,
+            plan: profile.plan,
+          });
+        } catch {
+          // tabela może nie istnieć — ignore
+        }
+      }
+
+      logger.info('[Stripe] Credits renewed with rollover', {
+        userId,
+        plan: profile.plan,
+        baseCredits: planConfig.credits,
+        rollover,
+        total: newCredits,
+      });
+
+      // Oznacz abandoned checkout jako completed
+      try {
+        await supabase
+          .from('abandoned_checkouts')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .eq('status', 'pending');
+      } catch {
+        // silent
+      }
     }
   }
 }

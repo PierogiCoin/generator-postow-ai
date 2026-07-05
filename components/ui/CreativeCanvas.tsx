@@ -183,7 +183,7 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
                                             onClick={() => setBrandAssets(prev => ({ ...prev, logo: { ...prev.logo, visible: !prev.logo.visible } }))}
                                             className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${brandAssets.logo.visible ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/10 opacity-50'}`}
                                         >
-                                            <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" />
+                                            <img src={logoUrl} alt="Logo" className="w-8 h-8 object-contain" loading="lazy" />
                                             <span className="text-[10px] font-black uppercase">Logo</span>
                                         </button>
                                     )}
@@ -192,7 +192,7 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
                                             onClick={() => setBrandAssets(prev => ({ ...prev, mascot: { ...prev.mascot, visible: !prev.mascot.visible } }))}
                                             className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 ${brandAssets.mascot.visible ? 'bg-blue-600/20 border-blue-500' : 'bg-white/5 border-white/10 opacity-50'}`}
                                         >
-                                            <img src={mascotUrl} alt="Maskotka" className="w-8 h-8 object-contain" />
+                                            <img src={mascotUrl} alt="Maskotka" className="w-8 h-8 object-contain" loading="lazy" />
                                             <span className="text-[10px] font-black uppercase">Maskotka</span>
                                         </button>
                                     )}

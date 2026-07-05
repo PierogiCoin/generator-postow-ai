@@ -2,7 +2,7 @@
 
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { I18nextProvider } from 'react-i18next';
 
 // Import our promise and instance, replacing the side-effect import
@@ -29,6 +29,7 @@ const DashboardView = lazyWithRetry(() => import('./components/DashboardView').t
 const AIStrategistView = lazyWithRetry(() => import('./components/AIStrategistView').then(m => ({ default: m.AIStrategistView })));
 const SocialAuthCallback = lazyWithRetry(() => import('./components/SocialAuthCallback').then(m => ({ default: m.SocialAuthCallback })));
 const CompetitorTrackerPanel = lazyWithRetry(() => import('./components/CompetitorTrackerPanel').then(m => ({ default: m.CompetitorTrackerPanel })));
+const NotFoundPage = lazyWithRetry(() => import('./components/NotFoundPage').then(m => ({ default: m.NotFoundPage })));
 
 
 // Import providers
@@ -74,10 +75,10 @@ const router = createBrowserRouter([
       }
     ],
   },
-  // Fallback redirect for any unknown paths
+  // 404 page for unknown routes
   {
     path: '*',
-    element: <Navigate to="/" replace />
+    element: <NotFoundPage />
   }
 ]);
 
@@ -175,3 +176,12 @@ async function startApp() {
 
 // Wywołujemy asynchroniczną funkcję
 startApp();
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // silent — SW is optional
+    });
+  });
+}

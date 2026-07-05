@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 // Importy komponentów i serwisów - EAGER (krytyczne dla pierwszego renderu)
 import { Header } from './components/Header';
@@ -18,8 +18,7 @@ import { ConfirmDialog } from './components/ui/ConfirmDialog';
 import { useConfirm } from './hooks/useConfirm';
 import { getSupabase } from './services/supabaseClient';
 import { MultiPlatformOptimizer, PlatformOptimization } from './components/MultiPlatformOptimizer';
-import { FilmIcon } from './components/icons/FilmIcon';
-import { ModernButton } from './components/ui/ModernButton';
+import { VeoKeyModal } from './components/VeoKeyModal';
 import { socialConnectionsService } from './services/socialConnectionsService';
 import { SocialConnection, SocialPlatform } from './types/socialPublishing';
 import { Chatbot } from './components/Chatbot';
@@ -57,6 +56,11 @@ import {
   redirectToSubscriptionCheckout,
 } from './services/paymentService';
 import { getPlanByUserPlan } from './config/subscriptionPlans';
+import { useCreditGuard } from './components/UpgradePrompt';
+import { ExitIntentPopup } from './components/ExitIntentPopup';
+import { CookieConsent } from './components/CookieConsent';
+import { NotFoundPage } from './components/NotFoundPage';
+import { analytics, AnalyticsEvents } from './services/analytics';
 
 // Loading fallback dla lazy-loaded modali
 const ModalLoadingFallback: React.FC = () => (
@@ -133,6 +137,9 @@ export const App: React.FC = () => {
 
   // Notification System
   const notificationSystem = useNotifications();
+
+  // Smart upgrade prompts — automatyczne powiadomienia o niskich kredytach
+  const creditGuard = useCreditGuard();
 
   // Business Logic Handlers
   const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification, confirm);
@@ -261,6 +268,11 @@ export const App: React.FC = () => {
         lastResult &&
         (lastResult.credits !== initialCredits || lastResult.plan !== initialPlan)
       ) {
+        analytics.track(AnalyticsEvents.CHECKOUT_COMPLETED, {
+          plan: lastResult.plan,
+          credits: lastResult.credits,
+          previousPlan: initialPlan,
+        });
         notificationSystem.addToast(
           `Płatność zakończona! Plan: ${getPlanByUserPlan(lastResult.plan).namePl}, kredyty: ${lastResult.credits.toLocaleString('pl-PL')}.`,
           NotificationType.Success,
@@ -436,6 +448,7 @@ export const App: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <ConfirmDialog {...confirmDialogProps} />
       <AppVersionBanner />
+      {creditGuard.prompt}
       {showOnboarding && (
         <OnboardingWizard onComplete={handleOnboardingComplete} />
       )}
@@ -462,44 +475,23 @@ export const App: React.FC = () => {
         </SectionErrorBoundary>
       </main>
 
+      {isHomePage && <ExitIntentPopup />}
+
+      <CookieConsent />
+
       <Suspense fallback={null}>
         {isCommandPaletteOpen && <CommandPalette onClose={() => setIsCommandPaletteOpen(false)} />}
       </Suspense>
 
       {isVeoKeyModalNeeded && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center z-[100] animate-fade-in">
-          <div className="bg-white/90 dark:bg-slate-900/90 border border-white/20 dark:border-slate-800 rounded-3xl shadow-2xl p-8 w-full max-w-md m-4 glass animate-scale-in relative overflow-hidden">
-            <div className="absolute -top-12 -right-12 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl" />
-
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg">
-                <FilmIcon className="w-6 h-6 text-blue-500" />
-              </div>
-              {t('videoKeyModal.title')}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-4 leading-relaxed">
-              <Trans i18nKey="videoKeyModal.description">
-                Generowanie wideo Veo wymaga wybrania klucza API, dla którego włączono płatności.
-                Więcej informacji znajdziesz w <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-blue-500 font-bold hover:underline">dokumentacji płatności</a>.
-              </Trans>
-            </p>
-            <div className="mt-8 flex justify-end">
-              <ModernButton
-                onClick={async () => {
-                  setIsVeoKeyModalNeeded(false);
-                  if (lastFormData) {
-                    handlers.handleGenerate(lastFormData);
-                  }
-                }}
-                variant="gradient"
-                size="md"
-                className="px-8"
-              >
-                {t('videoKeyModal.button')}
-              </ModernButton>
-            </div>
-          </div>
-        </div>
+        <VeoKeyModal
+          onClose={() => setIsVeoKeyModalNeeded(false)}
+          onRetry={() => {
+            if (lastFormData) {
+              handlers.handleGenerate(lastFormData);
+            }
+          }}
+        />
       )}
 
       {/* Modals - Critical (eager loaded) */}

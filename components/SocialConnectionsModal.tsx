@@ -159,7 +159,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                         <div className="flex items-center gap-2 mt-1">
                           <div className="w-6 h-6 bg-slate-300 dark:bg-slate-600 rounded-full overflow-hidden">
                             {connection.profileImageUrl ? (
-                              <img src={connection.profileImageUrl} alt={`${connection.accountName} profile picture`} className="w-full h-full object-cover" />
+                              <img src={connection.profileImageUrl} alt={`${connection.accountName} profile picture`} className="w-full h-full object-cover" loading="lazy" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-xs">
                                 {connection.accountName[0]}

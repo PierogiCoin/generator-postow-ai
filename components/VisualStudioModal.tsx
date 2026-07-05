@@ -290,7 +290,7 @@ export const VisualStudioModal: React.FC<VisualStudioModalProps> = ({
                 <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-900/50 rounded-lg">
                   {history.map((imgSrc, index) => (
                     <button key={`history-${imgSrc.slice(-20)}`} onClick={() => setHistoryIndex(index)} className={`w-16 h-16 rounded-md overflow-hidden flex-shrink-0 transition-all duration-200 ${historyIndex === index ? 'ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-800' : 'opacity-60 hover:opacity-100'}`}>
-                      <img src={imgSrc} alt={`Wersja ${index + 1}`} className="w-full h-full object-cover" />
+                      <img src={imgSrc} alt={`Wersja ${index + 1}`} className="w-full h-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>

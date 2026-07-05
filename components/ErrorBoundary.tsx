@@ -1,9 +1,6 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { reportError } from '../utils/errorReporting';
-// Placeholder icons since they may not exist
-const ExclamationTriangleIcon = ({ className }: { className?: string }) => <div className={className}>⚠️</div>;
-const ArrowPathIcon = ({ className }: { className?: string }) => <div className={className}>🔄</div>;
-const BugAntIcon = ({ className }: { className?: string }) => <div className={className}>🐛</div>;
+import { AlertTriangle, RefreshCw, Bug } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -78,7 +75,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 text-center">
             <div className="flex justify-center mb-4">
               <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
-                <ExclamationTriangleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
             </div>
             
@@ -117,7 +114,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleReset}
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
               >
-                <ArrowPathIcon className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" />
                 Spróbuj ponownie
               </button>
               
@@ -162,7 +159,7 @@ export const SectionErrorBoundary: React.FC<SectionErrorBoundaryProps> = ({
   const customFallback = fallback || (
     <div className="p-4 border border-red-200 dark:border-red-800 rounded-lg bg-red-50 dark:bg-red-900/20">
       <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-        <ExclamationTriangleIcon className="w-5 h-5" />
+        <AlertTriangle className="w-5 h-5" />
         <span className="font-medium">Sekcja "{sectionName}" jest tymczasowo niedostępna</span>
       </div>
       <p className="text-sm text-red-600 dark:text-red-400 mt-1">
@@ -197,7 +194,7 @@ export const ModalErrorBoundary: React.FC<ModalErrorBoundaryProps> = ({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-sm w-full">
         <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-3">
-          <ExclamationTriangleIcon className="w-6 h-6" />
+          <AlertTriangle className="w-6 h-6" />
           <h3 className="font-semibold">Błąd modalu "{modalName}"</h3>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
@@ -257,7 +254,7 @@ export const AsyncErrorBoundary: React.FC<{
     return (
       <div className="p-4 border border-orange-200 dark:border-orange-800 rounded-lg bg-orange-50 dark:bg-orange-900/20">
         <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
-          <BugAntIcon className="w-5 h-5" />
+          <Bug className="w-5 h-5" />
           <span className="font-medium">Wystąpił błąd asynchroniczny</span>
         </div>
         <p className="text-sm text-orange-600 dark:text-orange-400 mt-1">

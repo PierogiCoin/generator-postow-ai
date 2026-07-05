@@ -330,7 +330,7 @@ const ProfileForm: React.FC<{
                                 <div className="flex items-center gap-4 p-4 bg-white/5 rounded-3xl border border-white/10 group-hover:border-blue-500/50 transition-all">
                                     <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
                                         {formData.settings.logoUrl ? (
-                                            <img src={formData.settings.logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                                            <img src={formData.settings.logoUrl} alt="Logo" className="w-full h-full object-contain" loading="lazy" />
                                         ) : (
                                             <PhotoIcon className="w-8 h-8 text-slate-600" />
                                         )}
@@ -404,7 +404,7 @@ const ProfileForm: React.FC<{
                                 <div className="flex items-center gap-4">
                                     <div className="w-20 h-20 rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
                                         {formData.settings.mascotUrl ? (
-                                            <img src={formData.settings.mascotUrl} alt="Mascot" className="w-full h-full object-contain" />
+                                            <img src={formData.settings.mascotUrl} alt="Mascot" className="w-full h-full object-contain" loading="lazy" />
                                         ) : (
                                             <UserIcon className="w-10 h-10 text-slate-600" />
                                         )}

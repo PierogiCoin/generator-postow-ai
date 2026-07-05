@@ -1,0 +1,13 @@
+# robots.txt — Generator Postów AI
+User-agent: *
+Allow: /
+Allow: /pricing
+Disallow: /dashboard
+Disallow: /generator
+Disallow: /calendar
+Disallow: /analytics
+Disallow: /account
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://generatorpostow.ai/sitemap.xml

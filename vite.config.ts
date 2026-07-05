@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', 'VITE_');
+    const devEnv = loadEnv(mode, '.', '');
+    const devBackendPort = devEnv.VITE_DEV_BACKEND_PORT || devEnv.PORT || '3001';
     const rawApiUrl = env.VITE_API_BASE_URL ?? '';
     // Nigdy nie wbudowuj localhost do bundle produkcyjnego
     const apiBaseUrl =
@@ -26,7 +28,7 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
         proxy: {
           '/api': {
-            target: 'http://localhost:3001',
+            target: `http://localhost:${devBackendPort}`,
             changeOrigin: true,
             secure: false,
             ws: true,

@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express';
 import {
   createCheckoutSession,
+  createTrialCheckoutSession,
   createPortalSession,
   handleStripeWebhook,
   checkCredits,
@@ -8,6 +9,7 @@ import {
   PRICING,
 } from '../stripe.js';
 import { requireSupabaseAuth, SupabaseAuthRequest } from '../middleware/supabaseAuth.js';
+import { supabase } from '../supabase.js';
 import logger from '../logger.js';
 import stripe from '../stripe.js';
 
@@ -60,6 +62,43 @@ router.post(
       res.json({ sessionId: session.id, url: session.url });
     } catch (error: unknown) {
       logger.error('Checkout error:', error);
+      next(error);
+    }
+  }
+);
+
+// ============================================
+// FREE TRIAL CHECKOUT (7 days Pro)
+// ============================================
+
+router.post(
+  '/checkout/trial',
+  requireSupabaseAuth,
+  async (req: SupabaseAuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { plan = 'pro', trialDays = 7 } = req.body as { plan?: string; trialDays?: number };
+      const userId = req.user!.id;
+
+      if (!isPaidPlan(plan)) {
+        return res.status(400).json({ error: 'Nieprawidłowy plan' });
+      }
+
+      const planConfig = PRICING.subscriptions[plan];
+      if (!planConfig?.priceId) {
+        return res.status(503).json({
+          error: 'Ten plan nie jest jeszcze skonfigurowany w Stripe.',
+        });
+      }
+
+      const session = await createTrialCheckoutSession(userId, planConfig.priceId, trialDays);
+
+      res.json({ sessionId: session.id, url: session.url, trialDays });
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : String(error);
+      if (errMsg.includes('Trial już był wykorzystany')) {
+        return res.status(409).json({ error: errMsg });
+      }
+      logger.error('Trial checkout error:', error);
       next(error);
     }
   }
@@ -154,6 +193,39 @@ router.get(
       res.json(stats);
     } catch (error: unknown) {
       logger.error('Usage stats error:', error);
+      next(error);
+    }
+  }
+);
+
+// ============================================
+// CREDIT ROLLOVER HISTORY
+// ============================================
+
+router.get(
+  '/rollover-history',
+  requireSupabaseAuth,
+  async (req: SupabaseAuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user!.id;
+
+      const { data, error } = await supabase
+        .from('credit_rollover_log')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(12);
+
+      if (error) throw error;
+
+      const totalRolledOver = (data || []).reduce((sum, r) => sum + r.rolled_over, 0);
+
+      res.json({
+        history: data || [],
+        totalRolledOver,
+      });
+    } catch (error: unknown) {
+      logger.error('Rollover history error:', error);
       next(error);
     }
   }

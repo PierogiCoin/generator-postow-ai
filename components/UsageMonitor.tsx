@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { PricingModal } from './PricingModal';
+import { CreditBank } from './CreditBank';
 import { getPlanByUserPlan } from '../config/subscriptionPlans';
 import { UserPlan } from '../types';
 
@@ -141,6 +142,8 @@ export function UsageMonitor() {
             </div>
           )}
         </div>
+
+        <CreditBank />
 
         {stats && Object.keys(stats.byAction).length > 0 && (
           <div className="space-y-3">

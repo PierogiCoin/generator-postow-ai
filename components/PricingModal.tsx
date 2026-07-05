@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PostIcon } from './icons/PostIcon';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { VideoCameraIcon } from './icons/VideoCameraIcon';
 import { CampaignIcon } from './icons/CampaignIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { analytics, AnalyticsEvents } from '../services/analytics';
 import {
   isPaidPlan,
   redirectToCreditPackCheckout,
@@ -152,6 +153,15 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isOpen) {
+      analytics.track(AnalyticsEvents.PRICING_MODAL_OPENED, {
+        currentPlan: user?.plan || 'free',
+        isGuest: !user,
+      });
+    }
+  }, [isOpen, user]);
+
   const handleSubscribe = async (newPlan: UserPlan) => {
     setError(null);
 
@@ -243,6 +253,140 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               onSubscribe={handleSubscribe}
             />
           ))}
+        </div>
+
+        {/* Tabela porównawcza */}
+        <div className="mt-12 overflow-x-auto">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-6">Porównanie planów</h3>
+          <table className="w-full text-sm border-collapse min-w-[640px]">
+            <thead>
+              <tr className="border-b-2 border-gray-200 dark:border-gray-700">
+                <th className="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Funkcja</th>
+                {displayPlans.map((plan) => (
+                  <th
+                    key={plan.stripeKey}
+                    className={`text-center py-3 px-4 font-bold ${plan.recommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}
+                  >
+                    {plan.namePl}
+                    {plan.recommended && (
+                      <span className="block text-[10px] font-normal text-blue-500 mt-0.5">Polecany</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Kredyty */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Kredyty / mies.</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4 font-bold text-gray-900 dark:text-white">
+                    {plan.credits.toLocaleString('pl-PL')}
+                  </td>
+                ))}
+              </tr>
+              {/* Posty tekstowe */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Posty tekstowe</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
+                    {plan.usageLimits.text === 999999 ? 'Bez limitu' : `~${plan.usageLimits.text}`}
+                  </td>
+                ))}
+              </tr>
+              {/* Obrazy AI */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Obrazy AI</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
+                    {plan.usageLimits.image === 999999 ? 'Bez limitu' : plan.usageLimits.image}
+                  </td>
+                ))}
+              </tr>
+              {/* Wideo AI */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Wideo AI</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
+                    {plan.usageLimits.video === 0 ? '—' : plan.usageLimits.video === 999999 ? 'Bez limitu' : plan.usageLimits.video}
+                  </td>
+                ))}
+              </tr>
+              {/* Planowanie */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Planowanie i kalendarz</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4">
+                    {plan.flags.scheduling ? (
+                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              {/* Analityka */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Analityka AI</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4">
+                    {plan.flags.analytics ? (
+                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              {/* Strategista */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Strategista AI</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4">
+                    {plan.flags.strategist ? (
+                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              {/* Brand voices */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Profile głosu marki</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
+                    {plan.flags.brandVoices}
+                  </td>
+                ))}
+              </tr>
+              {/* API */}
+              <tr className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Dostęp do API</td>
+                {displayPlans.map((plan) => (
+                  <td key={plan.stripeKey} className="text-center py-3 px-4">
+                    {plan.flags.apiAccess ? (
+                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+                    ) : (
+                      <span className="text-gray-300 dark:text-gray-600">—</span>
+                    )}
+                  </td>
+                ))}
+              </tr>
+              {/* Cena */}
+              <tr>
+                <td className="py-3 px-4 font-bold text-gray-900 dark:text-white">Cena / mies.</td>
+                {displayPlans.map((plan) => {
+                  const price = formatSubscriptionPrice(plan);
+                  return (
+                    <td key={plan.stripeKey} className="text-center py-3 px-4 font-bold text-blue-600 dark:text-blue-400">
+                      {price.primary}
+                    </td>
+                  );
+                })}
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         {/* Enterprise */}

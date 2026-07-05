@@ -13,6 +13,8 @@ import { createVideoRouter } from './routes/video.js';
 import { createMiscRouter } from './routes/misc.js';
 import { createIntelligenceRouter } from './routes/intelligence.js';
 import paymentsRouter, { stripeWebhookHandler } from './routes/payments.js';
+import emailRouter from './routes/email.js';
+import referralRouter from './routes/referral.js';
 
 const NOT_FOUND_ENDPOINTS = [
   'GET /health',
@@ -36,7 +38,21 @@ const NOT_FOUND_ENDPOINTS = [
   'GET /api/rate-limit-status',
   'GET /api/payments/pricing',
   'POST /api/payments/checkout/subscription',
+  'POST /api/payments/checkout/trial',
   'POST /api/payments/portal',
+  'GET /api/payments/rollover-history',
+  'GET /api/email/status',
+  'POST /api/email/welcome',
+  'POST /api/email/low-credits',
+  'POST /api/email/credits-exhausted',
+  'POST /api/email/reengagement',
+  'POST /api/email/upgrade-nudge',
+  'POST /api/email/trial-started',
+  'POST /api/email/unsubscribe',
+  'POST /api/email/abandoned-checkout',
+  'GET /api/email/preferences',
+  'GET /api/referral',
+  'POST /api/referral/apply',
 ];
 
 export function createApp(): express.Application {
@@ -66,6 +82,8 @@ export function createApp(): express.Application {
   app.use(createIntelligenceRouter());
   app.use(createVideoRouter());
   app.use(createMiscRouter());
+  app.use('/api/email', emailRouter);
+  app.use('/api/referral', referralRouter);
 
   app.use(errorHandler);
 

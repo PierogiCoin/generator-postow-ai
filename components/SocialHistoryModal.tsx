@@ -227,6 +227,7 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
                                                 src={thumbnail}
                                                 alt="Post thumbnail"
                                                 className="w-24 h-24 rounded-xl object-cover flex-shrink-0 bg-slate-200"
+                                                loading="lazy"
                                                 onError={(e) => (e.currentTarget.style.display = 'none')}
                                             />
                                         ) : (

@@ -1,6 +1,7 @@
 import { getSupabase } from './supabaseClient';
 import { getApiBaseUrl } from './apiClient';
 import { UserPlan } from '../types';
+import { analytics, AnalyticsEvents } from './analytics';
 
 export const PENDING_CHECKOUT_PLAN_KEY = 'pendingCheckoutPlan';
 
@@ -68,8 +69,14 @@ export async function createSubscriptionCheckout(plan: UserPlan): Promise<string
 }
 
 export async function redirectToSubscriptionCheckout(plan: UserPlan): Promise<void> {
-  const url = await createSubscriptionCheckout(plan);
-  window.location.assign(url);
+  analytics.track(AnalyticsEvents.CHECKOUT_STARTED, { plan, type: 'subscription' });
+  try {
+    const url = await createSubscriptionCheckout(plan);
+    window.location.assign(url);
+  } catch (err) {
+    analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, { plan, type: 'subscription', reason: 'error' });
+    throw err;
+  }
 }
 
 export async function createCreditPackCheckout(packId: string): Promise<string> {
@@ -99,8 +106,52 @@ export async function createCreditPackCheckout(packId: string): Promise<string> 
 }
 
 export async function redirectToCreditPackCheckout(packId: string): Promise<void> {
-  const url = await createCreditPackCheckout(packId);
-  window.location.assign(url);
+  analytics.track(AnalyticsEvents.CHECKOUT_STARTED, { packId, type: 'credit_pack' });
+  try {
+    const url = await createCreditPackCheckout(packId);
+    window.location.assign(url);
+  } catch (err) {
+    analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, { packId, type: 'credit_pack', reason: 'error' });
+    throw err;
+  }
+}
+
+export async function createTrialCheckout(plan: UserPlan, trialDays: number = 7): Promise<string> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${getApiBaseUrl()}/api/payments/checkout/trial`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: 'include',
+    body: JSON.stringify({ plan, trialDays }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Błąd trial checkout (${response.status})`);
+  }
+
+  if (!data.url) {
+    throw new Error('Stripe nie zwrócił adresu płatności.');
+  }
+
+  return data.url as string;
+}
+
+export async function redirectToTrialCheckout(plan: UserPlan, trialDays: number = 7): Promise<void> {
+  analytics.track(AnalyticsEvents.TRIAL_STARTED, { plan, trialDays });
+  analytics.track(AnalyticsEvents.CHECKOUT_STARTED, { plan, type: 'trial', trialDays });
+  try {
+    const url = await createTrialCheckout(plan, trialDays);
+    window.location.assign(url);
+  } catch (err) {
+    analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, { plan, type: 'trial', reason: 'error' });
+    throw err;
+  }
 }
 
 export async function openBillingPortal(): Promise<void> {

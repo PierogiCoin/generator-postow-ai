@@ -616,6 +616,7 @@ export const VideoGenerator: React.FC<VideoGeneratorProps> = ({
                           src={video.thumbnailUrl}
                           alt="Video thumbnail"
                           className="w-full h-full object-cover"
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">

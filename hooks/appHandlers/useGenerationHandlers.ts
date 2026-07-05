@@ -217,6 +217,12 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             return;
         }
 
+        // Debounce — prevent spam-clicking generate while already in progress
+        const { isLoading } = useGenerationStore.getState();
+        if (isLoading) {
+            return;
+        }
+
         const activeBrandVoice = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
 
         if (!canGenerate(formData)) {

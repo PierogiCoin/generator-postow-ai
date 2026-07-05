@@ -33,6 +33,9 @@ import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
 import { socialConnectionsService } from '../services/socialConnectionsService';
 import { useUIStore } from '../stores/uiStore';
+import { OnboardingChecklist } from './OnboardingChecklist';
+import { TrialBanner } from './TrialBanner';
+import { ReferralCard } from './ReferralCard';
 
 // Zustand stores
 import { useDataStore } from '../stores/dataStore';
@@ -360,6 +363,7 @@ export const DashboardView: React.FC = () => {
 
     return (
         <div className="space-y-12 animate-fade-in pb-16">
+            <TrialBanner />
             <header className="relative py-16 px-8 md:px-12 glass-premium rounded-[3rem] overflow-hidden border border-white/10 shadow-3xl">
                 <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-cyan-500/10 via-fuchsia-500/5 to-transparent pointer-events-none" />
                 <div className="absolute -right-40 -top-40 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px]" />
@@ -446,8 +450,10 @@ export const DashboardView: React.FC = () => {
                     <StrategyAssistant />
                 </div>
                 <div className="lg:col-span-1 space-y-8">
+                    <OnboardingChecklist />
                     <LivePulse />
                     <SocialMediaSection />
+                    <ReferralCard />
 
                     <div className="glass-premium p-8 rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden relative group">
                         <div className="absolute -top-12 -right-12 w-24 h-24 bg-fuchsia-500/10 rounded-full blur-[60px]" />

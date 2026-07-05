@@ -262,6 +262,7 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                                             src={post.mediaUrl}
                                             alt="Post media thumbnail"
                                             className="w-20 h-20 rounded-lg object-cover flex-shrink-0 bg-slate-200"
+                                            loading="lazy"
                                         />
                                     ) : (
                                         <div className="w-20 h-20 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
