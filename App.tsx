@@ -468,7 +468,7 @@ export const App: React.FC = () => {
         />}
       />
 
-      <main className={`flex-grow max-w-full ${isHomePage ? 'p-0 pt-20 pb-0' : 'p-4 lg:p-8 pt-24 pb-20 sm:pb-4'}`}>
+      <main className={`flex-grow mx-auto w-full max-w-7xl ${isHomePage ? 'p-0 pb-0' : 'p-4 lg:p-8 pt-20 pb-20 sm:pb-4'}`}>
         {/* Outlet renders HomeView, DashboardView, GeneratorView, etc. */}
         <SectionErrorBoundary sectionName="Main Content">
           <Outlet />

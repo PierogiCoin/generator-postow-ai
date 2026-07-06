@@ -77,7 +77,7 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void, onOpenMoreMenu: () 
                 <div className="relative flex items-center justify-center -mt-10">
                     <button
                         onClick={onOpenCreateMenu}
-                        className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full text-white shadow-[0_0_30px_rgba(168,85,247,0.5)] flex items-center justify-center transform transition-all active:scale-90 hover:scale-110 animate-pulse-glow border-4 border-slate-900 shadow-2xl"
+                        className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full text-white shadow-[0_0_30px_rgba(168,85,247,0.5)] flex items-center justify-center transform transition-all active:scale-90 hover:scale-110 animate-pulse-glow border-4 border-slate-900"
                     >
                         <SparklesIcon className="w-8 h-8" />
                     </button>
@@ -242,7 +242,7 @@ export const Header: React.FC<HeaderProps> = ({
     return (
         <>
             <header className="glass sticky top-0 z-[50] border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.1)] backdrop-blur-xl">
-                <div className="max-w-screen-2xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+                <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-6 lg:gap-8">
                         <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group" aria-label="Strona główna">
                             <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-2.5 shadow-[0_0_30px_rgba(99,102,241,0.4)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden group">
@@ -277,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
                             {mainNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
                                 <NavItem key={id} to={to} title={title || label} disabled={disabled}>
                                     <Icon className="w-5 h-5 opacity-80" />
-                                    <span className="hidden lg:inline text-xs uppercase tracking-tighter">{label}</span>
+                                    <span className="hidden md:inline text-xs uppercase tracking-tighter">{label}</span>
                                 </NavItem>
                             ))}
                             {/* Create Dropdown */}
@@ -287,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     className={`flex items-center justify-center md:justify-start gap-2 px-3 md:px-5 py-2.5 text-xs font-black uppercase tracking-tighter rounded-xl transition-all duration-300 ${isCreateMenuOpen ? 'bg-white/10 text-white shadow-inner' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                                 >
                                     <SparklesIcon className="w-5 h-5 text-indigo-400" />
-                                    <span className="hidden lg:inline">{t('header.nav.create')}</span>
+                                    <span className="hidden md:inline">{t('header.nav.create')}</span>
                                     <ChevronDownIcon className={`w-4 h-4 transition-transform ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isCreateMenuOpen && (

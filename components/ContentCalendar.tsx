@@ -580,7 +580,7 @@ export const ContentCalendar: React.FC = () => {
         <div className="flex items-center justify-between gap-1">
           <span
             className={`font-bold text-xs ${
-              today ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-800 dark:text-slate-350'
+              today ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-800 dark:text-slate-300'
             }`}
           >
             {calendarView === 'week'
@@ -630,7 +630,7 @@ export const ContentCalendar: React.FC = () => {
               >
                 <div className="flex items-center gap-1">
                   <Icon className={`w-3 h-3 flex-shrink-0 ${config.iconColor}`} />
-                  <p className="text-[9px] font-bold truncate text-slate-850 dark:text-white flex-1">
+                  <p className="text-[9px] font-bold truncate text-slate-800 dark:text-white flex-1">
                     {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
                   </p>
                 </div>
@@ -832,7 +832,7 @@ export const ContentCalendar: React.FC = () => {
 
       <div className="overflow-x-auto -mx-2 px-2 pb-2 relative z-10">
         <div className="min-w-0 sm:min-w-[720px] lg:min-w-[900px]">
-          <div className="grid grid-cols-7 gap-2.5 text-center text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-3">
+          <div className="grid grid-cols-7 gap-2.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
             {WEEK_DAYS.map((d) => (
               <div key={d} className="py-2">
                 {d}
@@ -846,7 +846,7 @@ export const ContentCalendar: React.FC = () => {
       </div>
 
       {scheduledPosts.length === 0 && !intelligentCalendarPlan && (
-        <div className="text-center py-12 text-slate-400 dark:text-slate-500 relative z-10 border border-dashed border-slate-250 dark:border-white/5 rounded-3xl mt-6">
+        <div className="text-center py-12 text-slate-400 dark:text-slate-500 relative z-10 border border-dashed border-slate-200 dark:border-white/5 rounded-3xl mt-6">
           <SparklesIcon className="w-12 h-12 mx-auto mb-4 text-cyan-500/60" />
           <h3 className="text-lg font-black text-slate-800 dark:text-gray-200 uppercase tracking-tight">
             {t('calendar.empty.title', 'Kalendarz jest pusty')}

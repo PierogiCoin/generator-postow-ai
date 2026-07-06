@@ -510,10 +510,10 @@ export const InputForm: React.FC<InputFormProps> = ({
                 <div className="flex-grow px-4 h-12 border border-slate-200/50 dark:border-white/5 rounded-2xl bg-white/40 dark:bg-slate-950/20 text-sm text-slate-700 dark:text-slate-300 truncate flex items-center font-medium">
                   {selectedTemplate ? templates.find(t => t.id === selectedTemplate)?.name : t('common.newPost')}
                 </div>
-                <button type="button" onClick={() => setIsTemplateBrowserOpen(true)} className="w-12 h-12 flex items-center justify-center bg-slate-100/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 text-slate-650 dark:text-slate-400" title={t('form.template.browse')}>
+                <button type="button" onClick={() => setIsTemplateBrowserOpen(true)} className="w-12 h-12 flex items-center justify-center bg-slate-100/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 text-slate-600 dark:text-slate-400" title={t('form.template.browse')}>
                   <CollectionIcon className="w-6 h-6" />
                 </button>
-                <button type="button" onClick={() => { setTemplateToEdit(null); setIsSaveModalOpen(true); }} className="w-12 h-12 flex items-center justify-center bg-slate-100/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 text-slate-650 dark:text-slate-400" title={t('form.template.saveNew')}>
+                <button type="button" onClick={() => { setTemplateToEdit(null); setIsSaveModalOpen(true); }} className="w-12 h-12 flex items-center justify-center bg-slate-100/80 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl hover:bg-slate-200 dark:hover:bg-white/10 transition-all active:scale-95 text-slate-600 dark:text-slate-400" title={t('form.template.saveNew')}>
                   <SaveIcon className="w-6 h-6" />
                 </button>
               </div>
@@ -833,7 +833,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                       disabled={isDisabled}
                       className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden ${isSelected ? 'border-cyan-500 bg-slate-900/60 dark:bg-white/5 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan' : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-600 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105'} ${isDisabled ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
                     >
-                      <config.icon className={`w-8 h-8 mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'text-cyan-500' : 'text-slate-450'}`} />
+                      <config.icon className={`w-8 h-8 mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'text-cyan-500' : 'text-slate-400'}`} />
                       <span className={`text-[10px] font-black uppercase tracking-tighter leading-none ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500'}`}>{config.label}</span>
                       {isSelected && <div className="absolute top-1 right-2"><SparklesIcon className="w-3 h-3 text-cyan-500/60" /></div>}
                     </button>

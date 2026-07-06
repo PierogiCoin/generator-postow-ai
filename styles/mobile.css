@@ -12,12 +12,10 @@
 
 /* Touch-friendly targets */
 @media (max-width: 768px) {
-  /* Minimum touch target size: 44x44px */
-  button,
-  a,
-  input[type="checkbox"],
-  input[type="radio"],
-  select {
+  /* Minimum touch target size: 44x44px — only for primary interactive elements */
+  .btn,
+  .button,
+  [role="button"].touch-target {
     min-height: 44px;
     min-width: 44px;
   }
@@ -52,8 +50,8 @@
     padding-right: 16px;
   }
 
-  /* Stack cards on mobile */
-  .grid {
+  /* Stack generic cards on mobile — opt-in via .mobile-stack class */
+  .mobile-stack {
     grid-template-columns: 1fr !important;
     gap: 16px;
   }
@@ -114,8 +112,8 @@
     display: none !important;
   }
 
-  /* 2-column layout on tablet */
-  .grid {
+  /* 2-column layout on tablet — opt-in via .tablet-2col */
+  .tablet-2col {
     grid-template-columns: repeat(2, 1fr);
   }
 }

@@ -43,7 +43,7 @@ export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSele
           >
             {isSelected && <div className="absolute top-0 right-0 w-6 h-6 bg-cyan-500 text-white flex items-center justify-center rounded-bl-lg"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg></div>}
 
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-100 dark:bg-white/5 text-slate-450 dark:text-slate-650 group-hover:text-cyan-500'}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 group-hover:text-cyan-500'}`}>
               <Icon className="w-6 h-6" />
             </div>
 

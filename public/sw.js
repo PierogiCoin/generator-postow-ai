@@ -30,6 +30,10 @@ self.addEventListener('fetch', (event) => {
 
   if (request.method !== 'GET') return;
 
+  const url = new URL(request.url);
+
+  if (url.pathname.startsWith('/api/')) return;
+
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -44,7 +48,6 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Cache-first for same-origin static assets
-  const url = new URL(request.url);
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(request).then((cached) => {

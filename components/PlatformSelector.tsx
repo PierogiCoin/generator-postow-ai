@@ -96,7 +96,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
               {isSelected && <CheckIcon className="w-3.5 h-3.5 text-white stroke-[3]" />}
             </div>
 
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-650 group-hover:text-cyan-500'}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 group-hover:text-cyan-500'}`}>
               <Icon className="w-5 h-5" />
             </div>
 

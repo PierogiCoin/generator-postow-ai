@@ -164,7 +164,7 @@ const StrategyAssistant: React.FC = () => {
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-cyan-500">{idea.type}</span>
                                         </div>
-                                        <h4 className="text-base font-bold text-slate-850 dark:text-white leading-tight">{idea.title}</h4>
+                                        <h4 className="text-base font-bold text-slate-800 dark:text-white leading-tight">{idea.title}</h4>
                                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed italic">"{idea.strategy}"</p>
                                     </div>
                                 </div>
@@ -289,7 +289,7 @@ const SocialMediaSection: React.FC = () => {
                             </div>
                             <button
                                 onClick={() => openHistory(conn)}
-                                className="w-10 h-10 flex items-center justify-center text-slate-450 hover:text-cyan-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition"
+                                className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-cyan-500 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition"
                                 title="Historia"
                             >
                                 <History className="w-5 h-5" />
@@ -364,7 +364,7 @@ export const DashboardView: React.FC = () => {
     return (
         <div className="space-y-12 animate-fade-in pb-16">
             <TrialBanner />
-            <header className="relative py-16 px-8 md:px-12 glass-premium rounded-[3rem] overflow-hidden border border-white/10 shadow-3xl">
+            <header className="relative py-16 px-8 md:px-12 glass-premium rounded-[3rem] overflow-hidden border border-slate-200/50 dark:border-white/10 shadow-2xl">
                 <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-cyan-500/10 via-fuchsia-500/5 to-transparent pointer-events-none" />
                 <div className="absolute -right-40 -top-40 w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[120px]" />
                 <div className="absolute left-1/4 bottom-0 w-80 h-80 bg-fuchsia-500/5 rounded-full blur-[90px]" />
@@ -372,7 +372,7 @@ export const DashboardView: React.FC = () => {
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
                     <div className="space-y-6">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl">
+                            <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 rounded-full text-slate-700 dark:text-white text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl">
                                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping" />
                                 {t('dashboard.systemOnline')}
                             </div>
@@ -381,7 +381,7 @@ export const DashboardView: React.FC = () => {
                                 AI v2.0
                             </div>
                             {streak.currentStreak > 0 && (
-                                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/10 border border-amber-400/20 rounded-full text-amber-300 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
+                                <div className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-amber-500/10 border border-amber-400/20 rounded-full text-amber-600 dark:text-amber-300 text-[9px] font-bold uppercase tracking-wider backdrop-blur-xl" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
                                     🔥 {t('dashboard.streakDays', { count: streak.currentStreak })}
                                 </div>
                             )}
@@ -389,20 +389,20 @@ export const DashboardView: React.FC = () => {
                         <h1 className="text-4xl lg:text-7xl font-black text-slate-900 dark:text-white tracking-tighter leading-none font-sans">
                             {t('dashboard.welcome')}, <span className="text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-purple-500 to-cyan-400 font-extrabold">{user.name.split(' ')[0]}</span>.
                         </h1>
-                        <p className="text-lg text-slate-650 dark:text-slate-300 max-w-2xl leading-relaxed">
+                        <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
                             {t('dashboard.subtitle', { count: stats?.totalGenerations || 0 })}
                         </p>
                         <div className="flex flex-wrap gap-4 pt-2">
                             <button
                                 onClick={() => navigate('/generator')}
-                                className="px-6 py-3.5 bg-gradient-to-r from-fuchsia-500 to-indigo-650 text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:opacity-90 transition-all shadow-lg active:scale-95 flex items-center gap-2.5"
+                                className="px-6 py-3.5 bg-gradient-to-r from-fuchsia-500 to-indigo-600 text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:opacity-90 transition-all shadow-lg active:scale-95 flex items-center gap-2.5"
                             >
                                 <Plus className="w-4 h-4" />
                                 {t('dashboard.newProject')}
                             </button>
                             <button
                                 onClick={() => setIsCommandPaletteOpen(true)}
-                                className="px-6 py-3.5 bg-white/5 border border-white/10 text-slate-800 dark:text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-white/10 transition-all backdrop-blur flex items-center gap-2.5"
+                                className="px-6 py-3.5 bg-slate-900/5 dark:bg-white/5 border border-slate-900/10 dark:border-white/10 text-slate-700 dark:text-white font-bold uppercase tracking-widest text-xs rounded-2xl hover:bg-slate-900/10 dark:hover:bg-white/10 transition-all backdrop-blur flex items-center gap-2.5"
                             >
                                 <Zap className="w-4 h-4 text-amber-400" />
                                 {t('dashboard.quickActions')}
@@ -491,7 +491,7 @@ export const DashboardView: React.FC = () => {
                                                 </div>
                                                 <button
                                                     onClick={() => handlers.handlePublishNow(post.result, post.formData?.platform || 'Facebook')}
-                                                    className="opacity-0 group-hover:opacity-105 w-9 h-9 flex items-center justify-center bg-fuchsia-600 text-white rounded-xl shadow-lg transition-all hover:bg-fuchsia-500"
+                                                    className="opacity-60 sm:opacity-0 sm:group-hover:opacity-100 w-9 h-9 flex items-center justify-center bg-fuchsia-600 text-white rounded-xl shadow-lg transition-all hover:bg-fuchsia-500"
                                                     title="Publikuj teraz"
                                                 >
                                                     <Send className="w-4 h-4" />
@@ -503,10 +503,10 @@ export const DashboardView: React.FC = () => {
                         ) : (
                             <div className="text-center py-10 bg-slate-50/50 dark:bg-slate-950/20 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-white/5">
                                 <div className="w-14 h-14 bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow">
-                                    <ClockIcon className="w-6 h-6 text-slate-300 dark:text-slate-650" />
+                                    <ClockIcon className="w-6 h-6 text-slate-300 dark:text-slate-600" />
                                 </div>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Kolejka jest pusta</p>
-                                <p className="text-[9px] text-slate-350 mt-1 uppercase">Zaplanuj swój pierwszy post</p>
+                                <p className="text-[9px] text-slate-300 mt-1 uppercase">Zaplanuj swój pierwszy post</p>
                             </div>
                         )}
                     </div>

@@ -219,7 +219,7 @@ const HeroSection: React.FC<{ onNavigateToApp: () => void; reducedMotion: boolea
   const { t } = useTranslation();
 
   return (
-    <section className="text-center pt-24 md:pt-36 pb-20 px-4 relative overflow-hidden">
+    <section className="text-center pt-8 md:pt-20 pb-20 px-4 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none z-0">
         <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] bg-fuchsia-500/10 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute top-1/3 right-1/3 w-[350px] h-[350px] bg-indigo-500/10 rounded-full blur-[120px]" />
@@ -303,7 +303,7 @@ const TrustBar: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) => {
 
   return (
     <section className="py-12 border-y border-slate-200/50 dark:border-white/5 bg-slate-50/30 dark:bg-slate-950/20 backdrop-blur-sm">
-      <div className="container mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4">
         <p className="text-center text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           {t('home.trust.title')}
         </p>
@@ -469,7 +469,7 @@ const FeatureHighlight: React.FC<{
           {title}
         </h3>
       </div>
-      <p className="text-slate-600 dark:text-slate-350 text-base md:text-lg leading-relaxed font-normal">
+      <p className="text-slate-600 dark:text-slate-300 text-base md:text-lg leading-relaxed font-normal">
         {description}
       </p>
     </div>
@@ -495,7 +495,7 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section id="testimonials" className="py-20 md:py-28 bg-slate-50/40 dark:bg-slate-900/20 border border-slate-200/50 dark:border-white/5 rounded-3xl p-8 md:p-12 scroll-mt-28">
+    <section id="testimonials" className="py-20 md:py-28 bg-slate-50/40 dark:bg-slate-900/20 border-y border-slate-200/50 dark:border-white/5 scroll-mt-28">
       <SectionHeader
         title="Zaufali nam profesjonaliści"
         subtitle="Zobacz, jak transformacja pracy i inteligentne generowanie przekłada się na realne oszczędności."
@@ -510,7 +510,7 @@ const TestimonialsSection = () => {
                 ))}
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 ml-2">5.0</span>
               </div>
-              <p className="text-slate-700 dark:text-slate-250 italic leading-relaxed text-base">"{t.quote}"</p>
+              <p className="text-slate-700 dark:text-slate-200 italic leading-relaxed text-base">"{t.quote}"</p>
             </div>
             <div className="flex items-center gap-4 mt-8 pt-6 border-t border-slate-200/50 dark:border-white/5">
               <div className="h-12 w-12 rounded-full bg-gradient-to-br from-fuchsia-500 to-indigo-500 flex items-center justify-center text-white font-bold text-base shadow">
