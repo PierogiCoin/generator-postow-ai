@@ -38,3 +38,7 @@ supabase/.temp/
 .devin/
 AGENTS.md
 .devinrules
+
+# Google Cloud Service Account credentials
+gen-lang-client-*.json
+server/gen-lang-client-*.json
