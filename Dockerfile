@@ -1,16 +1,13 @@
 # Multi-stage build for optimal size
 FROM node:18-alpine AS builder
 
-# Install pnpm
-RUN npm install -g pnpm
-
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -28,7 +25,7 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 ENV VITE_GOOGLE_API_KEY=$VITE_GOOGLE_API_KEY
 
 # Build the application
-RUN pnpm run build
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
@@ -36,7 +33,7 @@ FROM nginx:alpine
 # Copy built files from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx config for SPA routing
+# Copy nginx config for SPA routing + API proxy
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
