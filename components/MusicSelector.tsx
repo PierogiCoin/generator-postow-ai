@@ -19,6 +19,10 @@ interface MusicSelectorProps {
   onVolumeChange: (volume: number) => void;
   isMuted: boolean;
   onToggleMute: () => void;
+  fadeIn: boolean;
+  onFadeInChange: (enabled: boolean) => void;
+  fadeOut: boolean;
+  onFadeOutChange: (enabled: boolean) => void;
 }
 
 const MUSIC_LIBRARY: MusicTrack[] = [
@@ -40,9 +44,14 @@ export const MusicSelector: React.FC<MusicSelectorProps> = ({
   volume,
   onVolumeChange,
   isMuted,
-  onToggleMute
+  onToggleMute,
+  fadeIn,
+  onFadeInChange,
+  fadeOut,
+  onFadeOutChange
 }) => {
   const { t } = useTranslation();
+  const [customTracks, setCustomTracks] = useState<MusicTrack[]>([]);
   const [selectedGenre, setSelectedGenre] = useState<string>('all');
   const [isPlaying, setIsPlaying] = useState(false);
   const [previewTrack, setPreviewTrack] = useState<MusicTrack | null>(null);
@@ -50,9 +59,11 @@ export const MusicSelector: React.FC<MusicSelectorProps> = ({
 
   const genres = ['all', 'energetic', 'calm', 'professional', 'fun', 'inspiring'];
 
+  const allTracks = [...customTracks, ...MUSIC_LIBRARY];
+
   const filteredTracks = selectedGenre === 'all' 
-    ? MUSIC_LIBRARY 
-    : MUSIC_LIBRARY.filter(t => t.genre === selectedGenre);
+    ? allTracks 
+    : allTracks.filter(t => t.genre === selectedGenre);
 
   const handlePreview = (track: MusicTrack) => {
     if (previewTrack?.id === track.id && isPlaying) {
@@ -71,6 +82,22 @@ export const MusicSelector: React.FC<MusicSelectorProps> = ({
 
   const handleSelect = (track: MusicTrack) => {
     onSelectTrack(selectedTrack?.id === track.id ? null : track);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const newTrack: MusicTrack = {
+      id: `custom_${Date.now()}`,
+      name: file.name.replace(/\.[^/.]+$/, ""),
+      artist: t('musicSelector.customArtist', 'Własny plik'),
+      duration: 30,
+      genre: 'fun',
+      url: url
+    };
+    setCustomTracks(prev => [newTrack, ...prev]);
+    onSelectTrack(newTrack);
   };
 
   React.useEffect(() => {
@@ -114,21 +141,35 @@ export const MusicSelector: React.FC<MusicSelectorProps> = ({
         </div>
       </div>
 
-      {/* Genre Filter */}
-      <div className="flex gap-2 flex-wrap">
-        {genres.map((genre) => (
-          <button
-            key={genre}
-            onClick={() => setSelectedGenre(genre)}
-            className={`px-3 py-1 text-sm rounded-full transition ${
-              selectedGenre === genre
-                ? 'bg-purple-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-            }`}
-          >
-            {t(`musicSelector.genres.${genre}`, genre.charAt(0).toUpperCase() + genre.slice(1))}
-          </button>
-        ))}
+      {/* Genre Filter & Upload */}
+      <div className="flex gap-2 flex-wrap items-center justify-between">
+        <div className="flex gap-2 flex-wrap">
+          {genres.map((genre) => (
+            <button
+              key={genre}
+              type="button"
+              onClick={() => setSelectedGenre(genre)}
+              className={`px-3 py-1 text-sm rounded-full transition ${
+                selectedGenre === genre
+                  ? 'bg-purple-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+              }`}
+            >
+              {t(`musicSelector.genres.${genre}`, genre.charAt(0).toUpperCase() + genre.slice(1))}
+            </button>
+          ))}
+        </div>
+        
+        {/* Audio Upload */}
+        <label className="cursor-pointer px-3 py-1 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 rounded-full transition font-semibold flex items-center gap-1.5">
+          <span>➕ Upload Audio</span>
+          <input
+            type="file"
+            accept="audio/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+        </label>
       </div>
 
       {/* Track List */}
@@ -195,6 +236,28 @@ export const MusicSelector: React.FC<MusicSelectorProps> = ({
           </div>
         </div>
       )}
+
+      {/* Fade Transitions */}
+      <div className="flex gap-4 p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800">
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={fadeIn}
+            onChange={(e) => onFadeInChange(e.target.checked)}
+            className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+          />
+          <span>Fade-in (stopniowe podgłaśnianie)</span>
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer text-sm text-slate-700 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={fadeOut}
+            onChange={(e) => onFadeOutChange(e.target.checked)}
+            className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+          />
+          <span>Fade-out (stopniowe wyciszanie)</span>
+        </label>
+      </div>
 
       {/* Hidden Audio Element */}
       <audio ref={audioRef} onEnded={() => setIsPlaying(false)} />

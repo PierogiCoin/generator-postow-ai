@@ -36,10 +36,20 @@ export const ModernCard: React.FC<ModernCardProps> = ({
     lg: 'p-8',
   };
   
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+  
   return (
     <div
       onClick={onClick}
+      onKeyDown={onClick ? handleKeyDown : undefined}
       style={style}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={`${baseClasses} ${glassClasses} ${hoverClasses} ${paddingClasses[padding]} ${className}`}
     >
       {children}

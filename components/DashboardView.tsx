@@ -49,11 +49,11 @@ const StatCard: React.FC<{
     glowClass: string,
     iconColor: string
 }> = ({ icon: Icon, label, value, color, trend, glowClass, iconColor }) => (
-    <div className={`p-8 rounded-[2.5rem] border bg-slate-900/40 backdrop-blur-xl border-white/5 flex flex-col gap-6 shadow-2xl relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${glowClass}`}>
-        <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700" />
+    <div className={`p-8 rounded-[2.5rem] border bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200/50 dark:border-white/5 flex flex-col gap-6 shadow-2xl relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${glowClass}`}>
+        <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${color} shadow-lg shadow-black/10 relative z-10 border border-white/10`}>
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${color} shadow-lg shadow-black/5 relative z-10 border border-slate-200/20 dark:border-white/10`}>
             <Icon className={`w-7 h-7 ${iconColor} group-hover:scale-110 transition-transform`} />
         </div>
 
@@ -62,7 +62,7 @@ const StatCard: React.FC<{
             <div className="flex items-center justify-between mt-3">
                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{label}</p>
                 {trend && (
-                    <span className="flex items-center gap-1 text-[10px] font-black text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 rounded-full">
+                    <span className="flex items-center gap-1 text-[10px] font-black text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-white/5 border border-slate-200/50 dark:border-white/5 px-3 py-1 rounded-full">
                         <Zap className="w-3 h-3 fill-current text-amber-500" />
                         {trend}
                     </span>

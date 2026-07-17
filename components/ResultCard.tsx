@@ -67,6 +67,9 @@ import { QualityGatePanel } from './resultCard/QualityGatePanel';
 import { ResultMediaPanel } from './resultCard/ResultMediaPanel';
 import { ContentRepurposingPanel } from './ContentRepurposingPanel';
 import { VisualStudioModal } from './VisualStudioModal';
+import { socialConnectionsService } from '../services/socialConnectionsService';
+import type { SocialConnection } from '../types/socialPublishing';
+import { MobilePreview } from './MobilePreview';
 
 interface ResultCardProps {
     historyResult?: GenerationResult | null;
@@ -129,6 +132,48 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
     useEffect(() => {
         if (result?.id) setActiveTab('content');
     }, [result?.id]);
+
+    const [connections, setConnections] = useState<SocialConnection[]>([]);
+    const [selectedConnectionId, setSelectedConnectionId] = useState<string>('');
+    const [isLoadingConnections, setIsLoadingConnections] = useState(false);
+    const [publishPreviewType, setPublishPreviewType] = useState<'text' | 'social'>('text');
+
+    const loadConnections = useCallback(async () => {
+        if (!user) return;
+        setIsLoadingConnections(true);
+        try {
+            const data = await socialConnectionsService.getConnections(user.id);
+            setConnections(data);
+            if (formData?.platform) {
+                const matched = data.filter(
+                    c => c.platform.toLowerCase() === formData.platform.toLowerCase() && c.isActive
+                );
+                if (matched.length > 0) {
+                    setSelectedConnectionId(matched[0].id);
+                }
+            }
+        } catch (error) {
+            // silent fail
+        } finally {
+            setIsLoadingConnections(false);
+        }
+    }, [user, formData?.platform]);
+
+    useEffect(() => {
+        if (activeTab === 'publish' && user) {
+            loadConnections();
+        }
+    }, [activeTab, user, loadConnections]);
+
+    const handleConnectSocial = async (platform: string) => {
+        try {
+            if (!user) throw new Error('Zaloguj się, aby połączyć konto');
+            const authUrl = await socialConnectionsService.getAuthUrl(platform as any, user.id);
+            window.location.href = authUrl;
+        } catch (error: any) {
+            notificationSystem.addToast(error.message || 'Błąd połączenia', NotificationType.Error);
+        }
+    };
 
     const activeProfile = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
 
@@ -488,13 +533,49 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                     </div>
                                 )}
 
-                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl">
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                                        {t('resultCard.publish.captionPreview', 'Podgląd publikacji')}
-                                    </p>
-                                    <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-                                        {publishCaptionPreview}
-                                    </p>
+                                <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            {t('resultCard.publish.captionPreview', 'Podgląd publikacji')}
+                                        </p>
+                                        <div className="flex bg-slate-200 dark:bg-slate-850 p-0.5 rounded-lg border border-slate-300 dark:border-slate-700">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPublishPreviewType('text')}
+                                                className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md transition-all ${
+                                                    publishPreviewType === 'text'
+                                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                                }`}
+                                            >
+                                                Tekst
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPublishPreviewType('social')}
+                                                className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md transition-all ${
+                                                    publishPreviewType === 'social'
+                                                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                                                }`}
+                                            >
+                                                Social Feed
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {publishPreviewType === 'text' ? (
+                                        <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                                            {publishCaptionPreview}
+                                        </p>
+                                    ) : (
+                                        <div className="pt-2">
+                                            <MobilePreview
+                                                content={result.postText}
+                                                hashtags={result.hashtags}
+                                                platform={(formData?.platform?.toLowerCase() || 'linkedin') as any}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {result.suggestedPostingTime && (
@@ -514,6 +595,90 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                     </div>
                                 )}
 
+                                {formData && (
+                                    <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                Konto publikacji ({formData.platform})
+                                            </p>
+                                            {connections.filter(c => c.platform.toLowerCase() === formData.platform.toLowerCase() && c.isActive).length > 0 && (
+                                                <button
+                                                    onClick={() => loadConnections()}
+                                                    className="text-[10px] font-bold text-blue-500 hover:underline uppercase tracking-wider"
+                                                >
+                                                    Odśwież
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {isLoadingConnections ? (
+                                            <div className="flex items-center gap-2 py-2">
+                                                <Spinner className="w-4 h-4 text-blue-500" />
+                                                <span className="text-xs text-slate-400">Wyszukiwanie połączeń...</span>
+                                            </div>
+                                        ) : (() => {
+                                            const platformConnections = connections.filter(
+                                                c => c.platform.toLowerCase() === formData.platform.toLowerCase() && c.isActive
+                                            );
+
+                                            if (platformConnections.length === 0) {
+                                                return (
+                                                    <div className="flex flex-col items-center gap-3 text-center py-2">
+                                                        <p className="text-xs text-slate-500">
+                                                            Brak połączonego konta dla platformy {formData.platform}.
+                                                        </p>
+                                                        <ModernButton
+                                                            onClick={() => handleConnectSocial(formData.platform.toLowerCase())}
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            className="text-xs py-1.5 px-3"
+                                                        >
+                                                            Połącz konto {formData.platform}
+                                                        </ModernButton>
+                                                    </div>
+                                                );
+                                            }
+
+                                            if (platformConnections.length > 1) {
+                                                return (
+                                                    <select
+                                                        value={selectedConnectionId}
+                                                        onChange={(e) => setSelectedConnectionId(e.target.value)}
+                                                        className="w-full text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-white"
+                                                    >
+                                                        {platformConnections.map(c => (
+                                                            <option key={c.id} value={c.id}>
+                                                                {c.accountName}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                );
+                                            }
+
+                                            const conn = platformConnections[0];
+                                            return (
+                                                <div className="flex items-center gap-3 bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
+                                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300">
+                                                        {conn.profileImageUrl ? (
+                                                            <img src={conn.profileImageUrl} alt="Avatar" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            conn.accountName?.[0] || '?'
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
+                                                            {conn.accountName}
+                                                        </p>
+                                                        <p className="text-[9px] text-green-500 font-bold uppercase tracking-wider">
+                                                            Połączono
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <ModernButton
                                         onClick={() => formData && appHandlers.handleOpenScheduleModal(result, formData)}
@@ -524,11 +689,12 @@ const [suggestedLayouts, setSuggestedLayouts] = useState<SuggestedLayout[]>([]);
                                         {t('resultCard.actions.schedule', 'Zaplanuj')}
                                     </ModernButton>
                                     <ModernButton
-                                        onClick={() => formData && appHandlers.handlePublishNow(result, formData.platform)}
+                                        onClick={() => formData && appHandlers.handlePublishNow(result, formData.platform, selectedConnectionId || undefined)}
                                         variant="primary"
                                         fullWidth
+                                        disabled={connections.filter(c => c.platform.toLowerCase() === formData?.platform?.toLowerCase() && c.isActive).length === 0}
                                         icon={<RocketLaunchIcon className="w-4 h-4" />}
-                                        className="bg-blue-600 hover:bg-blue-700"
+                                        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                                     >
                                         {t('resultCard.publish.publishNow', 'Publikuj teraz')}
                                     </ModernButton>

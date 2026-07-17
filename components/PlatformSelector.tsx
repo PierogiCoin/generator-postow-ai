@@ -52,7 +52,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
               key={platform}
               type="button"
               onClick={() => handleSelect(platform)}
-              className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden ${isSelected
+              className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${isSelected
                   ? `bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan`
                   : `border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105`
                 }`}
@@ -89,7 +89,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
             key={platform}
             type="button"
             onClick={() => handleSelect(platform)}
-            className={`group flex items-center gap-4 p-4 border rounded-2xl cursor-pointer transition-all duration-300 text-left ${isSelected ? 'bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/5 neon-glow-cyan' : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:border-cyan-500/35 hover:scale-[1.01]'}`}
+            className={`group flex items-center gap-4 p-4 border rounded-2xl cursor-pointer transition-all duration-300 text-left focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${isSelected ? 'bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/5 neon-glow-cyan' : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:border-cyan-500/35 hover:scale-[1.01]'}`}
             aria-pressed={isSelected}
           >
             <div className={`w-6 h-6 flex items-center justify-center rounded-lg border transition-all duration-300 ${isSelected ? 'bg-cyan-500 border-cyan-500 shadow-md scale-110' : 'border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5'}`}>

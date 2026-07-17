@@ -79,11 +79,18 @@ export const generateVideoStory = async (
   style: VideoStoryStyle,
   userId?: string,
   provider: VideoStoryProvider = 'auto',
-  onProgress?: (status: VideoStoryProgressStatus) => void
+  onProgress?: (status: VideoStoryProgressStatus) => void,
+  audioConfig?: {
+    trackId: string;
+    trackUrl: string;
+    volume: number;
+    fadeIn: boolean;
+    fadeOut: boolean;
+  }
 ): Promise<VideoStoryResponse> => {
   const aspectRatio = getVideoStoryAspectRatio(style);
   const startedAt = Date.now();
-  const request: VideoStoryRequest = {
+  const request = {
     postText: post.postText,
     platform: post.platform,
     style,
@@ -93,6 +100,7 @@ export const generateVideoStory = async (
     async: true,
     hashtags: post.hashtags,
     tone: post.metadata.tone,
+    audioConfig,
   };
 
   onProgress?.({

@@ -4,13 +4,24 @@ import { useTranslation } from 'react-i18next';
 import type { GenerationResult } from '../types';
 import type { VideoStoryProgressStatus } from '../services/videoStoryService';
 import { VideoStoryProgress } from './VideoStoryProgress';
+import { MusicSelector, MusicTrack } from './MusicSelector';
 
 interface VideoStoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onApplyToPost?: () => void;
   post: GenerationResult | null;
-  onGenerate: (style: VideoStoryStyle, provider: VideoStoryProvider) => Promise<void>;
+  onGenerate: (
+    style: VideoStoryStyle,
+    provider: VideoStoryProvider,
+    audioConfig?: {
+      trackId: string;
+      trackUrl: string;
+      volume: number;
+      fadeIn: boolean;
+      fadeOut: boolean;
+    }
+  ) => Promise<void>;
   isGenerating: boolean;
   progressStatus?: VideoStoryProgressStatus | null;
   generatedVideo?: {
@@ -51,6 +62,11 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
   const { t } = useTranslation();
   const [selectedStyle, setSelectedStyle] = useState<VideoStoryStyle>('instagram-story');
   const [selectedProvider, setSelectedProvider] = useState<VideoStoryProvider>('veo');
+  const [selectedTrack, setSelectedTrack] = useState<MusicTrack | null>(null);
+  const [volume, setVolume] = useState<number>(50);
+  const [isMuted, setIsMuted] = useState<boolean>(false);
+  const [fadeIn, setFadeIn] = useState<boolean>(true);
+  const [fadeOut, setFadeOut] = useState<boolean>(true);
 
   const providerOptions: { id: VideoStoryProvider; name: string; description: string; icon: string }[] = [
     {
@@ -119,7 +135,14 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
   if (!isOpen) return null;
 
   const handleGenerate = async () => {
-    await onGenerate(selectedStyle, selectedProvider);
+    const audioConfig = selectedTrack ? {
+      trackId: selectedTrack.id,
+      trackUrl: selectedTrack.url,
+      volume,
+      fadeIn,
+      fadeOut
+    } : undefined;
+    await onGenerate(selectedStyle, selectedProvider, audioConfig);
   };
 
   const selectedOption = styleOptions.find(opt => opt.id === selectedStyle);
@@ -216,6 +239,22 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
                     </div>
                   </button>
                 ))}
+              </div>
+
+              {/* Music selection */}
+              <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <MusicSelector
+                  selectedTrack={selectedTrack}
+                  onSelectTrack={setSelectedTrack}
+                  volume={volume}
+                  onVolumeChange={setVolume}
+                  isMuted={isMuted}
+                  onToggleMute={() => setIsMuted(!isMuted)}
+                  fadeIn={fadeIn}
+                  onFadeInChange={setFadeIn}
+                  fadeOut={fadeOut}
+                  onFadeOutChange={setFadeOut}
+                />
               </div>
             </div>
 

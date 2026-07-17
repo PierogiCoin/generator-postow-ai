@@ -13,6 +13,7 @@ type UIState = {
   isCommandPaletteOpen: boolean;
   isPublishingModalOpen: boolean;
   publishingPlatform: string;
+  publishingStatus: 'idle' | 'publishing' | 'success' | 'error';
 
   setIsPricingModalOpen: (isOpen: boolean) => void;
   setAuthModal: (modal: 'login' | 'signup' | null) => void;
@@ -22,6 +23,7 @@ type UIState = {
   setIsCommandPaletteOpen: (isOpen: boolean) => void;
   setIsSocialConnectionsModalOpen: (isOpen: boolean) => void;
   setIsPublishingModalOpen: (isOpen: boolean, platform?: string) => void;
+  setPublishingStatus: (status: 'idle' | 'publishing' | 'success' | 'error') => void;
   setVideoStoryModal: (isOpen: boolean, post?: GenerationResult | null) => void;
 };
 
@@ -36,6 +38,7 @@ export const useUIStore = create<UIState>((set) => ({
   isSocialConnectionsModalOpen: false,
   isPublishingModalOpen: false,
   publishingPlatform: '',
+  publishingStatus: 'idle',
   videoStoryPost: null,
 
   setIsPricingModalOpen: (isOpen) => set({ isPricingModalOpen: isOpen }),
@@ -46,5 +49,6 @@ export const useUIStore = create<UIState>((set) => ({
   setIsCommandPaletteOpen: (isOpen) => set({ isCommandPaletteOpen: isOpen }),
   setIsSocialConnectionsModalOpen: (isOpen) => set({ isSocialConnectionsModalOpen: isOpen }),
   setIsPublishingModalOpen: (isOpen, platform = '') => set({ isPublishingModalOpen: isOpen, publishingPlatform: platform }),
+  setPublishingStatus: (status) => set({ publishingStatus: status }),
   setVideoStoryModal: (isOpen, post = null) => set({ isVideoStoryModalOpen: isOpen, videoStoryPost: post }),
 }));

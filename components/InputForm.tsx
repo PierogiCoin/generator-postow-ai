@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useAutoSave, AutoSaveIndicator } from './AutoSaveIndicator';
 import { TONES, CONTENT_TYPES, VISUAL_STYLES, AI_MODELS, GENERATION_TYPES } from '../constants';
 import type { FormData, CustomTemplate, CampaignHistoryItem, FavoritePost, AudiencePersona } from '../types';
 import { Tone, Platform, ContentType, VisualStyle, GenerationType, AIModel, UserPlan, CopywritingFramework, GenerationMode } from '../types';
@@ -135,6 +136,55 @@ export const InputForm: React.FC<InputFormProps> = ({
     Boolean(user?.id && isOnboardingPendingFirstGenerate(user.id))
   );
 
+  const [hasStoredDraft, setHasStoredDraft] = useState(false);
+  const [storedDraft, setStoredDraft] = useState<FormData | null>(null);
+
+  // Check for stored draft on mount
+  useEffect(() => {
+    const key = `generator_post_draft_${user?.id || 'guest'}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.topic && parsed.topic.trim().length > 0) {
+          setStoredDraft(parsed);
+          // Only show banner if current form topic is empty
+          if (!formData.topic.trim()) {
+            setHasStoredDraft(true);
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [user?.id]);
+
+  const handleRestoreDraft = () => {
+    if (storedDraft) {
+      setFormData(storedDraft);
+      setHasStoredDraft(false);
+      addToast('Przywrócono poprzednią sesję!', NotificationType.Success);
+    }
+  };
+
+  const handleDiscardStoredDraft = () => {
+    const key = `generator_post_draft_${user?.id || 'guest'}`;
+    localStorage.removeItem(key);
+    setHasStoredDraft(false);
+  };
+
+  const saveDraftLocally = useCallback(async (data: FormData) => {
+    if (!data.topic || !data.topic.trim()) return;
+    const key = `generator_post_draft_${user?.id || 'guest'}`;
+    localStorage.setItem(key, JSON.stringify(data));
+  }, [user?.id]);
+
+  const { status: autoSaveStatus, lastSaved } = useAutoSave(
+    formData,
+    saveDraftLocally,
+    15000 // auto-save every 15 seconds
+  );
+
   const topicDebounceTimeout = React.useRef<number | null>(null);
   const duplicateTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const draftSavedTimeout = React.useRef<number | null>(null);
@@ -253,6 +303,8 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const key = `generator_post_draft_${user?.id || 'guest'}`;
+    localStorage.removeItem(key);
     if (inspiration && 'result' in inspiration) {
       const ins = inspiration as CampaignHistoryItem | FavoritePost;
       handlers.handleGenerate({
@@ -267,6 +319,8 @@ export const InputForm: React.FC<InputFormProps> = ({
 
   const handleSaveDraft = () => {
     handlers.handleSaveDraft(formData);
+    const key = `generator_post_draft_${user?.id || 'guest'}`;
+    localStorage.removeItem(key);
     setFormData(DEFAULT_FORM_DATA);
     setIsDraftSaved(true);
     if (draftSavedTimeout.current) clearTimeout(draftSavedTimeout.current);
@@ -462,6 +516,29 @@ export const InputForm: React.FC<InputFormProps> = ({
       <ModernCard className="p-4 sm:p-6 lg:p-8 glass-premium rounded-2xl sm:rounded-[2rem] lg:rounded-[2.5rem] border border-white/10">
         {showFirstPostBanner && (
           <OnboardingFirstPostBanner onDismiss={() => setShowFirstPostBanner(false)} />
+        )}
+        {hasStoredDraft && (
+          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-fade-in">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">💾</span>
+              <div>
+                <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {t('sessionRecovery.title', 'Znaleziono niezapisany szkic')}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {t('sessionRecovery.description', 'Czy chcesz przywrócić ostatnio edytowaną sesję?')}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <ModernButton onClick={handleRestoreDraft} variant="primary" size="sm" className="py-1.5 px-3 text-xs bg-amber-500 hover:bg-amber-600">
+                {t('sessionRecovery.restore', 'Przywróć')}
+              </ModernButton>
+              <ModernButton onClick={handleDiscardStoredDraft} variant="secondary" size="sm" className="py-1.5 px-3 text-xs">
+                {t('sessionRecovery.discard', 'Ignoruj')}
+              </ModernButton>
+            </div>
+          </div>
         )}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <InputFormModeToggle mode={formMode} onChange={handleModeChange} />
@@ -843,6 +920,12 @@ export const InputForm: React.FC<InputFormProps> = ({
             </div>
 
             {autoPublishSection}
+
+            {formData?.topic?.trim() && (
+              <div className="flex justify-end pt-2">
+                <AutoSaveIndicator status={autoSaveStatus} lastSaved={lastSaved} />
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-6 pt-6">
               <ModernButton

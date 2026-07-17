@@ -36,7 +36,7 @@ export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSele
             type="button"
             onClick={() => onSelect(tone)}
             disabled={disabled}
-            className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden ${isSelected
+            className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${isSelected
                 ? 'border-cyan-500 bg-slate-900/60 dark:bg-white/5 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan'
                 : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105'
               }`}

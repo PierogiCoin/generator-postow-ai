@@ -344,6 +344,31 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
   const EditableElement = inline ? 'span' : 'div';
   const WrapperElement = inline ? 'span' : 'div';
 
+  const cleanText = value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+  const charCount = cleanText.length;
+
+  const getPlatformLimit = (platform?: string): number | null => {
+    if (!platform) return null;
+    switch (platform.toLowerCase()) {
+      case 'x':
+      case 'twitter':
+        return 280;
+      case 'linkedin':
+        return 3000;
+      case 'instagram':
+        return 2200;
+      case 'tiktok':
+        return 2200;
+      case 'youtube':
+        return 5000;
+      default:
+        return null;
+    }
+  };
+
+  const limit = getPlatformLimit(formData?.platform);
+  const isOverLimit = limit !== null && charCount > limit;
+
   const editableContent = streaming ? (
     <StreamingText
       text={value.replace(/<[^>]*>/g, '')} // Remove HTML tags for streaming display
@@ -357,7 +382,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
       suppressContentEditableWarning
       onInput={handleEditorChange}
       onKeyDown={handleKeyDown}
-      className={`focus:outline-none intesanitizeRichText(racti)ve-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
+      className={`focus:outline-none interactive-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
       dangerouslySetInnerHTML={{ __html: value }}
     />
   );
@@ -439,7 +464,14 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
         `}</style>
 
       {lite ? (
-        editableContent
+        <div className="relative pb-6">
+          {editableContent}
+          {!inline && (
+            <div className={`absolute bottom-0 right-0 text-[10px] font-bold transition-colors ${isOverLimit ? 'text-red-500 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'}`}>
+              {charCount}{limit !== null ? ` / ${limit}` : ''} zn.
+            </div>
+          )}
+        </div>
       ) : (
         <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-shadow">
           <div className="p-2 border-b border-gray-200 dark:border-gray-700 flex items-center gap-1 flex-wrap">
@@ -479,8 +511,11 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
               <CodeIcon className="w-5 h-5" />
             </ToolbarButton>
           </div>
-          <div className="p-3 min-h-[8rem]">
+          <div className="p-3 min-h-[8rem] relative pb-8">
             {editableContent}
+            <div className={`absolute bottom-2 right-2 text-xs font-semibold transition-colors ${isOverLimit ? 'text-red-500 dark:text-red-400 font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
+              {charCount}{limit !== null ? ` / ${limit}` : ''} znaków
+            </div>
           </div>
         </div>
       )}

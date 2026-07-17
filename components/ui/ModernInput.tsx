@@ -61,11 +61,13 @@ export const ModernInput: React.FC<ModernInputProps> = ({
           onChange={onChange}
           disabled={disabled}
           required={required}
+          aria-invalid={!!error}
+          aria-describedby={error && id ? `${id}-error` : undefined}
           className={`${baseClasses} ${errorClasses} ${icon ? 'pl-10' : ''} ${widthClass} ${className}`}
         />
       </div>
       {error && (
-        <p className="mt-1.5 text-sm text-red-500 dark:text-red-400">{error}</p>
+        <p id={id ? `${id}-error` : undefined} className="mt-1.5 text-sm text-red-500 dark:text-red-400">{error}</p>
       )}
     </div>
   );

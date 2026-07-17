@@ -313,7 +313,17 @@ export const App: React.FC = () => {
     handlers.handleOpenRepurposeModal();
   }
 
-  const handleGenerateVideoStory = async (style: VideoStoryStyle, provider: VideoStoryProvider = 'auto') => {
+  const handleGenerateVideoStory = async (
+    style: VideoStoryStyle,
+    provider: VideoStoryProvider = 'auto',
+    audioConfig?: {
+      trackId: string;
+      trackUrl: string;
+      volume: number;
+      fadeIn: boolean;
+      fadeOut: boolean;
+    }
+  ) => {
     if (!videoStoryPost || !user) return;
 
     const { startVideoStoryGeneration, setVideoStoryProgress, videoStorySuccess, videoStoryFailure } = useGenerationStore.getState();
@@ -326,7 +336,8 @@ export const App: React.FC = () => {
         style,
         user.id,
         provider,
-        (status) => setVideoStoryProgress(status)
+        (status) => setVideoStoryProgress(status),
+        audioConfig
       );
       setGeneratedVideo(videoData);
       videoStorySuccess();

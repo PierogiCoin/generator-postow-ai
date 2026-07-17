@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Loader2, Rocket, Share2, ShieldCheck, Globe, X } from 'lucide-react';
 import { ModernButton } from './ui/ModernButton';
+import { useUIStore } from '../stores/uiStore';
 
 interface PublishingProgressModalProps {
     isOpen: boolean;
@@ -18,22 +19,36 @@ const STEPS = [
 export const PublishingProgressModal: React.FC<PublishingProgressModalProps> = ({ isOpen, onClose, platform }) => {
     const [currentStep, setCurrentStep] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
+    const publishingStatus = useUIStore(state => state.publishingStatus);
 
     useEffect(() => {
-        if (isOpen && !isComplete) {
+        if (isOpen) {
+            if (publishingStatus === 'success') {
+                setCurrentStep(STEPS.length - 1);
+                setIsComplete(true);
+                return;
+            }
+            if (publishingStatus === 'error') {
+                setIsComplete(false);
+                setCurrentStep(0);
+                return;
+            }
+
+            setCurrentStep(0);
+            setIsComplete(false);
+
             const timer = setInterval(() => {
                 setCurrentStep(prev => {
-                    if (prev >= STEPS.length - 1) {
+                    if (prev >= STEPS.length - 2) {
                         clearInterval(timer);
-                        setIsComplete(true);
                         return prev;
                     }
                     return prev + 1;
                 });
-            }, 1500);
+            }, 800);
             return () => clearInterval(timer);
         }
-    }, [isOpen, isComplete]);
+    }, [isOpen, publishingStatus]);
 
     if (!isOpen) return null;
 

@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGenerationStore } from '../stores/generationStore';
+import { useDataStore } from '../stores/dataStore';
+import { useNotifications } from '../hooks/useNotifications';
+import { NotificationType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { generateContent } from '../services/geminiService';
 import { getAppLanguageCode } from '../utils/aiLanguage';
@@ -39,6 +42,16 @@ export const Chatbot: React.FC = () => {
     
     If the user asks for improvements, focus on hooks, CTA, readability, and engagement.
     If you suggest an updated version of the post, wrap the new content in [UPDATE] tags.
+
+    If the user asks to generate a content calendar or weekly plan, wrap the final list of plan items in [CALENDAR] tags.
+    Inside the [CALENDAR] tags, write ONLY a valid JSON array of objects (do not wrap it in markdown code blocks like \`\`\`json ... \`\`\` inside the [CALENDAR] tag).
+    Each object must have the following keys:
+    - id: string (unique string, e.g. "plan_1", "plan_2")
+    - date: string (format YYYY-MM-DD starting from today or next Monday)
+    - platform: string (one of: "Facebook", "LinkedIn", "Instagram", "Twitter")
+    - topic: string (engaging, creative topic description)
+    - format: string (one of: "PostWithImage", "Video", "Idea")
+    - strategy: string (brief reason why this topic fits the day/audience)
     
     Always be supportive, creative, and professional.
     
@@ -117,8 +130,8 @@ export const Chatbot: React.FC = () => {
   const quickActions = [
     { label: '🔥 Wzmocnij hook', prompt: 'Popraw początek (hook) tego posta, aby był bardziej wciągający. Zacznij od razu od poprawionej wersji w tagach [UPDATE].' },
     { label: '✨ Dodaj emoji', prompt: 'Dodaj odpowiednie emoji do tego posta, zachowując profesjonalizm. Zacznij od razu od poprawionej wersji w tagach [UPDATE].' },
-    { label: '✂️ Skróć tekst', prompt: 'Skróć ten tekst, zachowując najważniejsze informacje. Zacznij od razu od poprawionej wersji w tagach [UPDATE].' },
-    { label: '🚀 Dodaj CTA', prompt: 'Dodaj na końcu silne wezwanie do działania (CTA). Zacznij od razu od poprawionej wersji w tagach [UPDATE].' },
+    { label: '📅 Kalendarz 7 dni', prompt: 'Wygeneruj kompletny kalendarz publikacji na kolejne 7 dni oparty na aktualnym temacie/niszy. Przedstaw go w tagach [CALENDAR] w formacie JSON zawierającym tablicę obiektów z polami id, date, platform, topic, format, strategy.' },
+    { label: '🔍 Wyszukaj trendy', prompt: 'Wyszukaj aktualne i wschodzące trendy rynkowe (content gaps/news) powiązane z tematem mojego posta i zaproponuj 3 kreatywne pomysły na treści na ich podstawie.' },
   ];
 
   const applyUpdate = (text: string) => {
@@ -126,6 +139,51 @@ export const Chatbot: React.FC = () => {
     if (match && match[1]) {
       updateResultText(match[1].trim());
       setMessages(prev => [...prev, { role: 'model', text: '✅ Tekst został zaktualizowany w edytorze!' }]);
+    }
+  };
+
+  const applyCalendar = async (text: string) => {
+    try {
+      const match = text.match(/\[CALENDAR\]\n?([\s\S]*)/);
+      if (match && match[1]) {
+        let jsonStr = match[1].trim();
+        if (jsonStr.startsWith('```json')) {
+          jsonStr = jsonStr.substring(7);
+        }
+        if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.substring(3);
+        }
+        if (jsonStr.endsWith('```')) {
+          jsonStr = jsonStr.substring(0, jsonStr.length - 3);
+        }
+        jsonStr = jsonStr.trim();
+        
+        const parsed = JSON.parse(jsonStr);
+        if (Array.isArray(parsed)) {
+          const { setIntelligentCalendarPlan, intelligentCalendarPlan } = useDataStore.getState();
+          const { mergeCalendarPlans } = await import('../services/calendarCadenceService');
+          
+          const formattedItems = parsed.map((item: any, idx: number) => {
+            const nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + idx);
+            const dateStr = nextDate.toISOString().split('T')[0];
+
+            return {
+              id: item.id || `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              date: item.date || dateStr,
+              platform: item.platform || 'Facebook',
+              topic: item.topic || 'Temat posta',
+              format: item.format || 'PostWithImage',
+              strategy: item.strategy || '',
+            };
+          });
+          
+          await setIntelligentCalendarPlan(mergeCalendarPlans(intelligentCalendarPlan, formattedItems));
+          setMessages(prev => [...prev, { role: 'model', text: '✅ Kalendarz treści został zaktualizowany! Przejdź do widoku kalendarza, aby go zobaczyć.' }]);
+        }
+      }
+    } catch (e) {
+      setMessages(prev => [...prev, { role: 'model', text: '❌ Nie udało się przetworzyć kalendarza. Upewnij się, że AI zwróciło poprawną strukturę JSON.' }]);
     }
   };
 
@@ -170,10 +228,20 @@ export const Chatbot: React.FC = () => {
                     <p className="text-xs sm:text-xs leading-relaxed whitespace-pre-wrap transition-colors duration-300 font-medium group-hover:text-white group-hover:drop-shadow-sm">{msg.text}</p>
                     {msg.text.includes('[UPDATE]') && (
                       <button 
+                        type="button"
                         onClick={() => applyUpdate(msg.text)}
                         className="mt-3 w-full py-2.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-[10px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation min-h-[44px] hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/25"
                       >
                         <RocketLaunchIcon className="w-3 h-3 sm:w-3 sm:h-3 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" /> Zastosuj w edytorze
+                      </button>
+                    )}
+                    {msg.text.includes('[CALENDAR]') && (
+                      <button 
+                        type="button"
+                        onClick={() => applyCalendar(msg.text)}
+                        className="mt-3 w-full py-2.5 sm:py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white text-[10px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation min-h-[44px] hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"
+                      >
+                        <RocketLaunchIcon className="w-3 h-3 sm:w-3 sm:h-3 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" /> Zastosuj w kalendarzu
                       </button>
                     )}
                   </div>

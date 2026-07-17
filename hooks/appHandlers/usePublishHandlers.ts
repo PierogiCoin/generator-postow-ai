@@ -16,11 +16,12 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
     const { user } = useAuth();
     const uiActions = useUIStore.getState();
 
-    const handlePublishNow = useCallback(async (result: GenerationResult, platform: string) => {
+    const handlePublishNow = useCallback(async (result: GenerationResult, platform: string, connectionId?: string) => {
         if (!user) return;
 
         try {
             uiActions.setIsPublishingModalOpen(true, platform);
+            uiActions.setPublishingStatus('publishing');
             addToast('Przygotowywanie do publikacji...', NotificationType.Info);
 
             await new Promise(resolve => setTimeout(resolve, 800));
@@ -29,11 +30,14 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
             const connections = await socialConnectionsService.getConnections(user.id);
 
             const targetPlatform = platform.toLowerCase();
-            const connection = connections.find(c => c.platform.toLowerCase() === targetPlatform && c.isActive);
+            const connection = connectionId
+                ? connections.find(c => c.id === connectionId && c.isActive)
+                : connections.find(c => c.platform.toLowerCase() === targetPlatform && c.isActive);
 
             if (!connection) {
                 uiActions.setIsSocialConnectionsModalOpen(true);
                 uiActions.setIsPublishingModalOpen(false);
+                uiActions.setPublishingStatus('idle');
                 throw new Error(`Brak aktywnego połączenia dla ${platform}. Połącz konto w ustawieniach.`);
             }
 
@@ -52,8 +56,11 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
             }, user.id);
 
             if (publishResult.success) {
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                uiActions.setPublishingStatus('success');
+                // give user 2.5s to see the success state in the modal
+                await new Promise(resolve => setTimeout(resolve, 2500));
                 uiActions.setIsPublishingModalOpen(false);
+                uiActions.setPublishingStatus('idle');
                 addToast(`Post został pomyślnie opublikowany na ${platform}!`, NotificationType.Success);
                 addNotification(
                     `Twój post jest już dostępny na ${platform}.`,
@@ -63,6 +70,7 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
             }
         } catch (e) {
             uiActions.setIsPublishingModalOpen(false);
+            uiActions.setPublishingStatus('idle');
             handleApiError(e, 'errors.unknownError');
         }
     }, [user, addToast, addNotification, handleApiError, uiActions]);
