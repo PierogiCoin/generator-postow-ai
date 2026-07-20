@@ -24,6 +24,7 @@ export const EngagementInboxPanel: React.FC = () => {
     Record<string, { friendly: string; professional: string; brief: string }>
   >({});
   const [copied, setCopied] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!user?.id) return;
@@ -38,6 +39,7 @@ export const EngagementInboxPanel: React.FC = () => {
       );
     } finally {
       setIsLoading(false);
+      setLoaded(true);
     }
   }, [user?.id, addToast, t]);
 
@@ -77,6 +79,11 @@ export const EngagementInboxPanel: React.FC = () => {
       addToast(t('inbox.copyError', 'Nie udało się skopiować'), NotificationType.Error);
     }
   };
+
+  // Progressive disclosure: ukryj gdy brak wątków (po załadowaniu)
+  if (!user || (loaded && !isLoading && messages.length === 0)) {
+    return null;
+  }
 
   return (
     <div className="glass-premium p-6 md:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">

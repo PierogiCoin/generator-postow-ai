@@ -26,17 +26,50 @@
       "quality": "Optimization & Quality",
       "distribution": "Distribution & Video"
     },
-    "reverseImage": { "title": "Competitor image analysis", "desc": "Analyze viral competitor images" },
-    "techRadar": { "title": "Find niche news", "desc": "Live news from Google Search → topic or calendar" },
-    "trends": { "title": "Trend analysis", "desc": "Analyze trends in your niche" },
-    "safety": { "title": "Content safety scanner", "desc": "Protect against shadowbans" },
-    "schedule": { "title": "Schedule optimization", "desc": "Find the best time to publish" },
-    "workflow": { "title": "AI workflow automation", "desc": "Pipeline, replies, prediction" },
-    "repurpose": { "title": "Content repurposing", "desc": "One piece → many platforms" },
-    "crossPlatform": { "title": "Cross-platform center", "desc": "Inbox, adaptation, analysis" },
-    "publisher": { "title": "Social media publisher", "desc": "Publish directly to accounts" },
-    "video": { "title": "AI video generator", "desc": "Create short videos from a post" },
-    "omni": { "title": "Gemini Omni", "desc": "Advanced multimodal assistant" }
+    "reverseImage": {
+      "title": "Competitor image analysis",
+      "desc": "Analyze viral competitor images"
+    },
+    "techRadar": {
+      "title": "Find niche news",
+      "desc": "Live news from Google Search → topic or calendar"
+    },
+    "trends": {
+      "title": "Trend analysis",
+      "desc": "Analyze trends in your niche"
+    },
+    "safety": {
+      "title": "Content safety scanner",
+      "desc": "Protect against shadowbans"
+    },
+    "schedule": {
+      "title": "Schedule optimization",
+      "desc": "Find the best time to publish"
+    },
+    "workflow": {
+      "title": "AI workflow automation",
+      "desc": "Pipeline, replies, prediction"
+    },
+    "repurpose": {
+      "title": "Content repurposing",
+      "desc": "One piece → many platforms"
+    },
+    "crossPlatform": {
+      "title": "Cross-platform center",
+      "desc": "Inbox, adaptation, analysis"
+    },
+    "publisher": {
+      "title": "Social media publisher",
+      "desc": "Publish directly to accounts"
+    },
+    "video": {
+      "title": "AI video generator",
+      "desc": "Create short videos from a post"
+    },
+    "omni": {
+      "title": "Gemini Omni",
+      "desc": "Advanced multimodal assistant"
+    }
   },
   "header": {
     "title": "AI Content Pro",
@@ -298,6 +331,28 @@
       "bannerLabel": "Generating from calendar slot",
       "bannerHint": "After generation, content passes the quality gate (up to 2 auto-fixes), then is added to scheduled posts.",
       "batchLabel": "Day batch {{current}}/{{total}}"
+    },
+    "bulk": {
+      "title": "Publish queue",
+      "subtitle": "Select ready posts — confirm schedule or publish now.",
+      "empty": "No ready posts in this range.",
+      "selectAll": "Select all",
+      "deselectAll": "Deselect all",
+      "selectPost": "Select post",
+      "open": "Publish queue",
+      "modeSchedule": "Confirm schedule",
+      "modePublishNow": "Publish now",
+      "publishSelected": "Publish selected ({{count}})",
+      "confirmSelected": "Confirm schedule ({{count}})",
+      "publishing": "Publishing…",
+      "confirming": "Saving…",
+      "done": "Queue: {{ok}} published, {{fail}} failed, {{skip}} skipped",
+      "scheduleConfirmed": "Confirmed {{count}} posts in schedule.",
+      "statusPublishing": "Publishing",
+      "statusDone": "Published",
+      "statusFailed": "Failed",
+      "statusSkipped": "Skipped",
+      "statusPending": "Pending"
     }
   },
   "topicAssistant": {
@@ -529,21 +584,26 @@
       "faq": "FAQ"
     },
     "trust": {
-      "title": "Trusted by the best",
-      "disclaimer": "Sample brands — illustrative examples of marketing team partnerships."
+      "title": "Built for marketers and creators",
+      "item_generate": "Post generator",
+      "item_plan": "Campaign planner",
+      "item_analyze": "Content analytics"
     },
     "hero": {
-      "title_part1": "Dominate social media. Create content that",
-      "title_part2": "converts 10x faster.",
-      "subtitle": "AI Content Pro is your intelligent assistant. Generate engaging posts, plan campaigns, and optimize your strategy based on data.",
-      "cta": "Start creating for free",
+      "brand": "AI Content Pro",
+      "title": "Social posts that sound like your brand",
+      "subtitle": "Generate ready-to-publish content and plan your calendar in one place — no credit card.",
+      "cta": "Generate your first post",
       "cta_logged_in": "Go to generator",
       "secondary_cta": "See how it works",
-      "sub_cta": "Join 5,000+ marketers and creators. No credit card required.",
-      "sub_cta_logged_in": "Pick up where you left off — your projects are waiting in the generator.",
-      "pill_features": "Features",
-      "pill_testimonials": "Reviews",
-      "pill_faq": "FAQ"
+      "preview_target": "Audience: Social Media Manager",
+      "preview_tone": "Tone: clear and professional",
+      "preview_generate": "Generate post",
+      "preview_label": "Post preview",
+      "preview_status": "Ready",
+      "preview_body": "Discover the future of marketing with an AI post generator. Scheduling, insights, and copywriting in one place.",
+      "preview_tag_ai": "#AI",
+      "preview_tag_marketing": "#Marketing"
     },
     "final_cta": {
       "title": "Ready to revolutionize your social media?",
@@ -853,8 +913,9 @@
     "upcomingPosts": "Upcoming Posts",
     "social": {
       "title": "Social Intelligence",
-      "autoPublishActive": "Auto-Publish: Active",
-      "noConnections": "No connected accounts"
+      "autoPublishActive": "Auto-publish: on",
+      "noConnections": "No connected accounts",
+      "connectedOnly": "Accounts connected · auto-publish off"
     },
     "weeklySummary": {
       "title": "Weekly Summary",
@@ -1015,6 +1076,60 @@
       "title": "Unlock the AI Strategist",
       "description": "Upgrade to the Pro plan to get a comprehensive strategic audit, a 30-day content plan, and competitive insights.",
       "upgradeButton": "Upgrade to Pro"
+    }
+  },
+  "approval": {
+    "title": "Approval queue",
+    "subtitle": "{{count}} pending",
+    "filterPending": "Pending",
+    "filterAll": "All",
+    "empty": "Queue is empty. Send a post for approval from scheduling.",
+    "approve": "Approve",
+    "approveKeep": "Approve (keep scheduled)",
+    "approvePublish": "Approve & publish",
+    "approvedScheduled": "Approved — kept in schedule.",
+    "reject": "Reject",
+    "send": "Send for approval",
+    "open": "Open"
+  },
+  "inbox": {
+    "title": "Engagement inbox",
+    "subtitle": "{{count}} threads with comments",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
+    "loading": "Loading comments from connected accounts…",
+    "empty": "No threads yet. Connect accounts and publish — posts with comments appear here.",
+    "smartReply": "AI reply draft",
+    "drafting": "Generating…",
+    "openPost": "Open post",
+    "copy": "Copy",
+    "toneFriendly": "Friendly",
+    "tonePro": "Professional",
+    "toneBrief": "Brief",
+    "loadError": "Failed to load inbox",
+    "draftError": "Failed to generate reply",
+    "copyError": "Copy failed"
+  },
+  "rss": {
+    "title": "RSS / Blog → Post",
+    "subtitle": "Article or feed → draft post in generator",
+    "urlLabel": "Article or RSS URL",
+    "pasteLabel": "Or paste article text",
+    "pastePlaceholder": "Paste text if URL cannot be fetched…",
+    "convert": "Turn into a post",
+    "converting": "Processing…",
+    "ready": "Draft ready — opening generator",
+    "needContent": "Paste article text or provide a fetchable URL.",
+    "loginRequired": "Log in to continue",
+    "error": "Failed to process content",
+    "defaultTopic": "Post from article / RSS"
+  },
+  "crossPlatform": {
+    "title": "Cross-platform command center",
+    "tabs": {
+      "picker": "Best platform",
+      "inbox": "Inbox",
+      "adapt": "Cross-post"
     }
   }
 }

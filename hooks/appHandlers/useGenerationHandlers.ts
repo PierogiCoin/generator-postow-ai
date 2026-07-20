@@ -21,12 +21,7 @@ import { clearOnboardingPendingFirstGenerate } from '../../utils/onboarding';
 import { applyBrandLogoToImage, shouldApplyBrandLogo } from '../../utils/brandImagePipeline';
 import { persistImageUrl } from '../../utils/persistImageUrl';
 import { normalizeCtaUrl } from '../../utils/publishCaption';
-import { canAutoPublish, autoPublishToConnectedAccounts, getPublishablePostText } from '../../services/autoPublishService';
-import {
-    scorePostContent,
-    passesAutoPublishQualityGate,
-    AUTO_PUBLISH_MIN_SCORE,
-} from '../../services/contentScoringService';
+import { canAutoPublish, autoPublishToConnectedAccounts } from '../../services/autoPublishService';
 import {
     ensureCalendarSlotQuality,
     formatSlotQualityMessage,
@@ -68,34 +63,27 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
     const runAutoPublishIfEnabled = async (finalResult: GenerationResult, formData: FormData) => {
         if (!user?.id || !canAutoPublish(finalResult, formData)) return;
 
-        const publishText = getPublishablePostText(finalResult);
-        if (publishText.length >= 60) {
-            genActions.setProgress('Sprawdzanie bramy jakości przed publikacją…');
-            try {
-                const qualityScore = await scorePostContent(publishText, formData.platform, user.id, {
-                    hasHashtags: (finalResult.hashtags?.length ?? 0) > 0 || publishText.includes('#'),
-                    hasEmojis: /[\u{1F300}-\u{1FAFF}]/u.test(publishText),
-                    targetAudience: formData.audience,
-                });
-                if (!passesAutoPublishQualityGate(qualityScore)) {
-                    showWarning(
-                        'Auto-publikacja wstrzymana',
-                        `Ocena ${qualityScore.overall}/100 — popraw treść w bramie jakości (min. ${AUTO_PUBLISH_MIN_SCORE}).`
-                    );
-                    return;
-                }
-            } catch {
-                showWarning(
-                    'Auto-publikacja wstrzymana',
-                    'Nie udało się ocenić treści — opublikuj ręcznie po sprawdzeniu jakości.'
-                );
+        genActions.setProgress('Sprawdzanie bramy jakości przed publikacją…');
+        try {
+            const { enforcePublishQualityGate } = await import('../../services/autoPublishService');
+            const gate = await enforcePublishQualityGate(finalResult, formData, user.id);
+            if (!gate.ok) {
+                showWarning('Auto-publikacja wstrzymana', gate.reason);
                 return;
             }
+        } catch {
+            showWarning(
+                'Auto-publikacja wstrzymana',
+                'Nie udało się ocenić treści — opublikuj ręcznie po sprawdzeniu jakości.'
+            );
+            return;
         }
 
         genActions.setProgress('Publikowanie na połączonych kontach…');
         try {
-            const summary = await autoPublishToConnectedAccounts(finalResult, formData, user.id);
+            const summary = await autoPublishToConnectedAccounts(finalResult, formData, user.id, {
+                skipQualityGate: true,
+            });
 
             if (summary.published.length > 0) {
                 const names = summary.published.map((p) => p.platform).join(', ');

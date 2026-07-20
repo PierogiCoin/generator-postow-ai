@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   validatePublishBody,
   assertPlatformPublishRules,
+  assertPublishApprovalAllowed,
+  isApprovalBlockingPublish,
+  normalizeSocialPlatform,
 } from '../server/lib/socialPublishGuards';
 import { formatPublishCaption, normalizeCtaUrl } from '../server/lib/publishCaption';
 
@@ -40,6 +43,23 @@ describe('assertPlatformPublishRules', () => {
 
   it('nie blokuje Facebooka bez obrazka', () => {
     expect(() => assertPlatformPublishRules('facebook')).not.toThrow();
+  });
+});
+
+describe('approval + platform normalize', () => {
+  it('blokuje pending_approval i rejected', () => {
+    expect(isApprovalBlockingPublish('pending_approval')).toBe(true);
+    expect(isApprovalBlockingPublish('rejected')).toBe(true);
+    expect(isApprovalBlockingPublish('approved')).toBe(false);
+    expect(isApprovalBlockingPublish('draft')).toBe(false);
+    expect(() => assertPublishApprovalAllowed('pending_approval')).toThrow(/akceptacj/);
+    expect(() => assertPublishApprovalAllowed('approved')).not.toThrow();
+  });
+
+  it('mapuje X → twitter', () => {
+    expect(normalizeSocialPlatform('X')).toBe('twitter');
+    expect(normalizeSocialPlatform('x')).toBe('twitter');
+    expect(normalizeSocialPlatform('Facebook')).toBe('facebook');
   });
 });
 

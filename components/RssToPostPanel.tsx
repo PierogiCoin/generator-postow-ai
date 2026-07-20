@@ -7,6 +7,7 @@ import { NotificationType, Platform, Tone } from '../types';
 import { generateRepurposingPlan } from '../services/contentRepurposingService';
 import { fetchArticleOrRss } from '../services/rssToPostService';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { ModernButton } from './ui/ModernButton';
 
 export const RssToPostPanel: React.FC = () => {
@@ -17,6 +18,7 @@ export const RssToPostPanel: React.FC = () => {
   const [url, setUrl] = useState('');
   const [pasted, setPasted] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const handleConvert = async () => {
     if (!user?.id) {
@@ -90,11 +92,16 @@ export const RssToPostPanel: React.FC = () => {
 
   return (
     <div className="glass-premium p-6 md:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-3 text-left"
+        aria-expanded={expanded}
+      >
+        <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center shrink-0">
           <SparklesIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">
             {t('rss.title', 'RSS / Blog → Post')}
           </h3>
@@ -102,9 +109,12 @@ export const RssToPostPanel: React.FC = () => {
             {t('rss.subtitle', 'Artykuł lub feed → gotowy szkic posta w generatorze')}
           </p>
         </div>
-      </div>
+        <ChevronDownIcon
+          className={`w-5 h-5 text-slate-400 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+        />
+      </button>
 
-      <div className="space-y-3">
+      <div className={`space-y-3 mt-4 ${expanded ? '' : 'hidden'}`}>
         <div>
           <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
             {t('rss.urlLabel', 'URL artykułu lub RSS')}

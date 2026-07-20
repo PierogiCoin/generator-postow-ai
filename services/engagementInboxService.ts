@@ -93,7 +93,58 @@ export function buildInboxFromSocialPosts(posts: SocialPost[]): UnifiedMessage[]
 
 export async function loadEngagementInbox(userId: string): Promise<UnifiedMessage[]> {
   const posts = await socialConnectionsService.getAggregateHistory(userId);
-  return buildInboxFromSocialPosts(posts);
+  const base = buildInboxFromSocialPosts(posts);
+
+  // Wzbogać o treść komentarzy (FB/IG) gdy mamy connectionId + platformPostId
+  const enriched: UnifiedMessage[] = [];
+  for (const msg of base.slice(0, 8)) {
+    const post = posts.find((p) => `inbox-${p.id}` === msg.id);
+    if (!post?.connectionId || !post.platformPostId) {
+      enriched.push(msg);
+      continue;
+    }
+    const platform = (post.platform || '').toLowerCase();
+    if (platform !== 'facebook' && platform !== 'instagram') {
+      enriched.push(msg);
+      continue;
+    }
+    try {
+      const { getApiBaseUrl, getApiAuthHeaders } = await import('./apiClient');
+      const headers = await getApiAuthHeaders(userId);
+      const url = `${getApiBaseUrl()}/api/social/comments?connectionId=${encodeURIComponent(post.connectionId)}&platformPostId=${encodeURIComponent(post.platformPostId)}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        enriched.push(msg);
+        continue;
+      }
+      const data = (await res.json()) as {
+        comments?: Array<{ id: string; message: string; authorName: string; createdAt: string }>;
+      };
+      const comments = data.comments || [];
+      if (comments.length === 0) {
+        enriched.push(msg);
+        continue;
+      }
+      for (const c of comments.slice(0, 3)) {
+        enriched.push({
+          ...msg,
+          id: `comment-${c.id}`,
+          author: {
+            name: c.authorName,
+            handle: c.authorName.toLowerCase().replace(/\s+/g, '_'),
+            isVerified: false,
+            isFollowing: false,
+          },
+          content: c.message || msg.content,
+          timestamp: c.createdAt || msg.timestamp,
+        });
+      }
+    } catch {
+      enriched.push(msg);
+    }
+  }
+
+  return enriched.length > 0 ? enriched : base;
 }
 
 export async function draftReplyForInboxItem(

@@ -9,6 +9,10 @@
     --text-primary: #0f172a;
     --accent-indigo: #6366f1;
     --accent-violet: #8b5cf6;
+    --hero-navy: #0b1220;
+    --hero-navy-muted: #152036;
+    --hero-accent: #4f6ef7;
+    --hero-accent-soft: rgba(79, 110, 247, 0.14);
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(255, 255, 255, 0.3);
     --glass-premium-bg: rgba(255, 255, 255, 0.6);

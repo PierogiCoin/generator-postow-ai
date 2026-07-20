@@ -244,6 +244,8 @@ export interface PostPerformanceData {
   likes: number;
   comments: number;
   shares: number;
+  /** Live = z API kont; estimated = symulacja (nie traktować jako fakt). */
+  metricsSource?: 'live' | 'estimated';
 }
 
 export interface AIInsight {

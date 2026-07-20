@@ -3,7 +3,11 @@ import { useUIStore } from '../../stores/uiStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { GenerationResult } from '../../types';
 import { NotificationType } from '../../types';
-import { formatPublishCaption, resolveCtaUrl } from '../../utils/publishCaption';
+import { resolveCtaUrl } from '../../utils/publishCaption';
+import {
+    approvalBlockMessage,
+    isApprovalBlockingPublish,
+} from '../../utils/publishApproval';
 import type { ApiErrorHandler, NotificationFn, ToastFn } from './types';
 
 interface PublishHandlerDeps {
@@ -18,6 +22,11 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
 
     const handlePublishNow = useCallback(async (result: GenerationResult, platform: string, connectionId?: string) => {
         if (!user) return;
+
+        if (isApprovalBlockingPublish(result.approvalStatus)) {
+            addToast(approvalBlockMessage(result.approvalStatus), NotificationType.Error);
+            return;
+        }
 
         try {
             uiActions.setIsPublishingModalOpen(true, platform);

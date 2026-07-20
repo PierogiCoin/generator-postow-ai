@@ -283,7 +283,7 @@ export const AnalyticsView: React.FC = () => {
                 const topic = (h.formData?.topic || "").trim().toLowerCase();
                 return topic !== "" && topic !== "bez tytułu";
             });
-            const { items: historyWithPerformance, liveMatched } =
+            const { items: historyWithPerformance, liveMatched, estimatedCount } =
               analyticsService.enrichHistoryWithLiveMetrics(filteredHistory, realSocialHistory);
 
             // 3. Uruchom analizę AI przekazując RZECZYWISTE dane z platform jeśli są dostępne
@@ -312,9 +312,14 @@ export const AnalyticsView: React.FC = () => {
             if (realSocialHistory.length > 0) {
                 addToast(
                   liveMatched > 0
-                    ? `Analiza: ${realSocialHistory.length} postów z kont + ${liveMatched} z live metrykami.`
-                    : `Analiza ukończona na podstawie ${realSocialHistory.length} rzeczywistych postów.`,
-                  NotificationType.Success
+                    ? `Analiza: ${liveMatched} live, ${estimatedCount} szacowanych (z ${realSocialHistory.length} postów z kont).`
+                    : `Brak dopasowań live — ${estimatedCount} postów oznaczono jako szacowane.`,
+                  liveMatched > 0 ? NotificationType.Success : NotificationType.Info
+                );
+            } else if (filteredHistory.length > 0) {
+                addToast(
+                  'Brak połączonych kont — metryki historii nie są danymi live.',
+                  NotificationType.Info
                 );
             }
         } catch (error) {
@@ -545,8 +550,17 @@ export const AnalyticsView: React.FC = () => {
                                                 <span>{dateString}</span>
                                                 <span className="text-gray-300 dark:text-gray-600">&bull;</span>
                                                 <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${isLivePost(item) ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
-                                                    {isLivePost(item) ? 'Live' : 'Draft'}
+                                                    {isLivePost(item) ? 'Live' : 'Szkic'}
                                                 </span>
+                                                {!isLivePost(item) && (
+                                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                                    item.performance?.metricsSource === 'live'
+                                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
+                                                  }`}>
+                                                    {item.performance?.metricsSource === 'live' ? 'Live' : 'Szacowane'}
+                                                  </span>
+                                                )}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">

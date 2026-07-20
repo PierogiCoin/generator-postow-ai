@@ -10,6 +10,12 @@ import { socialConnectionsService } from './socialConnectionsService';
 import { callApi } from './apiClient';
 import { resolveCtaUrl } from '../utils/publishCaption';
 import { getPlatformCharacterLimit, optimizeForPlatforms } from './multiPlatformService';
+import {
+  AUTO_PUBLISH_MIN_SCORE,
+  passesAutoPublishQualityGate,
+  scorePostContent,
+} from './contentScoringService';
+import { isApprovalBlockingPublish } from '../utils/publishApproval';
 
 export const PLATFORM_TO_SOCIAL: Partial<Record<Platform, SocialPlatform>> = {
   [Platform.Facebook]: SocialPlatform.Facebook,
@@ -63,6 +69,52 @@ export function getPublishablePostText(result: GenerationResult): string {
   if (main.length >= 60) return main;
   const fromOmni = result.omnichannelPosts?.find((p) => p.postText?.trim())?.postText?.trim();
   return fromOmni || main;
+}
+
+/**
+ * Wspólna brama jakości dla auto / bulk / publish-now.
+ * Fail-closed: krótki tekst lub błąd scoringu wstrzymuje publikację.
+ */
+export async function enforcePublishQualityGate(
+  result: GenerationResult,
+  formData: FormData,
+  userId: string
+): Promise<{ ok: true; score?: number } | { ok: false; reason: string }> {
+  if (isApprovalBlockingPublish(result.approvalStatus)) {
+    return { ok: false, reason: 'Post wymaga akceptacji przed publikacją.' };
+  }
+
+  const text = getPublishablePostText(result);
+  if (text.length < 60) {
+    return {
+      ok: false,
+      reason: 'Treść za krótka do automatycznej publikacji (min. 60 znaków).',
+    };
+  }
+
+  try {
+    const qualityScore = await scorePostContent(text, formData.platform, userId, {
+      hasHashtags: (result.hashtags?.length ?? 0) > 0 || text.includes('#'),
+      hasEmojis: /[\u{1F300}-\u{1FAFF}]/u.test(text),
+      targetAudience: formData.audience,
+    });
+    if (!passesAutoPublishQualityGate(qualityScore)) {
+      return {
+        ok: false,
+        reason: `Ocena ${qualityScore.overall}/100 — wymagane min. ${AUTO_PUBLISH_MIN_SCORE}.`,
+      };
+    }
+    return { ok: true, score: qualityScore.overall };
+  } catch {
+    return {
+      ok: false,
+      reason: 'Nie udało się ocenić jakości — publikacja wstrzymana.',
+    };
+  }
+}
+
+export function isPlatformPublishable(platform: SocialPlatform): boolean {
+  return PUBLISHABLE_SOCIAL.has(platform);
 }
 
 function formatPostText(text: string, hashtags: string[] = []): string {
@@ -257,7 +309,8 @@ async function publishStandardPost(
 export async function autoPublishToConnectedAccounts(
   result: GenerationResult,
   formData: FormData,
-  userId: string
+  userId: string,
+  options?: { skipQualityGate?: boolean }
 ): Promise<AutoPublishOutcome> {
   const connections = await socialConnectionsService.getConnections(userId);
   const out: AutoPublishOutcome = { published: [], skipped: [], failed: [] };
@@ -265,6 +318,14 @@ export async function autoPublishToConnectedAccounts(
   if (connections.length === 0) {
     out.failed.push({ platform: '—', error: 'Brak połączonych kont społecznościowych' });
     return out;
+  }
+
+  if (!options?.skipQualityGate) {
+    const gate = await enforcePublishQualityGate(result, formData, userId);
+    if (!gate.ok) {
+      out.failed.push({ platform: '—', error: gate.reason });
+      return out;
+    }
   }
 
   if (result.omnichannelPosts?.length) {

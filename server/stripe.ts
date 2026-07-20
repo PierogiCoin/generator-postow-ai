@@ -230,18 +230,38 @@ export async function deductCredits(
     return { success: true, remainingCredits: 999999 };
   }
 
-  const check = await checkCredits(userId, amount);
-  if (!check.hasEnough) {
-    throw new Error('Insufficient credits');
+  // Atomowy debit w Postgres (credits = credits - amount WHERE credits >= amount)
+  const { data: rpcBalance, error: rpcError } = await supabase.rpc('debit_credits', {
+    p_user_id: userId,
+    p_amount: amount,
+  });
+
+  let remainingCredits: number;
+  if (!rpcError && typeof rpcBalance === 'number') {
+    remainingCredits = rpcBalance;
+  } else {
+    // Fallback gdy RPC jeszcze nie wdrożone — lepszy niż nic, ale nadal lekko racy
+    if (rpcError) {
+      logger.warn('[credits] debit_credits RPC unavailable, using fallback', rpcError);
+    }
+    const check = await checkCredits(userId, amount);
+    if (!check.hasEnough) {
+      throw new Error('Insufficient credits');
+    }
+    const newBalance = check.currentCredits - amount;
+    const { data: updated, error } = await supabase
+      .from('profiles')
+      .update({ credits: newBalance })
+      .eq('id', userId)
+      .gte('credits', amount)
+      .select('credits')
+      .maybeSingle();
+    if (error) throw error;
+    if (!updated) {
+      throw new Error('Insufficient credits');
+    }
+    remainingCredits = updated.credits as number;
   }
-
-  const newBalance = check.currentCredits - amount;
-  const { error } = await supabase
-    .from('profiles')
-    .update({ credits: newBalance })
-    .eq('id', userId);
-
-  if (error) throw error;
 
   try {
     await supabase.from('usage_tracking').insert({
@@ -260,13 +280,13 @@ export async function deductCredits(
       amount: -amount,
       type: 'debit',
       reason: action,
-      balance_after: newBalance,
+      balance_after: remainingCredits,
     });
   } catch {
     // optional table
   }
 
-  return { success: true, remainingCredits: newBalance };
+  return { success: true, remainingCredits };
 }
 
 export async function addCredits(userId: string, amount: number, reason: string) {

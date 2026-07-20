@@ -183,7 +183,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
           </div>
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              Cross-Platform Command Center
+              {t('crossPlatform.title', 'Centrum multi-platformowe')}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               Zarządzaj wszystkimi platformami z jednego miejsca
@@ -195,10 +195,9 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
       {/* Tabs */}
       <div className="flex gap-2">
         {[
-          { id: 'picker', label: 'Best Platform', icon: SparklesIcon, badge: analysis ? '✓' : null },
-          { id: 'inbox', label: 'Unified Inbox', icon: ChatBubbleIcon, badge: String(inboxMessages.length || '') },
-          { id: 'adapt', label: 'Cross-Post', icon: ArrowRightIcon },
-          { id: 'migrate', label: 'Migration', icon: CollectionIcon },
+          { id: 'picker', label: t('crossPlatform.tabs.picker', 'Najlepsza platforma'), icon: SparklesIcon, badge: analysis ? '✓' : null },
+          { id: 'inbox', label: t('crossPlatform.tabs.inbox', 'Skrzynka'), icon: ChatBubbleIcon, badge: String(inboxMessages.length || '') },
+          { id: 'adapt', label: t('crossPlatform.tabs.adapt', 'Cross-post'), icon: ArrowRightIcon },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -569,25 +568,6 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
         </div>
       )}
 
-      {/* Platform Migration Tab */}
-      {activeTab === 'migrate' && (
-        <div className="space-y-4">
-          <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
-            <h4 className="font-bold text-amber-900 dark:text-amber-200 mb-2">
-              🚧 Funkcja w przygotowaniu
-            </h4>
-            <p className="text-sm text-amber-800 dark:text-amber-300">
-              Automatyczna migracja najlepszych postów między platformami z wykorzystaniem historycznych danych o engagement.
-            </p>
-            <ul className="mt-2 text-sm text-amber-700 dark:text-amber-400 list-disc list-inside">
-              <li>Analiza top postów z {sourcePlatform}</li>
-              <li>Automatyczna adaptacja dla docelowej platformy</li>
-              <li>7-dniowy content calendar dla rollout</li>
-              <li>Predykcja performance na nowej platformie</li>
-            </ul>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

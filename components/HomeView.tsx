@@ -18,197 +18,85 @@ import {
   scrollToAnchor,
   Reveal,
   SectionHeader,
-  type HomeAnchor,
 } from './homeViewUtils';
 
 interface HomeViewProps {}
 
-type PreviewMode = 'generator' | 'planner' | 'analytics';
-
-const HeroPreview: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) => {
-  const [mode, setMode] = React.useState<PreviewMode>('generator');
-
-  const tabs: Array<{ key: PreviewMode; label: string }> = [
-    { key: 'generator', label: 'Generator AI' },
-    { key: 'planner', label: 'Planer Kampanii' },
-    { key: 'analytics', label: 'Analityka AI' },
-  ];
-
-  const renderCanvas = () => {
-    if (mode === 'planner') {
-      return (
-        <div className="rounded-2xl bg-slate-950/80 p-6 overflow-hidden border border-white/5 shadow-2xl relative min-h-[300px] flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-red-500/80"></span>
-              <span className="w-3 h-3 rounded-full bg-yellow-500/80"></span>
-              <span className="w-3 h-3 rounded-full bg-green-500/80"></span>
-            </div>
-            <div className="h-6 w-32 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-[10px] text-slate-400 font-mono">
-              JULY 2026 PLANNER
-            </div>
-          </div>
-          <div className="flex-1 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="h-3 w-36 rounded-full bg-white/10" />
-              <div className="h-5 w-24 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-[10px] text-indigo-300 font-semibold uppercase tracking-wider">
-                Active Campaign
-              </div>
-            </div>
-            <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 28 }).map((_, i) => (
-                <div
-                  key={`day-${i}`}
-                  className={`aspect-square rounded-xl flex flex-col items-center justify-center border transition-all duration-300 ${
-                    i % 6 === 0
-                      ? 'bg-gradient-to-br from-fuchsia-500/20 to-indigo-500/20 border-fuchsia-500/50 shadow-md scale-105'
-                      : 'bg-white/5 border-white/5 hover:border-white/10'
-                  }`}
-                >
-                  <span className="text-[10px] font-mono text-slate-400">{i + 1}</span>
-                  {i % 6 === 0 && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-fuchsia-400 mt-1 animate-pulse" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (mode === 'analytics') {
-      return (
-        <div className="rounded-2xl bg-slate-950/80 p-6 overflow-hidden border border-white/5 shadow-2xl relative min-h-[300px] flex flex-col justify-between">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-            <div className="h-3 w-40 rounded-full bg-gradient-to-r from-cyan-400 to-indigo-400" />
-            <div className="h-7 px-3 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-xs font-semibold text-cyan-300">
-              Live Metrics
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-white/5 border border-white/5 p-4 flex flex-col justify-between h-36">
-              <span className="text-xs font-semibold text-slate-400">Total Engagement</span>
-              <div className="flex items-end justify-between">
-                <span className="text-3xl font-extrabold text-white tracking-tight">324.8K</span>
-                <span className="text-xs font-bold text-green-400 bg-green-400/10 px-2 py-1 rounded-lg flex items-center gap-1">
-                  +12.4%
-                </span>
-              </div>
-              <div className="flex items-end gap-1 h-12 w-full pt-2">
-                {[40, 60, 50, 70, 90, 80, 100].map((h, i) => (
-                  <div
-                    key={i}
-                    style={{ height: `${h}%` }}
-                    className="flex-1 bg-gradient-to-t from-cyan-500 to-indigo-500 rounded-t-sm"
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="rounded-2xl bg-white/5 border border-white/5 p-4 flex flex-col justify-between h-36">
-              <span className="text-xs font-semibold text-slate-400">AI Optimization Score</span>
-              <div className="flex items-end justify-between">
-                <span className="text-3xl font-extrabold text-white tracking-tight">98/100</span>
-                <span className="text-xs font-bold text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded-lg">
-                  Optimal
-                </span>
-              </div>
-              <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
-                <div className="bg-gradient-to-r from-fuchsia-500 to-cyan-500 h-full w-[98%] rounded-full" />
-              </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    // generator
-    return (
-      <div className="rounded-2xl bg-slate-950/80 overflow-hidden border border-white/5 shadow-2xl relative min-h-[300px]">
-        <div className="flex h-full flex-col md:flex-row">
-          <div className="w-full md:w-2/5 p-5 border-r border-white/5 flex flex-col justify-between">
-            <div>
-              <div className="h-3 bg-gradient-to-r from-fuchsia-500 to-indigo-500 rounded-full w-3/4 mb-4" />
-              <div className="space-y-2">
-                <div className="h-9 bg-white/5 border border-white/5 rounded-xl flex items-center px-3 text-xs text-slate-400">
-                  Target: Social Media Manager
-                </div>
-                <div className="h-9 bg-white/5 border border-white/5 rounded-xl flex items-center px-3 text-xs text-slate-400">
-                  Tone: Visionary & Professional
-                </div>
-              </div>
-            </div>
-            <div className="pt-4">
-              <button className="w-full h-10 rounded-xl bg-gradient-to-r from-fuchsia-500 to-indigo-500 text-white font-semibold text-xs shadow-lg shadow-fuchsia-500/20 hover:opacity-90 transition">
-                Generuj Post
-              </button>
-            </div>
-          </div>
-          <div className="w-full md:w-3/5 p-5 flex flex-col justify-between bg-slate-900/40">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500" />
-                <span className="text-xs font-semibold text-white">Post Preview</span>
-              </div>
-              <span className="text-[10px] text-fuchsia-400 font-bold uppercase tracking-wider">Ready</span>
-            </div>
-            <div className="my-4 space-y-2 flex-1 flex flex-col justify-center">
-              <p className="text-xs text-slate-300 leading-relaxed italic">
-                "Odkryj przyszłość marketingu z nowym generatorem postów AI. Zautomatyzowane harmonogramowanie, głębokie analizy i angażujący copywriter w jednym miejscu. ⚡️"
-              </p>
-              <div className="flex gap-1.5 pt-2">
-                <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-slate-400">#AI</span>
-                <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-slate-400">#Marketing</span>
-              </div>
-            </div>
-            <div className="h-28 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center">
-              <SparklesIcon className="w-8 h-8 text-fuchsia-400 animate-pulse" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+const HeroPreview: React.FC = () => {
+  const { t } = useTranslation();
 
   return (
-    <div className="mt-16 max-w-5xl mx-auto px-4">
-      <div className="glass-premium rounded-3xl p-5 border border-white/10 shadow-3xl hover:border-white/20 transition-all duration-300">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 via-purple-600 to-indigo-500 shadow-lg flex items-center justify-center text-white">
-              <SparklesIcon className="w-6 h-6" />
+    <div
+      className="mt-14 w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]"
+      aria-hidden="true"
+    >
+      <div
+        className="border-y border-slate-200/60 dark:border-white/10"
+        style={{ backgroundColor: 'var(--hero-navy)' }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <div className="flex min-h-[320px] flex-col md:flex-row">
+            <div className="w-full md:w-2/5 p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between gap-6">
+              <div className="space-y-3">
+                <div
+                  className="h-1 w-24 rounded-sm"
+                  style={{ backgroundColor: 'var(--hero-accent)' }}
+                />
+                <div className="space-y-2">
+                  <div className="h-10 px-3 rounded-lg border border-white/10 bg-white/5 flex items-center text-sm text-slate-300">
+                    {t('home.hero.preview_target')}
+                  </div>
+                  <div className="h-10 px-3 rounded-lg border border-white/10 bg-white/5 flex items-center text-sm text-slate-300">
+                    {t('home.hero.preview_tone')}
+                  </div>
+                </div>
+              </div>
+              <div
+                className="h-11 rounded-lg text-white font-semibold text-sm flex items-center justify-center"
+                style={{ backgroundColor: 'var(--hero-accent)' }}
+              >
+                {t('home.hero.preview_generate')}
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-slate-900 dark:text-white">Interaktywne Studio</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Przetestuj funkcjonalności bezpośrednio w podglądzie</p>
-            </div>
-          </div>
 
-          <div role="tablist" className="inline-flex rounded-2xl bg-slate-100/80 dark:bg-slate-900/60 p-1.5 border border-slate-200/50 dark:border-white/5">
-            {tabs.map((t) => {
-              const active = t.key === mode;
-              return (
-                <button
-                  key={t.key}
-                  role="tab"
-                  aria-selected={active}
-                  type="button"
-                  onClick={() => setMode(t.key)}
-                  className={`px-4 py-2 text-xs md:text-sm font-semibold rounded-xl transition-all duration-300 ${
-                    active
-                      ? 'bg-white dark:bg-slate-800 shadow-md text-slate-900 dark:text-white border border-slate-200/10'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
+            <div
+              className="w-full md:w-3/5 p-6 md:p-8 flex flex-col justify-between gap-4"
+              style={{ backgroundColor: 'var(--hero-navy-muted)' }}
+            >
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-6 h-6 rounded-md"
+                    style={{ backgroundColor: 'var(--hero-accent)' }}
+                  />
+                  <span className="text-sm font-semibold text-white">{t('home.hero.preview_label')}</span>
+                </div>
+                <span
+                  className="text-xs font-semibold tracking-wide"
+                  style={{ color: 'var(--hero-accent)' }}
                 >
-                  {t.label}
-                </button>
-              );
-            })}
+                  {t('home.hero.preview_status')}
+                </span>
+              </div>
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {t('home.hero.preview_body')}
+              </p>
+              <div className="flex gap-2">
+                <span className="text-xs border border-white/10 px-2.5 py-1 rounded-md text-slate-400">
+                  {t('home.hero.preview_tag_ai')}
+                </span>
+                <span className="text-xs border border-white/10 px-2.5 py-1 rounded-md text-slate-400">
+                  {t('home.hero.preview_tag_marketing')}
+                </span>
+              </div>
+              <div
+                className="h-24 rounded-lg border border-white/10 flex items-center justify-center"
+                style={{ backgroundColor: 'var(--hero-accent-soft)' }}
+              >
+                <PencilIcon className="w-7 h-7 text-slate-300" />
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="relative rounded-2xl overflow-hidden bg-slate-950/40">
-          {renderCanvas()}
         </div>
       </div>
     </div>
@@ -219,109 +107,78 @@ const HeroSection: React.FC<{ onNavigateToApp: () => void; reducedMotion: boolea
   const { t } = useTranslation();
 
   return (
-    <section className="text-center pt-8 md:pt-20 pb-20 px-4 relative overflow-hidden">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] pointer-events-none z-0">
-        <div className="absolute top-1/4 left-1/3 w-[300px] h-[300px] bg-fuchsia-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute top-1/3 right-1/3 w-[350px] h-[350px] bg-indigo-500/10 rounded-full blur-[120px]" />
+    <section className="pt-10 md:pt-16 pb-0 relative">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[420px] pointer-events-none z-0 overflow-hidden">
+        <div
+          className="absolute top-1/4 left-1/4 w-[280px] h-[280px] rounded-full blur-[120px] opacity-40"
+          style={{ backgroundColor: 'var(--hero-accent)' }}
+        />
+        <div
+          className="absolute top-1/3 right-1/4 w-[260px] h-[260px] rounded-full blur-[120px] opacity-25"
+          style={{ backgroundColor: 'var(--hero-navy)' }}
+        />
       </div>
 
-      <div className="relative z-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-fuchsia-500/10 border border-fuchsia-500/30 text-fuchsia-600 dark:text-fuchsia-400 text-xs font-bold uppercase tracking-wider mb-6 animate-fade-in">
-          <SparklesIcon className="w-3.5 h-3.5" />
-          Inteligentny Generator Postów 2.0
-        </div>
-        <h1 className="text-4xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none max-w-4xl mx-auto font-sans">
-          {t('home.hero.title_part1')}
-          <span className="block mt-4 bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-500 via-purple-600 to-cyan-400 animate-float font-black">
-            {t('home.hero.title_part2')}
-          </span>
+      <div className="relative z-10 text-center px-4">
+        <p className="text-2xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white animate-fade-in">
+          {t('home.hero.brand')}
+        </p>
+        <h1 className="mt-4 text-3xl md:text-5xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight max-w-3xl mx-auto">
+          {t('home.hero.title')}
         </h1>
-        <p className="mt-8 max-w-2xl mx-auto text-lg md:text-2xl text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
+        <p className="mt-5 max-w-xl mx-auto text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
           {t('home.hero.subtitle')}
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-3">
           <ModernButton
-            variant="gradient"
+            variant="primary"
             size="lg"
             onClick={onNavigateToApp}
-            className="rounded-full px-8 py-4 bg-gradient-to-r from-fuchsia-500 to-indigo-600 text-white font-bold shadow-lg shadow-fuchsia-500/20 hover:shadow-xl hover:shadow-fuchsia-500/35 transition-all duration-300 transform hover:-translate-y-0.5"
+            className="rounded-xl px-7 py-3.5 !bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white font-semibold shadow-md focus:!ring-[var(--hero-accent)]"
           >
-            <span className="flex items-center gap-2">
-              <SparklesIcon className="w-5 h-5 text-white" />
-              {t(isLoggedIn ? 'home.hero.cta_logged_in' : 'home.hero.cta')}
-            </span>
+            {t(isLoggedIn ? 'home.hero.cta_logged_in' : 'home.hero.cta')}
           </ModernButton>
           <ModernButton
             variant="outline"
             size="lg"
             onClick={() => scrollToAnchor('how-it-works', reducedMotion)}
-            className="rounded-full px-8 py-4 border-slate-300 dark:border-white/10 dark:hover:border-white/20 text-slate-700 dark:text-slate-300 bg-white/50 dark:bg-white/5 backdrop-blur hover:bg-white/85 transition-all duration-300"
+            className="rounded-xl px-7 py-3.5 border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/5 hover:bg-white dark:hover:bg-white/10 transition-all duration-300"
           >
             {t('home.hero.secondary_cta')}
           </ModernButton>
         </div>
-        <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-          {t(isLoggedIn ? 'home.hero.sub_cta_logged_in' : 'home.hero.sub_cta')}
-        </p>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-2.5">
-          {[
-            { id: 'features', label: t('home.hero.pill_features') },
-            { id: 'testimonials', label: t('home.hero.pill_testimonials') },
-            { id: 'faq', label: t('home.hero.pill_faq') }
-          ].map((pill) => (
-            <button
-              key={pill.id}
-              type="button"
-              onClick={() => scrollToAnchor(pill.id as HomeAnchor, reducedMotion)}
-              className="px-4 py-2 rounded-full text-xs font-bold bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-slate-300 transition focus:outline-none"
-            >
-              {pill.label}
-            </button>
-          ))}
-        </div>
-
-        <HeroPreview reducedMotion={reducedMotion} />
+        <HeroPreview />
       </div>
     </section>
   );
 };
 
-const TrustBar: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) => {
+const TrustBar: React.FC = () => {
   const { t } = useTranslation();
 
-  const brands = [
-    'TechFlow',
-    'Innovate Inc.',
-    'MarketingPRO',
-    'StartUp Weekly',
-    'Creative Solutions',
-    'StudioNine',
-    'EcomLabs',
-    'Growth Guild',
+  const items = [
+    t('home.trust.item_generate'),
+    t('home.trust.item_plan'),
+    t('home.trust.item_analyze'),
   ];
 
   return (
-    <section className="py-12 border-y border-slate-200/50 dark:border-white/5 bg-slate-50/30 dark:bg-slate-950/20 backdrop-blur-sm">
-      <div className="max-w-6xl mx-auto px-4">
-        <p className="text-center text-xs font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+    <section className="py-10 border-b border-slate-200/50 dark:border-white/5 bg-slate-50/40 dark:bg-slate-950/30">
+      <div className="max-w-4xl mx-auto px-4 text-center">
+        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
           {t('home.trust.title')}
         </p>
-        <p className="mt-2 text-center text-xs text-slate-400 dark:text-slate-600 max-w-lg mx-auto">
-          {t('home.trust.disclaimer')}
-        </p>
-        <div className="mt-8 overflow-hidden relative w-full [-webkit-mask-image:linear-gradient(90deg,transparent,white_15%,white_85%,transparent)] [mask-image:linear-gradient(90deg,transparent,white_15%,white_85%,transparent)]">
-          <div className="flex gap-4 w-max animate-marquee hover:[animation-play-state:paused]">
-            {[...brands, ...brands].map((brand, idx) => (
-              <span
-                key={`${brand}-${idx}`}
-                className="px-6 py-3 rounded-2xl font-bold text-sm md:text-base bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 text-slate-600 dark:text-slate-400 shadow-sm"
-              >
-                {brand}
-              </span>
-            ))}
-          </div>
-        </div>
+        <ul className="mt-5 flex flex-wrap justify-center gap-x-8 gap-y-3">
+          {items.map((item) => (
+            <li
+              key={item}
+              className="text-sm md:text-base font-medium text-slate-700 dark:text-slate-300"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -639,15 +496,20 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   return (
     <div className="relative animate-fade-in pb-16">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[48rem] h-[48rem] bg-gradient-to-br from-fuchsia-500/10 via-purple-500/5 to-cyan-500/10 blur-[150px]" />
-        <div className="absolute top-96 -left-24 w-[36rem] h-[36rem] bg-gradient-to-br from-indigo-500/8 to-fuchsia-500/8 blur-[150px]" />
-        <div className="absolute bottom-0 -right-24 w-[36rem] h-[36rem] bg-gradient-to-br from-fuchsia-500/8 to-cyan-500/8 blur-[150px]" />
+        <div
+          className="absolute -top-24 left-1/2 -translate-x-1/2 w-[42rem] h-[42rem] blur-[150px] opacity-30"
+          style={{ background: 'radial-gradient(circle, var(--hero-accent) 0%, transparent 70%)' }}
+        />
+        <div
+          className="absolute top-96 -left-24 w-[32rem] h-[32rem] blur-[150px] opacity-20"
+          style={{ background: 'radial-gradient(circle, var(--hero-navy) 0%, transparent 70%)' }}
+        />
       </div>
 
       <div className="relative">
         <HeroSection onNavigateToApp={handleNavigateToApp} reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} />
         <Reveal reducedMotion={reducedMotion}>
-          <TrustBar reducedMotion={reducedMotion} />
+          <TrustBar />
         </Reveal>
         
         <StatsSection reducedMotion={reducedMotion} />

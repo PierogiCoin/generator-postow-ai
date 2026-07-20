@@ -528,6 +528,34 @@ export class FacebookPublisher {
       return [];
     }
   }
+
+  async getComments(
+    postId: string,
+    pageAccessToken: string
+  ): Promise<Array<{ id: string; message: string; authorName: string; createdAt: string }>> {
+    try {
+      const response = await axios.get(`https://graph.facebook.com/v18.0/${postId}/comments`, {
+        params: {
+          access_token: pageAccessToken,
+          fields: 'id,message,from,created_time',
+          filter: 'toplevel',
+          order: 'reverse_chronological',
+          limit: 25,
+        },
+      });
+      return (response.data?.data || []).map(
+        (c: { id: string; message?: string; from?: { name?: string }; created_time?: string }) => ({
+          id: c.id,
+          message: c.message || '',
+          authorName: c.from?.name || 'Użytkownik',
+          createdAt: c.created_time || new Date().toISOString(),
+        })
+      );
+    } catch (error) {
+      logger.error('Facebook getComments error:', error);
+      return [];
+    }
+  }
 }
 
 // ============================================
@@ -688,6 +716,31 @@ export class InstagramPublisher {
         .map(r => (r as PromiseFulfilledResult<EnrichedPost>).value);
     } catch (error) {
       logger.error('Instagram getPosts error:', error);
+      return [];
+    }
+  }
+
+  async getComments(
+    mediaId: string
+  ): Promise<Array<{ id: string; message: string; authorName: string; createdAt: string }>> {
+    try {
+      const response = await axios.get(`https://graph.facebook.com/v18.0/${mediaId}/comments`, {
+        params: {
+          access_token: this.accessToken,
+          fields: 'id,text,username,timestamp',
+          limit: 25,
+        },
+      });
+      return (response.data?.data || []).map(
+        (c: { id: string; text?: string; username?: string; timestamp?: string }) => ({
+          id: c.id,
+          message: c.text || '',
+          authorName: c.username || 'Użytkownik',
+          createdAt: c.timestamp || new Date().toISOString(),
+        })
+      );
+    } catch (error) {
+      logger.error('Instagram getComments error:', error);
       return [];
     }
   }

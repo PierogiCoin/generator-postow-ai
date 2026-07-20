@@ -8,18 +8,45 @@ import {
 import { supabase } from '../lib/clients.js';
 import { fetchTopSlots, nextOccurrenceForSlot, type Slot } from '../lib/schedulingAnalytics.js';
 import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js';
+import {
+  isApprovalBlockingPublish,
+  normalizeSocialPlatform,
+} from '../lib/socialPublishGuards.js';
 
 let schedulerBlockedUntil: number | null = null;
+let isRunning = false;
+
+const PUBLISHABLE = new Set(['facebook', 'instagram', 'twitter', 'linkedin']);
+
+async function markFailed(
+  postId: string,
+  lastError: string,
+  retryCount = 0,
+  nextRetryAt?: string
+) {
+  await supabase.from('scheduled_posts').update({
+    status: 'failed',
+    retry_count: retryCount,
+    last_error: lastError,
+    ...(nextRetryAt ? { next_retry_at: nextRetryAt } : {}),
+  }).eq('id', postId);
+}
 
 async function processScheduledPosts() {
   const nowDate = new Date();
   const nowIso = nowDate.toISOString();
+
+  if (isRunning) {
+    logger.warn('[Scheduler] Previous run still in progress — skip');
+    return;
+  }
 
   if (schedulerBlockedUntil && Date.now() < schedulerBlockedUntil) {
     logger.warn('[Scheduler] Skipping run (previous permission error, backoff active)');
     return;
   }
 
+  isRunning = true;
   try {
     const { data: unscheduled } = await supabase
       .from('scheduled_posts')
@@ -101,18 +128,50 @@ async function processScheduledPosts() {
 
     for (const post of posts) {
       try {
-        const platform = (post.form_data?.platform || 'facebook').toLowerCase();
+        const approvalStatus = post.approval_status as string | undefined;
+        if (isApprovalBlockingPublish(approvalStatus)) {
+          logger.warn(`[Scheduler] Pomijam ${post.id} — approval: ${approvalStatus}`);
+          // Nie oznaczaj failed — czekamy na akceptację; nie retry w nieskończoność
+          if (post.status === 'failed') {
+            await supabase
+              .from('scheduled_posts')
+              .update({ status: 'scheduled', next_retry_at: null, last_error: 'Oczekuje na akceptację' })
+              .eq('id', post.id);
+          }
+          continue;
+        }
+
+        const platform = normalizeSocialPlatform(post.form_data?.platform);
+
+        if (!PUBLISHABLE.has(platform)) {
+          await markFailed(post.id, `Platforma ${platform} nie jest wspierana w schedulerze`, 3);
+          continue;
+        }
+
+        // Claim — unikaj race przy wielu replikach
+        const { data: claimed, error: claimErr } = await supabase
+          .from('scheduled_posts')
+          .update({ status: 'publishing' })
+          .eq('id', post.id)
+          .in('status', ['scheduled', 'failed'])
+          .select('id')
+          .maybeSingle();
+
+        if (claimErr || !claimed) {
+          logger.warn(`[Scheduler] Nie udało się claimować ${post.id}`);
+          continue;
+        }
+
         const { data: connection } = await supabase
           .from('social_connections')
           .select('*')
           .eq('user_id', post.user_id)
           .eq('platform', platform)
           .eq('is_active', true)
-          .single();
+          .maybeSingle();
 
         if (!connection) {
-          logger.warn(`[Scheduler] Brak połączenia dla postu ${post.id} (platforma: ${platform})`);
-          await supabase.from('scheduled_posts').update({ status: 'failed' }).eq('id', post.id);
+          await markFailed(post.id, `Brak aktywnego połączenia (${platform})`, 3);
           continue;
         }
 
@@ -126,7 +185,12 @@ async function processScheduledPosts() {
         });
         const linkUrl = normalizeCtaUrl(post.result?.ctaUrl);
 
-        let publishResult;
+        if (platform === 'instagram' && !imageUrl) {
+          await markFailed(post.id, 'Instagram wymaga obrazka do publikacji', 3);
+          continue;
+        }
+
+        let publishResult: { url?: string; id?: string } | undefined;
 
         if (platform === 'facebook') {
           const publisher = new FacebookPublisher(connection.access_token);
@@ -137,9 +201,9 @@ async function processScheduledPosts() {
             imageUrl,
             linkUrl ?? undefined
           );
-        } else if (platform === 'instagram' && imageUrl) {
+        } else if (platform === 'instagram') {
           const publisher = new InstagramPublisher(connection.access_token);
-          publishResult = await publisher.publishPost(connection.account_id, imageUrl, caption);
+          publishResult = await publisher.publishPost(connection.account_id, imageUrl!, caption);
         } else if (platform === 'twitter') {
           const publisher = new TwitterPublisher(
             process.env.TWITTER_APP_KEY || '',
@@ -156,17 +220,25 @@ async function processScheduledPosts() {
             clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
             redirectUri: process.env.LINKEDIN_REDIRECT_URI || '',
           });
-          publishResult = await publisher.publishPost(connection.access_token, connection.account_id, caption, imageUrl);
+          publishResult = await publisher.publishPost(
+            connection.access_token,
+            connection.account_id,
+            caption,
+            imageUrl
+          );
         }
 
-        if (publishResult) {
-          await supabase
-            .from('scheduled_posts')
-            .update({ status: 'published', published_url: publishResult.url })
-            .eq('id', post.id);
-
-          logger.info(`[Scheduler] Opublikowano post ${post.id} na ${platform}`);
+        if (!publishResult) {
+          await markFailed(post.id, `Brak wyniku publikacji dla ${platform}`, 3);
+          continue;
         }
+
+        await supabase
+          .from('scheduled_posts')
+          .update({ status: 'published', published_url: publishResult.url, last_error: null })
+          .eq('id', post.id);
+
+        logger.info(`[Scheduler] Opublikowano post ${post.id} na ${platform}`);
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : String(e);
         const retryCount = (post.retry_count || 0) + 1;
@@ -176,20 +248,15 @@ async function processScheduledPosts() {
         const nextRetryAt = new Date(Date.now() + nextRetryMinutes * 60 * 1000).toISOString();
 
         if (retryCount >= maxRetries) {
-          logger.error(`[Scheduler] Post ${post.id} przekroczył limit prób (${maxRetries}), oznaczam jako failed definitywnie.`);
-          await supabase.from('scheduled_posts').update({
-            status: 'failed',
-            retry_count: retryCount,
-            last_error: message,
-          }).eq('id', post.id);
+          logger.error(
+            `[Scheduler] Post ${post.id} przekroczył limit prób (${maxRetries}), oznaczam jako failed definitywnie.`
+          );
+          await markFailed(post.id, message, retryCount);
         } else {
-          logger.warn(`[Scheduler] Błąd publikacji postu ${post.id} – próba ${retryCount}/${maxRetries}, kolejna za ${nextRetryMinutes} min.`);
-          await supabase.from('scheduled_posts').update({
-            status: 'failed',
-            retry_count: retryCount,
-            next_retry_at: nextRetryAt,
-            last_error: message,
-          }).eq('id', post.id);
+          logger.warn(
+            `[Scheduler] Błąd publikacji postu ${post.id} – próba ${retryCount}/${maxRetries}, kolejna za ${nextRetryMinutes} min.`
+          );
+          await markFailed(post.id, message, retryCount, nextRetryAt);
         }
       }
     }
@@ -199,10 +266,14 @@ async function processScheduledPosts() {
 
     if (isPermission) {
       schedulerBlockedUntil = Date.now() + 5 * 60 * 1000;
-      logger.error('[Scheduler] Błąd uprawnień do scheduled_posts – blokuję kolejne próby na 5 min', { message: msg });
+      logger.error('[Scheduler] Błąd uprawnień do scheduled_posts – blokuję kolejne próby na 5 min', {
+        message: msg,
+      });
     } else {
       logger.error('[Scheduler] Błąd krytyczny:', e);
     }
+  } finally {
+    isRunning = false;
   }
 }
 

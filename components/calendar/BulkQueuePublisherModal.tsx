@@ -46,6 +46,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isRunning, setIsRunning] = useState(false);
   const [progress, setProgress] = useState<BulkPublishProgressItem[]>([]);
+  const [mode, setMode] = useState<'publish_now' | 'confirm_schedule'>('confirm_schedule');
 
   useEscapeClose(isOpen && !isRunning, onClose);
 
@@ -58,6 +59,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
     setSelectedIds(new Set(initial));
     setProgress([]);
     setIsRunning(false);
+    setMode('confirm_schedule');
   }, [isOpen, candidates, initialSelectedIds]);
 
   if (!isOpen) return null;
@@ -81,8 +83,39 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
 
   const selectedPosts: ScheduledPost[] = candidates.filter((c) => selectedIds.has(c.id));
 
+  const handleConfirmSchedule = async () => {
+    if (selectedPosts.length === 0) return;
+    setIsRunning(true);
+    try {
+      for (const post of selectedPosts) {
+        await addOrUpdateScheduledPost({
+          ...post,
+          status: 'scheduled',
+          approvalStatus:
+            post.approvalStatus === 'pending_approval' || post.approvalStatus === 'rejected'
+              ? post.approvalStatus
+              : 'approved',
+        });
+      }
+      addToast(
+        t('calendar.bulk.scheduleConfirmed', 'Potwierdzono {{count}} publikacji w harmonogramie.', {
+          count: selectedPosts.length,
+        }),
+        NotificationType.Success
+      );
+      onClose();
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!user?.id || selectedPosts.length === 0) return;
+    if (mode === 'confirm_schedule') {
+      await handleConfirmSchedule();
+      return;
+    }
+
     setIsRunning(true);
     setProgress(
       selectedPosts.map((p) => ({
@@ -172,6 +205,33 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
             </div>
           ) : (
             <>
+              <div className="flex gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800">
+                <button
+                  type="button"
+                  disabled={isRunning}
+                  onClick={() => setMode('confirm_schedule')}
+                  className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${
+                    mode === 'confirm_schedule'
+                      ? 'bg-white dark:bg-slate-900 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {t('calendar.bulk.modeSchedule', 'Potwierdź harmonogram')}
+                </button>
+                <button
+                  type="button"
+                  disabled={isRunning}
+                  onClick={() => setMode('publish_now')}
+                  className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${
+                    mode === 'publish_now'
+                      ? 'bg-white dark:bg-slate-900 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  {t('calendar.bulk.modePublishNow', 'Publikuj teraz')}
+                </button>
+              </div>
+
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -259,10 +319,16 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
             onClick={() => void handlePublish()}
           >
             {isRunning
-              ? t('calendar.bulk.publishing', 'Publikuję…')
-              : t('calendar.bulk.publishSelected', 'Publikuj zaznaczone ({{count}})', {
-                  count: selectedPosts.length,
-                })}
+              ? mode === 'publish_now'
+                ? t('calendar.bulk.publishing', 'Publikuję…')
+                : t('calendar.bulk.confirming', 'Zapisuję…')
+              : mode === 'publish_now'
+                ? t('calendar.bulk.publishSelected', 'Publikuj zaznaczone ({{count}})', {
+                    count: selectedPosts.length,
+                  })
+                : t('calendar.bulk.confirmSelected', 'Potwierdź harmonogram ({{count}})', {
+                    count: selectedPosts.length,
+                  })}
           </ModernButton>
         </footer>
       </div>

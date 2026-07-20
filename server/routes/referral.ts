@@ -36,6 +36,9 @@ router.get(
       const userId = req.user!.id;
       const referralCode = generateReferralCode(userId);
 
+      // Zapisz kod w profiles (lookup O(1) przy /apply)
+      await supabase.from('profiles').update({ referral_code: referralCode }).eq('id', userId);
+
       // Pobierz statystyki
       const { data: referrals } = await supabase
         .from('referrals')
@@ -98,19 +101,33 @@ router.post(
         return res.status(409).json({ error: 'Kod polecający już został użyty' });
       }
 
-      // Znajdź polecającego po kodzie
-      // Kod format: GPA-XXXXXXXX — musimy odwrócić mapowanie
-      // Alternatywa: przechowuj kod w tabeli profiles
-      const { data: profiles } = await supabase
+      // O(1) lookup po kolumnie referral_code (+ fallback legacy dla starych kont)
+      let referrerId: string | null = null;
+      const { data: byCode } = await supabase
         .from('profiles')
         .select('id')
-        .not('id', 'is', null);
+        .eq('referral_code', referralCode)
+        .maybeSingle();
 
-      let referrerId: string | null = null;
-      for (const p of profiles || []) {
-        if (generateReferralCode(p.id) === referralCode) {
-          referrerId = p.id;
-          break;
+      if (byCode?.id) {
+        referrerId = byCode.id;
+      } else {
+        // Legacy: kod wyliczany z UUID — tylko gdy kolumna jeszcze pusta
+        const suffix = referralCode.replace(/^GPA-/i, '').toLowerCase();
+        if (/^[0-9a-f]{8}$/.test(suffix)) {
+          const { data: legacy } = await supabase
+            .from('profiles')
+            .select('id')
+            .ilike('id', `${suffix.slice(0, 8)}%`)
+            .limit(5);
+          const match = (legacy || []).find((p) => generateReferralCode(p.id) === referralCode);
+          if (match) {
+            referrerId = match.id;
+            await supabase
+              .from('profiles')
+              .update({ referral_code: referralCode })
+              .eq('id', match.id);
+          }
         }
       }
 

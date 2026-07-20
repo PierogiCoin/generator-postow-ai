@@ -27,6 +27,7 @@ const NOT_FOUND_ENDPOINTS = [
   'POST /api/score-content',
   'POST /api/benchmark-content',
   'POST /api/content/fetch-url',
+  'GET /api/social/comments',
   'POST /api/intelligence/news',
   'POST /api/intelligence/trends',
   'POST /api/intelligence/competitor',

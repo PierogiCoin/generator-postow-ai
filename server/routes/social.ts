@@ -42,6 +42,7 @@ import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js'
 import {
   validatePublishBody,
   assertPlatformPublishRules,
+  assertPublishApprovalAllowed,
 } from '../lib/socialPublishGuards.js';
 
 export function createSocialRouter(): Router {
@@ -357,13 +358,66 @@ export function createSocialRouter(): Router {
     }
   });
 
+  /** Komentarze do posta (FB/IG) — baza pod Engagement Inbox. */
+  router.get('/api/social/comments', requireSupabaseAuth, async (req, res) => {
+    const userId = getAuthUserId(req);
+    const connectionId = String(req.query.connectionId || '');
+    const platformPostId = String(req.query.platformPostId || '');
+
+    if (!connectionId || !platformPostId) {
+      return res.status(400).json({ error: 'Wymagane connectionId i platformPostId' });
+    }
+
+    try {
+      const { data: connection, error: connError } = await supabase
+        .from('social_connections')
+        .select('*')
+        .eq('id', connectionId)
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (connError || !connection) {
+        return res.status(404).json({ error: 'Nie znaleziono połączenia' });
+      }
+
+      let comments: Array<{ id: string; message: string; authorName: string; createdAt: string }> = [];
+
+      if (connection.platform === 'facebook') {
+        const fb = new FacebookPublisher(connection.access_token);
+        comments = await fb.getComments(platformPostId, connection.access_token);
+      } else if (connection.platform === 'instagram') {
+        const ig = new InstagramPublisher(connection.access_token);
+        comments = await ig.getComments(platformPostId);
+      } else {
+        return res.status(400).json({
+          error: `Komentarze nie są jeszcze wspierane dla ${connection.platform}`,
+        });
+      }
+
+      res.json({ comments, platform: connection.platform });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('Social comments error:', error);
+      res.status(500).json({ error: message });
+    }
+  });
+
   router.post('/api/social/publish', ...creditGate('publishPost'), async (req, res) => {
     const userId = getAuthUserId(req);
     const parsed = validatePublishBody(req.body);
     if (!parsed.ok) return res.status(parsed.status).json({ error: parsed.error });
 
-    const { connectionId, postText, imageUrl, scheduledPostId, hashtags, callToAction, ctaUrl } =
-      parsed.data;
+    const {
+      connectionId,
+      postText,
+      imageUrl,
+      scheduledPostId,
+      historyId,
+      hashtags,
+      callToAction,
+      ctaUrl,
+    } = parsed.data;
 
     const caption = formatPublishCaption({
       postText,
@@ -374,6 +428,41 @@ export function createSocialRouter(): Router {
     const linkUrl = normalizeCtaUrl(ctaUrl);
 
     try {
+      if (scheduledPostId) {
+        const { data: scheduled } = await supabase
+          .from('scheduled_posts')
+          .select('id, approval_status, user_id')
+          .eq('id', scheduledPostId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (!scheduled) {
+          return res.status(404).json({ error: 'Nie znaleziono zaplanowanego posta.' });
+        }
+        try {
+          assertPublishApprovalAllowed(scheduled.approval_status);
+        } catch (approvalErr) {
+          const message = approvalErr instanceof Error ? approvalErr.message : String(approvalErr);
+          return res.status(403).json({ error: message });
+        }
+      }
+
+      if (historyId) {
+        const { data: hist } = await supabase
+          .from('history')
+          .select('id, status, user_id')
+          .eq('id', historyId)
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (hist) {
+          try {
+            assertPublishApprovalAllowed(hist.status as string | undefined);
+          } catch (approvalErr) {
+            const message = approvalErr instanceof Error ? approvalErr.message : String(approvalErr);
+            return res.status(403).json({ error: message });
+          }
+        }
+      }
+
       const { data: connection, error: connError } = await supabase
         .from('social_connections')
         .select('*')

@@ -24,13 +24,11 @@ const hashString = (str: string): number => {
 
 export const generateMockPerformanceData = (history: CampaignHistoryItem[]): CampaignHistoryItem[] => {
   return history.map(item => {
-    // Podstawowe wartości metryk
     let baseReach = 5000;
     let baseLikes = 200;
     let baseComments = 20;
     let baseShares = 10;
 
-    // Modyfikatory w oparciu o właściwości posta (symulacja trendów)
     if (item.formData?.contentType === ContentType.Advertisement) baseReach *= 2.5;
     if (item.formData?.tone === Tone.Witty) baseComments *= 1.5;
     if (item.formData?.tone === Tone.Inspirational) baseShares *= 1.8;
@@ -39,7 +37,6 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
       baseLikes *= 2;
     }
 
-    // Deterministyczna losowość na podstawie ID posta – eliminuje miganie przy re-renderach
     const seed = hashString(item.id);
     const randomize = (value: number, offset: number) =>
       value * (0.8 + seededRandom(seed + offset) * 0.4);
@@ -51,6 +48,7 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
         likes: Math.floor(randomize(baseLikes, 1)),
         comments: Math.floor(randomize(baseComments, 2)),
         shares: Math.floor(randomize(baseShares, 3)),
+        metricsSource: 'estimated' as const,
       },
     };
   });
@@ -59,30 +57,77 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
 const normalizeText = (text: string) =>
   text.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 120);
 
+function extractPublishedUrl(item: CampaignHistoryItem): string | null {
+  const meta = (item.result as { metadata?: { published_url?: string } })?.metadata;
+  const fromMeta = meta?.published_url;
+  if (typeof fromMeta === 'string' && fromMeta.trim()) return fromMeta.trim();
+  return null;
+}
+
+function findSocialMatch(
+  item: CampaignHistoryItem,
+  socialPosts: SocialPost[]
+): SocialPost | undefined {
+  const publishedUrl = extractPublishedUrl(item);
+  if (publishedUrl) {
+    const byUrl = socialPosts.find(
+      (sp) => sp.url && (sp.url === publishedUrl || publishedUrl.includes(sp.platformPostId))
+    );
+    if (byUrl) return byUrl;
+  }
+
+  const topic = normalizeText(item.formData?.topic || item.result?.postText || '');
+  if (!topic) return undefined;
+
+  return socialPosts.find((sp) => {
+    const content = normalizeText(sp.content || '');
+    if (!content) return false;
+    return content.includes(topic.slice(0, 40)) || topic.includes(content.slice(0, 40));
+  });
+}
+
 /**
- * Preferuje metryki z podłączonych kont social; brak dopasowania → mock.
+ * Preferuje metryki z podłączonych kont social.
+ * Brak kont → puste metryki (bez udawania live).
+ * Brak dopasowania przy obecnych kontach → estimated (oznaczone).
  */
 export const enrichHistoryWithLiveMetrics = (
   history: CampaignHistoryItem[],
   socialPosts: SocialPost[]
-): { items: CampaignHistoryItem[]; liveMatched: number } => {
-  const withMock = generateMockPerformanceData(history);
+): { items: CampaignHistoryItem[]; liveMatched: number; estimatedCount: number } => {
   if (!socialPosts.length) {
-    return { items: withMock, liveMatched: 0 };
+    return {
+      items: history.map((item) => ({
+        ...item,
+        performance: {
+          reach: 0,
+          likes: 0,
+          comments: 0,
+          shares: 0,
+          metricsSource: 'estimated' as const,
+        },
+      })),
+      liveMatched: 0,
+      estimatedCount: history.length,
+    };
   }
 
+  const withMock = generateMockPerformanceData(history);
   let liveMatched = 0;
+  let estimatedCount = 0;
+
   const items = withMock.map((item) => {
-    const topic = normalizeText(item.formData?.topic || item.result?.postText || '');
-    if (!topic) return item;
-
-    const match = socialPosts.find((sp) => {
-      const content = normalizeText(sp.content || '');
-      if (!content) return false;
-      return content.includes(topic.slice(0, 40)) || topic.includes(content.slice(0, 40));
-    });
-
-    if (!match) return item;
+    const match = findSocialMatch(item, socialPosts);
+    if (!match) {
+      estimatedCount += 1;
+      return {
+        ...item,
+        performance: {
+          ...item.performance!,
+          metricsSource: 'estimated' as const,
+        },
+      };
+    }
 
     const likes = match.metrics?.likes ?? (match as { likes?: number }).likes;
     const comments = match.metrics?.comments ?? (match as { comments?: number }).comments;
@@ -98,21 +143,31 @@ export const enrichHistoryWithLiveMetrics = (
       typeof comments === 'number' ||
       typeof shares === 'number' ||
       typeof reach === 'number';
-    if (!hasLive) return item;
+    if (!hasLive) {
+      estimatedCount += 1;
+      return {
+        ...item,
+        performance: {
+          ...item.performance!,
+          metricsSource: 'estimated' as const,
+        },
+      };
+    }
 
     liveMatched += 1;
     return {
       ...item,
       performance: {
-        reach: reach ?? item.performance?.reach ?? 0,
-        likes: likes ?? item.performance?.likes ?? 0,
-        comments: comments ?? item.performance?.comments ?? 0,
-        shares: shares ?? item.performance?.shares ?? 0,
+        reach: reach ?? 0,
+        likes: likes ?? 0,
+        comments: comments ?? 0,
+        shares: shares ?? 0,
+        metricsSource: 'live' as const,
       },
     };
   });
 
-  return { items, liveMatched };
+  return { items, liveMatched, estimatedCount };
 };
 
 interface AIAnalysisResult {
@@ -128,39 +183,40 @@ export const fetchAIAnalysis = async (
   userId: string,
   socialHistory: SocialPost[] = []
 ): Promise<AIAnalysisResult> => {
-  if (analyzedHistory.length === 0 && socialHistory.length === 0) {
-    return { insights: [], optimalTimes: [] };
-  }
-
-  // Uprościmy historię aplikacji dla promptu
-  const appHistorySummary = analyzedHistory.map(h => ({
-    source: 'app_generation',
-    topic: h.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu',
-    platform: h.formData?.platform,
-    tone: h.formData?.tone,
-    performance: h.performance
-  }));
-
-  // Uprościmy historię z mediów społecznościowych
-  const socialHistorySummary = socialHistory.map(p => ({
-    source: 'social_media_platform',
-    content: p.content?.substring(0, 200) + '...',
-    platform: (p as unknown as Record<string, unknown>).platform as string || 'Unknown',
-    publishedAt: p.publishedAt,
-    metrics: p.metrics
-  }));
-
-  const allDataSummary = [...appHistorySummary, ...socialHistorySummary];
-
   try {
+    const allDataSummary = {
+      generatedPosts: analyzedHistory.map(item => ({
+        id: item.id,
+        topic: item.formData.topic,
+        platform: item.formData.platform,
+        contentType: item.formData.contentType,
+        tone: item.formData.tone,
+        performance: item.performance,
+        metricsSource: item.performance?.metricsSource,
+        timestamp: item.timestamp,
+        source: 'local_history',
+      })),
+      socialMediaPosts: socialHistory.map(item => ({
+        id: item.id,
+        content: item.content?.substring(0, 100),
+        platform: item.platform,
+        metrics: item.metrics,
+        publishedAt: item.publishedAt,
+        source: 'social_media_platform',
+      })),
+    };
+
     const result = await generateJson<AIAnalysisResult>({
       model: "gemini-flash-latest",
-      contents: `Jesteś ekspertem ds. analityki mediów społecznościowych. Przeanalizuj poniższe dane o postach (zarówno wygenerowanych w naszej aplikacji, jak i pobranych bezpośrednio z platform społecznościowych):
+      contents: `Jesteś ekspertem od analityki social media.
+            
+            Oto dane dotyczące historii postów użytkownika (zarówno wygenerowanych lokalnie, jak i rzeczywistych z platform):
             ${JSON.stringify(allDataSummary, null, 2)}
             
             Twoim zadaniem jest:
             1. Wygenerować 3-4 konkretne wskazówki (insights) o typie 'positive', 'suggestion' lub 'observation'. 
-               Priorytetyzuj wnioski oparte na RZECZYWISTYCH danych z platform społecznościowych (source: social_media_platform).
+               Priorytetyzuj wnioski oparte na RZECZYWISTYCH danych z platform społecznościowych (source: social_media_platform)
+               oraz postach z metricsSource=live. Nie traktuj metricsSource=estimated jako faktów.
             2. Określić optymalne czasy publikacji (optimalTimes) na podstawie dat publikacji rzeczywistych postów i ich wyników.
             
             Zwróć wynik w formacie JSON zgodnym z interfejsem:
@@ -173,7 +229,6 @@ export const fetchAIAnalysis = async (
 
     return result;
   } catch {
-    // Fallback w razie błędu API
     return {
       insights: [
         { id: 'err-1', type: 'observation', text: 'Analiza w czasie rzeczywistym tymczasowo niedostępna. Wykorzystano dane archiwalne.' },
@@ -196,7 +251,9 @@ export const generateStrategySuggestions = async (
   historySummary: unknown[]
 ): Promise<{ date: string; platform: string; topic: string; reason: string }[]> => {
   try {
-    const result = await generateJson<{ suggestions: { date: string; platform: string; topic: string; reason: string }[] }>({
+    const result = await generateJson<{
+      suggestions: { date: string; platform: string; topic: string; reason: string }[];
+    }>({
       model: "gemini-flash-latest",
       contents: `Na podstawie analizy wydajności postów:
             INSIGHTS: ${JSON.stringify(analysis.insights)}

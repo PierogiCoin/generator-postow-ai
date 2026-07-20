@@ -26,17 +26,50 @@
       "quality": "Optymalizacja i Jakość",
       "distribution": "Dystrybucja i Wideo"
     },
-    "reverseImage": { "title": "Analiza obrazu konkurencji", "desc": "Analizuj viralowe obrazy konkurencji" },
-    "techRadar": { "title": "Znajdź nowinki w niszy", "desc": "Live newsy z Google Search → temat lub kalendarz" },
-    "trends": { "title": "Analiza trendów", "desc": "Analizuj trendy w Twojej niszy" },
-    "safety": { "title": "Skaner bezpieczeństwa treści", "desc": "Ochrona przed shadowbanem" },
-    "schedule": { "title": "Optymalizacja harmonogramu", "desc": "Znajdź najlepszy czas publikacji" },
-    "workflow": { "title": "Automatyzacja AI Workflow", "desc": "Pipeline, odpowiedzi, predykcja" },
-    "repurpose": { "title": "Przetwarzanie treści", "desc": "Jedna treść → wiele platform" },
-    "crossPlatform": { "title": "Centrum wieloplatformowe", "desc": "Inbox, adaptacja, analiza" },
-    "publisher": { "title": "Publikacja w social media", "desc": "Publikuj bezpośrednio na kontach" },
-    "video": { "title": "Generator wideo AI", "desc": "Twórz krótkie wideo z posta" },
-    "omni": { "title": "Gemini Omni", "desc": "Zaawansowany asystent multimodalny" }
+    "reverseImage": {
+      "title": "Analiza obrazu konkurencji",
+      "desc": "Analizuj viralowe obrazy konkurencji"
+    },
+    "techRadar": {
+      "title": "Znajdź nowinki w niszy",
+      "desc": "Live newsy z Google Search → temat lub kalendarz"
+    },
+    "trends": {
+      "title": "Analiza trendów",
+      "desc": "Analizuj trendy w Twojej niszy"
+    },
+    "safety": {
+      "title": "Skaner bezpieczeństwa treści",
+      "desc": "Ochrona przed shadowbanem"
+    },
+    "schedule": {
+      "title": "Optymalizacja harmonogramu",
+      "desc": "Znajdź najlepszy czas publikacji"
+    },
+    "workflow": {
+      "title": "Automatyzacja AI Workflow",
+      "desc": "Pipeline, odpowiedzi, predykcja"
+    },
+    "repurpose": {
+      "title": "Przetwarzanie treści",
+      "desc": "Jedna treść → wiele platform"
+    },
+    "crossPlatform": {
+      "title": "Centrum wieloplatformowe",
+      "desc": "Inbox, adaptacja, analiza"
+    },
+    "publisher": {
+      "title": "Publikacja w social media",
+      "desc": "Publikuj bezpośrednio na kontach"
+    },
+    "video": {
+      "title": "Generator wideo AI",
+      "desc": "Twórz krótkie wideo z posta"
+    },
+    "omni": {
+      "title": "Gemini Omni",
+      "desc": "Zaawansowany asystent multimodalny"
+    }
   },
   "header": {
     "title": "AI Content Pro",
@@ -301,6 +334,28 @@
       "bannerLabel": "Generowanie ze slotu kalendarza",
       "bannerHint": "Po wygenerowaniu treść przejdzie bramę jakości (auto-poprawka do 2×), potem trafi do zaplanowanych publikacji.",
       "batchLabel": "Batch dnia {{current}}/{{total}}"
+    },
+    "bulk": {
+      "title": "Kolejka publikacji",
+      "subtitle": "Wybierz gotowe posty — potwierdź harmonogram lub publikuj od razu.",
+      "empty": "Brak gotowych postów w tym zakresie. Wygeneruj treść i zaplanuj publikacje.",
+      "selectAll": "Zaznacz wszystkie",
+      "deselectAll": "Odznacz wszystkie",
+      "selectPost": "Zaznacz post",
+      "open": "Kolejka publikacji",
+      "modeSchedule": "Potwierdź harmonogram",
+      "modePublishNow": "Publikuj teraz",
+      "publishSelected": "Publikuj zaznaczone ({{count}})",
+      "confirmSelected": "Potwierdź harmonogram ({{count}})",
+      "publishing": "Publikuję…",
+      "confirming": "Zapisuję…",
+      "done": "Kolejka: {{ok}} opublikowano, {{fail}} błędów, {{skip}} pominięto",
+      "scheduleConfirmed": "Potwierdzono {{count}} publikacji w harmonogramie.",
+      "statusPublishing": "Publikowanie",
+      "statusDone": "Opublikowano",
+      "statusFailed": "Błąd",
+      "statusSkipped": "Pominięto",
+      "statusPending": "Oczekuje"
     }
   },
   "topicAssistant": {
@@ -533,21 +588,26 @@
       "faq": "FAQ"
     },
     "trust": {
-      "title": "Zaufali nam najlepsi",
-      "disclaimer": "Przykładowe marki — ilustracja stylu współpracy z zespołami marketingowymi."
+      "title": "Zbudowane dla marketerów i twórców",
+      "item_generate": "Generator postów",
+      "item_plan": "Planer kampanii",
+      "item_analyze": "Analityka treści"
     },
     "hero": {
-      "title_part1": "Zdominuj media społecznościowe. Twórz treści, które",
-      "title_part2": "konwertują 10x szybciej.",
-      "subtitle": "AI Content Pro to Twój inteligentny asystent. Generuj angażujące posty, planuj kampanie i optymalizuj strategię w oparciu o dane.",
-      "cta": "Zacznij tworzyć za darmo",
+      "brand": "AI Content Pro",
+      "title": "Posty social media dopasowane do Twojej marki",
+      "subtitle": "Generuj gotowe treści i planuj publikacje w jednym miejscu — bez karty kredytowej.",
+      "cta": "Wygeneruj pierwszy post",
       "cta_logged_in": "Przejdź do generatora",
       "secondary_cta": "Zobacz jak to działa",
-      "sub_cta": "Dołącz do 5,000+ marketerów i twórców. Bez karty kredytowej.",
-      "sub_cta_logged_in": "Wróć do pracy — Twoje projekty czekają w generatorze.",
-      "pill_features": "Funkcje",
-      "pill_testimonials": "Opinie",
-      "pill_faq": "FAQ"
+      "preview_target": "Odbiorca: Social Media Manager",
+      "preview_tone": "Ton: konkretny i profesjonalny",
+      "preview_generate": "Generuj post",
+      "preview_label": "Podgląd posta",
+      "preview_status": "Gotowe",
+      "preview_body": "Odkryj przyszłość marketingu z generatorem postów AI. Harmonogram, analizy i copywriter w jednym miejscu.",
+      "preview_tag_ai": "#AI",
+      "preview_tag_marketing": "#Marketing"
     },
     "final_cta": {
       "title": "Gotowy zrewolucjonizować swoje media społecznościowe?",
@@ -858,8 +918,9 @@
     "upcomingPosts": "Nadchodzące Posty",
     "social": {
       "title": "Social Intelligence",
-      "autoPublishActive": "Auto-Publikacja: Aktywna",
-      "noConnections": "Brak połączonych kont"
+      "autoPublishActive": "Auto-publikacja: włączona",
+      "noConnections": "Brak połączonych kont",
+      "connectedOnly": "Konta połączone · auto-publikacja wyłączona"
     },
     "weeklySummary": {
       "title": "Podsumowanie tygodnia",
@@ -1008,20 +1069,72 @@
       "contentGaps": "Luki treści",
       "optimalTimes": "Optymalne godziny",
       "newsAngles": "Kąty z newsów",
-      "tone": "Ton",
-      "generatePost": "Wygeneruj ten post",
+      "tone": "Sugerowany Ton",
+      "generatePost": "Generuj ten post",
       "buildsOn": "Rozwija",
       "gapsFilled": "Uzupełnia luki",
       "avoided": "Unika powtórzeń",
       "complements": "Uzupełnia kalendarz",
-      "dayHour": "Dzień i Godzina",
-      "tone": "Sugerowany Ton",
-      "generatePost": "Generuj ten post"
+      "dayHour": "Dzień i Godzina"
     },
     "locked": {
       "title": "Odblokuj Strategistę AI",
       "description": "Przejdź na plan Pro, aby uzyskać kompleksowy audyt strategiczny, 30-dniowy plan treści i wgląd w konkurencję.",
       "upgradeButton": "Ulepsz do Pro"
+    }
+  },
+  "approval": {
+    "title": "Kolejka akceptacji",
+    "subtitle": "{{count}} oczekujących",
+    "filterPending": "Oczekujące",
+    "filterAll": "Wszystkie",
+    "empty": "Brak treści w kolejce. Wyślij post do akceptacji z planowania.",
+    "approve": "Akceptuj",
+    "approveKeep": "Akceptuj (harmonogram)",
+    "approvePublish": "Akceptuj i publikuj",
+    "approvedScheduled": "Zaakceptowano — zostaje w harmonogramie.",
+    "reject": "Odrzuć",
+    "send": "Wyślij do akceptacji",
+    "open": "Otwórz"
+  },
+  "inbox": {
+    "title": "Skrzynka engagement",
+    "subtitle": "{{count}} wątków z komentarzami",
+    "refresh": "Odśwież",
+    "refreshing": "Odświeżam…",
+    "loading": "Ładowanie komentarzy z połączonych kont…",
+    "empty": "Brak wątków. Połącz konta i opublikuj posty — tu pojawią się te z komentarzami.",
+    "smartReply": "Szkic odpowiedzi AI",
+    "drafting": "Generuję…",
+    "openPost": "Otwórz post",
+    "copy": "Kopiuj",
+    "toneFriendly": "Przyjazny",
+    "tonePro": "Profesjonalny",
+    "toneBrief": "Krótki",
+    "loadError": "Nie udało się załadować skrzynki",
+    "draftError": "Błąd generowania odpowiedzi",
+    "copyError": "Nie udało się skopiować"
+  },
+  "rss": {
+    "title": "RSS / Blog → Post",
+    "subtitle": "Artykuł lub feed → gotowy szkic posta w generatorze",
+    "urlLabel": "URL artykułu lub RSS",
+    "pasteLabel": "Lub wklej treść artykułu",
+    "pastePlaceholder": "Wklej tekst, jeśli URL nie da się pobrać…",
+    "convert": "Zrób post z artykułu",
+    "converting": "Przetwarzam…",
+    "ready": "Gotowy draft — otwieram generator",
+    "needContent": "Wklej treść artykułu lub podaj URL, który da się pobrać (RSS/HTML).",
+    "loginRequired": "Zaloguj się, aby kontynuować",
+    "error": "Nie udało się przetworzyć treści",
+    "defaultTopic": "Post z artykułu / RSS"
+  },
+  "crossPlatform": {
+    "title": "Centrum multi-platformowe",
+    "tabs": {
+      "picker": "Najlepsza platforma",
+      "inbox": "Skrzynka",
+      "adapt": "Cross-post"
     }
   }
 }

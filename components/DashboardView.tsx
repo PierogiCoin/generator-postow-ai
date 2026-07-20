@@ -39,6 +39,7 @@ import { ReferralCard } from './ReferralCard';
 import { ApprovalQueuePanel } from './ApprovalQueuePanel';
 import { EngagementInboxPanel } from './EngagementInboxPanel';
 import { RssToPostPanel } from './RssToPostPanel';
+import { loadAutoPublishPrefs } from '../utils/autoPublishPrefs';
 
 // Zustand stores
 import { useDataStore } from '../stores/dataStore';
@@ -202,6 +203,7 @@ const SocialMediaSection: React.FC = () => {
     const [selectedConnection, setSelectedConnection] = useState<SocialConnection | null>(null);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [autoPublishOn, setAutoPublishOn] = useState(false);
 
     const load = async () => {
         if (!user) return;
@@ -209,6 +211,7 @@ const SocialMediaSection: React.FC = () => {
         try {
             const data = await socialConnectionsService.getConnections(user.id);
             setConnections(data);
+            setAutoPublishOn(Boolean(loadAutoPublishPrefs().autoPublishToConnected));
         } catch (e) {
             // ignore
         } finally {
@@ -233,11 +236,19 @@ const SocialMediaSection: React.FC = () => {
                 <div>
                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard.social.title', 'Social Intelligence')}</h3>
                     <div className="flex items-center gap-2 mt-1">
-                        <div className={`w-1.5 h-1.5 rounded-full ${connections.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          connections.length > 0 && autoPublishOn
+                            ? 'bg-emerald-500 animate-pulse'
+                            : connections.length > 0
+                              ? 'bg-cyan-500'
+                              : 'bg-slate-400'
+                        }`} />
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            {connections.length > 0
-                                ? t('dashboard.social.autoPublishActive', 'Auto-Publikacja: Aktywna')
-                                : t('dashboard.social.noConnections', 'Brak połączonych kont')}
+                            {connections.length === 0
+                                ? t('dashboard.social.noConnections', 'Brak połączonych kont')
+                                : autoPublishOn
+                                  ? t('dashboard.social.autoPublishActive', 'Auto-publikacja: włączona')
+                                  : t('dashboard.social.connectedOnly', 'Konta połączone · auto-publikacja wyłączona')}
                         </span>
                     </div>
                 </div>

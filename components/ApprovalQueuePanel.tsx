@@ -2,7 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDataStore } from '../stores/dataStore';
+import { useAppHandlers } from '../hooks/useAppHandlers';
+import { useNotifications } from '../hooks/useNotifications';
 import type { CampaignHistoryItem, PostApprovalStatus, ScheduledPost } from '../types';
+import { NotificationType } from '../types';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { XMarkIcon } from './icons/XMarkIcon';
 import { ClockIcon } from './icons/ClockIcon';
@@ -26,19 +29,11 @@ function topicOf(item: CampaignHistoryItem | ScheduledPost): string {
 export const ApprovalQueuePanel: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { addToast } = useNotifications();
+  const handlers = useAppHandlers(() => {}, () => {});
   const { history, scheduledPosts, handleStatusChange, addOrUpdateScheduledPost } = useDataStore();
   const [filter, setFilter] = useState<'pending_approval' | 'all'>('pending_approval');
   const [busyId, setBusyId] = useState<string | null>(null);
-
-  const items = useMemo(() => {
-    const hist: QueueItem[] = history
-      .filter((h) => (filter === 'all' ? true : h.status === 'pending_approval'))
-      .map((item) => ({ kind: 'history', item }));
-    const sched: QueueItem[] = scheduledPosts
-      .filter((p) => (filter === 'all' ? true : p.approvalStatus === 'pending_approval'))
-      .map((item) => ({ kind: 'scheduled', item }));
-    return [...hist, ...sched].slice(0, 20);
-  }, [history, scheduledPosts, filter]);
 
   const pendingCount = useMemo(
     () =>
@@ -46,6 +41,21 @@ export const ApprovalQueuePanel: React.FC = () => {
       scheduledPosts.filter((p) => p.approvalStatus === 'pending_approval').length,
     [history, scheduledPosts]
   );
+
+  // Progressive disclosure: ukryj panel gdy brak oczekujących (chyba że filtr „wszystkie”)
+  if (pendingCount === 0 && filter === 'pending_approval') {
+    return null;
+  }
+
+  const items = (() => {
+    const hist: QueueItem[] = history
+      .filter((h) => (filter === 'all' ? true : h.status === 'pending_approval'))
+      .map((item) => ({ kind: 'history' as const, item }));
+    const sched: QueueItem[] = scheduledPosts
+      .filter((p) => (filter === 'all' ? true : p.approvalStatus === 'pending_approval'))
+      .map((item) => ({ kind: 'scheduled' as const, item }));
+    return [...hist, ...sched].slice(0, 20);
+  })();
 
   const setStatus = async (entry: QueueItem, status: PostApprovalStatus) => {
     const id = entry.item.id;
@@ -55,6 +65,36 @@ export const ApprovalQueuePanel: React.FC = () => {
         await handleStatusChange(id, status);
       } else {
         await addOrUpdateScheduledPost({ ...entry.item, approvalStatus: status });
+      }
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const approveAndLeave = async (entry: QueueItem) => {
+    await setStatus(entry, 'approved');
+    addToast(
+      t('approval.approvedScheduled', 'Zaakceptowano — zostaje w harmonogramie.'),
+      NotificationType.Success
+    );
+  };
+
+  const approveAndPublish = async (entry: QueueItem) => {
+    const id = entry.item.id;
+    setBusyId(id);
+    try {
+      if (entry.kind === 'history') {
+        await handleStatusChange(id, 'approved');
+        await handlers.handlePublishNow(
+          { ...entry.item.result, approvalStatus: 'approved' },
+          String(entry.item.formData?.platform || 'Facebook')
+        );
+      } else {
+        await addOrUpdateScheduledPost({ ...entry.item, approvalStatus: 'approved' });
+        await handlers.handlePublishNow(
+          { ...entry.item.result, approvalStatus: 'approved' },
+          String(entry.item.formData?.platform || 'Facebook')
+        );
       }
     } finally {
       setBusyId(null);
@@ -122,16 +162,24 @@ export const ApprovalQueuePanel: React.FC = () => {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => setStatus(entry, 'approved')}
+                        onClick={() => void approveAndLeave(entry)}
                         className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-xl bg-emerald-500 text-white disabled:opacity-50"
                       >
                         <CheckCircleIcon className="w-4 h-4" />
-                        {t('approval.approve', 'Akceptuj')}
+                        {t('approval.approveKeep', 'Akceptuj (harmonogram)')}
                       </button>
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => setStatus(entry, 'rejected')}
+                        onClick={() => void approveAndPublish(entry)}
+                        className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-xl bg-cyan-600 text-white disabled:opacity-50"
+                      >
+                        {t('approval.approvePublish', 'Akceptuj i publikuj')}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void setStatus(entry, 'rejected')}
                         className="inline-flex items-center gap-1 px-3 py-2 text-xs font-bold rounded-xl bg-red-500/90 text-white disabled:opacity-50"
                       >
                         <XMarkIcon className="w-4 h-4" />
@@ -143,7 +191,7 @@ export const ApprovalQueuePanel: React.FC = () => {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => setStatus(entry, 'pending_approval')}
+                      onClick={() => void setStatus(entry, 'pending_approval')}
                       className="px-3 py-2 text-xs font-bold rounded-xl bg-amber-500 text-white disabled:opacity-50"
                     >
                       {t('approval.send', 'Wyślij do akceptacji')}
