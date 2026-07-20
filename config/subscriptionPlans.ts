@@ -55,6 +55,12 @@ export interface SubscriptionPlanConfig {
   };
 }
 
+/** Format limitu z usageLimits — ten sam string na kartach i w porównaniu */
+export function formatUsageLimit(n: number): string {
+  if (!Number.isFinite(n)) return '∞';
+  return n.toLocaleString('pl-PL');
+}
+
 export const CREDIT_PACKS = CREDIT_PACK_PRICING.map((pack) => ({
   id: pack.id,
   name: pack.id.charAt(0).toUpperCase() + pack.id.slice(1),
@@ -74,13 +80,13 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     namePl: 'Darmowy',
     ...SUBSCRIPTION_PRICING.free,
     savingsPercent: 0,
-    descriptionPl: 'Poznaj AI bez karty — wystarczy na ~10 postów miesięcznie.',
+    descriptionPl: 'Poznaj AI bez karty — limit zgodny z limitem konta.',
     stripePriceEnv: null,
     features: [
-      { id: 'credits', labelPl: 'Kredyty / mies.', limit: String(SUBSCRIPTION_PRICING.free.credits) },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: '~10' },
-      { id: 'image', labelPl: 'Obrazy AI', limit: '3' },
-      { id: 'campaign', labelPl: 'Kampanie AI', limit: '1' },
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.free.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(10) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(3) },
+      { id: 'campaign', labelPl: 'Kampanie AI', limit: formatUsageLimit(1) },
     ],
     usageLimits: { text: 10, image: 3, video: 0, campaign: 1 },
     flags: {
@@ -104,10 +110,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     descriptionPl: 'Freelancerzy i twórcy — kalendarz, wideo i głos marki.',
     stripePriceEnv: 'STRIPE_CREATOR_PRICE_ID',
     features: [
-      { id: 'credits', labelPl: 'Kredyty / mies.', limit: '750' },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: '~75' },
-      { id: 'image', labelPl: 'Obrazy AI', limit: '20' },
-      { id: 'video', labelPl: 'Wideo AI', limit: '2' },
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.creator.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(100) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(20) },
+      { id: 'video', labelPl: 'Wideo AI', limit: formatUsageLimit(2) },
       { id: 'schedule', labelPl: 'Planowanie i kalendarz' },
       { id: 'brand', labelPl: 'Profile głosu marki', limit: '1' },
     ],
@@ -134,10 +140,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     descriptionPl: 'Najlepszy wybór solo — analityka, strategista i 5 profili marki.',
     stripePriceEnv: 'STRIPE_PRO_PRICE_ID',
     features: [
-      { id: 'credits', labelPl: 'Kredyty / mies.', limit: '1 800' },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: '~180' },
-      { id: 'image', labelPl: 'Obrazy AI', limit: '100' },
-      { id: 'video', labelPl: 'Wideo AI', limit: '10' },
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.pro.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(500) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(100) },
+      { id: 'video', labelPl: 'Wideo AI', limit: formatUsageLimit(10) },
       { id: 'analytics', labelPl: 'Analityka i strategista AI' },
       { id: 'brand', labelPl: 'Profile głosu marki', limit: '5' },
     ],
@@ -163,10 +169,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     descriptionPl: 'Zespoły marketingowe — API, 6 000 kredytów i 20 profili marki.',
     stripePriceEnv: 'STRIPE_BUSINESS_PRICE_ID',
     features: [
-      { id: 'credits', labelPl: 'Kredyty / mies.', limit: '6 000' },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: '~600' },
-      { id: 'image', labelPl: 'Obrazy AI', limit: '200' },
-      { id: 'video', labelPl: 'Wideo AI', limit: '50' },
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.business.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(800) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(200) },
+      { id: 'video', labelPl: 'Wideo AI', limit: formatUsageLimit(50) },
       { id: 'api', labelPl: 'Dostęp API' },
       { id: 'brand', labelPl: 'Profile głosu marki', limit: '20' },
     ],
@@ -189,17 +195,17 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       SUBSCRIPTION_PRICING.agency.priceUsd,
       SUBSCRIPTION_PRICING.agency.credits
     ),
-    descriptionPl: 'Agencje — 18 000 kredytów, nielimitowane kampanie i profile marki.',
+    descriptionPl: 'Agencje — 18 000 kredytów, więcej wideo niż Business, ∞ kampanii.',
     stripePriceEnv: 'STRIPE_AGENCY_PRICE_ID',
     features: [
-      { id: 'credits', labelPl: 'Kredyty / mies.', limit: '18 000' },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: '~1 800' },
-      { id: 'image', labelPl: 'Obrazy AI', limit: '300' },
-      { id: 'video', labelPl: 'Wideo AI', limit: '30' },
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.agency.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(2000) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(400) },
+      { id: 'video', labelPl: 'Wideo AI', limit: formatUsageLimit(80) },
       { id: 'campaign', labelPl: 'Kampanie AI', limit: '∞' },
       { id: 'brand', labelPl: 'Profile głosu marki', limit: '∞' },
     ],
-    usageLimits: { text: 2000, image: 300, video: 30, campaign: Infinity },
+    usageLimits: { text: 2000, image: 400, video: 80, campaign: Infinity },
     flags: {
       scheduling: true,
       analytics: true,
@@ -221,10 +227,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     descriptionPl: '28 000 kredytów, white-label i priorytetowy support.',
     stripePriceEnv: 'STRIPE_ENTERPRISE_PRICE_ID',
     features: [
-      { id: 'credits', labelPl: 'Kredyty / mies.', limit: '28 000' },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: '~2 800' },
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.enterprise.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: '∞' },
       { id: 'unlimited', labelPl: 'Limity generacji', limit: '∞' },
-      { id: 'api', labelPl: 'API + white-label' },
+      { id: 'api_whitelabel', labelPl: 'API + white-label' },
       { id: 'support', labelPl: 'Priorytetowy support' },
     ],
     usageLimits: { text: Infinity, image: Infinity, video: Infinity, campaign: Infinity },

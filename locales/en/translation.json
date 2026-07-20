@@ -113,16 +113,34 @@
     "selectWorkspace": "Select Workspace"
   },
   "form": {
+    "workspaceLabel": "Workspace",
     "mode": {
       "label": "Form mode",
       "quick": "Quick",
       "advanced": "Advanced",
-      "quickHint": "3 steps: topic → platform → generate"
+      "quickHint": "3 steps: topic → platform → generate",
+      "advancedHint": "Full control: type, tone, visuals, and Brand Voice."
+    },
+    "sections": {
+      "topic": "Topic",
+      "topicDesc": "Describe what the content should be about — the rest follows from this.",
+      "format": "Platform & format",
+      "formatDesc": "Where you publish and which content type we generate.",
+      "generationType": "Generation type",
+      "voice": "Voice & audience",
+      "voiceDesc": "Who you’re writing for, in what tone and language.",
+      "campaign": "Campaign strategy",
+      "campaignDesc": "Goal and duration for a multi-channel campaign.",
+      "video": "Video settings",
+      "videoDesc": "Transcript, aspect ratio, and reference image.",
+      "visual": "Visuals",
+      "visualDesc": "Image style and aspect ratio for the platform."
     },
     "quick": {
       "stepTopic": "Topic",
       "stepPlatform": "Platform & tone",
       "stepGenerate": "Generate",
+      "stepsAria": "Form steps",
       "next": "Next",
       "back": "Back",
       "summary": "Summary",
@@ -170,7 +188,13 @@
       "label": "Topic or main message",
       "placeholder": "e.g., Introducing a new, eco-friendly shoe model...",
       "tooltip": "Enter the main theme, product, or message you want to convey. The more details you provide (e.g., benefits, features), the better the result will be.",
-      "assistantTooltip": "Get AI suggestions to improve your topic"
+      "assistantTooltip": "Get AI suggestions to improve your topic",
+      "assistant": "AI Assistant",
+      "repurpose": "Smart Repurpose",
+      "repurposePrompt": "Paste text or a URL to extract a topic:",
+      "repurposeTooltip": "Paste text to extract a topic",
+      "analyzing": "Analyzing inspiration…",
+      "extractError": "Topic extraction failed"
     },
     "videoTranscript": {
       "label": "Transcript or text for video",
@@ -191,7 +215,8 @@
     "audience": {
       "label": "Target audience",
       "tooltip": "Describe your ideal audience, e.g., 'Young professionals interested in sustainable development', 'Fitness enthusiasts looking for healthy snacks'.",
-      "placeholder": "e.g., Young professionals, fitness enthusiasts"
+      "placeholder": "e.g., Young professionals, fitness enthusiasts",
+      "persona": "AI Persona"
     },
     "keywords": {
       "label": "Keywords (comma-separated)",
@@ -372,6 +397,9 @@
     "use": "Use this"
   },
   "generatorView": {
+    "eyebrow": "Create",
+    "title": "Content generator",
+    "subtitle": "From topic to a ready post — quick mode or full control.",
     "viewingHistory": "You are viewing a saved item.",
     "backToGenerator": "Back to Generator",
     "viewingBanner": "Viewing a post from {{date}}",
@@ -382,6 +410,19 @@
     "mobileNav": "Generator navigation",
     "openSidebar": "Open sidebar",
     "closeSidebar": "Close sidebar"
+  },
+  "strategyAssistant": {
+    "title": "Strategy tip",
+    "showLess": "Show less",
+    "showMore": "Show {{count}} more",
+    "tips": {
+      "shortTopic": "Your topic is short. Add an emotional hook to boost click-through.",
+      "question": "Add a question at the end to invite comments.",
+      "longPost": "The post is fairly long — bullet points will improve readability.",
+      "cta": "A clear call to action (CTA) is missing.",
+      "abTest": "Great topic — try A/B Test to compare two angles.",
+      "contentMix": "Recent posts are mostly images — mix in video or stories."
+    }
   },
   "generationTypes": {
     "PostWithImage": "Post + Image",
@@ -577,6 +618,69 @@
       "finalize": "Finalizing video sequence...",
       "checks": "Almost done, performing final checks...",
       "success": "Video generated successfully!"
+    }
+  },
+  "pricing": {
+    "title": "Subscription plans",
+    "subtitle": "Higher plan = more credits and a lower cost per credit. Billed in USD (Stripe).",
+    "guest_banner": "Pick a plan — after sign-up we’ll take you to secure Stripe checkout.",
+    "recommended": "Recommended",
+    "per_month": "/mo",
+    "savings_per_credit": "−{{percent}}% / credit",
+    "cta_register": "Sign up and choose",
+    "cta_pay": "Continue to payment",
+    "cta_current": "Current plan",
+    "cta_start_free": "Start for free",
+    "cta_free_plan": "Free plan",
+    "cta_enterprise": "Choose Enterprise",
+    "cta_buy_pack": "Buy pack",
+    "redirecting": "Redirecting…",
+    "close": "Close",
+    "show": "Show",
+    "hide": "Hide",
+    "show_agency": "Show Agency plan",
+    "compare_title": "Compare plans",
+    "compare_feature": "Feature",
+    "compare": {
+      "analytics": "AI analytics",
+      "strategist": "AI strategist",
+      "price": "Price / mo"
+    },
+    "unlimited": "Unlimited",
+    "contact_sales": "Contact sales",
+    "packs_title": "Credit packs",
+    "packs_subtitle": "One-time purchase — credits don’t expire while your account is active.",
+    "credits_label": "credits",
+    "disclaimer": "PLN amounts are estimates (~4.2 PLN/USD). Stripe invoices in USD. One-time packs cost more per credit than a subscription.",
+    "error_checkout": "Could not start checkout.",
+    "error_login_pack": "Log in to buy a credit pack.",
+    "feature": {
+      "credits": "Credits / mo",
+      "text": "Text posts",
+      "image": "AI images",
+      "video": "AI video",
+      "campaign": "AI campaigns",
+      "schedule": "Scheduling & calendar",
+      "analytics": "Analytics & AI strategist",
+      "brand": "Brand voice profiles",
+      "api": "API access",
+      "api_whitelabel": "API + white-label",
+      "unlimited": "Generation limits",
+      "support": "Priority support"
+    },
+    "plan_desc": {
+      "free": "Try AI with no card — limits match your account caps.",
+      "creator": "Freelancers and creators — calendar, video, and brand voice.",
+      "pro": "Best solo pick — analytics, strategist, and 5 brand profiles.",
+      "business": "Marketing teams — API, 6,000 credits, and 20 brand profiles.",
+      "agency": "Agencies — 18,000 credits, more video than Business, unlimited campaigns.",
+      "enterprise": "28,000 credits, white-label, and priority support."
+    },
+    "pack": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "mega": "Mega"
     }
   },
   "home": {

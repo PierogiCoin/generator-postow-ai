@@ -77,9 +77,8 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   const goBack = () => setStep((s) => Math.max(1, s - 1));
 
   return (
-    <form onSubmit={onSubmit} className="space-y-8">
-      {/* Step indicator */}
-      <nav aria-label="Kroki formularza" className="flex items-center justify-center gap-1.5 sm:gap-4 flex-wrap">
+    <form onSubmit={onSubmit} className="space-y-6">
+      <nav aria-label={t('form.quick.stepsAria', 'Kroki formularza')} className="flex items-center justify-center gap-1.5 sm:gap-3 flex-wrap">
         {STEPS.map((s, i) => {
           const active = step === s.id;
           const done = step > s.id;
@@ -87,7 +86,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             <React.Fragment key={s.id}>
               {i > 0 && (
                 <div
-                  className={`hidden sm:block h-0.5 w-8 rounded ${done ? 'bg-indigo-500' : 'bg-slate-200 dark:bg-slate-700'}`}
+                  className={`hidden sm:block h-0.5 w-8 rounded ${done ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`}
                 />
               )}
               <button
@@ -95,17 +94,17 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 onClick={() => {
                   if (s.id < step || (s.id === 2 && canGoStep2) || s.id === 1) setStep(s.id);
                 }}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-full text-[11px] sm:text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-xl text-[11px] sm:text-xs font-bold transition-colors ${
                   active
-                    ? 'bg-indigo-600 text-white shadow-md'
+                    ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-600/25'
                     : done
-                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                      ? 'bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-500/25'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                 }`}
               >
                 <span
-                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                    active ? 'bg-white/20' : done ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+                  className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-black ${
+                    active ? 'bg-white/20' : done ? 'bg-cyan-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
                   }`}
                 >
                   {done ? '✓' : s.id}
@@ -141,19 +140,19 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
               <button
                 type="button"
                 onClick={onOpenAssistant}
-                className="flex items-center gap-2 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-800/50"
+                className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-500/25"
               >
                 <SparklesIcon className="w-4 h-4" />
-                Asystent AI
+                {t('form.topic.assistant', 'Asystent AI')}
               </button>
               <InputFormAiToolsMenu panels={aiToolPanels} variant="compact" label={t('form.quick.aiTools', 'Narzędzia AI')} />
             </div>
           </div>
 
-          <div className="rounded-2xl border-2 border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900/30 focus-within:border-indigo-500 transition-colors">
+          <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/30 focus-within:border-cyan-500/45 focus-within:ring-2 focus-within:ring-cyan-500/15 transition-colors">
             <InteractiveEditor
               id="topic-quick"
-              ariaLabel="Treść posta"
+              ariaLabel={t('form.topic.label', 'Temat')}
               value={formData.topic}
               onChange={onTopicChange}
               onAction={onAiAction}
@@ -165,20 +164,20 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
           </div>
 
           {duplicateCheck?.mostSimilar && (
-            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-2xl">
-              <span className="text-amber-500 shrink-0">⚠️</span>
+            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl">
+              <span className="text-amber-600 dark:text-amber-400 shrink-0 text-xs font-black" aria-hidden>!</span>
               <div className="flex-1 min-w-0 text-xs text-amber-800 dark:text-amber-300">
                 {t('form.quick.duplicateWarning', 'Podobny post w historii')} ({Math.round(duplicateCheck.mostSimilar.similarity * 100)}%) —{' '}
                 {formatTimeAgo(duplicateCheck.mostSimilar.timestamp)}
               </div>
-              <button type="button" onClick={onDismissDuplicate} className="text-amber-400 text-xs">
-                ✕
+              <button type="button" onClick={onDismissDuplicate} className="text-amber-500 text-xs font-bold" aria-label={t('common.close', 'Zamknij')}>
+                ×
               </button>
             </div>
           )}
 
           <div className="flex justify-end">
-            <ModernButton type="button" variant="gradient" onClick={goNext} disabled={!canGoStep2}>
+            <ModernButton type="button" variant="gradient" onClick={goNext} disabled={!canGoStep2} className="!bg-cyan-600 hover:!bg-cyan-500 ![background-image:none]">
               {t('form.quick.next', 'Dalej')} →
             </ModernButton>
           </div>
@@ -220,7 +219,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             <ModernButton type="button" variant="secondary" onClick={goBack}>
               ← {t('form.quick.back', 'Wstecz')}
             </ModernButton>
-            <ModernButton type="button" variant="gradient" onClick={goNext}>
+            <ModernButton type="button" variant="gradient" onClick={goNext} className="!bg-cyan-600 hover:!bg-cyan-500 ![background-image:none]">
               {t('form.quick.next', 'Dalej')} →
             </ModernButton>
           </div>
@@ -229,9 +228,9 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
 
       {/* Step 3: Summary + generate */}
       {step === 3 && (
-        <div className="space-y-6 animate-fade-in">
-          <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 space-y-4">
-            <h3 className="text-sm font-bold text-slate-800 dark:text-white">{t('form.quick.summary', 'Podsumowanie')}</h3>
+        <div className="space-y-5 animate-fade-in">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-900/40 border border-slate-200/70 dark:border-white/10 space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.quick.summary', 'Podsumowanie')}</h3>
             <div className="space-y-2 text-sm">
               <p className="text-slate-600 dark:text-slate-400">
                 <span className="font-semibold text-slate-800 dark:text-slate-200">{t('form.quick.summaryTopic', 'Temat')}: </span>
@@ -255,38 +254,41 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             </div>
           </div>
 
-          <p className="text-xs text-slate-500 text-center">
+          <p className="text-xs text-slate-500 text-center leading-relaxed">
             {t('form.quick.needAdvanced', 'Potrzebujesz kampanii, wideo lub A/B testu?')}{' '}
-            <button type="button" onClick={onSwitchToAdvanced} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+            <button type="button" onClick={onSwitchToAdvanced} className="text-cyan-700 dark:text-cyan-400 font-semibold hover:underline">
               {t('form.quick.switchToAdvanced', 'Przełącz na tryb zaawansowany')}
             </button>
           </p>
 
           {autoPublishSection}
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <ModernButton type="button" variant="secondary" onClick={goBack} fullWidth>
-              ← {t('form.quick.back', 'Wstecz')}
-            </ModernButton>
-            <ModernButton
-              type="button"
-              variant="secondary"
-              onClick={onSaveDraft}
-              disabled={isLoading || !topicPlain || isDraftSaved}
-              fullWidth
-              icon={isDraftSaved ? <CheckIcon className="w-5 h-5" /> : <SaveIcon className="w-5 h-5" />}
-            >
-              {isDraftSaved ? t('form.buttons.draftSaved', 'Zapisano') : t('form.buttons.saveDraft', 'Zapisz szkic')}
-            </ModernButton>
-            <ModernButton
-              type="submit"
-              variant="gradient"
-              disabled={isLoading || !topicPlain}
-              fullWidth
-              icon={<SparklesIcon className="w-5 h-5" />}
-            >
-              {isLoading ? t('common.generating', 'Generowanie…') : t('common.generate', 'Generuj post')}
-            </ModernButton>
+          <div className="sticky bottom-20 sm:bottom-4 z-20 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl p-3 shadow-lg">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <ModernButton type="button" variant="secondary" onClick={goBack} fullWidth>
+                ← {t('form.quick.back', 'Wstecz')}
+              </ModernButton>
+              <ModernButton
+                type="button"
+                variant="secondary"
+                onClick={onSaveDraft}
+                disabled={isLoading || !topicPlain || isDraftSaved}
+                fullWidth
+                icon={isDraftSaved ? <CheckIcon className="w-5 h-5" /> : <SaveIcon className="w-5 h-5" />}
+              >
+                {isDraftSaved ? t('form.buttons.draftSaved', 'Zapisano') : t('form.buttons.saveDraft', 'Zapisz szkic')}
+              </ModernButton>
+              <ModernButton
+                type="submit"
+                variant="gradient"
+                disabled={isLoading || !topicPlain}
+                fullWidth
+                icon={<SparklesIcon className="w-5 h-5" />}
+                className="!bg-cyan-600 hover:!bg-cyan-500 ![background-image:none] shadow-md shadow-cyan-600/25"
+              >
+                {isLoading ? t('common.generating', 'Generowanie…') : t('common.generate', 'Generuj post')}
+              </ModernButton>
+            </div>
           </div>
         </div>
       )}

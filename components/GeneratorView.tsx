@@ -32,13 +32,9 @@ import { parseUserFacingError } from '../utils/userFacingError';
 import { ClockIcon } from './icons/ClockIcon';
 import { StarIcon } from './icons/StarIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
-import { TrendingUpIcon } from './icons/TrendingUpIcon';
-import { TargetIcon } from './icons/TargetIcon';
-const FireIcon = ({ className }: { className?: string }) => <div className={className}>🔥</div>;
 import { ChartBarIcon } from './icons/ChartBarIcon';
 import { CreditCardIcon } from './icons/CreditCardIcon';
 import { XMarkIcon } from './icons/XMarkIcon';
-import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { SidebarIcon } from './icons/SidebarIcon';
 import { PostIcon } from './icons/PostIcon';
 import { VideoIcon } from './icons/VideoIcon';
@@ -54,7 +50,6 @@ import { isOnboardingGuideActive } from '../utils/onboarding';
 import { CalendarSlotBanner } from './calendar/CalendarSlotBanner';
 
 import type { FormData, CampaignHistoryItem, FavoritePost, Draft, GenerationResult, ScheduledPost, CalendarSlotContext } from '../types';
-import { UserPlan } from '../types';
 
 type SidebarTab = 'history' | 'drafts' | 'favorites' | 'scheduled' | 'stats' | 'subscription';
 
@@ -159,8 +154,6 @@ export const GeneratorView: React.FC = () => {
     const handleMouseLeave = useCallback(() => {
         setPopover(null);
     }, []);
-
-    const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
 
     const isResultVisible = !!result || !!inspiration;
 
@@ -326,27 +319,27 @@ export const GeneratorView: React.FC = () => {
                 />
             )}
 
-            <aside className={`fixed lg:sticky lg:top-8 inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-300 ease-out self-start lg:h-[calc(100vh-8rem)] ${isSidebarOpen ? 'translate-x-0 w-[min(360px,92vw)] xl:w-[400px] lg:flex-shrink-0' : '-translate-x-full w-0'}`}>
-                <div className={`h-full flex flex-col glass-premium rounded-[2.5rem] overflow-hidden transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <div className="p-6 lg:p-8 pb-4 flex-shrink-0 flex items-center justify-between border-b border-white/5">
+            <aside className={`fixed lg:sticky lg:top-8 inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-300 ease-out self-start lg:h-[calc(100vh-8rem)] ${isSidebarOpen ? 'translate-x-0 w-[min(340px,92vw)] xl:w-[380px] lg:flex-shrink-0' : '-translate-x-full w-0'}`}>
+                <div className={`h-full flex flex-col glass-premium rounded-2xl sm:rounded-[1.75rem] overflow-hidden border border-white/10 transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div className="p-5 lg:p-6 pb-3 flex-shrink-0 flex items-center justify-between border-b border-white/5">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20">
+                            <div className="w-9 h-9 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20">
                                 <SidebarIcon className="w-5 h-5 text-cyan-500" />
                             </div>
-                            <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">{t('sidebar.title')}</h3>
+                            <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight uppercase">{t('sidebar.title')}</h3>
                         </div>
                         <button 
                             onClick={() => setIsSidebarOpen(false)} 
                             aria-label={t('generatorView.closeSidebar', 'Zamknij panel')} 
-                            className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
                         >
                             <XMarkIcon className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="px-6 py-4 flex-shrink-0">
+                    <div className="px-4 py-3 flex-shrink-0">
                         <div 
-                            className="grid grid-cols-6 gap-1.5 p-1.5 bg-slate-100/50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/50 dark:border-white/5 focus:outline-none"
+                            className="grid grid-cols-6 gap-1 p-1 bg-slate-100/60 dark:bg-slate-950/40 rounded-xl border border-slate-200/60 dark:border-white/5 focus:outline-none"
                             role="tablist"
                             aria-label={t('sidebar.tabs.ariaLabel', 'Zakładki panelu bocznego')}
                             onKeyDown={handleTabsKeyDown}
@@ -364,13 +357,13 @@ export const GeneratorView: React.FC = () => {
                                     onClick={() => setActiveSidebarTab(tab.id as SidebarTab)}
                                     title={tab.label}
                                     aria-label={tab.label}
-                                    className={`relative p-2.5 rounded-xl transition-colors flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isSelected 
-                                        ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400 border border-slate-200/60 dark:border-white/10' 
+                                    className={`relative p-2.5 rounded-lg transition-colors flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${isSelected 
+                                        ? 'bg-white dark:bg-slate-800 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25' 
                                         : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/5'}`}
                                 >
                                     <tab.icon className="w-4 h-4" />
                                     {badge > 0 && (
-                                        <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                                        <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center leading-none">
                                             {badgeLabel}
                                         </span>
                                     )}
@@ -400,16 +393,16 @@ export const GeneratorView: React.FC = () => {
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
                         aria-label={t('generatorView.openSidebar', 'Otwórz panel boczny')}
-                        className="fixed bottom-24 left-4 sm:left-6 z-[60] w-12 h-12 sm:w-14 sm:h-14 bg-white/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 rounded-2xl shadow-lg flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-colors backdrop-blur-md"
+                        className="fixed bottom-24 left-3 sm:left-5 z-[60] w-11 h-11 sm:w-12 sm:h-12 bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 rounded-xl shadow-lg flex items-center justify-center text-slate-500 hover:text-cyan-600 transition-colors backdrop-blur-md"
                     >
-                        <SidebarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
+                        <SidebarIcon className="w-5 h-5" />
                     </button>
                 )}
 
-                <div className={`w-full transition-all duration-300 ${isResultVisible && !isMobile ? 'grid gap-8 lg:grid-cols-[1.1fr,1.2fr]' : ''}`}>
+                <div className={`w-full transition-all duration-300 ${isResultVisible && !isMobile ? 'grid gap-6 lg:gap-8 lg:grid-cols-[minmax(0,1fr),minmax(0,1.05fr)]' : ''}`}>
                     {isResultVisible && isMobile && (
                         <div
-                            className="lg:hidden sticky top-[4.5rem] z-30 mb-4 flex p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm"
+                            className="lg:hidden sticky top-[4.5rem] z-30 mb-4 flex p-1 rounded-xl bg-slate-100/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm"
                             role="tablist"
                             aria-label={t('generatorView.mobileNav', 'Nawigacja generatora')}
                         >
@@ -418,7 +411,7 @@ export const GeneratorView: React.FC = () => {
                                 role="tab"
                                 aria-selected={mobilePanel === 'form'}
                                 onClick={() => setMobilePanel('form')}
-                                className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-colors ${mobilePanel === 'form' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${mobilePanel === 'form' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/20' : 'text-slate-500 dark:text-slate-400'}`}
                             >
                                 {t('generatorView.mobileTabForm', 'Formularz')}
                             </button>
@@ -427,7 +420,7 @@ export const GeneratorView: React.FC = () => {
                                 role="tab"
                                 aria-selected={mobilePanel === 'result'}
                                 onClick={() => setMobilePanel('result')}
-                                className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${mobilePanel === 'result' ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${mobilePanel === 'result' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/20' : 'text-slate-500 dark:text-slate-400'}`}
                             >
                                 {t('generatorView.mobileTabResult', 'Wynik')}
                                 {result && !isLoading && (
@@ -438,51 +431,69 @@ export const GeneratorView: React.FC = () => {
                     )}
 
                     {showFormColumn && (
-                    <div className={`w-full ${!isResultVisible ? 'max-w-4xl mx-auto' : ''}`}>
-                        {showOnboardingGuide && user && (
-                            <OnboardingGuide
-                                userId={user.id}
-                                hasGenerated={history.length > 0}
-                                hasFavorited={favorites.length > 0}
-                                onConnectSocial={() => setIsSocialConnectionsModalOpen(true)}
-                                onScrollToForm={() => {
-                                    document.getElementById('input-form-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
-                                onScrollToResult={() => {
-                                    document.getElementById('generation-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
-                            />
+                    <div className={`w-full ${!isResultVisible ? 'max-w-3xl mx-auto' : ''}`}>
+                        {!isResultVisible && (
+                            <header className="mb-5 sm:mb-6">
+                                <p className="text-[11px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400 mb-1">
+                                    {t('generatorView.eyebrow', 'Twórz')}
+                                </p>
+                                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                                    {t('generatorView.title', 'Generator treści')}
+                                </h1>
+                                <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
+                                    {t('generatorView.subtitle', 'Od tematu do gotowego posta — w szybkim trybie lub z pełną kontrolą.')}
+                                </p>
+                            </header>
                         )}
-                        <div className="mb-8">
+
+                        {(showOnboardingGuide || inspiration || pendingCalendarSlot) && (
+                            <div className="mb-4 space-y-3">
+                                {showOnboardingGuide && user && (
+                                    <OnboardingGuide
+                                        userId={user.id}
+                                        hasGenerated={history.length > 0}
+                                        hasFavorited={favorites.length > 0}
+                                        onConnectSocial={() => setIsSocialConnectionsModalOpen(true)}
+                                        onScrollToForm={() => {
+                                            document.getElementById('input-form-anchor')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }}
+                                        onScrollToResult={() => {
+                                            document.getElementById('generation-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }}
+                                    />
+                                )}
+                                {inspiration && (
+                                    <div className="flex justify-between items-center gap-3 p-3 sm:p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-xl">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="p-1.5 bg-cyan-600 rounded-lg text-white shrink-0">
+                                                <ClockIcon className="w-4 h-4" />
+                                            </div>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400 truncate">{t('generatorView.viewingHistory')}</p>
+                                        </div>
+                                        <ModernButton onClick={handleReturnToGenerator} variant="outline" size="sm">
+                                            <ArrowUturnLeftIcon className="w-3.5 h-3.5 mr-1.5" /> {t('generatorView.backToGenerator')}
+                                        </ModernButton>
+                                    </div>
+                                )}
+                                {pendingCalendarSlot && (
+                                    <CalendarSlotBanner
+                                        slot={pendingCalendarSlot}
+                                        batchIndex={
+                                            calendarBatchTotal > 0
+                                                ? calendarBatchTotal - calendarBatchQueue.length
+                                                : undefined
+                                        }
+                                        batchTotal={calendarBatchTotal > 1 ? calendarBatchTotal : undefined}
+                                        isGenerating={isLoading}
+                                    />
+                                )}
+                            </div>
+                        )}
+
+                        <div className="mb-4">
                             <StrategyAssistant />
                         </div>
-                        {inspiration && (
-                            <div className="mb-6 flex justify-between items-center p-4 lg:p-5 bg-cyan-500/5 border border-cyan-500/20 rounded-3xl shadow-md">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-cyan-500 rounded-xl text-white shadow-md shadow-cyan-500/20">
-                                        <ClockIcon className="w-5 h-5" />
-                                    </div>
-                                    <p className="text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">{t('generatorView.viewingHistory')}</p>
-                                </div>
-                                <ModernButton onClick={handleReturnToGenerator} variant="outline" size="sm" className="hover:scale-105 transition-transform">
-                                    <ArrowUturnLeftIcon className="w-3.5 h-3.5 mr-2" /> {t('generatorView.backToGenerator')}
-                                </ModernButton>
-                            </div>
-                        )}
-                        {pendingCalendarSlot && (
-                            <div className="mb-6">
-                                <CalendarSlotBanner
-                                    slot={pendingCalendarSlot}
-                                    batchIndex={
-                                        calendarBatchTotal > 0
-                                            ? calendarBatchTotal - calendarBatchQueue.length
-                                            : undefined
-                                    }
-                                    batchTotal={calendarBatchTotal > 1 ? calendarBatchTotal : undefined}
-                                    isGenerating={isLoading}
-                                />
-                            </div>
-                        )}
+
                         <Suspense fallback={<SkeletonCard />}>
                             <InputForm
                                 prefillData={prefillData}
@@ -495,7 +506,7 @@ export const GeneratorView: React.FC = () => {
                     )}
 
                     {showResultColumn && (
-                        <div id="generation-result" className="space-y-8 animate-fade-in lg:sticky lg:top-8 self-start">
+                        <div id="generation-result" className="space-y-5 animate-fade-in lg:sticky lg:top-8 self-start">
                             {isLoading ? (
                                 <SkeletonCard />
                             ) : (
@@ -505,7 +516,7 @@ export const GeneratorView: React.FC = () => {
                             )}
 
                             {result && !isLoading && (
-                                <div className="glass-premium rounded-[2.5rem] border border-white/10 shadow-2xl p-6 lg:p-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                                <div className="glass-premium rounded-2xl border border-white/10 shadow-xl p-5 lg:p-6 animate-fade-in-up">
                                     <Suspense fallback={<SkeletonCard />}>
                                         <MultiPlatformOptimizer
                                         originalText={result.postText}

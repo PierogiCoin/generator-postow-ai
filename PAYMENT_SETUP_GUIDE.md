@@ -33,39 +33,33 @@ Complete payment system with:
 
 ## 💰 Pricing Structure
 
+> Source of truth: `config/pricingMath.ts` + `config/subscriptionPlans.ts` (limits on cards = `usageLimits`).
+
 ### **Monthly Subscriptions:**
 
-| Plan | Price | Credits | Posts | Images | Videos |
-|------|-------|---------|-------|--------|--------|
-| **Free** | $0 | 100 | 10 | 5 | 0 |
-| **Pro** | $29 | 1,000 | 100 | 50 | 10 |
-| **Business** | $99 | 5,000 | 500 | 200 | 50 |
-| **Enterprise** | $299 | 20,000 | ∞ | ∞ | ∞ |
+| Plan | Price (USD) | Credits | Posts (limit) | Images | Videos |
+|------|-------------|---------|---------------|--------|--------|
+| **Free** | $0 | 100 | 10 | 3 | 0 |
+| **Creator** | $29 | 750 | 100 | 20 | 2 |
+| **Pro** | $49 | 1,800 | 500 | 100 | 10 |
+| **Business** | $99 | 6,000 | 800 | 200 | 50 |
+| **Agency** | $249 | 18,000 | 2,000 | 400 | 80 |
+| **Enterprise** | $299 | 28,000 | ∞ | ∞ | ∞ |
 
-### **Credit Costs (per action):**
+PLN on the UI is approximate (~4.2 PLN/USD). Stripe charges **USD**, monthly only.
 
-```typescript
-{
-  generatePost: 10,
-  generateHashtags: 5,
-  generateImage: 50,
-  generateVideo: 200,
-  publishPost: 20,
-  schedulePost: 15,
-  analyticsSync: 5,
-  brandVoiceAnalysis: 30,
-  contentOptimization: 25,
-}
-```
+### **Credit costs**
+
+See `config/creditCosts.ts` (and server equivalent). Typical post ≈ 10 credits.
 
 ### **One-Time Credit Packs:**
 
-| Pack | Credits | Price | Discount |
-|------|---------|-------|----------|
-| Small | 500 | $9.99 | - |
-| Medium | 1,500 | $24.99 | 17% |
-| Large | 3,500 | $49.99 | 29% |
-| Mega | 10,000 | $99.99 | 50% |
+| Pack | Credits | Price (USD) |
+|------|---------|-------------|
+| Small | 400 | $9.99 |
+| Medium | 1,100 | $24.99 |
+| Large | 2,600 | $49.99 |
+| Mega | 7,000 | $99.99 |
 
 ---
 

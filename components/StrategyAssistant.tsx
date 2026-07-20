@@ -3,85 +3,145 @@ import { useGenerationStore } from '../stores/generationStore';
 import { useDataStore } from '../stores/dataStore';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { BulbIcon } from './icons/BulbIcon';
-import { RocketLaunchIcon } from './icons/RocketLaunchIcon';
 import { useTranslation } from 'react-i18next';
-import { GenerationType } from '../types'; // Import GenerationType
+import { GenerationType } from '../types';
 
 export const StrategyAssistant: React.FC = () => {
     const { t } = useTranslation();
     const { result, lastFormData } = useGenerationStore();
     const { history } = useDataStore();
     const [tips, setTips] = useState<{ id: string; text: string; category: string }[]>([]);
-    
+    const [expanded, setExpanded] = useState(false);
+
     useEffect(() => {
-        // Simple heuristic-based strategy tips
-        const newTips = [];
-        const text = result?.postText || "";
-        const topic = lastFormData?.topic || "";
+        const newTips: { id: string; text: string; category: string }[] = [];
+        const text = result?.postText || '';
+        const topic = lastFormData?.topic || '';
         const cleanTopic = topic.replace(/<[^>]*>?/gm, '').trim();
 
         if (cleanTopic.length > 0 && cleanTopic.length < 20) {
-            newTips.push({ id: '1', category: 'Hook', text: 'Twój temat jest krótki. Dodaj do niego "haczyk" emocjonalny, aby zwiększyć klikalność.' });
+            newTips.push({
+                id: '1',
+                category: 'Hook',
+                text: t(
+                    'strategyAssistant.tips.shortTopic',
+                    'Twój temat jest krótki. Dodaj haczyk emocjonalny, aby zwiększyć klikalność.'
+                ),
+            });
         }
 
         if (text.length > 0) {
             if (!text.includes('?') && !text.includes('!')) {
-                newTips.push({ id: '2', category: 'Engagement', text: 'Dodaj pytanie na końcu, aby zachęcić odbiorców do komentowania.' });
+                newTips.push({
+                    id: '2',
+                    category: 'Engagement',
+                    text: t(
+                        'strategyAssistant.tips.question',
+                        'Dodaj pytanie na końcu, aby zachęcić odbiorców do komentowania.'
+                    ),
+                });
             }
             if (text.length > 500) {
-                newTips.push({ id: '3', category: 'Readability', text: 'Twój post jest dość długi. Upewnij się, że używasz wypunktowań dla lepszej czytelności.' });
+                newTips.push({
+                    id: '3',
+                    category: 'Readability',
+                    text: t(
+                        'strategyAssistant.tips.longPost',
+                        'Post jest dość długi — wypunktowania poprawią czytelność.'
+                    ),
+                });
             }
-            if (!text.toLowerCase().includes('kliknij') && !text.toLowerCase().includes('sprawdź') && !text.toLowerCase().includes('zobacz')) {
-                newTips.push({ id: '4', category: 'CTA', text: 'Brakuje jasnego wezwania do działania (CTA). Powiedz ludziom, co mają zrobić po przeczytaniu.' });
+            if (
+                !text.toLowerCase().includes('kliknij') &&
+                !text.toLowerCase().includes('sprawdź') &&
+                !text.toLowerCase().includes('zobacz')
+            ) {
+                newTips.push({
+                    id: '4',
+                    category: 'CTA',
+                    text: t(
+                        'strategyAssistant.tips.cta',
+                        'Brakuje jasnego wezwania do działania (CTA).'
+                    ),
+                });
             }
         } else if (cleanTopic.length > 10) {
-            newTips.push({ id: '5', category: 'Strategy', text: 'Świetny temat! Spróbuj wygenerować post w formacie "A/B Test", aby sprawdzić dwa różne podejścia.' });
+            newTips.push({
+                id: '5',
+                category: 'Strategy',
+                text: t(
+                    'strategyAssistant.tips.abTest',
+                    'Świetny temat — spróbuj A/B Test, żeby porównać dwa podejścia.'
+                ),
+            });
         }
 
-        // Content Mix Analysis
         if (history && history.length > 3) {
-            const recentTypes = history.slice(0, 5).map(h => h.formData?.generationType).filter(Boolean);
-            const isHeavyOnImages = recentTypes.filter(t => t === GenerationType.PostWithImage).length >= 4;
+            const recentTypes = history.slice(0, 5).map((h) => h.formData?.generationType).filter(Boolean);
+            const isHeavyOnImages = recentTypes.filter((type) => type === GenerationType.PostWithImage).length >= 4;
             if (isHeavyOnImages) {
-                newTips.push({ id: '6', category: 'Content Mix', text: 'Ostatnio dodawałeś głównie posty z obrazami. Może tym razem spróbujesz Video Story, aby urozmaicić feed?' });
+                newTips.push({
+                    id: '6',
+                    category: 'Content Mix',
+                    text: t(
+                        'strategyAssistant.tips.contentMix',
+                        'Ostatnio dominują posty z grafiką — urozmać feed wideo lub story.'
+                    ),
+                });
             }
         }
 
         setTips(newTips);
-    }, [result, lastFormData, history]);
+        setExpanded(false);
+    }, [result, lastFormData, history, t]);
 
     if (tips.length === 0) return null;
 
+    const visibleTips = expanded ? tips : tips.slice(0, 1);
+
     return (
-        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-3xl p-6 shadow-sm animate-fade-in-up">
-            <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-indigo-600 rounded-xl text-white">
-                    <BulbIcon className="w-5 h-5" />
+        <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] dark:bg-cyan-500/[0.08] p-3.5 sm:p-4 animate-fade-in">
+            <div className="flex items-center justify-between gap-3 mb-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="p-1.5 bg-cyan-600 rounded-lg text-white shrink-0">
+                        <BulbIcon className="w-4 h-4" />
+                    </div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-cyan-800 dark:text-cyan-300 truncate">
+                        {t('strategyAssistant.title', 'Wskazówka strategii')}
+                    </h3>
+                    {tips.length > 1 && (
+                        <span className="text-[10px] font-bold text-cyan-700/70 dark:text-cyan-400/70 shrink-0">
+                            {tips.length}
+                        </span>
+                    )}
                 </div>
-                <h3 className="font-black text-sm uppercase tracking-wider text-indigo-900 dark:text-indigo-300">Asystent Strategii</h3>
+                <SparklesIcon className="w-3.5 h-3.5 text-cyan-600/70 shrink-0" />
             </div>
-            
-            <div className="space-y-4">
-                {tips.map((tip) => (
-                    <div key={tip.id} className="flex gap-4 group">
-                        <div className="flex-shrink-0 mt-1">
-                            <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:scale-150 transition-transform"></div>
-                        </div>
-                        <div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500/70 block mb-1">{tip.category}</span>
-                            <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed">{tip.text}</p>
-                        </div>
+
+            <div className="space-y-2.5">
+                {visibleTips.map((tip) => (
+                    <div key={tip.id}>
+                        <span className="text-[10px] font-black uppercase tracking-wider text-cyan-700/70 dark:text-cyan-400/70">
+                            {tip.category}
+                        </span>
+                        <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed mt-0.5">
+                            {tip.text}
+                        </p>
                     </div>
                 ))}
             </div>
 
-            <div className="mt-6 pt-6 border-t border-indigo-100 dark:border-indigo-900/50 flex items-center justify-between">
-                <p className="text-[10px] font-bold text-slate-400">Wskazówki na podstawie Twojej treści i historii — pełną strategię AI znajdziesz w Strategiście.</p>
-                <div className="flex items-center gap-1 text-indigo-600">
-                    <SparklesIcon className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Wskazówki</span>
-                </div>
-            </div>
+            {tips.length > 1 && (
+                <button
+                    type="button"
+                    onClick={() => setExpanded((v) => !v)}
+                    className="mt-3 text-[11px] font-bold text-cyan-700 dark:text-cyan-400 hover:underline"
+                >
+                    {expanded
+                        ? t('strategyAssistant.showLess', 'Pokaż mniej')
+                        : t('strategyAssistant.showMore', 'Pokaż {{count}} więcej', { count: tips.length - 1 })}
+                </button>
+            )}
         </div>
     );
 };

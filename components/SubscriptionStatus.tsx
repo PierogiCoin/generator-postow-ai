@@ -90,10 +90,11 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         </p>
       </div>
 
-      {userPlan !== UserPlan.Enterprise && userPlan !== UserPlan.Business && (
+      {userPlan !== UserPlan.Enterprise && (
         <button
           onClick={onUpgrade}
-          className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-all shadow-md focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800"
+          className="w-full mt-6 flex items-center justify-center gap-2 text-white font-semibold py-2.5 px-4 rounded-xl hover:brightness-110 transition-all shadow-md focus:outline-none focus:ring-4 focus:ring-[var(--hero-accent)]/30"
+          style={{ backgroundColor: 'var(--hero-accent)' }}
         >
           <SparklesIcon className="w-5 h-5" />
           {isFreePlan ? 'Ulepsz plan' : 'Zmień plan'}

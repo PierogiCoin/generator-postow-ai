@@ -116,16 +116,34 @@
     "selectWorkspace": "Wybierz przestrzeń"
   },
   "form": {
+    "workspaceLabel": "Workspace",
     "mode": {
       "label": "Tryb formularza",
       "quick": "Szybki",
       "advanced": "Zaawansowany",
-      "quickHint": "3 kroki: temat → platforma → generuj"
+      "quickHint": "3 kroki: temat → platforma → generuj",
+      "advancedHint": "Pełna kontrola: typ, ton, wizualia i Brand Voice."
+    },
+    "sections": {
+      "topic": "Temat",
+      "topicDesc": "Opisz, o czym ma być treść — reszta ustawień dopasuje się do tego.",
+      "format": "Platforma i format",
+      "formatDesc": "Gdzie publikujesz i jaki typ treści generujemy.",
+      "generationType": "Typ generacji",
+      "voice": "Głos i odbiorca",
+      "voiceDesc": "Dla kogo piszesz, w jakim tonie i języku.",
+      "campaign": "Strategia kampanii",
+      "campaignDesc": "Cel i długość kampanii wielokanałowej.",
+      "video": "Ustawienia wideo",
+      "videoDesc": "Transkrypt, proporcje i obraz referencyjny.",
+      "visual": "Wizualia",
+      "visualDesc": "Styl grafiki i proporcje pod platformę."
     },
     "quick": {
       "stepTopic": "Temat",
       "stepPlatform": "Platforma i ton",
       "stepGenerate": "Generuj",
+      "stepsAria": "Kroki formularza",
       "next": "Dalej",
       "back": "Wstecz",
       "summary": "Podsumowanie",
@@ -173,7 +191,13 @@
       "label": "Temat lub główny przekaz",
       "placeholder": "np. Wprowadzamy nowy, ekologiczny model butów...",
       "tooltip": "Wprowadź główny temat, produkt lub wiadomość, którą chcesz przekazać. Im więcej szczegółów podasz (np. korzyści, cechy), tym lepszy będzie wynik.",
-      "assistantTooltip": "Uzyskaj sugestie AI, aby ulepszyć temat"
+      "assistantTooltip": "Uzyskaj sugestie AI, aby ulepszyć temat",
+      "assistant": "Asystent AI",
+      "repurpose": "Smart Repurpose",
+      "repurposePrompt": "Wklej tekst lub URL, aby wyciągnąć z niego temat:",
+      "repurposeTooltip": "Wklej tekst aby wyciągnąć temat",
+      "analyzing": "Analizowanie inspiracji…",
+      "extractError": "Błąd ekstrakcji tematu"
     },
     "videoTranscript": {
       "label": "Transkrypcja lub tekst do wideo",
@@ -194,7 +218,8 @@
     "audience": {
       "label": "Grupa docelowa",
       "tooltip": "Opisz swoją idealną grupę odbiorców, np. 'Młodzi profesjonaliści zainteresowani zrównoważonym rozwojem', 'Miłośnicy fitnessu szukający zdrowych przekąsek'.",
-      "placeholder": "np. Młodzi profesjonaliści, miłośnicy fitnessu"
+      "placeholder": "np. Młodzi profesjonaliści, miłośnicy fitnessu",
+      "persona": "Persona AI"
     },
     "keywords": {
       "label": "Słowa kluczowe (oddzielone przecinkami)",
@@ -375,6 +400,9 @@
     "use": "Użyj"
   },
   "generatorView": {
+    "eyebrow": "Twórz",
+    "title": "Generator treści",
+    "subtitle": "Od tematu do gotowego posta — w szybkim trybie lub z pełną kontrolą.",
     "viewingHistory": "Przeglądasz zapisany element.",
     "backToGenerator": "Wróć do generatora",
     "viewingBanner": "Przeglądasz post z dnia {{date}}",
@@ -385,6 +413,19 @@
     "mobileNav": "Nawigacja generatora",
     "openSidebar": "Otwórz panel boczny",
     "closeSidebar": "Zamknij panel"
+  },
+  "strategyAssistant": {
+    "title": "Wskazówka strategii",
+    "showLess": "Pokaż mniej",
+    "showMore": "Pokaż {{count}} więcej",
+    "tips": {
+      "shortTopic": "Twój temat jest krótki. Dodaj haczyk emocjonalny, aby zwiększyć klikalność.",
+      "question": "Dodaj pytanie na końcu, aby zachęcić odbiorców do komentowania.",
+      "longPost": "Post jest dość długi — wypunktowania poprawią czytelność.",
+      "cta": "Brakuje jasnego wezwania do działania (CTA).",
+      "abTest": "Świetny temat — spróbuj A/B Test, żeby porównać dwa podejścia.",
+      "contentMix": "Ostatnio dominują posty z grafiką — urozmać feed wideo lub story."
+    }
   },
   "generationTypes": {
     "PostWithImage": "Post + Obraz",
@@ -581,6 +622,69 @@
       "finalize": "Finalizowanie sekwencji wideo...",
       "checks": "Prawie gotowe, przeprowadzanie ostatecznych sprawdzeń...",
       "success": "Wideo wygenerowane pomyślnie!"
+    }
+  },
+  "pricing": {
+    "title": "Plany subskrypcji",
+    "subtitle": "Wyższy plan = więcej kredytów i niższy koszt za kredyt. Płatność w USD (Stripe).",
+    "guest_banner": "Wybierz plan — po rejestracji przeniesiemy Cię do bezpiecznej płatności Stripe.",
+    "recommended": "Polecany",
+    "per_month": "/mies.",
+    "savings_per_credit": "−{{percent}}% / kredyt",
+    "cta_register": "Zarejestruj się i wybierz",
+    "cta_pay": "Przejdź do płatności",
+    "cta_current": "Obecny plan",
+    "cta_start_free": "Zacznij za darmo",
+    "cta_free_plan": "Plan darmowy",
+    "cta_enterprise": "Wybierz Enterprise",
+    "cta_buy_pack": "Kup pakiet",
+    "redirecting": "Przekierowanie…",
+    "close": "Zamknij",
+    "show": "Pokaż",
+    "hide": "Ukryj",
+    "show_agency": "Pokaż plan Agency",
+    "compare_title": "Porównanie planów",
+    "compare_feature": "Funkcja",
+    "compare": {
+      "analytics": "Analityka AI",
+      "strategist": "Strategista AI",
+      "price": "Cena / mies."
+    },
+    "unlimited": "Bez limitu",
+    "contact_sales": "Kontakt sprzedaż",
+    "packs_title": "Pakiety kredytów",
+    "packs_subtitle": "Jednorazowy zakup — kredyty nie wygasają przy aktywnym koncie.",
+    "credits_label": "kredytów",
+    "disclaimer": "PLN: ceny orientacyjne (kurs ~4,2 PLN/USD). Rozliczenie w USD na fakturze Stripe. Pakiety jednorazowe mają wyższy koszt/kredyt niż subskrypcja.",
+    "error_checkout": "Nie udało się rozpocząć płatności.",
+    "error_login_pack": "Zaloguj się, aby kupić pakiet kredytów.",
+    "feature": {
+      "credits": "Kredyty / mies.",
+      "text": "Posty tekstowe",
+      "image": "Obrazy AI",
+      "video": "Wideo AI",
+      "campaign": "Kampanie AI",
+      "schedule": "Planowanie i kalendarz",
+      "analytics": "Analityka i strategista AI",
+      "brand": "Profile głosu marki",
+      "api": "Dostęp API",
+      "api_whitelabel": "API + white-label",
+      "unlimited": "Limity generacji",
+      "support": "Priorytetowy support"
+    },
+    "plan_desc": {
+      "free": "Poznaj AI bez karty — limit zgodny z limitem konta.",
+      "creator": "Freelancerzy i twórcy — kalendarz, wideo i głos marki.",
+      "pro": "Najlepszy wybór solo — analityka, strategista i 5 profili marki.",
+      "business": "Zespoły marketingowe — API, 6 000 kredytów i 20 profili marki.",
+      "agency": "Agencje — 18 000 kredytów, więcej wideo niż Business, ∞ kampanii.",
+      "enterprise": "28 000 kredytów, white-label i priorytetowy support."
+    },
+    "pack": {
+      "small": "Mały",
+      "medium": "Średni",
+      "large": "Duży",
+      "mega": "Mega"
     }
   },
   "home": {

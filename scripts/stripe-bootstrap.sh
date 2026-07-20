@@ -117,10 +117,10 @@ create_sub enterprise "Generator Postów AI — Enterprise" 29900
 
 echo ""
 echo "=== Pakiety kredytów (one-time) ==="
-create_pack credits_small "Generator Postów AI — Credits Small (500)" 999
-create_pack credits_medium "Generator Postów AI — Credits Medium (1500)" 2499
-create_pack credits_large "Generator Postów AI — Credits Large (3500)" 4999
-create_pack credits_mega "Generator Postów AI — Credits Mega (10000)" 9999
+create_pack credits_small "Generator Postów AI — Credits Small (400)" 999
+create_pack credits_medium "Generator Postów AI — Credits Medium (1100)" 2499
+create_pack credits_large "Generator Postów AI — Credits Large (2600)" 4999
+create_pack credits_mega "Generator Postów AI — Credits Mega (7000)" 9999
 
 echo ""
 echo "=== Webhook ==="
