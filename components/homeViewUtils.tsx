@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-export type HomeAnchor = 'how-it-works' | 'features' | 'testimonials' | 'faq';
+export type HomeAnchor = 'how-it-works' | 'features' | 'use-cases' | 'faq';
 
 // ============================================================
 // Hooks
@@ -124,10 +124,10 @@ export const Reveal: React.FC<{
 
 export const SectionHeader: React.FC<{ title: string; subtitle: string; id?: string }> = ({ title, subtitle, id }) => (
   <div id={id} className="text-center scroll-mt-28 mb-12">
-    <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight font-sans">
+    <h2 className="text-2xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">
       {title}
     </h2>
-    <p className="mt-4 max-w-2xl mx-auto text-slate-600 dark:text-slate-300 text-base md:text-lg">
+    <p className="mt-3 max-w-xl mx-auto text-slate-600 dark:text-slate-300 text-base md:text-lg">
       {subtitle}
     </p>
   </div>

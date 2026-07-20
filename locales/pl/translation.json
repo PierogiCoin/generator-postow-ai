@@ -87,7 +87,12 @@
       "newStoryboard": "Nowy Storyboard",
       "strategist": "Strategista",
       "brandVoice": "Głos Marki",
-      "more": "Więcej"
+      "more": "Więcej",
+      "competitors": "Konkurencja",
+      "ariaLabel": "Nawigacja główna",
+      "sectionMain": "Główne",
+      "sectionMore": "Więcej",
+      "menu": "Menu"
     },
     "calendarDisabledTooltip": "Wygeneruj plan kampanii, aby aktywować kalendarz",
     "calendarTooltip": "Kalendarz treści",
@@ -609,11 +614,55 @@
       "preview_tag_ai": "#AI",
       "preview_tag_marketing": "#Marketing"
     },
+    "how_it_works": {
+      "title": "Prostota w 3 krokach",
+      "subtitle": "Od pomysłu do gotowego posta w mniej niż minutę — bez przełączania narzędzi.",
+      "step1_title": "1. Opisz cel",
+      "step1_desc": "Temat, odbiorcy i ton — tyle wystarczy, żeby zacząć.",
+      "step2_title": "2. Wybierz styl",
+      "step2_desc": "Dopasuj platformę i typ treści do swojego brandu.",
+      "step3_title": "3. Generuj i publikuj",
+      "step3_desc": "Skopiuj, zaplanuj albo dopracuj propozycję przed publikacją."
+    },
+    "features": {
+      "title": "Trzy moduły, jeden workflow",
+      "subtitle": "Generowanie, planowanie i analiza treści w jednym miejscu.",
+      "generator_title": "Generator treści",
+      "generator_desc": "Posty dopasowane do marki — gotowe do edycji i publikacji.",
+      "generator_mock_label": "Podgląd posta",
+      "planner_title": "Planer kampanii",
+      "planner_desc": "Cel marketingowy → wielodniowy harmonogram z pomysłami na treść.",
+      "planner_mock_label": "Kalendarz treści",
+      "planner_mock_badge": "Automatyczny",
+      "analytics_title": "Analityka",
+      "analytics_desc": "Zobacz, które treści działają i kiedy warto publikować.",
+      "analytics_mock_label": "Zaangażowanie"
+    },
+    "use_cases": {
+      "title": "Jak z tego korzystać",
+      "subtitle": "Konkretne scenariusze — bez fikcyjnych recenzji.",
+      "item1_title": "Zespół marketingu",
+      "item1_desc": "Szybkie warianty postów pod jedną markę i spójny ton.",
+      "item2_title": "Freelancer",
+      "item2_desc": "Generator + planer zamiast kilku osobnych narzędzi.",
+      "item3_title": "Twórca contentu",
+      "item3_desc": "Regularna publikacja bez zaczynania od pustej kartki."
+    },
+    "faq": {
+      "title": "Najczęstsze pytania",
+      "subtitle": "Krótko o działaniu generatora — albo od razu wygeneruj pierwszy post.",
+      "q1": "Czy muszę mieć doświadczenie w marketingu?",
+      "a1": "Nie. Narzędzie prowadzi Cię od celu i grupy docelowej po gotowy post z CTA i hasztagami.",
+      "q2": "Czy mogę edytować treści przed publikacją?",
+      "a2": "Tak. Generujesz propozycję, potem dopracowujesz styl albo tworzysz kolejne wersje w innym tonie.",
+      "q3": "Jak szybko zobaczę efekty?",
+      "a3": "Najczęściej od razu: lepsza regularność i szybsze iteracje. Analityka pomaga potem dopracować timing."
+    },
     "final_cta": {
-      "title": "Gotowy zrewolucjonizować swoje media społecznościowe?",
-      "subtitle": "Dołącz do tysięcy twórców i marketerów, którzy oszczędzają czas i osiągają lepsze wyniki.",
-      "subtitle_logged_in": "Kontynuuj tworzenie treści i rozwijaj swoją strategię w generatorze.",
-      "button": "Wypróbuj AI Content Pro za darmo"
+      "title": "Wygeneruj pierwszy post w kilka minut",
+      "subtitle": "Załóż konto i zacznij od generatora — bez karty kredytowej.",
+      "subtitle_logged_in": "Wróć do generatora i kontynuuj tworzenie treści.",
+      "button": "Wygeneruj pierwszy post"
     }
   },
   "langSwitcher": {

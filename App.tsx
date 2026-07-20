@@ -5,9 +5,7 @@ import { useTranslation } from 'react-i18next';
 // Eager — shell pierwszej renderacji
 import { Header } from './components/Header';
 import { ConfirmDialog } from './components/ui/ConfirmDialog';
-import { MobileBottomNav } from './components/mobile/MobileBottomNav';
 import { useConfirm } from './hooks/useConfirm';
-import { LayoutDashboard, Sparkles, CalendarDays, BarChart3 } from 'lucide-react';
 import { getSupabase } from './services/supabaseClient';
 import { socialConnectionsService } from './services/socialConnectionsService';
 import { SocialConnection, SocialPlatform } from './types/socialPublishing';
@@ -486,17 +484,6 @@ export const App: React.FC = () => {
           <Outlet />
         </SectionErrorBoundary>
       </main>
-
-      {!isHomePage && (
-        <MobileBottomNav
-          items={[
-            { path: '/dashboard', label: t('nav.dashboard', 'Panel'), icon: <LayoutDashboard className="w-5 h-5" /> },
-            { path: '/generator', label: t('nav.generator', 'Generator'), icon: <Sparkles className="w-5 h-5" /> },
-            { path: '/calendar', label: t('nav.calendar', 'Kalendarz'), icon: <CalendarDays className="w-5 h-5" /> },
-            { path: '/analytics', label: t('nav.analytics', 'Analityka'), icon: <BarChart3 className="w-5 h-5" /> },
-          ]}
-        />
-      )}
 
       {isHomePage && (
         <Suspense fallback={null}>

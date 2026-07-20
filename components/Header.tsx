@@ -31,61 +31,80 @@ interface HeaderProps {
     notificationSystem: React.ReactNode;
 }
 
-const NavItem: React.FC<{ to: string, children: React.ReactNode, title?: string, disabled?: boolean, onClick?: () => void }> = ({ to, children, title, disabled, onClick }) => (
+const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string; disabled?: boolean }> = ({
+    to,
+    children,
+    title,
+    disabled,
+}) => (
     <NavLink
         to={to}
         title={title}
-        onClick={onClick}
-        className={({ isActive }) => `group flex items-center justify-center md:justify-start gap-3 px-4 md:px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-300 relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-white shadow-lg shadow-indigo-500/25 backdrop-blur-md border border-indigo-400/30 scale-[1.02]'
-                : 'text-slate-400 dark:text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 border border-transparent hover:border-white/10 hover:scale-[1.01] hover:shadow-lg'
-            } ${disabled ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''}`
+        end={to === '/dashboard'}
+        className={({ isActive }) =>
+            `flex items-center gap-2 px-3 lg:px-3.5 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-colors ${
+                isActive
+                    ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/35'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/5 border border-transparent'
+            } ${disabled ? 'opacity-35 cursor-not-allowed pointer-events-none' : ''}`
         }
     >
-        <div className={`absolute inset-0 bg-gradient-to-r from-indigo-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-xl group-hover:scale-105`}></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
-        <div className="relative z-10 flex items-center gap-3 transition-transform duration-300 group-hover:scale-105">
-            {children}
-        </div>
+        {children}
     </NavLink>
 );
 
-const BottomNavItem: React.FC<{ to: string, icon: React.ComponentType<{ className?: string }>, label: string }> = ({ to, icon: Icon, label }) => (
+const BottomNavItem: React.FC<{
+    to: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+}> = ({ to, icon: Icon, label }) => (
     <NavLink
         to={to}
-        className={({ isActive }) => `group flex flex-col items-center justify-center gap-2 w-full h-full py-2 transition-all duration-300 relative ${isActive 
-            ? 'text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text scale-105'
-            : 'text-slate-500 dark:text-slate-400 opacity-70 hover:opacity-100 hover:scale-105'}`
+        end={to === '/dashboard'}
+        className={({ isActive }) =>
+            `flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] transition-colors ${
+                isActive
+                    ? 'text-cyan-600 dark:text-cyan-400'
+                    : 'text-slate-500 dark:text-slate-400'
+            }`
         }
     >
-        <div className={`absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-xl"></div>
-        <div className="relative z-10 flex flex-col items-center gap-1 transition-transform duration-300 group-hover:scale-105">
-            <Icon className="w-6 h-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6" />
-            <span className="text-[10px] font-bold uppercase tracking-tight transition-all duration-300 group-hover:tracking-normal group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-indigo-400 group-hover:to-purple-400 group-hover:bg-clip-text">{label}</span>
-        </div>
+        <Icon className="w-5 h-5" />
+        <span className="text-[10px] font-bold tracking-tight">{label}</span>
     </NavLink>
 );
 
-const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void, onOpenMoreMenu: () => void }> = ({ onOpenCreateMenu, onOpenMoreMenu }) => {
+const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () => void }> = ({
+    onOpenCreateMenu,
+    onOpenMoreMenu,
+}) => {
     const { t } = useTranslation();
     return (
-        <div className="sm:hidden fixed bottom-0 left-0 right-0 h-20 glass border-t border-white/10 z-40 shadow-[0_-10px_40px_rgba(0,0,0,0.2)] pb-4 px-4 flex items-center">
-            <nav className="grid grid-cols-5 items-center w-full bg-slate-900/40 dark:bg-black/40 rounded-3xl h-14 border border-white/5 backdrop-blur-xl px-2">
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none">
+            <nav
+                className="pointer-events-auto grid grid-cols-5 items-end gap-1 w-full max-w-lg mx-auto rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl shadow-lg px-1 py-1.5"
+                aria-label={t('header.nav.ariaLabel', 'Nawigacja główna')}
+            >
                 <BottomNavItem to="/dashboard" icon={LayoutGridIcon} label={t('header.nav.dashboard')} />
-                <BottomNavItem to="/trends" icon={TrendingUpIcon} label={t('header.nav.trends')} />
-                <div className="relative flex items-center justify-center -mt-10">
+                <BottomNavItem to="/calendar" icon={CalendarIcon} label={t('header.nav.calendar')} />
+                <div className="flex items-center justify-center -mt-5">
                     <button
+                        type="button"
                         onClick={onOpenCreateMenu}
-                        className="w-16 h-16 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-full text-white shadow-[0_0_30px_rgba(168,85,247,0.5)] flex items-center justify-center transform transition-all active:scale-90 hover:scale-110 animate-pulse-glow border-4 border-slate-900"
+                        className="w-14 h-14 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-600/30 flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-slate-950"
+                        aria-label={t('header.nav.create')}
                     >
-                        <SparklesIcon className="w-8 h-8" />
+                        <SparklesIcon className="w-7 h-7" />
                     </button>
                 </div>
-                <BottomNavItem to="/calendar" icon={CalendarIcon} label={t('header.nav.calendar')} />
-                <button onClick={onOpenMoreMenu} className="flex flex-col items-center justify-center gap-1 w-full h-full text-slate-500 dark:text-slate-400 opacity-70 hover:opacity-100 transition-all">
-                    <MenuIcon className="w-6 h-6" />
-                    <span className="text-[9px] font-black uppercase tracking-tighter">{t('header.nav.more')}</span>
+                <BottomNavItem to="/generator" icon={PostIcon} label={t('header.nav.generator')} />
+                <button
+                    type="button"
+                    onClick={onOpenMoreMenu}
+                    className="flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] text-slate-500 dark:text-slate-400"
+                >
+                    <MenuIcon className="w-5 h-5" />
+                    <span className="text-[10px] font-bold tracking-tight">{t('header.nav.more')}</span>
                 </button>
             </nav>
         </div>
@@ -149,8 +168,10 @@ export const Header: React.FC<HeaderProps> = ({
     const isLandingPage = location.pathname === '/';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
     const createMenuRef = useRef<HTMLDivElement>(null);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
 
     const userPlan = user?.plan || UserPlan.Free;
@@ -162,9 +183,23 @@ export const Header: React.FC<HeaderProps> = ({
             if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
                 setIsCreateMenuOpen(false);
             }
+            if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setIsMoreMenuOpen(false);
+            }
+        };
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsCreateMenuOpen(false);
+                setIsMoreMenuOpen(false);
+                setIsMobileCreateMenuOpen(false);
+            }
         };
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
     }, []);
 
     useEffect(() => {
@@ -207,20 +242,48 @@ export const Header: React.FC<HeaderProps> = ({
         { id: 'new-storyboard', to: '/storyboard', label: t('header.nav.newStoryboard'), icon: FilmIcon, state: null, disabled: false },
     ];
 
-    const mainNavItems = [
-        { id: 'dashboard', to: '/dashboard', label: t('header.nav.dashboard'), icon: LayoutGridIcon, state: null },
-        { id: 'strategist', to: '/strategist', label: t('header.nav.strategist'), icon: BrainCircuitIcon, disabled: !isStrategistEnabled, title: !isStrategistEnabled ? t('header.strategistDisabledTooltip') : t('header.strategistTooltip'), state: null },
-        { id: 'trends', to: '/trends', label: t('header.nav.trends'), icon: TrendingUpIcon, state: null },
-        { id: 'calendar', to: '/calendar', label: t('header.nav.calendar'), icon: CalendarIcon, disabled: !isCalendarEnabled, title: !isCalendarEnabled ? t('header.calendarDisabledTooltip') : t('header.calendarTooltip'), state: null },
-        { id: 'analytics', to: '/analytics', label: t('header.nav.analytics'), icon: ChartPieIcon, disabled: !isAnalyticsEnabled, title: !isAnalyticsEnabled ? t('header.analyticsDisabledTooltip') : t('header.analyticsTooltip'), state: null },
-        { id: 'competitors', to: '/competitors', label: 'Konkurencja', icon: UsersIcon, state: null },
+    /** Główne ścieżki codziennej pracy — widoczne od razu na desktopie */
+    const primaryNavItems = [
+        { id: 'dashboard', to: '/dashboard', label: t('header.nav.dashboard'), icon: LayoutGridIcon },
+        { id: 'generator', to: '/generator', label: t('header.nav.generator'), icon: PostIcon },
+        {
+            id: 'calendar',
+            to: '/calendar',
+            label: t('header.nav.calendar'),
+            icon: CalendarIcon,
+            disabled: !isCalendarEnabled,
+            title: !isCalendarEnabled ? t('header.calendarDisabledTooltip') : t('header.calendarTooltip'),
+        },
+        {
+            id: 'analytics',
+            to: '/analytics',
+            label: t('header.nav.analytics'),
+            icon: ChartPieIcon,
+            disabled: !isAnalyticsEnabled,
+            title: !isAnalyticsEnabled ? t('header.analyticsDisabledTooltip') : t('header.analyticsTooltip'),
+        },
+    ];
+
+    /** Rzadziej używane — w menu „Więcej” */
+    const moreNavItems = [
+        {
+            id: 'strategist',
+            to: '/strategist',
+            label: t('header.nav.strategist'),
+            icon: BrainCircuitIcon,
+            disabled: !isStrategistEnabled,
+            title: !isStrategistEnabled ? t('header.strategistDisabledTooltip') : t('header.strategistTooltip'),
+        },
+        { id: 'trends', to: '/trends', label: t('header.nav.trends'), icon: TrendingUpIcon },
+        { id: 'competitors', to: '/competitors', label: t('header.nav.competitors'), icon: UsersIcon },
+        { id: 'analyzer', to: '/analyzer', label: t('header.nav.analyzer'), icon: BeakerIcon },
+        { id: 'storyboard', to: '/storyboard', label: t('header.nav.storyboard'), icon: FilmIcon },
     ];
 
     const mobileDrawerNavItems = [
-        { id: 'strategist', to: '/strategist', label: t('header.nav.strategist'), icon: BrainCircuitIcon, disabled: !isStrategistEnabled },
-        { id: 'analytics', to: '/analytics', label: t('header.nav.analytics'), icon: ChartPieIcon, disabled: !isAnalyticsEnabled },
-        { id: 'competitors', to: '/competitors', label: 'Konkurencja', icon: UsersIcon, disabled: false },
-        { id: 'account', to: '/account', label: t('userMenu.myAccount'), icon: UserIcon, disabled: false },
+        ...primaryNavItems,
+        ...moreNavItems,
+        { id: 'account', to: '/account', label: t('userMenu.myAccount'), icon: UserIcon },
     ];
 
     const landingNavItems: Array<
@@ -273,37 +336,102 @@ export const Header: React.FC<HeaderProps> = ({
                     </div>
 
                     {user && (
-                        <nav className="hidden sm:flex items-center gap-2 p-2 bg-gradient-to-br from-slate-900/40 to-slate-800/40 rounded-[1.5rem] border border-white/[0.08] backdrop-blur-md shadow-inner">
-                            {mainNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
+                        <nav
+                            className="hidden sm:flex items-center gap-1 p-1.5 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/50 backdrop-blur-md"
+                            aria-label={t('header.nav.ariaLabel', 'Nawigacja główna')}
+                        >
+                            {primaryNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
                                 <NavItem key={id} to={to} title={title || label} disabled={disabled}>
-                                    <Icon className="w-5 h-5 opacity-80" />
-                                    <span className="hidden md:inline text-xs uppercase tracking-tighter">{label}</span>
+                                    <Icon className="w-4 h-4 shrink-0 opacity-90" />
+                                    <span className="hidden lg:inline">{label}</span>
                                 </NavItem>
                             ))}
-                            {/* Create Dropdown */}
+
+                            <div className="relative" ref={moreMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsMoreMenuOpen((v) => !v);
+                                        setIsCreateMenuOpen(false);
+                                    }}
+                                    aria-expanded={isMoreMenuOpen}
+                                    aria-haspopup="menu"
+                                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-colors border ${
+                                        isMoreMenuOpen || moreNavItems.some((i) => location.pathname.startsWith(i.to))
+                                            ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/35'
+                                            : 'text-slate-500 dark:text-slate-400 hover:bg-white/5 border-transparent'
+                                    }`}
+                                >
+                                    <span className="hidden lg:inline">{t('header.nav.more')}</span>
+                                    <MenuIcon className="w-4 h-4 lg:hidden" />
+                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${isMoreMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isMoreMenuOpen && (
+                                    <div
+                                        role="menu"
+                                        className="absolute top-full right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl z-50 p-1.5"
+                                    >
+                                        {moreNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
+                                            <NavLink
+                                                key={id}
+                                                to={to}
+                                                title={title}
+                                                role="menuitem"
+                                                onClick={() => setIsMoreMenuOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                                                        isActive
+                                                            ? 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300'
+                                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                    } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                }
+                                            >
+                                                <Icon className="w-4 h-4 shrink-0" />
+                                                {label}
+                                            </NavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-0.5" aria-hidden />
+
                             <div className="relative" ref={createMenuRef}>
                                 <button
-                                    onClick={() => setIsCreateMenuOpen(prev => !prev)}
-                                    className={`flex items-center justify-center md:justify-start gap-2 px-3 md:px-5 py-2.5 text-xs font-black uppercase tracking-tighter rounded-xl transition-all duration-300 ${isCreateMenuOpen ? 'bg-white/10 text-white shadow-inner' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
+                                    type="button"
+                                    onClick={() => {
+                                        setIsCreateMenuOpen((prev) => !prev);
+                                        setIsMoreMenuOpen(false);
+                                    }}
+                                    aria-expanded={isCreateMenuOpen}
+                                    aria-haspopup="menu"
+                                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-colors ${
+                                        isCreateMenuOpen
+                                            ? 'bg-cyan-600 text-white'
+                                            : 'bg-cyan-600/90 hover:bg-cyan-500 text-white'
+                                    }`}
                                 >
-                                    <SparklesIcon className="w-5 h-5 text-indigo-400" />
+                                    <SparklesIcon className="w-4 h-4" />
                                     <span className="hidden md:inline">{t('header.nav.create')}</span>
-                                    <ChevronDownIcon className={`w-4 h-4 transition-transform ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isCreateMenuOpen && (
-                                    <div className="absolute top-full right-0 mt-3 w-64 glass border border-white/10 rounded-2xl shadow-2xl z-50 animate-scale-in p-2 overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
+                                    <div
+                                        role="menu"
+                                        className="absolute top-full right-0 mt-2 w-60 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl z-50 p-1.5"
+                                    >
                                         {createNavItems.map(({ id, to, label, icon: Icon, state }) => (
                                             <NavLink
                                                 key={id}
                                                 to={to}
                                                 state={state}
+                                                role="menuitem"
                                                 onClick={() => setIsCreateMenuOpen(false)}
-                                                className={({ isActive }) => `flex w-full items-center gap-4 px-4 py-3 text-sm font-bold rounded-xl transition-all ${isActive ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 dark:text-slate-300 hover:bg-white/5 hover:text-white'}`}
+                                                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                             >
-                                                <div className="p-2 bg-slate-800 rounded-lg">
-                                                    <Icon className="w-5 h-5" />
-                                                </div>
+                                                <span className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                                                    <Icon className="w-4 h-4" />
+                                                </span>
                                                 {label}
                                             </NavLink>
                                         ))}
@@ -386,28 +514,59 @@ export const Header: React.FC<HeaderProps> = ({
                     <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm bg-white dark:bg-slate-900 shadow-2xl p-8 transition-transform duration-500 ease-out glass border-l border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
                         <div>
                             <div className="flex justify-between items-center mb-10">
-                                <h2 id="mobile-menu-heading" className="text-3xl font-black gradient-text tracking-tighter">Menu</h2>
+                                <h2 id="mobile-menu-heading" className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                    {t('header.nav.menu', 'Menu')}
+                                </h2>
                                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400">
                                     <XMarkIcon className="w-6 h-6" />
                                 </button>
                             </div>
-                            <nav className="flex flex-col gap-3">
+                            <nav className="flex flex-col gap-2 overflow-y-auto custom-scrollbar">
                                 {user ? (
                                     <>
-                                        {mobileDrawerNavItems.map(({ id, to, label, icon: Icon, disabled = false }, i) => (
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 mb-1">
+                                            {t('header.nav.sectionMain', 'Główne')}
+                                        </p>
+                                        {mobileDrawerNavItems.slice(0, 4).map(({ id, to, label, icon: Icon, disabled = false }) => (
+                                            <NavLink
+                                                key={id}
+                                                to={to}
+                                                end={to === '/dashboard'}
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors ${
+                                                        isActive
+                                                            ? 'bg-cyan-500 text-white'
+                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                    } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                }
+                                            >
+                                                <Icon className="w-5 h-5 shrink-0" />
+                                                {label}
+                                            </NavLink>
+                                        ))}
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 mt-4 mb-1">
+                                            {t('header.nav.sectionMore', 'Więcej')}
+                                        </p>
+                                        {mobileDrawerNavItems.slice(4).map(({ id, to, label, icon: Icon, disabled = false }) => (
                                             <NavLink
                                                 key={id}
                                                 to={to}
                                                 onClick={() => setIsMobileMenuOpen(false)}
-                                                className={({ isActive }) => `flex items-center gap-4 px-5 py-4 text-base font-bold rounded-2xl transition-all animate-fade-in-right ${isActive ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'} ${disabled ? 'opacity-30 pointer-events-none' : ''}`}
-                                                style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'both' }}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors ${
+                                                        isActive
+                                                            ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300'
+                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                    } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                }
                                             >
-                                                <Icon className="w-6 h-6" />
+                                                <Icon className="w-5 h-5 shrink-0" />
                                                 {label}
                                             </NavLink>
                                         ))}
                                         <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
-                                        {user && <TeamSwitcher user={user} onSwitchTeam={(id) => { setCurrentTeamId(id); setIsMobileMenuOpen(false); }} />}
+                                        <TeamSwitcher user={user} onSwitchTeam={(id) => { setCurrentTeamId(id); setIsMobileMenuOpen(false); }} />
                                     </>
                                 ) : (
                                     <div className="flex flex-col gap-4">
