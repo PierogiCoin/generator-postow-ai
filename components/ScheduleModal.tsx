@@ -6,11 +6,17 @@ import { ClockIcon } from './icons/ClockIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { ModernButton } from './ui/ModernButton';
 import { XMarkIcon } from './icons/XMarkIcon';
+import { useEscapeClose } from '../hooks/useEscapeClose';
 
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (scheduleTimestamp: number, selectedPlatforms: Platform[], selectedFormats: GenerationType[]) => void;
+  onConfirm: (
+    scheduleTimestamp: number,
+    selectedPlatforms: Platform[],
+    selectedFormats: GenerationType[],
+    requireApproval?: boolean
+  ) => void;
   itemToSchedule: (Partial<ScheduledPost> & { formData: FormData; result: GenerationResult; }) | null;
 }
 
@@ -28,6 +34,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
   const [error, setError] = useState('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedFormats, setSelectedFormats] = useState<GenerationType[]>([]);
+  const [requireApproval, setRequireApproval] = useState(false);
+  useEscapeClose(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -48,6 +56,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
         setSelectedFormats([GenerationType.PostWithImage]);
       }
       setError('');
+      setRequireApproval(false);
     }
   }, [isOpen, itemToSchedule]);
 
@@ -84,7 +93,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
     }
 
     setError('');
-    onConfirm(scheduleDateTime.getTime(), selectedPlatforms, selectedFormats);
+    onConfirm(scheduleDateTime.getTime(), selectedPlatforms, selectedFormats, requireApproval);
   };
 
   if (!isOpen) return null;
@@ -101,12 +110,15 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="schedule-modal-title"
         className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-xl m-4 transform transition-all flex flex-col gap-6"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-black text-blue-600 dark:text-blue-300">Zaplanuj publikację</h2>
-          <button onClick={onClose} className="p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"><XMarkIcon className="w-5 h-5" /></button>
+          <h2 id="schedule-modal-title" className="text-2xl font-black text-blue-600 dark:text-blue-300">Zaplanuj publikację</h2>
+          <button type="button" onClick={onClose} aria-label="Zamknij" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"><XMarkIcon className="w-5 h-5" /></button>
         </div>
 
         {itemToSchedule && (
@@ -190,6 +202,19 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
               })}
             </div>
           </div>
+
+          <label className="flex items-start gap-3 p-3 rounded-xl border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-900/10 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={requireApproval}
+              onChange={(e) => setRequireApproval(e.target.checked)}
+              className="mt-1 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+            />
+            <span>
+              <span className="block text-sm font-bold text-slate-800 dark:text-slate-200">Wymagaj akceptacji przed publikacją</span>
+              <span className="block text-xs text-slate-500 mt-0.5">Post trafi do kolejki akceptacji na dashboardzie.</span>
+            </span>
+          </label>
 
         </div>
         {error && <p className="text-red-500 dark:text-red-400 text-sm mt-4">{error}</p>}

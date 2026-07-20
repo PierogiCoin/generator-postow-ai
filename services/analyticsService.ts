@@ -56,6 +56,65 @@ export const generateMockPerformanceData = (history: CampaignHistoryItem[]): Cam
   });
 };
 
+const normalizeText = (text: string) =>
+  text.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 120);
+
+/**
+ * Preferuje metryki z podłączonych kont social; brak dopasowania → mock.
+ */
+export const enrichHistoryWithLiveMetrics = (
+  history: CampaignHistoryItem[],
+  socialPosts: SocialPost[]
+): { items: CampaignHistoryItem[]; liveMatched: number } => {
+  const withMock = generateMockPerformanceData(history);
+  if (!socialPosts.length) {
+    return { items: withMock, liveMatched: 0 };
+  }
+
+  let liveMatched = 0;
+  const items = withMock.map((item) => {
+    const topic = normalizeText(item.formData?.topic || item.result?.postText || '');
+    if (!topic) return item;
+
+    const match = socialPosts.find((sp) => {
+      const content = normalizeText(sp.content || '');
+      if (!content) return false;
+      return content.includes(topic.slice(0, 40)) || topic.includes(content.slice(0, 40));
+    });
+
+    if (!match) return item;
+
+    const likes = match.metrics?.likes ?? (match as { likes?: number }).likes;
+    const comments = match.metrics?.comments ?? (match as { comments?: number }).comments;
+    const shares = match.metrics?.shares ?? (match as { shares?: number }).shares;
+    const reach =
+      match.metrics?.reach ??
+      match.metrics?.impressions ??
+      (match as { reach?: number }).reach ??
+      (match as { impressions?: number }).impressions;
+
+    const hasLive =
+      typeof likes === 'number' ||
+      typeof comments === 'number' ||
+      typeof shares === 'number' ||
+      typeof reach === 'number';
+    if (!hasLive) return item;
+
+    liveMatched += 1;
+    return {
+      ...item,
+      performance: {
+        reach: reach ?? item.performance?.reach ?? 0,
+        likes: likes ?? item.performance?.likes ?? 0,
+        comments: comments ?? item.performance?.comments ?? 0,
+        shares: shares ?? item.performance?.shares ?? 0,
+      },
+    };
+  });
+
+  return { items, liveMatched };
+};
+
 interface AIAnalysisResult {
   insights: AIInsight[];
   optimalTimes: OptimalTime[];

@@ -12,6 +12,7 @@ import {
   cachePlatformAnalysis,
   getCachedPlatformAnalysis,
 } from '../services/crossPlatformService';
+import { loadEngagementInbox } from '../services/engagementInboxService';
 import { Platform, Tone, NotificationType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
@@ -77,7 +78,27 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
   const [selectedTargetPlatforms, setSelectedTargetPlatforms] = useState<Platform[]>([]);
   const [copiedIndex, setCopiedIndex] = useState<string | null>(null);
 
-  const [inboxMessages] = useState<UnifiedMessage[]>([]);
+  const [inboxMessages, setInboxMessages] = useState<UnifiedMessage[]>([]);
+  const [isLoadingInbox, setIsLoadingInbox] = useState(false);
+
+  const refreshInbox = useCallback(async () => {
+    if (!user?.id) return;
+    setIsLoadingInbox(true);
+    try {
+      const messages = await loadEngagementInbox(user.id);
+      setInboxMessages(messages);
+    } catch {
+      setInboxMessages([]);
+    } finally {
+      setIsLoadingInbox(false);
+    }
+  }, [user?.id]);
+
+  React.useEffect(() => {
+    if (activeTab === 'inbox') {
+      void refreshInbox();
+    }
+  }, [activeTab, refreshInbox]);
 
   const handleAnalyzeBestPlatform = useCallback(async () => {
     if (!user?.id || !currentContent.trim()) return;
@@ -175,7 +196,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
       <div className="flex gap-2">
         {[
           { id: 'picker', label: 'Best Platform', icon: SparklesIcon, badge: analysis ? '✓' : null },
-          { id: 'inbox', label: 'Unified Inbox', icon: ChatBubbleIcon, badge: '3' },
+          { id: 'inbox', label: 'Unified Inbox', icon: ChatBubbleIcon, badge: String(inboxMessages.length || '') },
           { id: 'adapt', label: 'Cross-Post', icon: ArrowRightIcon },
           { id: 'migrate', label: 'Migration', icon: CollectionIcon },
         ].map((tab) => (
@@ -351,12 +372,21 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
 
           {/* Messages */}
           <div className="space-y-3">
-            {inboxMessages.length === 0 ? (
+            {isLoadingInbox ? (
+              <div className="p-8 text-center text-sm text-slate-500">Ładowanie skrzynki…</div>
+            ) : inboxMessages.length === 0 ? (
               <div className="p-8 text-center rounded-xl border border-dashed border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/50">
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Brak wiadomości w skrzynce</p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   Połącz konta social media, aby agregować komentarze i wzmianki.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => void refreshInbox()}
+                  className="mt-3 text-xs font-bold text-indigo-600 hover:underline"
+                >
+                  Odśwież
+                </button>
               </div>
             ) : inboxMessages.map((message) => (
               <div

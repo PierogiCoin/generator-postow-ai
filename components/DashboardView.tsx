@@ -36,6 +36,9 @@ import { useUIStore } from '../stores/uiStore';
 import { OnboardingChecklist } from './OnboardingChecklist';
 import { TrialBanner } from './TrialBanner';
 import { ReferralCard } from './ReferralCard';
+import { ApprovalQueuePanel } from './ApprovalQueuePanel';
+import { EngagementInboxPanel } from './EngagementInboxPanel';
+import { RssToPostPanel } from './RssToPostPanel';
 
 // Zustand stores
 import { useDataStore } from '../stores/dataStore';
@@ -448,6 +451,9 @@ export const DashboardView: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-2 space-y-8">
                     <WeeklySummary />
+                    <ApprovalQueuePanel />
+                    <EngagementInboxPanel />
+                    <RssToPostPanel />
                     <StrategyAssistant />
                 </div>
                 <div className="lg:col-span-1 space-y-8">

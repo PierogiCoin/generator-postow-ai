@@ -13,7 +13,8 @@ export const useScheduleHandlers = (addToast: ToastFn, confirm?: ConfirmFn) => {
     const handleConfirmSchedule = useCallback(async (
         scheduleTimestamp: number,
         selectedPlatforms: Platform[],
-        selectedFormats: GenerationType[]
+        selectedFormats: GenerationType[],
+        requireApproval = false
     ) => {
         const itemToSchedule = useDataStore.getState().itemToSchedule;
         if (!itemToSchedule || !user) return;
@@ -36,7 +37,7 @@ export const useScheduleHandlers = (addToast: ToastFn, confirm?: ConfirmFn) => {
                     result: { ...itemToSchedule.result, platform, type: format },
                     scheduleTimestamp,
                     status: 'scheduled',
-                    approvalStatus: 'draft',
+                    approvalStatus: requireApproval ? 'pending_approval' : 'draft',
                     comments: [],
                     createdAt: Date.now(),
                     scheduledPlatforms: selectedPlatforms,
@@ -49,7 +50,12 @@ export const useScheduleHandlers = (addToast: ToastFn, confirm?: ConfirmFn) => {
             await dataActions.addOrUpdateScheduledPost(post);
         }
 
-        addToast(`Zaplanowano ${newPosts.length} publikacji!`, NotificationType.Success);
+        addToast(
+            requireApproval
+                ? `Dodano ${newPosts.length} publikacji do kolejki akceptacji.`
+                : `Zaplanowano ${newPosts.length} publikacji!`,
+            NotificationType.Success
+        );
         dataActions.setItemToSchedule(null);
     }, [user, addToast, dataActions]);
 

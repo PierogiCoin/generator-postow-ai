@@ -283,7 +283,8 @@ export const AnalyticsView: React.FC = () => {
                 const topic = (h.formData?.topic || "").trim().toLowerCase();
                 return topic !== "" && topic !== "bez tytułu";
             });
-            const historyWithPerformance = analyticsService.generateMockPerformanceData(filteredHistory);
+            const { items: historyWithPerformance, liveMatched } =
+              analyticsService.enrichHistoryWithLiveMetrics(filteredHistory, realSocialHistory);
 
             // 3. Uruchom analizę AI przekazując RZECZYWISTE dane z platform jeśli są dostępne
             const analysisResult = await analyticsService.fetchAIAnalysis(
@@ -309,7 +310,12 @@ export const AnalyticsView: React.FC = () => {
             setIsGeneratingStrategy(false);
 
             if (realSocialHistory.length > 0) {
-                addToast(`Analiza ukończona na podstawie ${realSocialHistory.length} rzeczywistych postów.`, NotificationType.Success);
+                addToast(
+                  liveMatched > 0
+                    ? `Analiza: ${realSocialHistory.length} postów z kont + ${liveMatched} z live metrykami.`
+                    : `Analiza ukończona na podstawie ${realSocialHistory.length} rzeczywistych postów.`,
+                  NotificationType.Success
+                );
             }
         } catch (error) {
             addToast(t('errors.analysis_failed'), NotificationType.Error);

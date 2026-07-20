@@ -20,6 +20,24 @@
   "auth": {
     "loginToContinue": "Sign in to continue to the selected section."
   },
+  "aiTools": {
+    "categories": {
+      "inspiration": "Inspiration & Trends",
+      "quality": "Optimization & Quality",
+      "distribution": "Distribution & Video"
+    },
+    "reverseImage": { "title": "Competitor image analysis", "desc": "Analyze viral competitor images" },
+    "techRadar": { "title": "Find niche news", "desc": "Live news from Google Search → topic or calendar" },
+    "trends": { "title": "Trend analysis", "desc": "Analyze trends in your niche" },
+    "safety": { "title": "Content safety scanner", "desc": "Protect against shadowbans" },
+    "schedule": { "title": "Schedule optimization", "desc": "Find the best time to publish" },
+    "workflow": { "title": "AI workflow automation", "desc": "Pipeline, replies, prediction" },
+    "repurpose": { "title": "Content repurposing", "desc": "One piece → many platforms" },
+    "crossPlatform": { "title": "Cross-platform center", "desc": "Inbox, adaptation, analysis" },
+    "publisher": { "title": "Social media publisher", "desc": "Publish directly to accounts" },
+    "video": { "title": "AI video generator", "desc": "Create short videos from a post" },
+    "omni": { "title": "Gemini Omni", "desc": "Advanced multimodal assistant" }
+  },
   "header": {
     "title": "AI Content Pro",
     "nav": {

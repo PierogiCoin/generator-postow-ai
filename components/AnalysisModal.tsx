@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { CampaignHistoryItem } from '../types';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { BeakerIcon } from './icons/BeakerIcon';
+import { useEscapeClose } from '../hooks/useEscapeClose';
 
 interface AnalysisModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
 }) => {
   const [prompt, setPrompt] = useState('');
   const { t } = useTranslation();
+  useEscapeClose(isOpen, onClose);
 
   if (!isOpen || !itemToAnalyze) return null;
 
@@ -47,15 +49,18 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="analysis-modal-title"
         className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl w-full max-w-2xl m-4 flex flex-col max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
         <div className="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-3">
+          <h2 id="analysis-modal-title" className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-3">
             <BeakerIcon className="w-6 h-6 text-blue-500" />
             {t('analysisModal.title')}
           </h2>
-          <button onClick={onClose} aria-label="Close modal" className="p-2 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 text-2xl leading-none">&times;</button>
+          <button onClick={onClose} aria-label={t('common.close', 'Zamknij')} className="p-2 rounded-full text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 text-2xl leading-none">&times;</button>
         </div>
         
         <div className="p-6 overflow-y-auto space-y-6">

@@ -399,20 +399,23 @@ export function useInputFormController({
 
   const aiToolPanels = useMemo(
     () =>
-      createAiToolPanels({
-        setIsReverseImageOpen,
-        setIsTrendAnalysisOpen,
-        setIsTechRadarOpen,
-        setIsScheduleOptimizerOpen,
-        setIsAIWorkflowOpen,
-        setIsContentSafetyOpen,
-        setIsRepurposingOpen,
-        setIsCrossPlatformOpen,
-        setIsSocialMediaOpen,
-        setIsVideoGeneratorOpen,
-        setIsOmniOpen,
-      }),
-    []
+      createAiToolPanels(
+        {
+          setIsReverseImageOpen,
+          setIsTrendAnalysisOpen,
+          setIsTechRadarOpen,
+          setIsScheduleOptimizerOpen,
+          setIsAIWorkflowOpen,
+          setIsContentSafetyOpen,
+          setIsRepurposingOpen,
+          setIsCrossPlatformOpen,
+          setIsSocialMediaOpen,
+          setIsVideoGeneratorOpen,
+          setIsOmniOpen,
+        },
+        (key, fallback) => t(key, fallback ?? key)
+      ),
+    [t]
   );
 
   const handleAddTechNewsToCalendar = useCallback(

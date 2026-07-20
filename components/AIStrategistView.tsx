@@ -122,8 +122,31 @@ const ReportDisplay: React.FC<{
                     {t('strategist.report.newAudit', 'Nowy audyt')}
                 </button>
             </div>
+
+            <nav
+              aria-label={t('strategist.report.toc', 'Spis treści raportu')}
+              className="sticky top-2 z-20 flex flex-wrap gap-2 p-3 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-700 backdrop-blur shadow-sm"
+            >
+              {[
+                { id: 'report-summary', label: t('strategist.report.summary') },
+                { id: 'report-pillars', label: t('strategist.report.pillars') },
+                { id: 'report-persona', label: t('strategist.report.persona') },
+                { id: 'report-competitors', label: t('strategist.report.competitors') },
+                { id: 'report-swot', label: t('strategist.report.swot') },
+                { id: 'report-plan', label: t('strategist.report.plan') },
+              ].map((item) => (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  className="px-3 py-1.5 text-xs font-bold rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:text-blue-700 dark:hover:text-blue-300 transition"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+
             {/* Summary */}
-            <div className="p-6 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 rounded-r-lg">
+            <div id="report-summary" className="scroll-mt-24 p-6 bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 rounded-r-lg">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{t('strategist.report.summary')}</h3>
                 <p className="text-slate-700 dark:text-slate-300">{report.summary}</p>
             </div>
@@ -131,7 +154,7 @@ const ReportDisplay: React.FC<{
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Pillars */}
                 {report.contentPillars?.length > 0 && (
-                <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                <div id="report-pillars" className="scroll-mt-24 p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.pillars')}</h3>
                     <div className="space-y-4">
                         {report.contentPillars.map(p => (
@@ -149,7 +172,7 @@ const ReportDisplay: React.FC<{
 
                 {/* Persona */}
                 {report.refinedPersona && (
-                <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                <div id="report-persona" className="scroll-mt-24 p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.persona')}</h3>
                     <h4 className="font-bold text-lg text-blue-700 dark:text-blue-300">{report.refinedPersona.name}, {report.refinedPersona.age}</h4>
                     <p className="text-sm font-medium">{report.refinedPersona.jobTitle} @ {report.refinedPersona.location}</p>
@@ -175,7 +198,7 @@ const ReportDisplay: React.FC<{
 
             {/* Competitive snapshot */}
             {report.competitiveSnapshot?.length > 0 && (
-                <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+                <div id="report-competitors" className="scroll-mt-24 p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.competitors')}</h3>
                     <div className="space-y-4">
                         {report.competitiveSnapshot.map((c, i) => (
@@ -299,7 +322,7 @@ const ReportDisplay: React.FC<{
 
             {/* SWOT */}
             {report.swot && (
-            <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <div id="report-swot" className="scroll-mt-24 p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.swot')}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -323,10 +346,10 @@ const ReportDisplay: React.FC<{
             )}
 
             {/* Plan */}
-            <div className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
+            <div id="report-plan" className="scroll-mt-24 p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">{t('strategist.report.plan')}</h3>
-                    <button onClick={handleImport} disabled={planImported} aria-label={planImported ? "Plan imported" : "Import plan"} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition disabled:bg-green-600">
+                    <button onClick={handleImport} disabled={planImported} aria-label={planImported ? t('strategist.report.planImported', 'Plan zaimportowany') : t('strategist.report.importPlan', 'Importuj plan')} className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition disabled:bg-green-600">
                         {planImported ? <><CheckIcon className="w-5 h-5" /> {t('strategist.report.planImported')}</> : <>{t('strategist.report.importPlan')}</>}
                     </button>
                 </div>

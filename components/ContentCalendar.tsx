@@ -22,6 +22,8 @@ import { PreviewPopover } from './PreviewPopover';
 import { XMarkIcon } from './icons/XMarkIcon';
 import { CalendarFillToolbar } from './calendar/CalendarFillToolbar';
 import { DayDetailDrawer } from './calendar/DayDetailDrawer';
+import { BulkQueuePublisherModal } from './calendar/BulkQueuePublisherModal';
+import { postsInDateRange } from '../services/bulkQueuePublisherService';
 import {
   auditCalendarDay,
   generateCadenceWeekPlan,
@@ -133,6 +135,8 @@ export const ContentCalendar: React.FC = () => {
     post: ScheduledPost;
     pos: { top: number; left: number };
   } | null>(null);
+  const [bulkQueueOpen, setBulkQueueOpen] = useState(false);
+  const [bulkRange, setBulkRange] = useState<{ start: Date; end: Date } | null>(null);
 
   const persistPrefs = useCallback(
     (patch: Partial<{ presetId: CadencePresetId; weekTheme: string; platform: Platform }>) => {
@@ -167,6 +171,35 @@ export const ContentCalendar: React.FC = () => {
   };
 
   const weekStartDate = useMemo(() => getWeekStart(currentDate), [currentDate]);
+
+  const weekBulkRange = useMemo(() => {
+    const start = new Date(weekStartDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(weekStartDate);
+    end.setDate(end.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  }, [weekStartDate]);
+
+  const weekPublishableCount = useMemo(
+    () => postsInDateRange(scheduledPosts, weekBulkRange.start, weekBulkRange.end).length,
+    [scheduledPosts, weekBulkRange]
+  );
+
+  const openBulkQueueForWeek = () => {
+    setBulkRange(weekBulkRange);
+    setBulkQueueOpen(true);
+  };
+
+  const openBulkQueueForDay = () => {
+    if (!selectedDay) return;
+    const start = new Date(selectedDay);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(selectedDay);
+    end.setHours(23, 59, 59, 999);
+    setBulkRange({ start, end });
+    setBulkQueueOpen(true);
+  };
 
   const periodLabel = useMemo(() => {
     if (calendarView === 'week') {
@@ -748,6 +781,8 @@ export const ContentCalendar: React.FC = () => {
           persistPrefs({ platform: p });
         }}
         onFillWeek={handleFillWeek}
+        onOpenBulkQueue={openBulkQueueForWeek}
+        bulkQueueCount={weekPublishableCount}
       />
 
       <IntelligenceGapStrip
@@ -887,8 +922,16 @@ export const ContentCalendar: React.FC = () => {
           onGenerateSlot={(item) => handleGenerateForSlot(item, true)}
           onUpdateSlot={handleUpdatePlanSlot}
           onEditPost={(post) => handlers.handleEditScheduledPost(post)}
+          onOpenBulkQueue={openBulkQueueForDay}
         />
       )}
+
+      <BulkQueuePublisherModal
+        isOpen={bulkQueueOpen}
+        onClose={() => setBulkQueueOpen(false)}
+        rangeStart={bulkRange?.start}
+        rangeEnd={bulkRange?.end}
+      />
 
       {hoveredPost && (
         <PreviewPopover

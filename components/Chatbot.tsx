@@ -19,7 +19,7 @@ interface Message {
 }
 
 export const Chatbot: React.FC = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const { result, lastFormData, updateResultText } = useGenerationStore();
   
@@ -192,7 +192,7 @@ export const Chatbot: React.FC = () => {
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-2xl hover:scale-110 hover:rotate-3 transition-all z-[60] group"
-        aria-label="Open AI Chatbot"
+        aria-label={t('chatbot.open', 'Otwórz asystenta AI')}
       >
         <SparklesIcon className="w-7 h-7 group-hover:animate-pulse" />
         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-bounce">AI</span>
@@ -301,7 +301,7 @@ export const Chatbot: React.FC = () => {
                 onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg touch-manipulation"
-                aria-label="Send message"
+                aria-label={t('chatbot.send', 'Wyślij wiadomość')}
               >
                 <SendIcon className="w-4 h-4" />
               </button>

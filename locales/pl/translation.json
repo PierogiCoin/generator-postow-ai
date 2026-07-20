@@ -20,6 +20,24 @@
   "auth": {
     "loginToContinue": "Zaloguj się, aby kontynuować do wybranej sekcji."
   },
+  "aiTools": {
+    "categories": {
+      "inspiration": "Inspiracja i Trendy",
+      "quality": "Optymalizacja i Jakość",
+      "distribution": "Dystrybucja i Wideo"
+    },
+    "reverseImage": { "title": "Analiza obrazu konkurencji", "desc": "Analizuj viralowe obrazy konkurencji" },
+    "techRadar": { "title": "Znajdź nowinki w niszy", "desc": "Live newsy z Google Search → temat lub kalendarz" },
+    "trends": { "title": "Analiza trendów", "desc": "Analizuj trendy w Twojej niszy" },
+    "safety": { "title": "Skaner bezpieczeństwa treści", "desc": "Ochrona przed shadowbanem" },
+    "schedule": { "title": "Optymalizacja harmonogramu", "desc": "Znajdź najlepszy czas publikacji" },
+    "workflow": { "title": "Automatyzacja AI Workflow", "desc": "Pipeline, odpowiedzi, predykcja" },
+    "repurpose": { "title": "Przetwarzanie treści", "desc": "Jedna treść → wiele platform" },
+    "crossPlatform": { "title": "Centrum wieloplatformowe", "desc": "Inbox, adaptacja, analiza" },
+    "publisher": { "title": "Publikacja w social media", "desc": "Publikuj bezpośrednio na kontach" },
+    "video": { "title": "Generator wideo AI", "desc": "Twórz krótkie wideo z posta" },
+    "omni": { "title": "Gemini Omni", "desc": "Zaawansowany asystent multimodalny" }
+  },
   "header": {
     "title": "AI Content Pro",
     "nav": {

@@ -24,6 +24,7 @@ import { NotificationType } from '../types';
 import { PhotoIcon } from './icons/PhotoIcon';
 import { computeBrandVoiceCompleteness } from '../utils/brandVoiceLearn';
 import { UsersIcon } from './icons/UsersIcon';
+import { useEscapeClose } from '../hooks/useEscapeClose';
 
 interface BrandVoiceManagerModalProps {
     isOpen: boolean;
@@ -537,6 +538,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
     const [extractUrl, setExtractUrl] = useState('');
     const { t } = useTranslation();
     const { confirm, confirmDialogProps } = useConfirm();
+    useEscapeClose(isOpen, onClose);
 
     useEffect(() => {
         if (!isOpen) {
@@ -631,6 +633,9 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
             onClick={onClose}
         >
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="brand-voice-modal-title"
                 className="bg-white/90 dark:bg-slate-900/90 border border-white/20 rounded-[3rem] shadow-2xl w-full max-w-7xl flex flex-col max-h-[92vh] overflow-hidden animate-scale-in"
                 onClick={e => e.stopPropagation()}
             >
@@ -640,12 +645,14 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                             <IdentificationIcon className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Tożsamość Marki</h2>
+                            <h2 id="brand-voice-modal-title" className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Tożsamość Marki</h2>
                             <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Brand Voice & Assets Manager</p>
                         </div>
                     </div>
                     <button
+                        type="button"
                         onClick={onClose}
+                        aria-label="Zamknij"
                         className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-500 hover:text-white transition-all transform hover:rotate-90"
                     >
                         &times;

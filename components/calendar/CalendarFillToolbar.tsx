@@ -19,6 +19,8 @@ interface CalendarFillToolbarProps {
   onThemeChange: (theme: string) => void;
   onPlatformChange: (platform: Platform) => void;
   onFillWeek: () => void;
+  onOpenBulkQueue?: () => void;
+  bulkQueueCount?: number;
 }
 
 export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
@@ -30,6 +32,8 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
   onThemeChange,
   onPlatformChange,
   onFillWeek,
+  onOpenBulkQueue,
+  bulkQueueCount = 0,
 }) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(() =>
@@ -106,7 +110,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
           </select>
         </div>
 
-        <div className="flex items-end">
+        <div className="flex flex-col gap-2 justify-end">
           <ModernButton
             type="button"
             variant="gradient"
@@ -119,6 +123,18 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
               ? t('calendar.fill.filling', 'Generowanie…')
               : t('calendar.fill.fillWeek', 'Wypełnij tydzień')}
           </ModernButton>
+          {onOpenBulkQueue && (
+            <ModernButton
+              type="button"
+              variant="outline"
+              fullWidth
+              onClick={onOpenBulkQueue}
+              disabled={bulkQueueCount === 0}
+            >
+              {t('calendar.bulk.open', 'Kolejka publikacji')}
+              {bulkQueueCount > 0 ? ` (${bulkQueueCount})` : ''}
+            </ModernButton>
+          )}
         </div>
       </div>
     </div>

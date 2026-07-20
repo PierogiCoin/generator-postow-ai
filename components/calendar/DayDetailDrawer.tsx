@@ -42,6 +42,7 @@ interface DayDetailDrawerProps {
     patch: Partial<Pick<IntelligentCalendarPlanItem, 'topic' | 'time' | 'platform'>>
   ) => void;
   onEditPost: (post: ScheduledPost) => void;
+  onOpenBulkQueue?: () => void;
 }
 
 function scoreStyles(score: number): string {
@@ -186,6 +187,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
   onGenerateSlot,
   onUpdateSlot,
   onEditPost,
+  onOpenBulkQueue,
 }) => {
   const { t, i18n } = useTranslation();
   const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
@@ -262,9 +264,20 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
 
   const scheduledSection = (
     <section>
-      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">
-        {t('calendar.dayDrawer.scheduled', 'Zaplanowane publikacje')} ({sortedPosts.length})
-      </h3>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          {t('calendar.dayDrawer.scheduled', 'Zaplanowane publikacje')} ({sortedPosts.length})
+        </h3>
+        {onOpenBulkQueue && sortedPosts.length > 0 && (
+          <button
+            type="button"
+            onClick={onOpenBulkQueue}
+            className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline"
+          >
+            {t('calendar.bulk.open', 'Kolejka publikacji')}
+          </button>
+        )}
+      </div>
       {sortedPosts.length === 0 ? (
         <p className="text-sm text-slate-500 dark:text-slate-400 italic">
           {t('calendar.dayDrawer.noScheduled', 'Brak zaplanowanych postów na ten dzień.')}

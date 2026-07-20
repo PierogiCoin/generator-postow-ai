@@ -67,34 +67,11 @@ async function main() {
     results.push(
       await fetchCheck('Backend /health', `${BACKEND}/health`, {
         expectJson: true,
-        expectKeys: ['status', 'deploy'],
+        expectKeys: ['status'],
       })
     );
 
-    const healthRes = await fetch(`${BACKEND}/health`).catch(() => null);
-    if (healthRes?.ok) {
-      const health = await healthRes.json();
-      const deploy = health.deploy;
-      if (deploy) {
-        console.log('  OAuth callbacks (z /health):');
-        for (const [platform, uri] of Object.entries(deploy.oauthCallbacks || {})) {
-          const isHttps = uri.startsWith('https://');
-          const isLocal = uri.includes('localhost');
-          const icon = isHttps && !isLocal ? '✅' : '⚠️';
-          console.log(`    ${icon} ${platform}: ${uri}`);
-        }
-        if (deploy.frontendUrl) {
-          console.log(`  FRONTEND_URL: ${deploy.frontendUrl}\n`);
-        }
-      }
-    }
-
-    results.push(
-      await fetchCheck('Backend /api/trends', `${BACKEND}/api/trends`, {
-        expectJson: true,
-        expectKeys: ['trends'],
-      })
-    );
+    // OAuth / Stripe status no longer exposed on public /health
   }
 
   if (FRONTEND) {

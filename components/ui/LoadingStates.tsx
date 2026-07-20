@@ -44,7 +44,7 @@ export const Spinner: React.FC<{ size?: 'sm' | 'md' | 'lg'; className?: string }
     <div
       className={`${sizeClasses[size]} border-purple-600 border-t-transparent rounded-full animate-spin ${className}`}
       role="status"
-      aria-label="Loading"
+      aria-label="Ładowanie"
     />
   );
 };

@@ -180,7 +180,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = (props) => 
                         </div>
                          {notifications.length > 0 && (
                             <div className="p-2 border-t border-slate-200 dark:border-slate-700 text-center">
-                                <button onClick={onClear} aria-label="Clear all notifications" className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 mx-auto">
+                                <button onClick={onClear} aria-label={t('notifications.clearAll', 'Wyczyść wszystkie powiadomienia')} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1 mx-auto">
                                    <TrashIcon className="w-3 h-3"/> {t('notifications.clearAll')}
                                 </button>
                             </div>

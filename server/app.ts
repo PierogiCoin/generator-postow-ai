@@ -12,13 +12,13 @@ import { createScoringRouter } from './routes/scoring.js';
 import { createVideoRouter } from './routes/video.js';
 import { createMiscRouter } from './routes/misc.js';
 import { createIntelligenceRouter } from './routes/intelligence.js';
+import { createContentFetchRouter } from './routes/contentFetch.js';
 import paymentsRouter, { stripeWebhookHandler } from './routes/payments.js';
 import emailRouter from './routes/email.js';
 import referralRouter from './routes/referral.js';
 
 const NOT_FOUND_ENDPOINTS = [
   'GET /health',
-  'GET /api/trends',
   'POST /api/generate-content',
   'POST /api/generate-content-stream',
   'POST /api/generate-images',
@@ -26,6 +26,7 @@ const NOT_FOUND_ENDPOINTS = [
   'POST /api/optimize-multi-platform',
   'POST /api/score-content',
   'POST /api/benchmark-content',
+  'POST /api/content/fetch-url',
   'POST /api/intelligence/news',
   'POST /api/intelligence/trends',
   'POST /api/intelligence/competitor',
@@ -82,6 +83,7 @@ export function createApp(): express.Application {
   app.use(createIntelligenceRouter());
   app.use(createVideoRouter());
   app.use(createMiscRouter());
+  app.use(createContentFetchRouter());
   app.use('/api/email', emailRouter);
   app.use('/api/referral', referralRouter);
 

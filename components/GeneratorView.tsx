@@ -210,7 +210,7 @@ export const GeneratorView: React.FC = () => {
                         <div className="flex justify-between items-center mb-2">
                             <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('sidebar.historySection.title')}</h2>
                             {history.length > 0 && (
-                                <button onClick={handleClearHistory} aria-label="Clear history" className="text-[10px] font-black text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">{t('sidebar.historySection.clear')}</button>
+                                <button onClick={handleClearHistory} aria-label={t('sidebar.historySection.clear')} className="text-[10px] font-black text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">{t('sidebar.historySection.clear')}</button>
                             )}
                         </div>
                         {history.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.historySection.empty')}</p> : (
@@ -268,7 +268,7 @@ export const GeneratorView: React.FC = () => {
                                             </div>
                                             <p className="text-[9px] font-bold uppercase tracking-widest mt-1 text-slate-400">{new Date(draft.timestamp).toLocaleDateString()}</p>
                                         </div>
-                                        <button onClick={() => removeDraft(draft.id)} aria-label="Delete draft" className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"><TrashIcon className="w-4 h-4" /></button>
+                                        <button onClick={() => removeDraft(draft.id)} aria-label={t('sidebar.draftsSection.delete', 'Usuń szkic')} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"><TrashIcon className="w-4 h-4" /></button>
                                     </div>
                                 ))}
                             </div>
@@ -337,7 +337,7 @@ export const GeneratorView: React.FC = () => {
                         </div>
                         <button 
                             onClick={() => setIsSidebarOpen(false)} 
-                            aria-label="Close sidebar" 
+                            aria-label={t('generatorView.closeSidebar', 'Zamknij panel')} 
                             className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                             <XMarkIcon className="w-5 h-5" />

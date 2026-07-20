@@ -20,6 +20,7 @@ import {
   formatSubscriptionPrice,
   type SubscriptionPlanConfig,
 } from '../config/subscriptionPlans';
+import { useEscapeClose } from '../hooks/useEscapeClose';
 
 interface PricingModalProps {
   isOpen: boolean;
@@ -152,6 +153,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const [loadingPlan, setLoadingPlan] = useState<UserPlan | null>(null);
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showAllPlans, setShowAllPlans] = useState(false);
+  const [showComparison, setShowComparison] = useState(false);
+  const [showCredits, setShowCredits] = useState(false);
+  useEscapeClose(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -202,7 +207,82 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
   if (!isOpen) return null;
 
-  const displayPlans = SUBSCRIPTION_PLANS.filter((p) => p.id !== UserPlan.Enterprise);
+  const allPaidPlans = SUBSCRIPTION_PLANS.filter((p) => p.id !== UserPlan.Enterprise);
+  const highlightIds = new Set<UserPlan>([UserPlan.Free, UserPlan.Pro, UserPlan.Business]);
+  const displayPlans = showAllPlans
+    ? allPaidPlans
+    : allPaidPlans.filter((p) => highlightIds.has(p.id));
+
+  const comparisonRows: Array<{
+    label: string;
+    render: (plan: SubscriptionPlanConfig) => React.ReactNode;
+  }> = [
+    {
+      label: 'Kredyty / mies.',
+      render: (plan) => plan.credits.toLocaleString('pl-PL'),
+    },
+    {
+      label: 'Posty tekstowe',
+      render: (plan) => (plan.usageLimits.text === 999999 ? 'Bez limitu' : `~${plan.usageLimits.text}`),
+    },
+    {
+      label: 'Obrazy AI',
+      render: (plan) => (plan.usageLimits.image === 999999 ? 'Bez limitu' : String(plan.usageLimits.image)),
+    },
+    {
+      label: 'Wideo AI',
+      render: (plan) =>
+        plan.usageLimits.video === 0
+          ? '—'
+          : plan.usageLimits.video === 999999
+            ? 'Bez limitu'
+            : String(plan.usageLimits.video),
+    },
+    {
+      label: 'Planowanie i kalendarz',
+      render: (plan) =>
+        plan.flags.scheduling ? (
+          <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+        ) : (
+          <span className="text-gray-300 dark:text-gray-600">—</span>
+        ),
+    },
+    {
+      label: 'Analityka AI',
+      render: (plan) =>
+        plan.flags.analytics ? (
+          <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+        ) : (
+          <span className="text-gray-300 dark:text-gray-600">—</span>
+        ),
+    },
+    {
+      label: 'Strategista AI',
+      render: (plan) =>
+        plan.flags.strategist ? (
+          <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+        ) : (
+          <span className="text-gray-300 dark:text-gray-600">—</span>
+        ),
+    },
+    {
+      label: 'Profile głosu marki',
+      render: (plan) => (plan.flags.brandVoices === -1 ? '∞' : String(plan.flags.brandVoices)),
+    },
+    {
+      label: 'Dostęp do API',
+      render: (plan) =>
+        plan.flags.apiAccess ? (
+          <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
+        ) : (
+          <span className="text-gray-300 dark:text-gray-600">—</span>
+        ),
+    },
+    {
+      label: 'Cena / mies.',
+      render: (plan) => formatSubscriptionPrice(plan).primary,
+    },
+  ];
 
   return (
     <div
@@ -211,20 +291,23 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="pricing-modal-title"
         className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-7xl m-4 relative overflow-y-auto max-h-[92vh] custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 p-2 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl leading-none"
+          className="absolute top-4 right-4 z-50 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl leading-none"
           aria-label="Zamknij"
         >
           ×
         </button>
 
         <div className="text-center max-w-2xl mx-auto pr-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Plany subskrypcji</h2>
+          <h2 id="pricing-modal-title" className="text-3xl font-bold text-gray-900 dark:text-white">Plany subskrypcji</h2>
           <p className="mt-3 text-lg text-gray-500 dark:text-gray-400">
             Wyższy plan = więcej kredytów i niższy koszt za kredyt. Płatność w USD (Stripe).
           </p>
@@ -242,7 +325,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </div>
         )}
 
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5 gap-6 items-stretch">
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">
           {displayPlans.map((plan) => (
             <PlanCard
               key={plan.stripeKey}
@@ -255,138 +338,59 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           ))}
         </div>
 
-        {/* Tabela porównawcza */}
-        <div className="mt-12 overflow-x-auto">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-6">Porównanie planów</h3>
-          <table className="w-full text-sm border-collapse min-w-[640px]">
-            <thead>
-              <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400 align-middle">Funkcja</th>
-                {displayPlans.map((plan) => (
-                  <th
-                    key={plan.stripeKey}
-                    className={`text-center py-3 px-4 font-bold align-middle ${plan.recommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}
-                  >
-                    {plan.namePl}
-                    {plan.recommended && (
-                      <span className="block text-[10px] font-normal text-blue-500 mt-0.5">Polecany</span>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {/* Kredyty */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Kredyty / mies.</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4 font-bold text-gray-900 dark:text-white">
-                    {plan.credits.toLocaleString('pl-PL')}
-                  </td>
-                ))}
-              </tr>
-              {/* Posty tekstowe */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Posty tekstowe</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
-                    {plan.usageLimits.text === 999999 ? 'Bez limitu' : `~${plan.usageLimits.text}`}
-                  </td>
-                ))}
-              </tr>
-              {/* Obrazy AI */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Obrazy AI</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
-                    {plan.usageLimits.image === 999999 ? 'Bez limitu' : plan.usageLimits.image}
-                  </td>
-                ))}
-              </tr>
-              {/* Wideo AI */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Wideo AI</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
-                    {plan.usageLimits.video === 0 ? '—' : plan.usageLimits.video === 999999 ? 'Bez limitu' : plan.usageLimits.video}
-                  </td>
-                ))}
-              </tr>
-              {/* Planowanie */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Planowanie i kalendarz</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4">
-                    {plan.flags.scheduling ? (
-                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
-                    ) : (
-                      <span className="text-gray-300 dark:text-gray-600">—</span>
-                    )}
-                  </td>
-                ))}
-              </tr>
-              {/* Analityka */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Analityka AI</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4">
-                    {plan.flags.analytics ? (
-                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
-                    ) : (
-                      <span className="text-gray-300 dark:text-gray-600">—</span>
-                    )}
-                  </td>
-                ))}
-              </tr>
-              {/* Strategista */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Strategista AI</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4">
-                    {plan.flags.strategist ? (
-                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
-                    ) : (
-                      <span className="text-gray-300 dark:text-gray-600">—</span>
-                    )}
-                  </td>
-                ))}
-              </tr>
-              {/* Brand voices */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Profile głosu marki</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
-                    {plan.flags.brandVoices === -1 ? '∞' : plan.flags.brandVoices}
-                  </td>
-                ))}
-              </tr>
-              {/* API */}
-              <tr className="border-b border-gray-100 dark:border-gray-800">
-                <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Dostęp do API</td>
-                {displayPlans.map((plan) => (
-                  <td key={plan.stripeKey} className="text-center py-3 px-4">
-                    {plan.flags.apiAccess ? (
-                      <CheckCircleIcon className="w-5 h-5 text-green-500 mx-auto" />
-                    ) : (
-                      <span className="text-gray-300 dark:text-gray-600">—</span>
-                    )}
-                  </td>
-                ))}
-              </tr>
-              {/* Cena */}
-              <tr>
-                <td className="py-3 px-4 font-bold text-gray-900 dark:text-white">Cena / mies.</td>
-                {displayPlans.map((plan) => {
-                  const price = formatSubscriptionPrice(plan);
-                  return (
-                    <td key={plan.stripeKey} className="text-center py-3 px-4 font-bold text-blue-600 dark:text-blue-400">
-                      {price.primary}
-                    </td>
-                  );
-                })}
-              </tr>
-            </tbody>
-          </table>
+        {!showAllPlans && (
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setShowAllPlans(true)}
+              className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Pokaż wszystkie plany ({allPaidPlans.length})
+            </button>
+          </div>
+        )}
+
+        <div className="mt-10">
+          <button
+            type="button"
+            onClick={() => setShowComparison((v) => !v)}
+            aria-expanded={showComparison}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-left"
+          >
+            <span className="text-base font-bold text-gray-900 dark:text-white">Porównanie planów</span>
+            <span className="text-xs font-bold text-gray-500">{showComparison ? 'Ukryj' : 'Pokaż'}</span>
+          </button>
+          {showComparison && (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm border-collapse min-w-[640px]">
+                <thead>
+                  <tr className="border-b-2 border-gray-200 dark:border-gray-700">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Funkcja</th>
+                    {displayPlans.map((plan) => (
+                      <th
+                        key={plan.stripeKey}
+                        className={`text-center py-3 px-4 font-bold ${plan.recommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}
+                      >
+                        {plan.namePl}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparisonRows.map((row) => (
+                    <tr key={row.label} className="border-b border-gray-100 dark:border-gray-800">
+                      <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">{row.label}</td>
+                      {displayPlans.map((plan) => (
+                        <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400 font-semibold">
+                          {row.render(plan)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Enterprise */}
@@ -429,12 +433,23 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         })()}
 
         {/* Pakiety kredytów */}
-        <div className="mt-12">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center">Pakiety kredytów</h3>
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6">
-            Jednorazowy zakup — kredyty nie wygasają przy aktywnym koncie.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+        <div className="mt-10">
+          <button
+            type="button"
+            onClick={() => setShowCredits((v) => !v)}
+            aria-expanded={showCredits}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 text-left"
+          >
+            <div>
+              <h3 className="text-base font-bold text-gray-900 dark:text-white">Pakiety kredytów</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Jednorazowy zakup — kredyty nie wygasają przy aktywnym koncie.
+              </p>
+            </div>
+            <span className="text-xs font-bold text-gray-500 shrink-0">{showCredits ? 'Ukryj' : 'Pokaż'}</span>
+          </button>
+          {showCredits && (
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             {CREDIT_PACKS.map((pack) => {
               const packPrice = formatCreditPackPrice(pack);
               return (
@@ -473,6 +488,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             );
             })}
           </div>
+          )}
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-8">
