@@ -29,7 +29,7 @@ export const QuickCommandBar: React.FC = () => {
         setError(null);
         try {
             const result = await executeCommand(command, user.id);
-            const functionCall = (result as any).functionCalls?.[0];
+            const functionCall = (result as unknown as { functionCalls?: Array<{ name: string; args: Record<string, unknown> }> }).functionCalls?.[0];
 
             if (functionCall) {
                 const { name, args } = functionCall;
@@ -81,8 +81,8 @@ export const QuickCommandBar: React.FC = () => {
             } else {
                 setError("Nie udało mi się zrozumieć polecenia jako akcji. Spróbuj ponownie.");
             }
-        } catch (e: any) {
-            setError(e.message || "Wystąpił błąd podczas wykonywania polecenia.");
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Wystąpił błąd podczas wykonywania polecenia.");
         } finally {
             setIsLoading(false);
         }

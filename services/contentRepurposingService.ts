@@ -402,7 +402,7 @@ Also provide:
   const lines = text.split('\n');
 
   return {
-    title: lines.find(l => l.toLowerCase().includes('title'))?.split(':')[1]?.trim() || topic,
+    title: lines.find((l: string) => l.toLowerCase().includes('title'))?.split(':')[1]?.trim() || topic,
     slides: Array.from({ length: slideCount }, (_, i) => ({
       number: i + 1,
       headline: `Slide ${i + 1}`,
@@ -410,7 +410,7 @@ Also provide:
       visualDescription: 'Chart or illustration',
     })),
     hashtags: ['#LinkedIn', '#Business', '#Growth'],
-    engagementHook: lines.find(l => l.toLowerCase().includes('hook')) || 'Check this out 👇',
+    engagementHook: lines.find((l: string) => l.toLowerCase().includes('hook')) || 'Check this out 👇',
   };
 }
 

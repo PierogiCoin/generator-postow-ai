@@ -19,11 +19,34 @@ const TABS: { id: ResultCardTab; labelKey: string; fallback: string }[] = [
 export const ResultCardTabBar: React.FC<ResultCardTabBarProps> = ({ active, onChange }) => {
   const { t } = useTranslation();
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+    const currentIndex = TABS.findIndex((tab) => tab.id === active);
+    let nextIndex = currentIndex;
+
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      nextIndex = (currentIndex + 1) % TABS.length;
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      nextIndex = (currentIndex - 1 + TABS.length) % TABS.length;
+    } else {
+      return;
+    }
+
+    const nextTab = TABS[nextIndex].id;
+    onChange(nextTab);
+
+    // Focus the target button
+    const buttons = e.currentTarget.querySelectorAll('button');
+    buttons[nextIndex]?.focus();
+  };
+
   return (
     <nav
-      className="flex gap-1 p-1 mb-6 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800"
+      className="flex gap-1 p-1 mb-6 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 focus:outline-none"
       role="tablist"
       aria-label={t('resultCard.tabs.label', 'Sekcje wyniku')}
+      onKeyDown={handleKeyDown}
     >
       {TABS.map((tab) => {
         const isActive = active === tab.id;
@@ -33,11 +56,12 @@ export const ResultCardTabBar: React.FC<ResultCardTabBarProps> = ({ active, onCh
             type="button"
             role="tab"
             aria-selected={isActive}
+            tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(tab.id)}
-            className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
               isActive
                 ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-355'
             }`}
           >
             {t(tab.labelKey, tab.fallback)}

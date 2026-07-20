@@ -64,7 +64,7 @@ export const updateHistoryItem = async (itemId: string, updates: Partial<Campaig
     const supabase = getSupabase();
 
     // Map updates to snake_case if necessary
-    const mappedUpdates: any = {};
+    const mappedUpdates: Record<string, unknown> = {};
     if (updates.status) mappedUpdates.status = updates.status;
     if (updates.comments) mappedUpdates.comments = updates.comments;
     if (updates.dueDate !== undefined) mappedUpdates.due_date = updates.dueDate ? new Date(updates.dueDate).toISOString() : null;

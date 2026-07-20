@@ -6,14 +6,14 @@ import { VISUAL_STYLES } from '../../constants';
 import { Tooltip } from '../Tooltip';
 import { SuggestionPills } from './SuggestionPills';
 import { InputFormAiToolsMenu } from './InputFormAiToolsMenu';
-import type { AiToolPanel } from './aiToolPanels';
+import type { AiToolPanelCategory } from './aiToolPanels';
 import { getPlatformVisualSpec } from '../../utils/platformVisualSpec';
 
 export interface InputFormVisualSectionProps {
   formData: FormData;
   styleSuggestions: { suggestedTones: unknown[]; suggestedVisualStyles: VisualStyle[] } | null;
   isSuggestingStyle: boolean;
-  aiToolPanels: AiToolPanel[];
+  aiToolPanels: AiToolPanelCategory[];
   onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   onVisualStyleSelect: (style: VisualStyle) => void;
   onAspectRatioSelect: (ratio: '1:1' | '16:9' | '9:16' | '4:3' | '3:4') => void;

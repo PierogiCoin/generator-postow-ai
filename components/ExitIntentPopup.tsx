@@ -136,3 +136,5 @@ export const ExitIntentPopup: React.FC = () => {
     </div>
   );
 };
+
+export default ExitIntentPopup;

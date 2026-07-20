@@ -18,9 +18,9 @@ export async function applyBrandLogoToImage(
     return await overlayLogoOnImage(
       imageUrl,
       logo,
-      options?.position ?? settings.logoPosition ?? 'bottom-right',
+      options?.position ?? settings?.logoPosition ?? 'bottom-right',
       28,
-      options?.sizePercent ?? settings.logoSizePercent ?? 13
+      options?.sizePercent ?? settings?.logoSizePercent ?? 13
     );
   } catch {
     return imageUrl;

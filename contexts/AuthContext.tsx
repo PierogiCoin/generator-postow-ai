@@ -1,9 +1,9 @@
 // contexts/AuthContext.tsx
 
 import React, { createContext, useState, useContext, ReactNode, useEffect, useMemo, useRef, useCallback } from 'react';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { SupabaseClient, User as SupabaseUser, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { getSupabase } from '../services/supabaseClient';
-import { User, UserPlan, Team } from '../types';
+import { User, UserPlan, Team, CampaignHistoryItem, FavoritePost, CustomTemplate, Draft, ScheduledPost, BrandVoiceProfile, StrategicAuditReport, IntelligentCalendarPlanItem, AIInsight } from '../types';
 import { getPlanByUserPlan } from '../config/subscriptionPlans';
 import { CREDITS_UPDATED_EVENT } from '../utils/creditSync';
 import { useDataStore } from '../stores/dataStore';
@@ -31,10 +31,10 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 
 
 // Helper for timeout – avoids generic syntax that is misinterpreted as JSX in .tsx
-function withTimeout(promise: PromiseLike<any>, ms: number, label: string): Promise<any> {
+function withTimeout<T>(promise: PromiseLike<T>, ms: number, label: string): Promise<T> {
   return Promise.race([
     Promise.resolve(promise),
-    new Promise((_resolve, reject) =>
+    new Promise<T>((_resolve, reject) =>
       setTimeout(() => reject(new Error(`Timeout: ${label}`)), ms)
     )
   ]);
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const fetchAndSetUserData = async (sbUser: any) => {
+  const fetchAndSetUserData = async (sbUser: SupabaseUser) => {
     if (!supabase) {
       setLoading(false);
       return;
@@ -85,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     try {
       // 1. Fetch Profile (Critical) – 20 s timeout, one silent retry
-      let profileData: any = null;
+      let profileData: Record<string, unknown> | null = null;
       try {
         const profileQuery = supabase
           .from('profiles')
@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', sbUser.id)
           .maybeSingle();
 
-        let pd: any;
+        let pd: { data: Record<string, unknown> | null; error: unknown } | undefined;
         try {
           pd = await withTimeout(profileQuery, 8000, 'profiles_fetch');
         } catch (timeoutErr: unknown) {
@@ -112,24 +112,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (pd?.error) {
           // profile fetch error — use defaults
         } else {
-          profileData = pd?.data;
+          profileData = pd?.data ?? null;
         }
       } catch {
         // profile unavailable — use defaults
       }
 
       const resolvedPlan = (profileData?.plan as UserPlan) || UserPlan.Free;
+      const profileName = profileData?.name as string | undefined;
+      const profileCredits = profileData?.credits as number | undefined;
+      const profileTeamId = profileData?.current_team_id as string | null | undefined;
       const planDefaults = getPlanByUserPlan(resolvedPlan);
 
       const combinedUser: User = {
         id: sbUser.id,
         email: sbUser.email || '',
-        name: profileData?.name || sbUser.email?.split('@')[0] || 'User',
+        name: profileName || sbUser.email?.split('@')[0] || 'User',
         plan: resolvedPlan,
         credits:
-          typeof profileData?.credits === 'number' ? profileData.credits : planDefaults.credits,
+          typeof profileCredits === 'number' ? profileCredits : planDefaults.credits,
         teams: [],
-        currentTeamId: profileData?.current_team_id || null
+        currentTeamId: profileTeamId || null
       };
 
       setUser(combinedUser);
@@ -156,47 +159,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // 3. Fetch secondary data (non-critical) incrementally with 8 s timeouts
-      const fetchTable = async (table: string, orderCol = 'timestamp', ascending = false) => {
+      const fetchTable = async <T = unknown[]>(table: string, orderCol = 'timestamp', ascending = false): Promise<T[]> => {
         try {
           const result = await withTimeout(
             supabase.from(table).select('*').order(orderCol, { ascending }),
             8000,
             `${table}_fetch`
-          ) as any;
-          return result?.error ? [] : (result?.data || []);
+          ) as { data: T[] | null; error: unknown } | undefined;
+          return (result?.error ? [] : (result?.data || [])) as T[];
         } catch {
           return [];
         }
       };
 
-      fetchTable('history').then((data: any) => setDataStoreState({ history: data }));
-      fetchTable('favorites').then((data: any) => setDataStoreState({ favorites: data }));
-      fetchTable('templates', 'created_at', true).then((data: any) => setDataStoreState({ templates: data }));
-      fetchTable('drafts').then((data: any) => setDataStoreState({ drafts: data }));
-      fetchTable('scheduled_posts', 'scheduled_at', true).then((data: any) => setDataStoreState({ scheduledPosts: data }));
-      fetchTable('brand_voice_profiles', 'name', true).then((data: any) => setDataStoreState({ brandVoiceProfiles: data }));
+      fetchTable<CampaignHistoryItem>('history').then((data) => setDataStoreState({ history: data }));
+      fetchTable<FavoritePost>('favorites').then((data) => setDataStoreState({ favorites: data }));
+      fetchTable<CustomTemplate>('templates', 'created_at', true).then((data) => setDataStoreState({ templates: data }));
+      fetchTable<Draft>('drafts').then((data) => setDataStoreState({ drafts: data }));
+      fetchTable<ScheduledPost>('scheduled_posts', 'scheduled_at', true).then((data) => setDataStoreState({ scheduledPosts: data }));
+      fetchTable<BrandVoiceProfile>('brand_voice_profiles', 'name', true).then((data) => setDataStoreState({ brandVoiceProfiles: data }));
 
       // New persistent modules
       // Strategic Audits (get latest)
-      fetchTable('strategic_audits', 'timestamp', false).then((data: any) => {
-        if (data.length > 0) setDataStoreState({ strategicAuditReport: data[0].report });
+      fetchTable('strategic_audits', 'timestamp', false).then((data) => {
+        if (data.length > 0) setDataStoreState({ strategicAuditReport: (data[0] as unknown as Record<string, unknown>).report as StrategicAuditReport });
       });
 
       // Calendar Plans (get latest)
-      fetchTable('calendar_plans', 'timestamp', false).then((data: any) => {
-        if (data.length > 0) setDataStoreState({ intelligentCalendarPlan: data[0].plan });
+      fetchTable('calendar_plans', 'timestamp', false).then((data) => {
+        if (data.length > 0) setDataStoreState({ intelligentCalendarPlan: (data[0] as unknown as Record<string, unknown>).plan as IntelligentCalendarPlanItem[] });
       });
 
       // Deep Memory (Learned Insights)
-      fetchTable('learned_insights', 'id', false).then((data: any) => {
-        if (data.length > 0) setDataStoreState({ learnedInsights: data.map((d: any) => ({ ...d, id: d.id.toString() })) });
+      fetchTable('learned_insights', 'id', false).then((data) => {
+        if (data.length > 0) setDataStoreState({ learnedInsights: data.map((d) => ({ ...(d as unknown as Record<string, unknown>), id: String((d as unknown as Record<string, unknown>).id) })) as AIInsight[] });
       });
 
       const usage = (profileData?.usage || {}) as Record<string, number>;
       const totalCount = Object.values(usage).reduce(
-        (acc: number, val: any) => acc + (Number(val) || 0),
+        (acc: number, val: number) => acc + (Number(val) || 0),
         0
-      ) as number;
+      );
 
       setDataStoreState({
         stats: {
@@ -204,7 +207,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           byTone: {},
           byContentType: {},
           byModel: {},
-          byGenerationType: usage as any,
+          byGenerationType: usage,
           totalGenerations: totalCount
         }
       });
@@ -263,7 +266,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: any, session: any) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       if (!isSubscribed) return;
 
       if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {

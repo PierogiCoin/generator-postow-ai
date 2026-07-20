@@ -18,10 +18,10 @@ export async function regeneratePostImage(
   const brandVoice = options?.brandVoice;
 
   if (brandVoice?.settings?.visualStyle) {
-    imageStyle = `${brandVoice.settings.visualStyle}, ${imageStyle}`;
+    imageStyle = `${brandVoice.settings.visualStyle}, ${imageStyle}` as VisualStyle;
   }
   if (brandVoice?.settings?.brandColors?.length) {
-    imageStyle = `${imageStyle}, brand colors: ${brandVoice.settings.brandColors.join(', ')}`;
+    imageStyle = `${imageStyle}, brand colors: ${brandVoice.settings.brandColors.join(', ')}` as VisualStyle;
   }
 
   let mascotPrompt: string | undefined;

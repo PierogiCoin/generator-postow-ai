@@ -192,3 +192,5 @@ export const RepurposeModal: React.FC<RepurposeModalProps> = ({ isOpen, onClose,
     </div>
   );
 };
+
+export default RepurposeModal;

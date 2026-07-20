@@ -211,13 +211,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-7xl m-4 relative overflow-y-auto max-h-[92vh]"
+        className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl p-6 md:p-8 w-full max-w-7xl m-4 relative overflow-y-auto max-h-[92vh] custom-scrollbar"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl leading-none"
+          className="absolute top-4 right-4 z-50 p-2 rounded-full text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-2xl leading-none"
           aria-label="Zamknij"
         >
           ×
@@ -261,11 +261,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           <table className="w-full text-sm border-collapse min-w-[640px]">
             <thead>
               <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-                <th className="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400">Funkcja</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-500 dark:text-gray-400 align-middle">Funkcja</th>
                 {displayPlans.map((plan) => (
                   <th
                     key={plan.stripeKey}
-                    className={`text-center py-3 px-4 font-bold ${plan.recommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}
+                    className={`text-center py-3 px-4 font-bold align-middle ${plan.recommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'}`}
                   >
                     {plan.namePl}
                     {plan.recommended && (
@@ -356,7 +356,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 <td className="py-3 px-4 font-medium text-gray-700 dark:text-gray-300">Profile głosu marki</td>
                 {displayPlans.map((plan) => (
                   <td key={plan.stripeKey} className="text-center py-3 px-4 text-gray-600 dark:text-gray-400">
-                    {plan.flags.brandVoices}
+                    {plan.flags.brandVoices === -1 ? '∞' : plan.flags.brandVoices}
                   </td>
                 ))}
               </tr>
@@ -398,7 +398,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">{ent.namePl}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{ent.descriptionPl}</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white mt-2 whitespace-nowrap">
                   {entPrice.primary}
                   <span className="text-sm font-normal text-gray-500">/mies.</span>
                 </p>
@@ -434,36 +434,38 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6">
             Jednorazowy zakup — kredyty nie wygasają przy aktywnym koncie.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
             {CREDIT_PACKS.map((pack) => {
               const packPrice = formatCreditPackPrice(pack);
               return (
               <div
                 key={pack.id}
-                className="rounded-xl border border-gray-200 dark:border-gray-700 p-5 bg-white dark:bg-gray-800 flex flex-col"
+                className="rounded-xl border border-gray-200 dark:border-gray-700 p-5 bg-white dark:bg-gray-800 flex flex-col min-h-[280px]"
               >
-                {pack.badge && (
-                  <span className="self-start text-xs font-bold text-green-700 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-0.5 rounded-full mb-2">
-                    {pack.badge}
-                  </span>
-                )}
+                <div className="min-h-[24px] mb-2">
+                  {pack.badge && (
+                    <span className="text-xs font-bold text-green-700 bg-green-100 dark:bg-green-900/40 dark:text-green-300 px-2 py-0.5 rounded-full">
+                      {pack.badge}
+                    </span>
+                  )}
+                </div>
                 <h4 className="font-semibold text-gray-900 dark:text-white">{pack.namePl}</h4>
-                <p className="text-2xl font-bold mt-2 text-gray-900 dark:text-white">
+                <p className="text-2xl font-bold mt-2 text-gray-900 dark:text-white whitespace-nowrap">
                   {pack.credits.toLocaleString('pl-PL')}
                   <span className="text-sm font-normal text-gray-500 ml-1">kredytów</span>
                 </p>
-                <p className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-1">
+                <p className="text-lg font-semibold text-blue-600 dark:text-blue-400 mt-1 whitespace-nowrap">
                   {packPrice.primary}
                 </p>
-                <p className="text-xs text-gray-400">{packPrice.secondary}</p>
+                <p className="text-xs text-gray-400 min-h-[16px]">{packPrice.secondary}</p>
                 {packPrice.perCredit && (
-                  <p className="text-xs text-blue-600 dark:text-blue-400">{packPrice.perCredit}</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400 min-h-[16px]">{packPrice.perCredit}</p>
                 )}
                 <button
                   type="button"
                   disabled={!user || loadingPack === pack.id}
                   onClick={() => handleCreditPack(pack.id)}
-                  className="mt-4 w-full py-2 text-sm font-bold rounded-lg border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:opacity-50"
+                  className="mt-auto w-full py-2 text-sm font-bold rounded-lg border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 disabled:opacity-50"
                 >
                   {loadingPack === pack.id ? 'Przekierowanie…' : 'Kup pakiet'}
                 </button>
@@ -481,3 +483,5 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     </div>
   );
 };
+
+export default PricingModal;

@@ -28,7 +28,7 @@ export function unlockScroll() {
 export function isPWA(): boolean {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true
+    (window.navigator as unknown as { standalone?: boolean }).standalone === true
   );
 }
 
@@ -98,9 +98,9 @@ export function preventDoubleTapZoom() {
  * Detect network connection quality
  */
 export function getNetworkQuality(): 'slow' | 'medium' | 'fast' | 'unknown' {
-  const connection = (navigator as any).connection || 
-                    (navigator as any).mozConnection || 
-                    (navigator as any).webkitConnection;
+  const connection = (navigator as unknown as { connection?: { effectiveType?: string }; mozConnection?: { effectiveType?: string }; webkitConnection?: { effectiveType?: string } }).connection || 
+                    (navigator as unknown as { connection?: { effectiveType?: string }; mozConnection?: { effectiveType?: string }; webkitConnection?: { effectiveType?: string } }).mozConnection || 
+                    (navigator as unknown as { connection?: { effectiveType?: string }; mozConnection?: { effectiveType?: string }; webkitConnection?: { effectiveType?: string } }).webkitConnection;
   
   if (!connection) return 'unknown';
   

@@ -222,3 +222,5 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     </div>
   );
 };
+
+export default SignUpModal;

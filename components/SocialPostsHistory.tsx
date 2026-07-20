@@ -130,7 +130,7 @@ export const SocialPostsHistory: React.FC<SocialPostsHistoryProps> = ({
                 post.id
             );
             setMortems(prev => ({ ...prev, [post.id]: report }));
-        } catch (e: any) {
+        } catch (e: unknown) {
             setExpandedMortem(null);
         } finally {
             setMortemLoadingId(null);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { GenerationResult, PostPerformanceData } from '../../types';
+import type { GenerationResult, PostPerformanceData, FormData } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { useAppHandlers } from '../../hooks/useAppHandlers';
@@ -81,7 +81,7 @@ export const ABTestResultDisplay: React.FC<{ result: GenerationResult; onUpdateR
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8 min-w-0">
                 {resultData.variants?.map((variant, index) => {
                     const isWinner = resultData.winnerVariantId === variant.id;
                     const isPotentialWinner = !resultData.winnerVariantId && potentialWinnerId === variant.id;
@@ -89,7 +89,7 @@ export const ABTestResultDisplay: React.FC<{ result: GenerationResult; onUpdateR
                     return (
                         <ModernCard
                             key={variant.id}
-                            className={`p-1 relative overflow-hidden transition-all duration-500 h-full flex flex-col ${isWinner ? 'ring-4 ring-amber-400 dark:ring-amber-500 shadow-2xl shadow-amber-500/20 scale-105 z-10' : isPotentialWinner ? 'ring-2 ring-blue-500/50' : ''}`}
+                            className={`p-1 relative overflow-hidden transition-all duration-500 h-full flex flex-col min-w-0 ${isWinner ? 'ring-4 ring-amber-400 dark:ring-amber-500 shadow-2xl shadow-amber-500/20 scale-[1.02] z-10' : isPotentialWinner ? 'ring-2 ring-blue-500/50' : ''}`}
                         >
                             <div className="p-6 pb-2 flex justify-between items-center">
                                 <div className="flex items-center gap-3">
@@ -106,7 +106,7 @@ export const ABTestResultDisplay: React.FC<{ result: GenerationResult; onUpdateR
                                 )}
                             </div>
 
-                            <div className="p-4 flex-grow">
+                            <div className="p-4 flex-grow min-w-0 overflow-hidden">
                                 {variant.imageUrl && (
                                     <div className="absolute top-4 right-4 flex gap-2">
                                         <button
@@ -120,7 +120,7 @@ export const ABTestResultDisplay: React.FC<{ result: GenerationResult; onUpdateR
                                 )}
                                 <PostPreview
                                     result={variant}
-                                    formData={{ ...resultData.metadata, platform: resultData.platform } as any}
+                                    formData={{ ...resultData.metadata, platform: resultData.platform } as unknown as FormData}
                                     onUpdateResult={() => { }}
                                     onAIAssistantAction={() => { }}
                                     isAssistantLoading={false}

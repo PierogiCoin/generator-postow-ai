@@ -36,14 +36,14 @@ export class CostTracker {
 
       if (error) {
         logger.error('[CostTracker] Failed to track cost', {
-          error: error.message,
+          error: error instanceof Error ? error.message : String(error),
           userId: params.userId,
           operation: params.operation
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CostTracker] Exception tracking cost', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         userId: params.userId
       });
     }
@@ -93,9 +93,9 @@ export class CostTracker {
       });
 
       return { totalCost, requestCount, breakdown };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CostTracker] Failed to get user costs', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         userId
       });
       return { totalCost: 0, requestCount: 0, breakdown: [] };
@@ -141,9 +141,9 @@ export class CostTracker {
         const [date, provider, operation] = key.split(':');
         return { date, provider, operation, cost: value.cost, count: value.count };
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CostTracker] Failed to get daily costs', {
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       return [];
     }
@@ -184,9 +184,9 @@ export class CostTracker {
         .map(([userId, stats]) => ({ userId, ...stats }))
         .sort((a, b) => b.totalCost - a.totalCost)
         .slice(0, limit);
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CostTracker] Failed to get top spenders', {
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       });
       return [];
     }
@@ -217,9 +217,9 @@ export class CostTracker {
       const exceeded = spent >= dailyBudget;
 
       return { exceeded, spent, remaining };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('[CostTracker] Failed to check budget', {
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
         userId
       });
       return { exceeded: false, spent: 0, remaining: dailyBudget };

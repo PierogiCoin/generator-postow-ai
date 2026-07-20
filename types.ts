@@ -567,7 +567,7 @@ export interface Achievement {
   id: AchievementId;
   name: string;
   description: string;
-  icon: React.FC<any>;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 // Types for Strategic Assistant

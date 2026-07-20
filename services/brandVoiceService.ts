@@ -28,14 +28,14 @@ export const saveOrUpdateBrandVoiceProfile = async (profile: BrandVoiceProfile):
   // Build save payload – maps to both old columns and new 'settings' JSONB column
   // so we work with both old DB schema and new one
   const settings = profile.settings || {};
-  const profileToSave: Record<string, any> = {
+  const profileToSave: Record<string, unknown> = {
     id: profile.id,
     user_id: user.id,
     name: profile.name,
     // Legacy columns (old schema)
-    description: (settings as any).description || profile.name,
-    tone: (settings as any).tone || 'Professional',
-    values: (settings as any).keywords || '',
+    description: (settings as unknown as Record<string, unknown>).description as string || profile.name,
+    tone: (settings as unknown as Record<string, unknown>).tone as string || 'Professional',
+    values: (settings as unknown as Record<string, unknown>).keywords as string || '',
     // Full settings blob (new schema – will be ignored if column doesn't exist)
     settings: settings,
     team_id: profile.teamId || null,

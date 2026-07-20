@@ -1,5 +1,6 @@
 import React from 'react';
 import type { CustomTemplate } from '../types';
+import { Platform } from '../types';
 import { platformConfig } from '../config/platformConfig';
 import { PencilIcon } from './icons/PencilIcon';
 import { TrashIcon } from './icons/TrashIcon';
@@ -20,8 +21,8 @@ const TemplateCard: React.FC<{
   onEdit: () => void;
   onDelete: () => void;
 }> = ({ template, onSelect, onEdit, onDelete }) => {
-  const platform = template.formData?.platform || 'Facebook';
-  const config = platformConfig[platform] || platformConfig[Object.keys(platformConfig)[0]];
+  const platform = (template.formData?.platform || 'Facebook') as Platform;
+  const config = platformConfig[platform] || platformConfig[Object.keys(platformConfig)[0] as Platform];
   const Icon = config.icon;
 
   return (

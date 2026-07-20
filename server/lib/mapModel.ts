@@ -1,6 +1,6 @@
 export function mapModel(requested?: string): string {
   const raw = (requested || '').trim();
-  // Jawny identyfikator modelu (np. gemini-2.0-flash-exp dla grounding)
+  // Jawny identyfikator modelu (np. gemini-2.5-flash dla grounding)
   if (/^gemini-[\d][\w.-]*$/i.test(raw)) return raw;
 
   const m = raw.toLowerCase();

@@ -27,7 +27,7 @@ describe('referralService', () => {
     const { callApi } = await import('../services/apiClient');
     const { referralService } = await import('../services/referralService');
 
-    (callApi as any).mockResolvedValueOnce({
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       message: 'Dodano 200 kredytów!',
       creditsAwarded: 200,
     });
@@ -41,7 +41,7 @@ describe('referralService', () => {
     const { callApi } = await import('../services/apiClient');
     const { referralService } = await import('../services/referralService');
 
-    (callApi as any).mockRejectedValueOnce(new Error('Nieprawidłowy kod'));
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Nieprawidłowy kod'));
 
     const result = await referralService.applyReferralCode('INVALID');
     expect(result.success).toBe(false);

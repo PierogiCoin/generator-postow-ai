@@ -98,8 +98,8 @@ export const VisualStudioModal: React.FC<VisualStudioModalProps> = ({
       setHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
       setPrompt('');
-    } catch (e: any) {
-      setError(e.message || 'Nie udało się edytować obrazu.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Nie udało się edytować obrazu.');
     } finally {
       setIsLoading(false);
     }

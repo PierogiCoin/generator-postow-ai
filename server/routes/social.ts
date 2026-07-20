@@ -39,6 +39,10 @@ import {
   type OAuthCallbackParams,
 } from '../lib/socialOAuthHandler.js';
 import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js';
+import {
+  validatePublishBody,
+  assertPlatformPublishRules,
+} from '../lib/socialPublishGuards.js';
 
 export function createSocialRouter(): Router {
   const router = Router();
@@ -355,13 +359,15 @@ export function createSocialRouter(): Router {
 
   router.post('/api/social/publish', ...creditGate('publishPost'), async (req, res) => {
     const userId = getAuthUserId(req);
-    const { connectionId, postText, imageUrl, scheduledPostId, hashtags, callToAction, ctaUrl } = req.body;
+    const parsed = validatePublishBody(req.body);
+    if (!parsed.ok) return res.status(parsed.status).json({ error: parsed.error });
 
-    if (!connectionId || !postText) return res.status(400).json({ error: 'Missing connectionId or postText' });
+    const { connectionId, postText, imageUrl, scheduledPostId, hashtags, callToAction, ctaUrl } =
+      parsed.data;
 
     const caption = formatPublishCaption({
       postText,
-      hashtags: Array.isArray(hashtags) ? hashtags : undefined,
+      hashtags,
       callToAction: callToAction ?? null,
       ctaUrl: normalizeCtaUrl(ctaUrl),
     });
@@ -395,8 +401,8 @@ export function createSocialRouter(): Router {
         }
         case 'instagram': {
           const ig = new InstagramPublisher(connection.access_token);
-          if (!imageUrl) throw new Error('Instagram wymaga obrazka do publikacji posta.');
-          publishResult = await ig.publishPost(connection.account_id, imageUrl, caption);
+          assertPlatformPublishRules(connection.platform, imageUrl);
+          publishResult = await ig.publishPost(connection.account_id, imageUrl!, caption);
           break;
         }
         case 'twitter': {

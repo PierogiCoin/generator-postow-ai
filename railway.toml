@@ -1,7 +1,8 @@
+# Backend Express — jedyne źródło prawdy dla Railway (root = ten repo)
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-watchPatterns = ["App.tsx", "index.tsx", "index.html", "components/**", "styles/**", "services/**", "config/**", "vite.config.ts", "package.json"]
+watchPatterns = ["Dockerfile", "server/**", "config/**", "types.ts", "railway.toml"]
 
 [deploy]
 healthcheckPath = "/health"

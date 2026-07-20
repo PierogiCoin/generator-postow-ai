@@ -28,6 +28,9 @@ interface InteractiveEditorProps {
   inline?: boolean;
   className?: string;
   streaming?: boolean;
+  id?: string;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
 }
 
 // Sub-komponent dla przycisku paska narzędzi
@@ -64,6 +67,9 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
   inline = false,
   className = '',
   streaming = false,
+  id,
+  ariaLabel,
+  ariaLabelledBy,
 }) => {
   const editorRef = useRef<HTMLElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
@@ -377,13 +383,18 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     />
   ) : (
     <EditableElement
-      ref={editorRef as any}
+      ref={editorRef as unknown as React.Ref<HTMLDivElement>}
+      id={id}
       contentEditable={!isLoading}
       suppressContentEditableWarning
       onInput={handleEditorChange}
       onKeyDown={handleKeyDown}
       className={`focus:outline-none interactive-editor ${className} ${!inline && !lite ? 'prose dark:prose-invert max-w-none w-full' : ''}`}
       dangerouslySetInnerHTML={{ __html: value }}
+      role="textbox"
+      aria-multiline={!inline}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
     />
   );
 

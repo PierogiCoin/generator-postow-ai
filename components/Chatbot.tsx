@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useGenerationStore } from '../stores/generationStore';
 import { useDataStore } from '../stores/dataStore';
 import { useNotifications } from '../hooks/useNotifications';
-import { NotificationType } from '../types';
+import { NotificationType, Platform, GenerationType } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { generateContent } from '../services/geminiService';
 import { getAppLanguageCode } from '../utils/aiLanguage';
@@ -104,7 +104,7 @@ export const Chatbot: React.FC = () => {
         ]
       }, user.id);
 
-      const modelResponse = response.text;
+      const modelResponse = response.text ?? '';
       setMessages(prev => [...prev, { role: 'model', text: modelResponse }]);
 
       // Check for [UPDATE] tag
@@ -163,18 +163,18 @@ export const Chatbot: React.FC = () => {
           const { setIntelligentCalendarPlan, intelligentCalendarPlan } = useDataStore.getState();
           const { mergeCalendarPlans } = await import('../services/calendarCadenceService');
           
-          const formattedItems = parsed.map((item: any, idx: number) => {
+          const formattedItems = parsed.map((item: Record<string, unknown>, idx: number) => {
             const nextDate = new Date();
             nextDate.setDate(nextDate.getDate() + idx);
             const dateStr = nextDate.toISOString().split('T')[0];
 
             return {
-              id: item.id || `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              date: item.date || dateStr,
-              platform: item.platform || 'Facebook',
-              topic: item.topic || 'Temat posta',
-              format: item.format || 'PostWithImage',
-              strategy: item.strategy || '',
+              id: (item.id as string) || `plan_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              date: (item.date as string) || dateStr,
+              platform: (item.platform as Platform) || Platform.Facebook,
+              topic: (item.topic as string) || 'Temat posta',
+              format: (item.format as GenerationType) || GenerationType.PostWithImage,
+              strategy: (item.strategy as string) || '',
             };
           });
           
@@ -312,3 +312,5 @@ export const Chatbot: React.FC = () => {
     </>
   );
 };
+
+export default Chatbot;

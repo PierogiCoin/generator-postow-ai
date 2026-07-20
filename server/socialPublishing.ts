@@ -2,6 +2,84 @@ import { TwitterApi } from 'twitter-api-v2';
 import axios from 'axios';
 import logger from './logger.js';
 
+// Type definitions for API responses
+interface LinkedInPost {
+  id: string;
+  commentary?: string;
+  createdAt?: number;
+  firstPublishedAt?: number;
+  specificContent?: {
+    'com.linkedin.ugc.ShareContent'?: {
+      shareCommentary?: { text?: string };
+    };
+  };
+}
+
+interface TwitterPost {
+  id: string;
+  text: string;
+  created_at: string;
+  public_metrics?: {
+    like_count?: number;
+    reply_count?: number;
+    retweet_count?: number;
+    impression_count?: number;
+  };
+}
+
+interface FacebookPage {
+  id: string;
+  name: string;
+  access_token: string;
+}
+
+interface FacebookPost {
+  id: string;
+  message?: string;
+  created_time: string;
+  full_picture?: string;
+  story?: string;
+  likes?: { summary?: { total_count?: number } };
+  comments?: { summary?: { total_count?: number } };
+  shares?: { count?: number };
+}
+
+interface InstagramPost {
+  id: string;
+  caption?: string;
+  timestamp: string;
+  media_url?: string;
+  permalink?: string;
+  like_count?: number;
+  comments_count?: number;
+}
+
+interface TikTokVideo {
+  id: string;
+  title?: string;
+  share_url: string;
+  create_time: number;
+}
+
+interface InsightMetric {
+  name: string;
+  values?: Array<{ value?: number }>;
+}
+
+interface EnrichedPost {
+  id: string;
+  content: string;
+  url: string;
+  publishedAt: Date;
+  mediaUrl?: string;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  views?: number;
+  reach?: number;
+  impressions?: number;
+}
+
 // ============================================
 // LINKEDIN API
 // ============================================
@@ -64,7 +142,7 @@ export class LinkedInPublisher {
   }
 
   async publishPost(accessToken: string, userId: string, content: string, imageUrl?: string): Promise<{ id: string; url: string }> {
-    const postData: any = {
+    const postData: Record<string, unknown> = {
       author: `urn:li:person:${userId}`,
       lifecycleState: 'PUBLISHED',
       specificContent: {
@@ -121,14 +199,14 @@ export class LinkedInPublisher {
         }
       });
 
-      return (response.data.elements || []).map((post: any) => ({
+      return (response.data.elements || []).map((post: LinkedInPost) => ({
         id: post.id,
         content: post.commentary || '',
         url: `https://www.linkedin.com/feed/update/${post.id}`,
         publishedAt: new Date(post.createdAt || Date.now())
       }));
-    } catch (error: any) {
-      logger.error('LinkedIn getPosts error (trying fallback):', { data: error.response?.data, message: error.message });
+    } catch (error: unknown) {
+      logger.error('LinkedIn getPosts error (trying fallback):', { data: (error as { response?: { data?: unknown } }).response?.data, message: (error instanceof Error ? error.message : String(error)) });
 
       // Fallback do ugcPosts jeśli /posts nie działa (starsze uprawnienia)
       try {
@@ -138,7 +216,7 @@ export class LinkedInPublisher {
             'X-Restli-Protocol-Version': '2.0.0'
           }
         });
-        return (response.data.elements || []).map((post: any) => ({
+        return (response.data.elements || []).map((post: LinkedInPost) => ({
           id: post.id,
           content: post.specificContent['com.linkedin.ugc.ShareContent']?.shareCommentary?.text || '',
           url: `https://www.linkedin.com/feed/update/${post.id}`,
@@ -212,7 +290,7 @@ export class TwitterPublisher {
   }
 
   async publishTweet(content: string, mediaIds?: string[]): Promise<{ id: string; url: string }> {
-    const tweetData: any = { text: content };
+    const tweetData: Record<string, unknown> = { text: content };
 
     if (mediaIds && mediaIds.length > 0) {
       tweetData.media = { media_ids: mediaIds };
@@ -246,7 +324,7 @@ export class TwitterPublisher {
         'tweet.fields': ['created_at', 'text', 'public_metrics']
       });
 
-      return (response.data.data || []).map((tweet: any) => ({
+      return (response.data.data || []).map((tweet: TwitterPost) => ({
         id: tweet.id,
         content: tweet.text,
         url: `https://twitter.com/i/web/status/${tweet.id}`,
@@ -305,8 +383,8 @@ export class FacebookPublisher {
       return {
         accessToken: response.data.access_token
       };
-    } catch (error: any) {
-      throw new Error(`Failed to exchange Facebook code for token: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to exchange Facebook code for token: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -337,13 +415,13 @@ export class FacebookPublisher {
         throw new Error(`Facebook API error: ${response.data.error.message}`);
       }
 
-      return (response.data.data || []).map((page: any) => ({
+      return (response.data.data || []).map((page: FacebookPage) => ({
         id: page.id,
         name: page.name,
         accessToken: page.access_token
       }));
-    } catch (error: any) {
-      throw new Error(`Failed to fetch Facebook pages: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to fetch Facebook pages: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -408,7 +486,7 @@ export class FacebookPublisher {
       // Pobierz insights dla każdego postu
       const posts = response.data.data || [];
       const enrichedPosts = await Promise.allSettled(
-        posts.map(async (post: any) => {
+        posts.map(async (post: FacebookPost) => {
           let reach = 0;
           let impressions = 0;
           try {
@@ -422,8 +500,8 @@ export class FacebookPublisher {
               }
             );
             const insightData = insightRes.data?.data || [];
-            reach = insightData.find((m: any) => m.name === 'post_reach')?.values?.[0]?.value || 0;
-            impressions = insightData.find((m: any) => m.name === 'post_impressions')?.values?.[0]?.value || 0;
+            reach = insightData.find((m: InsightMetric) => m.name === 'post_reach')?.values?.[0]?.value || 0;
+            impressions = insightData.find((m: InsightMetric) => m.name === 'post_impressions')?.values?.[0]?.value || 0;
           } catch (_) {
             // Brak uprawnień do insights – pomijamy
           }
@@ -444,7 +522,7 @@ export class FacebookPublisher {
 
       return enrichedPosts
         .filter(r => r.status === 'fulfilled')
-        .map(r => (r as PromiseFulfilledResult<any>).value);
+        .map(r => (r as PromiseFulfilledResult<EnrichedPost>).value);
     } catch (error) {
       logger.error('Facebook getPosts error:', error);
       return [];
@@ -552,8 +630,8 @@ export class InstagramPublisher {
         id: mediaId,
         url: `https://instagram.com/p/${mediaId}`
       };
-    } catch (error: any) {
-      throw new Error(`Failed to publish Instagram post: ${error.message}`);
+    } catch (error: unknown) {
+      throw new Error(`Failed to publish Instagram post: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -572,7 +650,7 @@ export class InstagramPublisher {
 
       const posts = response.data.data || [];
       const enrichedPosts = await Promise.allSettled(
-        posts.map(async (post: any) => {
+        posts.map(async (post: InstagramPost) => {
           let reach = 0;
           let views = 0;
           try {
@@ -586,8 +664,8 @@ export class InstagramPublisher {
               }
             );
             const insightData = insightRes.data?.data || [];
-            reach = insightData.find((m: any) => m.name === 'reach')?.values?.[0]?.value || 0;
-            views = insightData.find((m: any) => m.name === 'video_views')?.values?.[0]?.value || 0;
+            reach = insightData.find((m: InsightMetric) => m.name === 'reach')?.values?.[0]?.value || 0;
+            views = insightData.find((m: InsightMetric) => m.name === 'video_views')?.values?.[0]?.value || 0;
           } catch (_) {
             // Brak uprawnień – pomijamy
           }
@@ -607,7 +685,7 @@ export class InstagramPublisher {
 
       return enrichedPosts
         .filter(r => r.status === 'fulfilled')
-        .map(r => (r as PromiseFulfilledResult<any>).value);
+        .map(r => (r as PromiseFulfilledResult<EnrichedPost>).value);
     } catch (error) {
       logger.error('Instagram getPosts error:', error);
       return [];
@@ -675,7 +753,7 @@ export class TikTokPublisher {
       { headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' } }
     );
 
-    return (response.data.data.videos || []).map((video: any) => ({
+    return (response.data.data.videos || []).map((video: TikTokVideo) => ({
       id: video.id,
       title: video.title || '',
       url: video.share_url,

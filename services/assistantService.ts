@@ -10,7 +10,9 @@ import {
     AIAssistantAction,
     Platform,
     GenerationType,
-    Scene
+    Scene,
+    FormData,
+    FavoritePost
 } from '../types';
 
 /**
@@ -58,7 +60,7 @@ export const generateSpeech = async (text: string, userId: string): Promise<Blob
 export const performAIAction = async (
     action: AIAssistantAction,
     text: string,
-    context: { fullText: string, formData: any | null, tone?: string, [key: string]: any },
+    context: { fullText: string, formData: FormData | null, tone?: string, [key: string]: unknown },
     userId: string
 ): Promise<{ resultText: string }> => {
     let prompt = "";
@@ -80,7 +82,7 @@ export const performAIAction = async (
         contents: prompt
     }, userId);
 
-    return { resultText: response.text };
+    return { resultText: response.text ?? '' };
 };
 
 export const generateAudiencePersona = async (
@@ -159,9 +161,9 @@ export const suggestToneAndStyle = async (topic: string, userId?: string): Promi
     }
 };
 
-export const learnStyleFromFavorites = async (favorites: any[], userId: string): Promise<any> => {
+export const learnStyleFromFavorites = async (favorites: FavoritePost[], userId: string): Promise<Record<string, unknown>> => {
     try {
-        return await generateJson<any>({
+        return await generateJson<Record<string, unknown>>({
             model: "gemini-pro-latest",
             contents: `Analyze these high-performing favorite social media posts: ${JSON.stringify(favorites)}. 
             As an expert brand strategist, extract the DNA of this successful content.
@@ -181,9 +183,9 @@ export const learnStyleFromFavorites = async (favorites: any[], userId: string):
     }
 };
 
-export const learnBrandVoiceFromPosts = async (posts: any[], userId: string): Promise<any> => {
+export const learnBrandVoiceFromPosts = async (posts: { content?: string; postText?: string; caption?: string }[], userId: string): Promise<Record<string, unknown> | null> => {
     try {
-        return await generateJson<any>({
+        return await generateJson<Record<string, unknown>>({
             model: "gemini-pro-latest",
             contents: `As an expert brand strategist, analyze the following social media posts:
             
@@ -216,7 +218,7 @@ export const suggestAudioDescriptions = async (topic: string, audience: string, 
     }
 };
 
-export const executeCommand = async (command: string, userId: string): Promise<any> => {
+export const executeCommand = async (command: string, userId: string): Promise<{ success: boolean; message: string }> => {
     // This usually involves a function calling loop (Agent)
     return { success: true, message: "Command processed" };
 };

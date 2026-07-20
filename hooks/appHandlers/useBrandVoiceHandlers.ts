@@ -64,10 +64,10 @@ export const useBrandVoiceHandlers = ({ addToast, t, handleApiError }: BrandVoic
         if (!user) return;
         dataActions.setIsLearningStyle(true);
         try {
-            const learnedProfile = await geminiService.learnBrandVoiceFromHistory(user.id);
+            const learnedProfile = await geminiService.learnBrandVoiceFromHistory(user.id) as Record<string, unknown>;
 
             if (learnedProfile.error) {
-                addToast(learnedProfile.message || learnedProfile.error, NotificationType.Error);
+                addToast((learnedProfile.message as string) || (learnedProfile.error as string), NotificationType.Error);
                 return;
             }
 

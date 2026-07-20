@@ -42,7 +42,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
 
   if (mode === 'single') {
     return (
-      <div className={`grid grid-cols-3 sm:grid-cols-6 gap-3.5 ${className || ''}`}>
+      <div className={`grid grid-cols-3 sm:grid-cols-6 gap-3.5 ${className || ''}`} role="radiogroup" aria-label="Wybierz platformę społecznościową">
         {platformsToShow.map(platform => {
           const config = platformConfig[platform];
           const Icon = config.icon;
@@ -51,13 +51,14 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
             <button
               key={platform}
               type="button"
+              role="radio"
+              aria-checked={isSelected}
               onClick={() => handleSelect(platform)}
-              className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${isSelected
+              className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${isSelected
                   ? `bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan`
                   : `border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105`
                 }`}
               title={platform}
-              aria-pressed={isSelected}
             >
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 transition-transform duration-300 group-hover:scale-110 ${isSelected ? 'bg-cyan-500/10 text-cyan-500' : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 group-hover:text-cyan-500'}`}>
                 <Icon className="w-6 h-6" />
@@ -79,7 +80,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
 
   // Multi-select mode
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 ${className || ''}`}>
+    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 ${className || ''}`} role="group" aria-label="Wybierz platformy społecznościowe">
       {platformsToShow.map(platform => {
         const config = platformConfig[platform];
         const Icon = config.icon;
@@ -88,9 +89,10 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
           <button
             key={platform}
             type="button"
+            role="checkbox"
+            aria-checked={isSelected}
             onClick={() => handleSelect(platform)}
-            className={`group flex items-center gap-4 p-4 border rounded-2xl cursor-pointer transition-all duration-300 text-left focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${isSelected ? 'bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/5 neon-glow-cyan' : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:border-cyan-500/35 hover:scale-[1.01]'}`}
-            aria-pressed={isSelected}
+            className={`group flex items-center gap-4 p-4 border rounded-2xl cursor-pointer transition-all duration-300 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${isSelected ? 'bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/5 neon-glow-cyan' : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:border-cyan-500/35 hover:scale-[1.01]'}`}
           >
             <div className={`w-6 h-6 flex items-center justify-center rounded-lg border transition-all duration-300 ${isSelected ? 'bg-cyan-500 border-cyan-500 shadow-md scale-110' : 'border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5'}`}>
               {isSelected && <CheckIcon className="w-3.5 h-3.5 text-white stroke-[3]" />}

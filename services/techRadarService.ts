@@ -175,7 +175,7 @@ Pisz po polsku. Tylko prawdziwe, zweryfikowane informacje z wyszukiwania.`;
   const response = await callApi(
     'generate-content',
     {
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: prompt,
       config: {
         temperature: 0.4,

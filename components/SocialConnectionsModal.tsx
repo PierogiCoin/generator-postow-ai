@@ -262,3 +262,5 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
     </div>
   );
 };
+
+export default SocialConnectionsModal;

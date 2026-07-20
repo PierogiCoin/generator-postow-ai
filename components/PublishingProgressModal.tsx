@@ -118,3 +118,5 @@ export const PublishingProgressModal: React.FC<PublishingProgressModalProps> = (
         </div>
     );
 };
+
+export default PublishingProgressModal;

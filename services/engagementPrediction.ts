@@ -324,7 +324,7 @@ function parseEngagementPrediction(text: string, postText: string): EngagementPr
 
   return {
     overallScore: score,
-    confidence: (findValue(['CONFIDENCE']).toLowerCase() as any) || 'medium',
+    confidence: (findValue(['CONFIDENCE']).toLowerCase() as EngagementPrediction['confidence']) || 'medium',
     predictedMetrics: {
       likes: (likes.min + likes.max) / 2,
       comments: (comments.min + comments.max) / 2,

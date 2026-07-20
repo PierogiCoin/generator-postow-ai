@@ -45,7 +45,7 @@ export function reloadOnceForStaleChunks(): void {
   }
 }
 
-export function lazyWithRetry<T extends React.ComponentType<unknown>>(
+export function lazyWithRetry<T extends React.ComponentType<any>>(
   factory: () => Promise<{ default: T }>
 ): React.LazyExoticComponent<T> {
   return React.lazy(async () => {

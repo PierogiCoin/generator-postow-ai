@@ -6,7 +6,7 @@ import { createHealthRouter } from './routes/health.js';
 import { createTemplatesRouter } from './routes/templates.js';
 import { createSocialRouter } from './routes/social.js';
 import { createBrandVoiceRouter } from './routes/brandVoice.js';
-import { createGenerationRouter } from './routes/generation.js';
+import { createGenerationRouter } from './routes/generation/index.js';
 import { createCostsRouter } from './routes/costs.js';
 import { createScoringRouter } from './routes/scoring.js';
 import { createVideoRouter } from './routes/video.js';

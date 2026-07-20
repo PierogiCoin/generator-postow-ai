@@ -13,7 +13,7 @@ interface ToneSelectorProps {
   disabled?: boolean;
 }
 
-const toneConfig: Record<Tone, { icon: React.FC<any> }> = {
+const toneConfig: Record<Tone, { icon: React.ComponentType<{ className?: string }> }> = {
   [Tone.Professional]: { icon: BriefcaseIcon },
   [Tone.Casual]: { icon: SmileyIcon },
   [Tone.Witty]: { icon: LightbulbIcon },
@@ -24,7 +24,7 @@ const toneConfig: Record<Tone, { icon: React.FC<any> }> = {
 export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSelect, disabled = false }) => {
   const { t } = useTranslation();
   return (
-    <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5" role="radiogroup" aria-label="Wybierz ton wypowiedzi">
       {Object.values(Tone).map(tone => {
         const config = toneConfig[tone];
         const Icon = config.icon;
@@ -34,9 +34,11 @@ export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSele
           <button
             key={tone}
             type="button"
+            role="radio"
+            aria-checked={isSelected}
             onClick={() => onSelect(tone)}
             disabled={disabled}
-            className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-cyan-500/50 ${isSelected
+            className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${isSelected
                 ? 'border-cyan-500 bg-slate-900/60 dark:bg-white/5 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan'
                 : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105'
               }`}
@@ -47,7 +49,7 @@ export const ToneSelector: React.FC<ToneSelectorProps> = ({ selectedTone, onSele
               <Icon className="w-6 h-6" />
             </div>
 
-            <span className={`text-[10px] uppercase font-black tracking-widest transition-colors ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-505 dark:text-slate-500 group-hover:text-cyan-500'}`}>
+            <span className={`text-[10px] uppercase font-black tracking-widest transition-all duration-200 ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-500 dark:text-slate-550 group-hover:text-cyan-500'}`}>
               {label}
             </span>
 

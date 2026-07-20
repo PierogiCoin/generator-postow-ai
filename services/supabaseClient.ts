@@ -10,13 +10,13 @@ const looksLikeHtml = (v?: string) =>
 
 const resolveEnv = (): { url?: string; anonKey?: string } => {
   // Bezpieczny odczyt: preferuj process.env (Railway/devcontainer), fallback na import.meta.env jeśli dostępne.
-  const nodeEnv: Record<string, any> = typeof process !== 'undefined' && process.env ? (process.env as any) : {};
-  let metaEnv: Record<string, any> | undefined;
+  const nodeEnv: Record<string, string | undefined> = typeof process !== 'undefined' && process.env ? process.env : {};
+  let metaEnv: Record<string, string | undefined> | undefined;
   
   // 🟢 POPRAWIONA LINIA: Usuwamy (import as any)
   try { metaEnv = import.meta.env; } catch { metaEnv = undefined; }
 
-  const env: Record<string, any> = { ...nodeEnv, ...(metaEnv || {}) };
+  const env: Record<string, string | undefined> = { ...nodeEnv, ...(metaEnv || {}) };
 
   // 🟢 Sugerowany priorytet dla środowiska VITE/Railway
   const url = env.VITE_SUPABASE_URL || env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;

@@ -3,20 +3,24 @@ import logger, { logRequest, logCost } from '../logger.js';
 import { scoreContent, compareWithBenchmark, quickValidate } from '../contentScoring.js';
 import { creditGate } from '../middleware/credits.js';
 import { getAuthUserId } from '../middleware/supabaseAuth.js';
+import {
+  validateRequest,
+  scoreContentSchema,
+  benchmarkContentSchema,
+} from '../middleware/validate.js';
 
 export function createScoringRouter(): Router {
   const router = Router();
-router.post('/api/score-content', ...creditGate('sentimentAnalysis'), async (req, res) => {
+router.post(
+  '/api/score-content',
+  ...creditGate('sentimentAnalysis'),
+  validateRequest(scoreContentSchema),
+  async (req, res) => {
   logRequest(req, 200, 0);
 
   try {
     const { content, platform, context } = req.body;
     const userId = getAuthUserId(req);
-
-    // Walidacja
-    if (!content || !platform) {
-      return res.status(400).json({ error: 'Content and platform are required' });
-    }
 
     // Quick validation
     const validation = quickValidate(content, platform);
@@ -40,11 +44,11 @@ router.post('/api/score-content', ...creditGate('sentimentAnalysis'), async (req
       timestamp: new Date().toISOString()
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('[Content Scoring] Error:', error);
     res.status(500).json({
       error: 'Scoring failed',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });
@@ -52,18 +56,16 @@ router.post('/api/score-content', ...creditGate('sentimentAnalysis'), async (req
 // ===============================================
 // 🏆 BENCHMARK COMPARISON ENDPOINT (Optional)
 // ===============================================
-router.post('/api/benchmark-content', ...creditGate('contentOptimization'), async (req, res) => {
+router.post(
+  '/api/benchmark-content',
+  ...creditGate('contentOptimization'),
+  validateRequest(benchmarkContentSchema),
+  async (req, res) => {
   logRequest(req, 200, 0);
 
   try {
     const { content, platform, niche } = req.body;
     const userId = getAuthUserId(req);
-
-    if (!content || !platform || !niche) {
-      return res.status(400).json({
-        error: 'Content, platform, and niche are required'
-      });
-    }
 
     logger.info(`[Benchmark] User: ${userId}, Niche: ${niche}`);
 
@@ -75,11 +77,11 @@ router.post('/api/benchmark-content', ...creditGate('contentOptimization'), asyn
       timestamp: new Date().toISOString()
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('[Benchmark] Error:', error);
     res.status(500).json({
       error: 'Benchmark failed',
-      message: error.message
+      message: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

@@ -19,7 +19,7 @@ export const fetchPaymentHistory = async (user: User): Promise<PaymentHistoryIte
 /**
  * Symuluje aktualizację profilu użytkownika.
  */
-export const updateUserProfile = async (user: User, action: 'change_password' | 'delete_account', data?: any): Promise<{ success: boolean; message: string }> => {
+export const updateUserProfile = async (user: User, action: 'change_password' | 'delete_account', data?: Record<string, unknown>): Promise<{ success: boolean; message: string }> => {
     return new Promise(resolve => {
         setTimeout(() => {
             if (action === 'change_password') {

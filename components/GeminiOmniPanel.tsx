@@ -60,7 +60,7 @@ export const GeminiOmniPanel: React.FC<GeminiOmniPanelProps> = ({
   const notifications = useNotifications();
 
   const [activeTab, setActiveTab] = useState<OmniTab>('capabilities');
-  const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.0-flash-exp');
+  const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
   const [prompt, setPrompt] = useState(initialPrompt);
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<OmniGenerationResult | null>(null);
@@ -132,8 +132,8 @@ export const GeminiOmniPanel: React.FC<GeminiOmniPanelProps> = ({
         case 'image':
           response = await generateImageOmni(
             prompt,
-            imageStyle as any,
-            imageAspectRatio as any,
+            imageStyle as 'photorealistic' | 'anime' | 'digital_art' | 'oil_painting' | 'watercolor' | '3d' | 'sketch',
+            imageAspectRatio as '1:1' | '16:9' | '9:16' | '4:3',
             imageCount,
             user.id
           );
@@ -151,9 +151,9 @@ export const GeminiOmniPanel: React.FC<GeminiOmniPanelProps> = ({
 
         case 'analysis':
           if (uploadedImage) {
-            response = await analyzeImageOmni(uploadedImage, analysisType as any, user.id);
+            response = await analyzeImageOmni(uploadedImage, analysisType as 'describe' | 'extract_text' | 'analyze_style' | 'compare' | 'creative_brief', user.id);
           } else if (uploadedVideo) {
-            response = await analyzeVideoOmni(uploadedVideo, analysisType as any, user.id);
+            response = await analyzeVideoOmni(uploadedVideo, analysisType as 'summary' | 'scenes' | 'transcription' | 'insights' | 'all', user.id);
           } else {
             throw new Error('Dodaj obraz lub wideo do analizy');
           }
@@ -164,7 +164,7 @@ export const GeminiOmniPanel: React.FC<GeminiOmniPanelProps> = ({
           break;
 
         case 'code':
-          response = await generateAndExecuteCode(codeInput || prompt, codeLanguage as any, user.id);
+          response = await generateAndExecuteCode(codeInput || prompt, codeLanguage as 'python' | 'javascript' | 'typescript' | 'sql', user.id);
           break;
 
         default:
@@ -228,7 +228,7 @@ export const GeminiOmniPanel: React.FC<GeminiOmniPanelProps> = ({
           Wybierz model
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {(['gemini-2.0-flash-exp', 'gemini-2.0-flash-thinking-exp', 'gemini-2.0-pro-exp', 'gemini-1.5-pro', 'gemini-1.5-flash'] as GeminiModel[]).map((model) => {
+          {(['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-1.5-pro', 'gemini-1.5-flash'] as GeminiModel[]).map((model) => {
             const info = getModelInfo(model);
             return (
               <button

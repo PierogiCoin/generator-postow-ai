@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import logger from '../logger.js';
 import { costTracker } from '../lib/clients.js';
-import { requireSupabaseAuth, getAuthUserId } from '../middleware/supabaseAuth.js';
+import {
+  requireSupabaseAuth,
+  requireAdmin,
+  getAuthUserId,
+} from '../middleware/supabaseAuth.js';
 import { AppError } from '../middleware/errorHandler.js';
 
 function assertSelfUser(req: import('../middleware/supabaseAuth.js').SupabaseAuthRequest, paramUserId: string) {
@@ -32,7 +36,8 @@ export function createCostsRouter(): Router {
     }
   });
 
-  router.get('/daily', requireSupabaseAuth, async (req, res, next) => {
+  // Globalne koszty — tylko admin
+  router.get('/daily', requireSupabaseAuth, requireAdmin, async (req, res, next) => {
     try {
       const days = parseInt(req.query.days as string) || 7;
 
@@ -49,7 +54,7 @@ export function createCostsRouter(): Router {
     }
   });
 
-  router.get('/top-spenders', requireSupabaseAuth, async (req, res, next) => {
+  router.get('/top-spenders', requireSupabaseAuth, requireAdmin, async (req, res, next) => {
     try {
       const limit = parseInt(req.query.limit as string) || 10;
       const days = parseInt(req.query.days as string) || 30;

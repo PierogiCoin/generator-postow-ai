@@ -19,7 +19,7 @@ import { KeyboardIcon } from './icons/KeyboardIcon';
 interface Command {
   id: string;
   title: string;
-  icon: React.FC<any>;
+  icon: React.ComponentType<{ className?: string }>;
   action: () => void;
   keywords?: string[];
 }

@@ -108,7 +108,7 @@ export const morganStream = {
 };
 
 // Helper functions for structured logging
-export const logRequest = (req: any, statusCode: number, duration: number) => {
+export const logRequest = (req: { method: string; url: string; ip?: string; header: (name: string) => string | undefined }, statusCode: number, duration: number) => {
   logger.http('Request completed', {
     method: req.method,
     url: req.url,
@@ -139,7 +139,7 @@ export const logCost = (userId: string, operation: string, cost: number, provide
   });
 };
 
-export const logValidationError = (endpoint: string, errors: any[], ip: string) => {
+export const logValidationError = (endpoint: string, errors: unknown[], ip: string) => {
   logger.warn('Validation failed', {
     endpoint,
     errors,

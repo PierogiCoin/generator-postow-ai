@@ -5,6 +5,11 @@ import { genAI, supabase } from '../lib/clients.js';
 import { syncUserSocialPosts } from '../socialSync.js';
 import { FacebookPublisher, InstagramPublisher } from '../socialPublishing.js';
 import { creditGate } from '../middleware/credits.js';
+import {
+  validateRequest,
+  brandVoiceExtractUrlSchema,
+  brandVoiceLearnSchema,
+} from '../middleware/validate.js';
 
 function normalizeWebsiteUrl(raw: string): string {
   const trimmed = raw.trim();
@@ -36,13 +41,15 @@ function extractHtmlSignals(html: string): Record<string, string | null> {
 export function createBrandVoiceRouter(): Router {
   const router = Router();
 
-router.post('/api/brand-voice/extract-url', ...creditGate('brandVoiceAnalysis'), async (req, res) => {
+router.post(
+  '/api/brand-voice/extract-url',
+  ...creditGate('brandVoiceAnalysis'),
+  validateRequest(brandVoiceExtractUrlSchema),
+  async (req, res) => {
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'User ID required' });
 
-  const { url } = req.body as { url?: string };
-  if (!url?.trim()) return res.status(400).json({ error: 'Brak URL strony' });
-
+  const { url } = req.body as { url: string };
   const websiteUrl = normalizeWebsiteUrl(url);
 
   try {
@@ -93,7 +100,11 @@ Zwróć JSON:
   }
 });
 
-router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async (req, res) => {
+router.post(
+  '/api/brand-voice/learn',
+  ...creditGate('brandVoiceAnalysis'),
+  validateRequest(brandVoiceLearnSchema),
+  async (req, res) => {
   const userId = req.user?.id;
   if (!userId) return res.status(401).json({ error: 'User ID required' });
 
@@ -150,16 +161,16 @@ router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async
             if (conn.platform === 'facebook') {
               const fb = new FacebookPublisher(conn.access_token);
               const posts = await fb.getPosts(conn.account_id, conn.access_token);
-              directSocialPosts.push(...posts.map((p: any) => p.content).filter(Boolean));
+              directSocialPosts.push(...posts.map((p: Record<string, any>) => p.content).filter(Boolean));
               logger.info(`[BrandVoice] Direct Facebook fetch: ${posts.length} posts from ${conn.account_id}`);
             } else if (conn.platform === 'instagram') {
               const ig = new InstagramPublisher(conn.access_token);
               const posts = await ig.getPosts(conn.account_id);
-              directSocialPosts.push(...posts.map((p: any) => p.content || p.caption).filter(Boolean));
+              directSocialPosts.push(...posts.map((p: Record<string, any>) => p.content || p.caption).filter(Boolean));
               logger.info(`[BrandVoice] Direct Instagram fetch: ${posts.length} posts`);
             }
-          } catch (directErr: any) {
-            logger.warn(`[BrandVoice] Direct fetch failed for ${conn.platform}:`, directErr.message);
+          } catch (directErr: unknown) {
+            logger.warn(`[BrandVoice] Direct fetch failed for ${conn.platform}:`, directErr instanceof Error ? directErr.message : String(directErr));
           }
         }
       }
@@ -167,10 +178,10 @@ router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async
 
     // 6. Compile all posts
     const allPosts = [
-      ...(historyItems || []).map((h: any) => h.content || h.postText || h.metadata?.postText),
-      ...(socialPosts || []).map((s: any) => s.content),
+      ...(historyItems || []).map((h: Record<string, any>) => h.content || h.postText || h.metadata?.postText),
+      ...(socialPosts || []).map((s: Record<string, any>) => s.content),
       ...directSocialPosts,
-      ...(scheduledItems || []).map((s: any) => s.result?.postText || s.result?.content)
+      ...(scheduledItems || []).map((s: Record<string, any>) => s.result?.postText || s.result?.content)
     ].filter((c): c is string => typeof c === 'string' && c.trim().length > 10);
 
     logger.info(`[BrandVoice] Total usable posts: ${allPosts.length}`);
@@ -202,18 +213,18 @@ router.post('/api/brand-voice/learn', ...creditGate('brandVoiceAnalysis'), async
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    let profile: any;
+    let profile: Record<string, unknown>;
     try {
       profile = JSON.parse(response.text().replace(/```json|```/g, '').trim());
-    } catch (parseErr: any) {
-      throw new Error(`AI zwróciło niepoprawny JSON podczas generowania Brand Voice: ${parseErr.message}`);
+    } catch (parseErr: unknown) {
+      throw new Error(`AI zwróciło niepoprawny JSON podczas generowania Brand Voice: ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`);
     }
 
     logger.info(`[BrandVoice] Profile generated successfully for user: ${userId}`);
     res.json(profile);
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('[BrandVoice] Error:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 });
 

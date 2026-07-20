@@ -14,7 +14,7 @@ export const fetchDrafts = async (): Promise<Draft[]> => {
   return data || [];
 };
 
-export const saveDraft = async (draft: any): Promise<Draft> => {
+export const saveDraft = async (draft: Partial<Draft>): Promise<Draft> => {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("User not logged in");

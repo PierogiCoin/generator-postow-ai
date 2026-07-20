@@ -148,7 +148,7 @@ Generate the post NOW. Make it scroll-stopping!`;
   }, userId);
 
   return {
-    text: response.text,
+    text: response.text ?? '',
     structure: 'professional'
   };
 };
@@ -221,7 +221,7 @@ Return JSON:
   }, userId);
 
   try {
-    return JSON.parse(response.text);
+    return JSON.parse(response.text ?? '{}');
   } catch {
     throw new Error('Failed to generate strategic hashtags');
   }
@@ -295,7 +295,7 @@ Return JSON:
   }, userId);
 
   try {
-    return JSON.parse(response.text);
+    return JSON.parse(response.text ?? '{}');
   } catch {
     throw new Error('Failed to generate image concept');
   }
@@ -378,7 +378,7 @@ Return JSON:
   }, userId);
 
   try {
-    return JSON.parse(response.text);
+    return JSON.parse(response.text ?? '{}');
   } catch {
     throw new Error('Failed to generate video script');
   }
@@ -446,7 +446,7 @@ Return JSON:
   }, userId);
 
   try {
-    return JSON.parse(response.text);
+    return JSON.parse(response.text ?? '{}');
   } catch {
     throw new Error('Failed to analyze content');
   }

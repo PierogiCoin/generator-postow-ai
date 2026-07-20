@@ -60,16 +60,18 @@ export function getApiBaseUrl(): string {
     return resolveApiBaseUrl();
 }
 
-/** Długie requesty (wideo) — bezpośrednio na Railway, omija limit proxy Vercel. */
-const PRODUCTION_BACKEND_URL = 'https://generator-postow-api-production.up.railway.app';
-
+/**
+ * Długie requesty (wideo / multi-platform) — preferuj bezpośredni URL backendu
+ * (omija limit czasu proxy Vercel). Bez env → same-origin /api (proxy BACKEND_URL).
+ */
 export function getLongRunningApiBaseUrl(): string {
+    const direct = sanitizeEnvApiUrl(
+        import.meta.env.VITE_LONG_RUNNING_API_BASE_URL as string | undefined
+    );
+    if (direct) return direct;
+
     const envUrl = sanitizeEnvApiUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
     if (envUrl) return envUrl;
-
-    if (typeof window !== 'undefined' && !isLocalHostname(window.location.hostname)) {
-        return PRODUCTION_BACKEND_URL;
-    }
 
     return getApiBaseUrl();
 }
@@ -98,7 +100,7 @@ export async function getApiAuthHeaders(userId?: string): Promise<Record<string,
 /**
  * Funkcja pomocnicza do wywołań API Proxy
  */
-export const callApi = async (endpoint: string, payload: any, userId?: string, headers: Record<string, string> = {}) => {
+export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -177,7 +179,7 @@ export const callApi = async (endpoint: string, payload: any, userId?: string, h
 /**
  * Bezpieczne wywołanie dla generowania treści, obsługujące błędy bezpieczeństwa.
  */
-export async function generateContent(payload: any, userId?: string): Promise<GenerateContentResponse> {
+export async function generateContent(payload: Record<string, unknown>, userId?: string): Promise<GenerateContentResponse> {
     const response: GenerateContentResponse = await callApi("generate-content", payload, userId);
 
     if (response.promptFeedback?.blockReason) {
@@ -198,13 +200,13 @@ export async function generateContent(payload: any, userId?: string): Promise<Ge
 /**
  * Kombinacja wywołania AI i parsowania JSON.
  */
-export async function generateJson<T>(payload: any, userId?: string): Promise<T> {
+export async function generateJson<T>(payload: Record<string, unknown>, userId?: string): Promise<T> {
     const response = await generateContent({
-        ...payload,
-        config: { ...payload.config, responseMimeType: "application/json" }
+        ...(payload as object),
+        config: { ...(payload.config as object), responseMimeType: "application/json" }
     }, userId);
 
-    return extractJson<T>(response.text);
+    return extractJson<T>(response.text ?? '');
 }
 
 export const performComplexQuery = async (prompt: string, userId: string): Promise<string> => {
@@ -213,7 +215,7 @@ export const performComplexQuery = async (prompt: string, userId: string): Promi
         contents: prompt,
         config: { thinkingConfig: { thinkingBudget: 32768 } }
     }, userId);
-    return response.text;
+    return response.text ?? '';
 }
 
 export const fileToBase64 = (file: File): Promise<string> => {

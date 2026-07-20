@@ -87,6 +87,8 @@ export function buildCreditPacksConfig() {
       credits: number;
       price: number;
       pricePln: number;
+      pricePerCreditUsd: number;
+      badge: string | null;
       priceId: string | null;
       discount?: string;
     }

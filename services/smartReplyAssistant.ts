@@ -234,9 +234,9 @@ function parseReplySuggestion(text: string, originalComment: string): ReplySugge
     return '';
   };
 
-  const sentiment = (findValue(['SENTIMENT']).toLowerCase() as any) || 'neutral';
-  const intent = (findValue(['INTENT']).toLowerCase() as any) || 'engagement';
-  const urgency = (findValue(['URGENCY']).toLowerCase() as any) || 'whenever';
+  const sentiment = (findValue(['SENTIMENT']).toLowerCase() as CommentAnalysis['sentiment']) || 'neutral';
+  const intent = (findValue(['INTENT']).toLowerCase() as CommentAnalysis['intent']) || 'engagement';
+  const urgency = (findValue(['URGENCY']).toLowerCase() as CommentAnalysis['urgency']) || 'whenever';
   const tone = findValue(['SUGGESTED TONE', 'TONE']) || 'friendly';
   
   const replyOptions: ReplyOption[] = [];
@@ -251,7 +251,7 @@ function parseReplySuggestion(text: string, originalComment: string): ReplySugge
           id: `${length.toLowerCase()}-${Date.now()}`,
           text: replyText,
           tone: tone,
-          length: length.toLowerCase() as any,
+          length: length.toLowerCase() as ReplyOption['length'],
           emoji: replyText.includes('😊') || replyText.includes('🙏') || replyText.includes('❤️'),
           cta: lines.find(l => l.includes('CTA') && l.includes(length))?.split(':')[1]?.trim() || 'Thanks!',
           appropriatenessScore: 8,

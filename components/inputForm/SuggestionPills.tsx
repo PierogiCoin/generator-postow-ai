@@ -30,9 +30,9 @@ export const SuggestionPills = <T extends string>({ suggestions, onSelect, isLoa
             key={suggestion}
             type="button"
             onClick={() => onSelect(suggestion as T)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-300 border-2 ${isSelected
+            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 border-2 items-center ${isSelected
               ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-500 shadow-lg shadow-blue-500/25 scale-105'
-              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-blue-400/50 hover:text-blue-500'
+              : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-blue-400/50 hover:text-blue-500 hover:scale-105'
               }`}
           >
             {suggestion}

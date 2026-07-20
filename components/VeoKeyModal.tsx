@@ -50,3 +50,5 @@ export const VeoKeyModal: React.FC<VeoKeyModalProps> = ({ onClose, onRetry }) =>
     </div>
   );
 };
+
+export default VeoKeyModal;

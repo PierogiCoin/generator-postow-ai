@@ -90,11 +90,11 @@ const AppRouter: React.FC = () => {
 let root: ReactDOM.Root;
 const container = document.getElementById('root')!;
 
-if ((window as any)._reactRoot) {
-  root = (window as any)._reactRoot;
+if ((window as unknown as Record<string, unknown>)._reactRoot) {
+  root = (window as unknown as Record<string, unknown>)._reactRoot as ReactDOM.Root;
 } else {
   root = ReactDOM.createRoot(container);
-  (window as any)._reactRoot = root;
+  (window as unknown as Record<string, unknown>)._reactRoot = root;
 }
 
 const CenteredSpinner = () => (

@@ -139,7 +139,7 @@ export const useDataStore = create<DataState>()(
     set(state => {
       if (!state.stats) return {};
 
-      const newStats = JSON.parse(JSON.stringify(state.stats));
+      const newStats = structuredClone(state.stats);
       const newUsage = newStats.byGenerationType;
 
       switch (formData.generationType) {

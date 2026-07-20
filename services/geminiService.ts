@@ -17,11 +17,11 @@ export * from './analysisService';
 export * from './assistantService';
 
 // Brand Voice learning
-export const learnBrandVoiceFromHistory = async (userId: string): Promise<any> => {
+export const learnBrandVoiceFromHistory = async (userId: string): Promise<Record<string, unknown>> => {
     return await callApi('brand-voice/learn', {}, userId);
 };
 
-export const extractBrandVoiceFromUrl = async (url: string, userId: string): Promise<any> => {
+export const extractBrandVoiceFromUrl = async (url: string, userId: string): Promise<Record<string, unknown>> => {
     return await callApi('brand-voice/extract-url', { url }, userId);
 };
 

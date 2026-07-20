@@ -134,7 +134,7 @@ export function useRateLimiter(
 /**
  * Hook for debouncing actions (prevent rapid repeated calls)
  */
-export function useDebounce<T extends (...args: any[]) => any>(
+export function useDebounce<T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number = 500
 ): (...args: Parameters<T>) => void {
@@ -165,7 +165,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
 /**
  * Hook for throttling actions (limit execution rate)
  */
-export function useThrottle<T extends (...args: any[]) => any>(
+export function useThrottle<T extends (...args: unknown[]) => unknown>(
   callback: T,
   limit: number = 1000
 ): (...args: Parameters<T>) => void {

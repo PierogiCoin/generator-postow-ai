@@ -2,14 +2,18 @@ import rateLimit, { ipKeyGenerator, RateLimitExceededEventHandler } from 'expres
 import type { Request } from 'express';
 import { logRateLimit } from '../logger.js';
 
+/**
+ * Klucz limitu: zweryfikowany user z JWT (req.user) albo IP.
+ * Nigdy nie ufamy nagłówkom klienta (x-user-id / x-user-tier).
+ */
 const rateLimitKeyGenerator = (req: Request): string => {
-  const userId = req.header('x-user-id');
-  if (userId) return userId;
+  const userId = req.user?.id;
+  if (userId) return `user:${userId}`;
   return ipKeyGenerator(req.ip ?? '0.0.0.0');
 };
 
 const rateLimitHandler: RateLimitExceededEventHandler = (req, res, _next, options) => {
-  logRateLimit(req.path, req.ip || 'unknown', req.header('x-user-id') || undefined);
+  logRateLimit(req.path, req.ip || 'unknown', req.user?.id);
   res.status(options.statusCode || 429).json({ message: options.message || 'Too many requests' });
 };
 
@@ -31,10 +35,8 @@ export const expensiveLimiter = rateLimit({
   legacyHeaders: false,
   handler: rateLimitHandler,
   keyGenerator: rateLimitKeyGenerator,
-  skip: (req) => {
-    const userTier = req.header('x-user-tier');
-    return userTier === 'premium' || userTier === 'enterprise';
-  },
+  // Tier z nagłówka klienta był spoofowalny — limit dotyczy wszystkich;
+  // dostęp premium kontroluje creditGate + plan w DB.
 });
 
 export const textLimiter = rateLimit({

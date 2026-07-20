@@ -8,9 +8,14 @@ export default defineConfig(({ mode }) => {
     const devEnv = loadEnv(mode, '.', '');
     const devBackendPort = devEnv.VITE_DEV_BACKEND_PORT || devEnv.PORT || '3001';
     const rawApiUrl = env.VITE_API_BASE_URL ?? '';
+    const rawLongRunningUrl = env.VITE_LONG_RUNNING_API_BASE_URL ?? '';
     // Nigdy nie wbudowuj localhost do bundle produkcyjnego
     const apiBaseUrl =
         mode === 'production' && /localhost|127\.0\.0\.1/.test(rawApiUrl) ? '' : rawApiUrl;
+    const longRunningApiBaseUrl =
+        mode === 'production' && /localhost|127\.0\.0\.1/.test(rawLongRunningUrl)
+            ? ''
+            : rawLongRunningUrl;
 
     const appBuildId =
         process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 8) ||
@@ -54,6 +59,7 @@ export default defineConfig(({ mode }) => {
       
       define: {
         'import.meta.env.VITE_API_BASE_URL': JSON.stringify(apiBaseUrl),
+        'import.meta.env.VITE_LONG_RUNNING_API_BASE_URL': JSON.stringify(longRunningApiBaseUrl),
         'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(env.VITE_SUPABASE_URL ?? ''),
         'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY ?? ''),
         'import.meta.env.VITE_APP_BUILD_ID': JSON.stringify(appBuildId),

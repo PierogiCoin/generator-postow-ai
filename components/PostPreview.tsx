@@ -37,11 +37,11 @@ const XPreview: React.FC<PostPreviewProps> = ({ result, formData, onEditImage, h
           <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
         </div>
       </div>
-      <div className="flex-grow min-w-0">
+      <div className="flex-grow min-w-0 overflow-hidden">
         <div className="flex justify-between items-center mb-1">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="font-black text-slate-900 dark:text-white truncate">Twoja Marka</span>
-            <span className="text-slate-500 dark:text-slate-500 truncate">@twojamarka</span>
+          <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
+            <span className="font-black text-slate-900 dark:text-white truncate whitespace-normal">Twoja Marka</span>
+            <span className="text-slate-500 dark:text-slate-500 truncate whitespace-normal">@twojamarka</span>
             <span className="text-slate-400 dark:text-slate-600">&middot; Teraz</span>
           </div>
           <EllipsisHorizontalIcon className="w-5 h-5 text-slate-400 dark:text-slate-600" />

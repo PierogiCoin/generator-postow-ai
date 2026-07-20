@@ -41,7 +41,7 @@ import { ReferralCard } from './ReferralCard';
 import { useDataStore } from '../stores/dataStore';
 
 const StatCard: React.FC<{
-    icon: React.FC<any>,
+    icon: React.ComponentType<{ className?: string }>,
     label: string,
     value: number | string,
     color: string,
@@ -49,7 +49,7 @@ const StatCard: React.FC<{
     glowClass: string,
     iconColor: string
 }> = ({ icon: Icon, label, value, color, trend, glowClass, iconColor }) => (
-    <div className={`p-8 rounded-[2.5rem] border bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200/50 dark:border-white/5 flex flex-col gap-6 shadow-2xl relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${glowClass}`}>
+    <div className={`p-6 lg:p-8 rounded-[2rem] lg:rounded-[2.5rem] border bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl border-slate-200/50 dark:border-white/5 flex flex-col gap-4 lg:gap-6 shadow-2xl relative overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 ${glowClass}`}>
         <div className="absolute -right-6 -top-6 w-32 h-32 bg-white/5 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
@@ -90,8 +90,8 @@ const StrategyAssistant: React.FC = () => {
             try {
                 const result = await getStrategicContentIdeas(niche, undefined, user.id);
                 setIdeas(result);
-            } catch (e: any) {
-                setError(e.message || "Nie udało się pobrać strategicznych pomysłów.");
+            } catch (e: unknown) {
+                setError(e instanceof Error ? e.message : "Nie udało się pobrać strategicznych pomysłów.");
             } finally {
                 setIsLoading(false);
             }
@@ -113,10 +113,10 @@ const StrategyAssistant: React.FC = () => {
     }
 
     return (
-        <div className="glass-premium p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden">
+        <div className="glass-premium p-6 lg:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl relative overflow-hidden">
             <div className="absolute -top-12 -left-12 w-24 h-24 bg-cyan-500/10 rounded-full blur-[60px]" />
             
-            <div className="flex items-center justify-between mb-8 relative z-10">
+            <div className="flex items-center justify-between mb-6 lg:mb-8 relative z-10">
                 <div>
                     <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Asystent Strategiczny</h3>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Wskazówki dla marki: <span className="text-cyan-500">{niche}</span></p>
@@ -129,12 +129,13 @@ const StrategyAssistant: React.FC = () => {
             {isLoading ? (
                 <div className="space-y-4 relative z-10">
                     {Array.from({ length: 3 }).map((_, i) => (
-                        <div key={`skeleton-${i}`} className="p-6 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5 rounded-3xl animate-pulse">
-                            <div className="flex gap-4">
-                                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-800 rounded-xl" />
-                                <div className="space-y-2 flex-grow">
-                                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                        <div key={`skeleton-${i}`} className="p-5 bg-slate-50 dark:bg-slate-900/50 border border-slate-200/50 dark:border-white/5 rounded-3xl animate-pulse">
+                            <div className="flex gap-4 items-center">
+                                <div className="w-12 h-12 bg-slate-200 dark:bg-slate-800 rounded-2xl flex-shrink-0" />
+                                <div className="space-y-2 flex-grow min-w-0">
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-2/3" />
                                     <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-full" />
+                                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-4/5" />
                                 </div>
                             </div>
                         </div>
@@ -154,7 +155,7 @@ const StrategyAssistant: React.FC = () => {
             ) : (
                 <div className="space-y-4 relative z-10">
                     {ideas.map((idea, index) => (
-                        <div key={`idea-${index}`} className="p-6 bg-white/40 dark:bg-slate-950/20 border border-slate-200/50 dark:border-white/5 rounded-3xl hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
+                        <div key={`idea-${index}`} className="p-5 bg-white/40 dark:bg-slate-950/20 border border-slate-200/50 dark:border-white/5 rounded-3xl hover:border-cyan-500/50 transition-all group shadow-sm hover:shadow-md">
                             <div className="flex justify-between items-start gap-4">
                                 <div className="flex gap-4">
                                     <div className="w-12 h-12 bg-slate-100 dark:bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5 transition-transform group-hover:scale-115">
@@ -362,7 +363,7 @@ export const DashboardView: React.FC = () => {
     const scheduledThisWeek = scheduledPosts.filter(p => p.scheduleTimestamp <= oneWeekFromNow).length;
 
     return (
-        <div className="space-y-12 animate-fade-in pb-16">
+        <div className="space-y-8 animate-fade-in pb-16">
             <TrialBanner />
             <header className="relative py-16 px-8 md:px-12 glass-premium rounded-[3rem] overflow-hidden border border-slate-200/50 dark:border-white/10 shadow-2xl">
                 <div className="absolute top-0 right-0 w-[60%] h-full bg-gradient-to-l from-cyan-500/10 via-fuchsia-500/5 to-transparent pointer-events-none" />
@@ -414,7 +415,7 @@ export const DashboardView: React.FC = () => {
 
             <QuickCommandBar />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                     icon={RocketLaunchIcon}
                     label={t('dashboard.stats.generations')}
@@ -444,7 +445,7 @@ export const DashboardView: React.FC = () => {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
                 <div className="lg:col-span-2 space-y-8">
                     <WeeklySummary />
                     <StrategyAssistant />

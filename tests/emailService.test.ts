@@ -20,7 +20,7 @@ describe('emailService', () => {
     const { callApi } = await import('../services/apiClient');
     const { emailService } = await import('../services/emailService');
 
-    (callApi as any).mockResolvedValueOnce({});
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
     await expect(emailService.triggerWelcome()).resolves.not.toThrow();
     expect(callApi).toHaveBeenCalledWith('email/welcome', {});
@@ -30,7 +30,7 @@ describe('emailService', () => {
     const { callApi } = await import('../services/apiClient');
     const { emailService } = await import('../services/emailService');
 
-    (callApi as any).mockResolvedValueOnce({});
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
     await emailService.triggerLowCredits(50, 'Pro');
     expect(callApi).toHaveBeenCalledWith('email/low-credits', { remaining: 50, planName: 'Pro' });
@@ -40,7 +40,7 @@ describe('emailService', () => {
     const { callApi } = await import('../services/apiClient');
     const { emailService } = await import('../services/emailService');
 
-    (callApi as any).mockResolvedValueOnce({});
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
     await emailService.triggerCreditsExhausted();
     expect(callApi).toHaveBeenCalledWith('email/credits-exhausted', {});
@@ -50,7 +50,7 @@ describe('emailService', () => {
     const { callApi } = await import('../services/apiClient');
     const { emailService } = await import('../services/emailService');
 
-    (callApi as any).mockResolvedValueOnce({});
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
     await emailService.triggerTrialStarted(7);
     expect(callApi).toHaveBeenCalledWith('email/trial-started', { trialDays: 7 });
@@ -60,7 +60,7 @@ describe('emailService', () => {
     const { callApi } = await import('../services/apiClient');
     const { emailService } = await import('../services/emailService');
 
-    (callApi as any).mockResolvedValueOnce({});
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
     await emailService.unsubscribe(['reengagement', 'upgrade-nudge']);
     expect(callApi).toHaveBeenCalledWith('email/unsubscribe', { types: ['reengagement', 'upgrade-nudge'] });
@@ -70,7 +70,7 @@ describe('emailService', () => {
     const { callApi } = await import('../services/apiClient');
     const { emailService } = await import('../services/emailService');
 
-    (callApi as any).mockRejectedValueOnce(new Error('Network error'));
+    (callApi as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 
     await expect(emailService.triggerWelcome()).resolves.not.toThrow();
   });

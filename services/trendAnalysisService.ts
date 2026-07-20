@@ -271,16 +271,16 @@ function parseTrendData(text: string): TrendData[] {
         id: `trend-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         topic,
         category: 'trending',
-        momentum: (getValue(['MOMENTUM']).toLowerCase() as any) || 'stable',
+        momentum: (getValue(['MOMENTUM']).toLowerCase() as TrendData['momentum']) || 'stable',
         engagementScore: parseInt(getValue(['ENGAGEMENT SCORE'])) || 5,
         volumeScore: parseInt(getValue(['VOLUME SCORE'])) || 5,
-        competitionLevel: (getValue(['COMPETITION']).toLowerCase() as any) || 'medium',
-        predictedLifespan: (getValue(['LIFESPAN']).toLowerCase() as any) || 'medium',
+        competitionLevel: (getValue(['COMPETITION']).toLowerCase() as TrendData['competitionLevel']) || 'medium',
+        predictedLifespan: (getValue(['LIFESPAN']).toLowerCase() as TrendData['predictedLifespan']) || 'medium',
         relatedHashtags: getList(['RELATED HASHTAGS', 'HASHTAGS']),
         bestPlatforms: getList(['BEST PLATFORMS', 'PLATFORMS']),
         contentIdeas: getList(['CONTENT IDEAS', 'IDEAS']),
         whyItsTrending: getValue(['WHY TRENDING', "WHY IT'S TRENDING"]) || 'Growing interest in this area',
-        actionUrgency: (getValue(['ACTION URGENCY', 'URGENCY']).toLowerCase() as any) || 'soon',
+        actionUrgency: (getValue(['ACTION URGENCY', 'URGENCY']).toLowerCase() as TrendData['actionUrgency']) || 'soon',
       });
     }
   }
@@ -348,7 +348,7 @@ function parseTrendAlerts(text: string): TrendAlert[] {
       return '';
     };
 
-    const alertType = (getValue(['ALERT TYPE', 'TYPE']).toLowerCase().replace(/\s+/g, '_') as any) || 'new_trend';
+    const alertType = (getValue(['ALERT TYPE', 'TYPE']).toLowerCase().replace(/\s+/g, '_') as TrendAlert['alertType']) || 'new_trend';
     const topic = getValue(['TREND TOPIC', 'TOPIC']) || 'New Trend Alert';
 
     if (topic) {
@@ -372,7 +372,7 @@ function parseTrendAlerts(text: string): TrendAlert[] {
         alertType,
         message: getValue(['MESSAGE']) || `${topic} is trending!`,
         suggestedAction: getValue(['SUGGESTED ACTION', 'ACTION']) || 'Create content about this trend',
-        priority: (getValue(['PRIORITY']).toLowerCase() as any) || 'medium',
+        priority: (getValue(['PRIORITY']).toLowerCase() as TrendAlert['priority']) || 'medium',
         createdAt: new Date(),
       });
     }
@@ -485,7 +485,7 @@ export function storeAlerts(alerts: TrendAlert[]): void {
 export function getStoredAlerts(): TrendAlert[] {
   if (typeof window === 'undefined') return [];
   const alerts = JSON.parse(localStorage.getItem(ALERTS_STORAGE_KEY) || '[]');
-  return alerts.map((a: any) => ({ ...a, createdAt: new Date(a.createdAt) }));
+  return alerts.map((a: TrendAlert) => ({ ...a, createdAt: new Date(a.createdAt) }));
 }
 
 export default {

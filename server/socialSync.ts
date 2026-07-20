@@ -37,7 +37,7 @@ export async function syncAllActiveConnections() {
         if (!users || users.length === 0) return;
 
         // Deduplicate user IDs
-        const uniqueUserIds = [...new Set(users.map((u: any) => u.user_id))];
+        const uniqueUserIds = [...new Set(users.map((u: { user_id: string }) => u.user_id))];
         logger.info(`[AutoSync] Synchronizuję ${uniqueUserIds.length} użytkowników...`);
 
         for (const uid of uniqueUserIds) {
@@ -48,11 +48,11 @@ export async function syncAllActiveConnections() {
                 } else {
                     logger.info(`[AutoSync] Zsynchronizowano ${result.synced} postów dla ${uid}`);
                 }
-            } catch (e: any) {
+            } catch (e: unknown) {
                 logger.error(`[AutoSync] Błąd dla użytkownika ${uid}:`, e);
             }
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('[AutoSync] Błąd podczas pobierania aktywnych połączeń:', error);
     }
 }
@@ -80,7 +80,7 @@ export async function syncUserSocialPosts(userId: string) {
         // 2. Process each connection
         for (const conn of connections) {
             try {
-                let posts: any[] = [];
+                let posts: Array<{ id: string; content: string; url: string; publishedAt: Date; [key: string]: unknown }> = [];
 
                 // Fetch from platform API
                 switch (conn.platform) {
@@ -153,15 +153,16 @@ export async function syncUserSocialPosts(userId: string) {
                     .update({ last_sync_at: new Date().toISOString() })
                     .eq('id', conn.id);
 
-            } catch (e: any) {
+            } catch (e: unknown) {
+                const errMsg = e instanceof Error ? e.message : String(e);
                 logger.error(`Sync error for connection ${conn.id} (${conn.platform}):`, e);
-                errors.push(`${conn.platform}: ${e.message}`);
+                errors.push(`${conn.platform}: ${errMsg}`);
 
                 // Token expiry detection: 401/403 lub specyficzne błędy FB/TikTok = token wygasł
-                const msg: string = e.message || '';
+                const msg: string = errMsg || '';
                 const isAuthError =
-                    e.response?.status === 401 ||
-                    e.response?.status === 403 ||
+                    (e as { response?: { status?: number } }).response?.status === 401 ||
+                    (e as { response?: { status?: number } }).response?.status === 403 ||
                     /token.*expired|invalid.*token|OAuthException|access.*denied/i.test(msg);
 
                 if (isAuthError) {
@@ -178,7 +179,7 @@ export async function syncUserSocialPosts(userId: string) {
         }
 
         return { synced: totalSynced, errors };
-    } catch (error: any) {
+    } catch (error: unknown) {
         logger.error('Sync process failed:', error);
         throw error;
     }

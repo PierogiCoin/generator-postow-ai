@@ -300,7 +300,7 @@ export async function batchAdaptContent(
   tone: Tone,
   userId: string
 ): Promise<Record<Platform, CrossPostAdaptation>> {
-  const adaptations: Record<Platform, CrossPostAdaptation> = {} as any;
+  const adaptations = {} as Record<Platform, CrossPostAdaptation>;
 
   for (const target of targetPlatforms) {
     if (target !== sourcePlatform) {

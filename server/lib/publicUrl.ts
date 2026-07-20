@@ -19,13 +19,14 @@ export function resolvePublicBackendUrl(): string | null {
 }
 
 export function resolveOAuthCallbackUrl(platform: string): string {
-  const explicit = {
+  const redirectUrls: Record<string, string | undefined> = {
     linkedin: process.env.LINKEDIN_REDIRECT_URI,
     twitter: process.env.TWITTER_CALLBACK_URL,
     facebook: process.env.FACEBOOK_REDIRECT_URI,
     instagram: process.env.INSTAGRAM_REDIRECT_URI,
     tiktok: process.env.TIKTOK_REDIRECT_URI,
-  }[platform as keyof typeof explicit];
+  };
+  const explicit = redirectUrls[platform];
 
   if (explicit?.trim()) return explicit.trim();
 

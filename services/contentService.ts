@@ -191,10 +191,11 @@ YOUTUBE STYLE GUIDELINES:
     if (insights && insights.length > 0) {
         systemInstruction += ` Use these high-performance insights retrieved from analytics: ${JSON.stringify(insights)}. Focus on "positive" insights to replicate success.`;
 
-        const postMortemInsight = insights.find(i => (i as any).textTemplateSuggestion || (i as any).imagePromptSuggestion);
+        const postMortemInsight = insights.find(i => (i as AIInsight & { textTemplateSuggestion?: string; imagePromptSuggestion?: string }).textTemplateSuggestion || (i as AIInsight & { textTemplateSuggestion?: string; imagePromptSuggestion?: string }).imagePromptSuggestion);
         if (postMortemInsight) {
-            if ((postMortemInsight as any).textTemplateSuggestion) {
-                systemInstruction += ` CRITICAL: Follow this proven text template that worked best for this brand: "${(postMortemInsight as any).textTemplateSuggestion}".`;
+            const extended = postMortemInsight as AIInsight & { textTemplateSuggestion?: string };
+            if (extended.textTemplateSuggestion) {
+                systemInstruction += ` CRITICAL: Follow this proven text template that worked best for this brand: "${extended.textTemplateSuggestion}".`;
             }
         }
     }
@@ -322,7 +323,7 @@ export const regenerateWithFeedback = async (originalText: string, feedback: str
         model: "gemini-flash-latest",
         contents: prompt
     }, userId);
-    return response.text;
+    return response.text ?? '';
 }
 
 export const generatePostDetails = async (
@@ -353,10 +354,10 @@ export const generatePostDetails = async (
 
         // Add brand visual style if active
         if (brandVoice?.visualStyle) {
-            imageStyle = `${brandVoice.visualStyle}, ${imageStyle}`;
+            imageStyle = `${brandVoice.visualStyle}, ${imageStyle}` as VisualStyle;
         }
         if (brandVoice?.brandColors?.length) {
-            imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}`;
+            imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}` as VisualStyle;
         }
 
         let mascotPrompt: string | undefined;
@@ -366,7 +367,7 @@ export const generatePostDetails = async (
             mascotPrompt = `FEATURED MASCOT: The user mentioned the mascot. Include it: ${brandVoice.mascotDescription}.`;
         }
 
-        const postMortemImageHint = insights?.find((i: any) => i.imagePromptSuggestion);
+        const postMortemImageHint = insights?.find((i: AIInsight & { imagePromptSuggestion?: string }) => i.imagePromptSuggestion);
         const imagePrompt = buildPlatformImagePrompt({
             postText,
             platform: formData.platform,
@@ -387,7 +388,7 @@ export const generatePostDetails = async (
         const imageResponse = await generateImages(imagePrompt, { aspectRatio }, userId).catch(() => null);
         if (!imageResponse) {
             try {
-                const details = await generateJson<any>({
+                const details = await generateJson<Record<string, unknown>>({
                     model: "gemini-flash-lite-latest",
                     contents: `For the following social media post, generate:
                     - 10 relevant hashtags [array]
@@ -411,7 +412,7 @@ export const generatePostDetails = async (
         const imageUrl = imageResponse.publicUrls?.[0] || `data:image/jpeg;base64,${imageResponse.generatedImages?.[0]?.image?.imageBytes ?? ""}`;
 
         try {
-            const details = await generateJson<any>({
+            const details = await generateJson<Record<string, unknown>>({
                 model: "gemini-flash-lite-latest",
                 contents: `For the following social media post, generate:
                 - 10 relevant hashtags [array]
@@ -452,7 +453,7 @@ export const repurposeContent = async (text: string, newPlatform: Platform, user
         model: "gemini-pro-latest",
         contents: `Repurpose this content for ${newPlatform}: "${text}". Adapt format and tone.`,
     }, userId);
-    return response.text;
+    return response.text ?? '';
 };
 
 export const generateABTestVariations = async (formData: FormData, brandVoice: BrandVoiceData | null, userId: string): Promise<[Partial<GenerationResult>, Partial<GenerationResult>]> => {

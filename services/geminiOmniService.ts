@@ -1,15 +1,44 @@
 import { callApi } from './apiClient';
 import { Platform, Tone, ContentType } from '../types';
 
+interface GeminiPart {
+  text?: string;
+  inlineData?: { mimeType: string; data: string };
+  fileData?: { mimeType: string; fileUri: string };
+  executableCode?: { code: string };
+  codeExecutionResult?: { output: string };
+  functionCall?: { name: string; args: Record<string, unknown> };
+}
+
+interface GeminiGroundingChunk {
+  web?: { title?: string; uri?: string };
+}
+
+interface GeminiResponse {
+  text?: string;
+  candidates?: Array<{
+    content?: { parts?: GeminiPart[] };
+    groundingMetadata?: {
+      webSearchQueries?: string[];
+      groundingChunks?: GeminiGroundingChunk[];
+    };
+    finishReason?: string;
+  }>;
+  usageMetadata?: {
+    promptTokenCount?: number;
+    candidatesTokenCount?: number;
+    totalTokenCount?: number;
+  };
+}
+
 /**
  * Google Gemini 2.0 (Omni) Advanced Integration
  * Full multimodal capabilities: text, image, video, audio
  */
 
 export type GeminiModel = 
-  | 'gemini-2.0-flash-exp' 
-  | 'gemini-2.0-flash-thinking-exp' 
-  | 'gemini-2.0-pro-exp'
+  | 'gemini-2.5-flash' 
+  | 'gemini-2.5-pro'
   | 'gemini-1.5-pro'
   | 'gemini-1.5-flash';
 
@@ -97,7 +126,7 @@ export async function generateWithOmni(
   userId: string
 ): Promise<OmniGenerationResult> {
   const config: GeminiOmniConfig = {
-    model: request.config?.model || 'gemini-2.0-flash-exp',
+    model: request.config?.model || 'gemini-2.5-flash',
     temperature: request.config?.temperature ?? 0.7,
     maxOutputTokens: request.config?.maxOutputTokens || 8192,
     enableGrounding: request.config?.enableGrounding || false,
@@ -157,7 +186,7 @@ Requirements:
     prompt: enhancedPrompt,
     mode: 'image',
     config: {
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       temperature: 0.9,
       maxOutputTokens: 4096,
     },
@@ -189,7 +218,7 @@ Video specifications:
     prompt: enhancedPrompt,
     mode: 'video',
     config: {
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       temperature: 0.8,
       maxOutputTokens: 4096,
     },
@@ -217,7 +246,7 @@ export async function analyzeVideoOmni(
     mode: 'multimodal_chat',
     referenceVideo: videoUrl,
     config: {
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       temperature: 0.3,
       maxOutputTokens: 8192,
     },
@@ -246,7 +275,7 @@ export async function analyzeImageOmni(
     mode: 'multimodal_chat',
     referenceImage: imageBase64,
     config: {
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       temperature: 0.3,
       maxOutputTokens: 4096,
     },
@@ -272,7 +301,7 @@ Use Google Search to find current information, trends, and data. Cite sources. E
     tone,
     contentType,
     config: {
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       temperature: 0.7,
       maxOutputTokens: 8192,
       enableGrounding: true,
@@ -295,7 +324,7 @@ ${description}
 Provide the complete code and the execution results.`,
     mode: 'text',
     config: {
-      model: 'gemini-2.0-flash-thinking-exp',
+      model: 'gemini-2.5-flash',
       temperature: 0.2,
       maxOutputTokens: 8192,
       enableCodeExecution: true,
@@ -326,7 +355,7 @@ ${questions?.map((q, i) => `${i + 1}. ${q}`).join('\n')}`,
     prompt: `${prompts[analysisType]}\n\nDocument:\n${documentContent.slice(0, 500000)}`, // Up to 2M tokens supported
     mode: 'text',
     config: {
-      model: 'gemini-2.0-pro-exp',
+      model: 'gemini-2.5-pro',
       temperature: 0.3,
       maxOutputTokens: 8192,
     },
@@ -341,7 +370,7 @@ export async function multimodalChat(
   userId: string
 ): Promise<OmniGenerationResult> {
   const formattedMessages = messages.map(msg => {
-    const parts: any[] = [];
+    const parts: GeminiPart[] = [];
     if (msg.content.text) parts.push({ text: msg.content.text });
     if (msg.content.images) {
       msg.content.images.forEach(img => {
@@ -360,7 +389,7 @@ export async function multimodalChat(
   });
 
   const response = await callApi("generate-content", {
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.5-flash',
     contents: formattedMessages,
     config: {
       temperature: 0.7,
@@ -368,7 +397,7 @@ export async function multimodalChat(
     },
   }, userId);
 
-  return parseOmniResponse(response, 'gemini-2.0-flash-exp');
+  return parseOmniResponse(response, 'gemini-2.5-flash');
 }
 
 /**
@@ -378,7 +407,7 @@ export async function batchProcessOmni(
   items: { id: string; prompt: string; mode: OmniGenerationRequest['mode'] }[],
   config: Partial<GeminiOmniConfig>,
   userId: string
-): Promise<{ id: string; result: OmniGenerationResult; status: 'success' | 'error'; error?: string }[]> {
+): Promise<{ id: string; result: OmniGenerationResult | null; status: 'success' | 'error'; error?: string }[]> {
   const results = await Promise.all(
     items.map(async (item) => {
       try {
@@ -387,8 +416,8 @@ export async function batchProcessOmni(
           userId
         );
         return { id: item.id, result, status: 'success' as const };
-      } catch (error: any) {
-        return { id: item.id, result: null, status: 'error' as const, error: error.message };
+      } catch (error: unknown) {
+        return { id: item.id, result: null, status: 'error' as const, error: error instanceof Error ? error.message : String(error) };
       }
     })
   );
@@ -424,8 +453,8 @@ function buildSystemInstruction(
   return instruction;
 }
 
-function buildMultimodalContents(request: OmniGenerationRequest): any {
-  const parts: any[] = [{ text: request.prompt }];
+function buildMultimodalContents(request: OmniGenerationRequest): { role: string; parts: GeminiPart[] }[] {
+  const parts: GeminiPart[] = [{ text: request.prompt }];
 
   if (request.referenceImage) {
     parts.push({
@@ -457,7 +486,7 @@ function buildMultimodalContents(request: OmniGenerationRequest): any {
   return [{ role: 'user', parts }];
 }
 
-function parseOmniResponse(response: any, model: string): OmniGenerationResult {
+function parseOmniResponse(response: GeminiResponse, model: string): OmniGenerationResult {
   const text = response.text || 
     response.candidates?.[0]?.content?.parts?.[0]?.text || 
     JSON.stringify(response);
@@ -465,7 +494,7 @@ function parseOmniResponse(response: any, model: string): OmniGenerationResult {
   // Extract grounding info
   const groundingInfo = response.candidates?.[0]?.groundingMetadata ? {
     searchesUsed: response.candidates[0].groundingMetadata.webSearchQueries?.length || 0,
-    sources: (response.candidates[0].groundingMetadata.groundingChunks || []).map((chunk: any) => ({
+    sources: (response.candidates[0].groundingMetadata.groundingChunks || []).map((chunk: GeminiGroundingChunk) => ({
       title: chunk.web?.title || 'Unknown',
       url: chunk.web?.uri || '',
       snippet: chunk.web?.title || '',
@@ -474,19 +503,19 @@ function parseOmniResponse(response: any, model: string): OmniGenerationResult {
 
   // Extract code execution
   const codeExecution = response.candidates?.[0]?.content?.parts?.find(
-    (p: any) => p.executableCode || p.codeExecutionResult
+    (p: GeminiPart) => p.executableCode || p.codeExecutionResult
   ) ? {
-    code: response.candidates[0].content.parts.find((p: any) => p.executableCode)?.executableCode?.code || '',
-    output: response.candidates[0].content.parts.find((p: any) => p.codeExecutionResult)?.codeExecutionResult?.output || '',
-    logs: [],
+    code: response.candidates[0].content!.parts!.find((p: GeminiPart) => p.executableCode)?.executableCode?.code || '',
+    output: response.candidates[0].content!.parts!.find((p: GeminiPart) => p.codeExecutionResult)?.codeExecutionResult?.output || '',
+    logs: [] as string[],
   } : undefined;
 
   // Extract function calls
   const functionCalls = response.candidates?.[0]?.content?.parts
-    ?.filter((p: any) => p.functionCall)
-    .map((p: any) => ({
-      name: p.functionCall.name,
-      arguments: p.functionCall.args,
+    ?.filter((p: GeminiPart) => p.functionCall)
+    .map((p: GeminiPart) => ({
+      name: p.functionCall!.name,
+      arguments: p.functionCall!.args,
     }));
 
   // Token usage
@@ -515,21 +544,21 @@ export function getOmniCapabilities() {
       id: 'text_generation',
       name: 'Text Generation',
       description: 'Generate any text content with reasoning',
-      models: ['gemini-2.0-flash-exp', 'gemini-2.0-flash-thinking-exp'],
+      models: ['gemini-2.5-flash'],
       maxTokens: 8192,
     },
     {
       id: 'image_generation',
       name: 'Image Generation (Imagen 3)',
       description: 'Generate photorealistic and artistic images',
-      models: ['gemini-2.0-flash-exp'],
+      models: ['gemini-2.5-flash'],
       supportedStyles: ['photorealistic', 'anime', 'digital_art', 'oil_painting', 'watercolor', '3d', 'sketch'],
     },
     {
       id: 'video_generation',
       name: 'Video Generation (Veo 2)',
       description: 'Generate cinematic videos',
-      models: ['gemini-2.0-flash-exp'],
+      models: ['gemini-2.5-flash'],
       maxDuration: 10,
       supportedRatios: ['16:9', '9:16'],
     },
@@ -537,49 +566,49 @@ export function getOmniCapabilities() {
       id: 'image_analysis',
       name: 'Image Understanding',
       description: 'Deep analysis of any image',
-      models: ['gemini-2.0-flash-exp', 'gemini-2.0-pro-exp'],
+      models: ['gemini-2.5-flash', 'gemini-2.5-pro'],
       features: ['OCR', 'style analysis', 'object detection', 'scene understanding'],
     },
     {
       id: 'video_analysis',
       name: 'Video Understanding',
       description: 'Native video analysis without frames extraction',
-      models: ['gemini-2.0-flash-exp'],
+      models: ['gemini-2.5-flash'],
       features: ['Scene detection', 'Transcription', 'Content analysis', 'Highlights extraction'],
     },
     {
       id: 'audio_analysis',
       name: 'Audio Understanding',
       description: 'Transcribe and analyze audio content',
-      models: ['gemini-2.0-flash-exp'],
+      models: ['gemini-2.5-flash'],
       features: ['Speech-to-text', 'Sentiment analysis', 'Speaker identification'],
     },
     {
       id: 'grounding',
       name: 'Google Search Grounding',
       description: 'Real-time information with citations',
-      models: ['gemini-2.0-flash-exp'],
+      models: ['gemini-2.5-flash'],
       features: ['Real-time data', 'Source citations', 'Fact checking'],
     },
     {
       id: 'code_execution',
       name: 'Code Execution',
       description: 'Generate, execute, and debug code',
-      models: ['gemini-2.0-flash-thinking-exp'],
+      models: ['gemini-2.5-flash'],
       languages: ['python', 'javascript', 'typescript', 'sql', 'go', 'java'],
     },
     {
       id: 'long_context',
       name: 'Long Context (2M tokens)',
       description: 'Process entire books, codebases, or video libraries',
-      models: ['gemini-2.0-pro-exp', 'gemini-1.5-pro'],
+      models: ['gemini-2.5-pro', 'gemini-1.5-pro'],
       contextWindow: 2000000,
     },
     {
       id: 'multimodal_chat',
       name: 'Multimodal Chat',
       description: 'Chat with text, images, video, and audio together',
-      models: ['gemini-2.0-flash-exp'],
+      models: ['gemini-2.5-flash'],
       features: ['Mixed media input', 'Cross-modal reasoning'],
     },
   ];
@@ -587,20 +616,15 @@ export function getOmniCapabilities() {
 
 export function getModelInfo(model: GeminiModel) {
   const info: Record<GeminiModel, { name: string; description: string; strengths: string[] }> = {
-    'gemini-2.0-flash-exp': {
+    'gemini-2.5-flash': {
       name: 'Gemini 2.0 Flash',
-      description: 'Fast, multimodal, experimental',
+      description: 'Fast, multimodal model',
       strengths: ['Speed', 'Multimodal', 'Image gen', 'Video gen'],
     },
-    'gemini-2.0-flash-thinking-exp': {
-      name: 'Gemini 2.0 Flash Thinking',
-      description: 'Chain-of-thought reasoning',
-      strengths: ['Reasoning', 'Code', 'Math', 'Complex problems'],
-    },
-    'gemini-2.0-pro-exp': {
-      name: 'Gemini 2.0 Pro',
-      description: 'Largest context, highest quality',
-      strengths: ['Long context', 'Complex tasks', 'Code', 'Analysis'],
+    'gemini-2.5-pro': {
+      name: 'Gemini 2.5 Pro',
+      description: 'Most capable model, largest context',
+      strengths: ['Long context', 'Complex tasks', 'Code', 'Analysis', 'Reasoning'],
     },
     'gemini-1.5-pro': {
       name: 'Gemini 1.5 Pro',

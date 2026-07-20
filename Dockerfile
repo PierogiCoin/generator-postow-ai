@@ -1,41 +1,24 @@
-# Multi-stage build for optimal size
-FROM node:18-alpine AS builder
+FROM node:22-alpine
 
-WORKDIR /app
+# Backend Express — Railway (ten plik = jedyny Dockerfile produkcyjny)
+# Frontend: Vercel (vite → dist + api/* proxy przez BACKEND_URL)
+WORKDIR /workspace
 
-# Copy package files
-COPY package.json package-lock.json ./
+COPY server/package.json server/package-lock.json* ./server/
+WORKDIR /workspace/server
+RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
 
-# Install dependencies
-RUN npm ci
+WORKDIR /workspace
+COPY config ./config
+COPY types.ts ./types.ts
+COPY server ./server
 
-# Copy source code
-COPY . .
+WORKDIR /workspace/server
 
-# Accept build arguments from Railway
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_ANON_KEY
-ARG VITE_API_BASE_URL
-ARG VITE_GOOGLE_API_KEY
+ENV NODE_ENV=production
+EXPOSE 3001
 
-# Set as environment variables for build
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
-ENV VITE_GOOGLE_API_KEY=$VITE_GOOGLE_API_KEY
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM nginx:alpine
-
-# Copy built files from builder stage
-COPY --from=builder /app/dist /usr/share/nginx/html
-
-# Copy nginx config for SPA routing + API proxy
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npx", "tsx", "index.ts"]

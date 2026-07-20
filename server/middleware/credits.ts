@@ -9,7 +9,7 @@ type CostResolver = number | ((req: Request) => number);
 declare global {
   namespace Express {
     interface Request {
-      user?: { id: string; email: string };
+      user?: { id: string; email: string; appMetadata?: Record<string, unknown> };
       creditCost?: number;
       creditAction?: string;
     }

@@ -2,40 +2,42 @@
 
 ## Redirect URI (produkcja)
 
-Ustaw w panelach developerów **dokładnie**:
+Ustaw w panelach developerów **dokładnie** (zamień domeny na swoje):
 
-| Platforma | Redirect URI |
-|-----------|--------------|
-| LinkedIn | `https://generator-postow-ai.vercel.app/auth/linkedin/callback` |
-| Facebook | `https://generator-postow-ai.vercel.app/auth/facebook/callback` |
-| Twitter/X | `https://generator-postow-ai.vercel.app/auth/twitter/callback` |
-| TikTok | `https://generator-postow-ai.vercel.app/auth/tiktok/callback` |
+| Platforma | Redirect URI (frontend) |
+|-----------|-------------------------|
+| LinkedIn | `https://TWOJA-APP.vercel.app/auth/linkedin/callback` |
+| Facebook | `https://TWOJA-APP.vercel.app/auth/facebook/callback` |
+| Twitter/X | `https://TWOJA-APP.vercel.app/auth/twitter/callback` |
+| TikTok | `https://TWOJA-APP.vercel.app/auth/tiktok/callback` |
 
-Backend callback (Railway): `https://generator-postow-api-production.up.railway.app/api/social/callback/{platform}`
+Backend callback (Railway): `{PUBLIC_BACKEND_URL}/api/social/callback/{platform}`
 
 ## Railway — wymagane zmienne
 
 ```bash
+PUBLIC_BACKEND_URL=https://twoj-backend.up.railway.app
 LINKEDIN_CLIENT_ID=
 LINKEDIN_CLIENT_SECRET=
-TWITTER_CLIENT_ID=
-TWITTER_CLIENT_SECRET=
+TWITTER_APP_KEY=
+TWITTER_APP_SECRET=
 FACEBOOK_APP_ID=
 FACEBOOK_APP_SECRET=
 TIKTOK_CLIENT_KEY=
 TIKTOK_CLIENT_SECRET=
-FRONTEND_URL=https://generator-postow-ai.vercel.app
+FRONTEND_URL=https://TWOJA-APP.vercel.app
+OAUTH_STATE_SECRET=          # losowy sekret HMAC
 ```
 
-Sprawdzenie: `npm run prod:readiness`
+Pełna lista: `server/.env.example`. Sprawdzenie: `npm run prod:readiness`.
 
 ## Stripe LIVE
 
-1. Uruchom `npm run stripe:bootstrap` w trybie live (klucze `sk_live_`)
+1. `npm run stripe:bootstrap:live` (klucze `sk_live_`)
 2. W Railway ustaw `STRIPE_*_PRICE_ID` z live produktów
-3. Webhook: `https://generator-postow-api-production.up.railway.app/api/payments/webhook`
-4. W Supabase SQL Editor: `server/DATABASE_FIX_STRIPE.sql`
+3. Webhook: `{PUBLIC_BACKEND_URL}/api/payments/webhook`
+4. W Supabase SQL Editor: migracje Stripe z katalogu `server/` / `DATABASE_SCHEMA_PAYMENTS.sql`
 
-## Sentry (opcjonalnie)
+## Sentry / PostHog (opcjonalnie)
 
-Ustaw `VITE_SENTRY_DSN` w Vercel. Obecnie `utils/errorReporting.ts` loguje błędy; po dodaniu `@sentry/react` podłącz init w `index.tsx`.
+- Vercel: `VITE_SENTRY_DSN`, `VITE_POSTHOG_KEY`

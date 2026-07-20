@@ -108,22 +108,36 @@ export const LoadingOverlay: React.FC<{
 }> = ({ message = 'Generowanie...', submessage, progress }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center animate-fade-in">
-      <div className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl shadow-2xl border border-white/10 dark:border-white/5 p-8 max-w-md w-full mx-4 backdrop-blur-xl">
+      <div 
+        className="bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-3xl shadow-2xl border border-white/10 dark:border-white/5 p-8 max-w-md w-full mx-4 backdrop-blur-xl animate-scale-in"
+        role="dialog"
+        aria-modal="true"
+        aria-busy="true"
+        aria-labelledby="loading-title"
+        aria-describedby={submessage ? "loading-description" : undefined}
+      >
         <div className="flex flex-col items-center space-y-6">
           <div className="relative">
             <Spinner size="lg" className="text-purple-600 dark:text-purple-400" />
             <div className="absolute inset-0 bg-purple-600/20 rounded-full animate-ping"></div>
           </div>
           <div className="text-center space-y-3">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent">
+            <h3 
+              id="loading-title"
+              className="text-xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent"
+            >
               {message}
             </h3>
             {submessage && (
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <p 
+                id="loading-description"
+                className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed animate-fade-in-up" 
+                style={{ animationDelay: '0.2s' }}
+              >
                 {submessage}
               </p>
             )}
-            <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-500">
+            <div className="flex items-center justify-center space-x-2 text-xs text-slate-500 dark:text-slate-500" aria-hidden="true">
               <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse"></div>
               <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse" style={{ animationDelay: '0.3s' }}></div>
               <div className="w-1.5 h-1.5 bg-purple-600 rounded-full animate-pulse" style={{ animationDelay: '0.6s' }}></div>

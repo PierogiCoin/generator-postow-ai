@@ -423,9 +423,14 @@ router.get('/preferences', requireSupabaseAuth, async (req: SupabaseAuthRequest,
 // ============================================
 router.post('/abandoned-checkout', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Sprawdź API key (cron secret)
+    // Wymagany CRON_SECRET — bez niego endpoint jest wyłączony (nie otwarty)
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      logger.error('[email/abandoned-checkout] CRON_SECRET is not configured');
+      return res.status(503).json({ error: 'Cron endpoint not configured' });
+    }
     const cronKey = req.headers['x-cron-key'];
-    if (cronKey !== process.env.CRON_SECRET) {
+    if (typeof cronKey !== 'string' || cronKey !== cronSecret) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
@@ -460,7 +465,7 @@ router.post('/abandoned-checkout', async (req: Request, res: Response, next: Nex
 
     let sentCount = 0;
     for (const item of abandoned) {
-      const profile = item.profiles as any;
+      const profile = item.profiles as Record<string, any>;
       if (!profile?.email) continue;
 
       // Sprawdź czy użytkownik nie unsubskrybował

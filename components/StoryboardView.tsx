@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { useTranslation } from 'react-i18next';
 import type { Scene } from '../types';
-import { generateStoryboard, generateVideoFromText, getVideoOperationStatus, generateSpeech } from '../services/geminiService';
+import { generateStoryboard, generateVideoFromText, getVideoOperationStatus, generateSpeech, type VideoOperation } from '../services/geminiService';
 import { decode, decodeAudioData } from '../utils/audioUtils';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { FilmIcon } from './icons/FilmIcon';
@@ -15,7 +15,7 @@ import { ModernCard } from './ui/ModernCard';
 import { ModernInput } from './ui/ModernInput';
 
 // Audio Context for playing TTS narration
-const outputAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+const outputAudioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)({ sampleRate: 24000 });
 const outputNode = outputAudioContext.createGain();
 outputNode.connect(outputAudioContext.destination);
 let currentAudioSource: AudioBufferSourceNode | null = null;
@@ -141,8 +141,8 @@ export const StoryboardView: React.FC = () => {
         try {
             const result = await generateStoryboard(topic, user.id);
             setScenes(result);
-        } catch (e: any) {
-            setError(e.message || 'Failed to generate storyboard.');
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Failed to generate storyboard.');
         } finally {
             setIsLoading(false);
         }
@@ -152,7 +152,7 @@ export const StoryboardView: React.FC = () => {
         setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: true, url: null } }));
         try {
             if (!user) throw new Error('Musisz być zalogowany, aby generować wideo.');
-            let operation = await generateVideoFromText(scene.visualDescription, '16:9', user.id);
+            let operation: VideoOperation = await generateVideoFromText(scene.visualDescription, '16:9', user.id);
             while (!operation.done) {
                 await new Promise(resolve => setTimeout(resolve, 5000)); // Reduced interval for better feel
                 operation = await getVideoOperationStatus(operation, user.id);
@@ -169,8 +169,8 @@ export const StoryboardView: React.FC = () => {
 
             setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false, url: videoUrl } }));
 
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Unknown error');
             setVideoStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false, url: null } }));
         }
     }, [user]);
@@ -200,8 +200,8 @@ export const StoryboardView: React.FC = () => {
                 }
             };
 
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'Unknown error');
         } finally {
             setAudioStates(prev => ({ ...prev, [scene.sceneNumber]: { isLoading: false } }));
         }
@@ -226,7 +226,7 @@ export const StoryboardView: React.FC = () => {
                     <ModernInput
                         type="text"
                         value={topic}
-                        onChange={(e: any) => setTopic(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setTopic(e.target.value)}
                         placeholder={t('storyboard.topicPlaceholder')}
                         className="flex-grow text-lg"
                         fullWidth

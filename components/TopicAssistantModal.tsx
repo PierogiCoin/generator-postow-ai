@@ -36,8 +36,8 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
       if (!user) throw new Error('Musisz być zalogowany, aby używać asystenta tematów.');
       const result = await getTopicSuggestions(currentTopic, userPrompt, user.id);
       setSuggestions(result);
-    } catch (e: any) {
-      setError(e.message || 'Failed to get suggestions.');
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to get suggestions.');
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +91,7 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
                 <ModernInput
                   type="text"
                   value={userPrompt}
-                  onChange={(e: any) => setUserPrompt(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setUserPrompt(e.target.value)}
                   placeholder={t('topicAssistant.requestPlaceholder')}
                   className="flex-grow"
                   fullWidth

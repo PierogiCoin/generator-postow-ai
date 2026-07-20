@@ -86,3 +86,5 @@ export const CookieConsent: React.FC = () => {
     </div>
   );
 };
+
+export default CookieConsent;

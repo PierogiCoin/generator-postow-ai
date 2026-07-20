@@ -1,1 +1,10 @@
-api
+# Nie ignoruj api/ — serverless proxy (BACKEND_URL) musi trafić na Vercel
+server
+supabase
+tests
+docs
+*.md
+!README.md
+Dockerfile*
+railway.toml
+gen-lang-client-*.json

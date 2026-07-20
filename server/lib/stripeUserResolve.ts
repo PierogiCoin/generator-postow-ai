@@ -13,10 +13,14 @@ export async function resolveUserIdFromInvoice(
   invoice: Stripe.Invoice,
   stripeClient: StripeClient
 ): Promise<string | null> {
+  const subscriptionRef =
+    invoice.parent?.subscription_details?.subscription ??
+    (invoice as Stripe.Invoice & { subscription?: string | Stripe.Subscription | null }).subscription;
+
   const subscriptionId =
-    typeof invoice.subscription === 'string'
-      ? invoice.subscription
-      : invoice.subscription?.id;
+    typeof subscriptionRef === 'string'
+      ? subscriptionRef
+      : subscriptionRef?.id;
 
   if (subscriptionId) {
     try {

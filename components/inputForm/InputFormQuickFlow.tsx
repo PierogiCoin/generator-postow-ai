@@ -13,7 +13,7 @@ import { CheckIcon } from '../icons/CheckIcon';
 import { ModernButton } from '../ui/ModernButton';
 import { Tooltip } from '../Tooltip';
 import { InputFormAiToolsMenu } from './InputFormAiToolsMenu';
-import type { AiToolPanel } from './aiToolPanels';
+import type { AiToolPanelCategory } from './aiToolPanels';
 import { stripTopicHtml } from '../../utils/inputFormMode';
 import type { DuplicateCheckResult } from '../../services/contentDuplicateService';
 import { formatTimeAgo } from '../../services/contentDuplicateService';
@@ -30,7 +30,7 @@ export interface InputFormQuickFlowProps {
   onOpenTechRadar?: () => void;
   onSwitchToAdvanced: () => void;
   onAiAction: (action: string, text: string) => void;
-  aiToolPanels: AiToolPanel[];
+  aiToolPanels: AiToolPanelCategory[];
   isLoading: boolean;
   isDraftSaved: boolean;
   duplicateCheck: DuplicateCheckResult | null;
@@ -150,8 +150,10 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/30 focus-within:border-indigo-500 transition-colors">
+          <div className="rounded-2xl border-2 border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900/30 focus-within:border-indigo-500 transition-colors">
             <InteractiveEditor
+              id="topic-quick"
+              ariaLabel="Treść posta"
               value={formData.topic}
               onChange={onTopicChange}
               onAction={onAiAction}
@@ -186,33 +188,33 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
       {/* Step 2: Platform + tone */}
       {step === 2 && (
         <div className="space-y-8 animate-fade-in">
-          <div className="space-y-3">
-            <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <fieldset className="space-y-3">
+            <legend className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
               {t('form.platform.label', 'Platforma')}
-            </span>
-            <PlatformSelector mode="single" value={formData.platform} onChange={onPlatformChange} />
-          </div>
+            </legend>
+            <PlatformSelector mode="single" value={formData.platform} onChange={(newValue) => onPlatformChange(newValue as Platform)} />
+          </fieldset>
 
-          <div className="space-y-3">
-            <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <fieldset className="space-y-3">
+            <legend className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
               {t('form.tone.label', 'Ton')}
-            </span>
+            </legend>
             <ToneSelector selectedTone={formData.tone} onSelect={onToneChange} />
-          </div>
+          </fieldset>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          <fieldset className="space-y-3">
+            <legend className="w-full flex items-center gap-2">
+              <span className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                 {t('form.contentLanguage.label', 'Język treści posta')}
               </span>
               <Tooltip text={t('form.contentLanguage.tooltip', 'Język wygenerowanej treści — niezależny od języka menu.')} />
-            </div>
+            </legend>
             <ContentLanguageSelector
               selected={formData.contentLanguage}
               onSelect={onContentLanguageChange}
               disabled={isLoading}
             />
-          </div>
+          </fieldset>
 
           <div className="flex justify-between gap-3">
             <ModernButton type="button" variant="secondary" onClick={goBack}>

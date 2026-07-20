@@ -252,16 +252,16 @@ function parseWeekContentPlan(text: string, theme: string, platform: Platform): 
     posts.push({
       day,
       dayOfWeek: dayMap[day] || 1,
-      contentType: (getValue(['CONTENT TYPE', 'Type']).toLowerCase() as any) || 'educational',
+      contentType: (getValue(['CONTENT TYPE', 'Type']).toLowerCase() as DailyPost['contentType']) || 'educational',
       topic,
       angle: getValue(['ANGLE', 'Approach']) || 'Standard',
       hook: getValue(['HOOK', 'Opening']) || topic,
-      format: (getValue(['FORMAT', 'Form']).toLowerCase() as any) || 'single-image',
+      format: (getValue(['FORMAT', 'Form']).toLowerCase() as DailyPost['format']) || 'single-image',
       optimalTime: getValue(['OPTIMAL TIME', 'Time', 'Posting']) || '14:00',
       hashtags: getValue(['HASHTAGS', 'Tags']).split(/[,#\s]+/).filter(h => h).slice(0, 8),
       cta: getValue(['CTA', 'Call to action', 'Action']) || 'Comment below!',
       estimatedEngagement: parseInt(getValue(['ENGAGEMENT', 'Score'])) || 6,
-      confidence: (getValue(['CONFIDENCE']).toLowerCase() as any) || 'medium',
+      confidence: (getValue(['CONFIDENCE']).toLowerCase() as DailyPost['confidence']) || 'medium',
     });
   }
 
@@ -444,8 +444,8 @@ Example format:
   const text = response.text || '';
   return text
     .split('\n')
-    .filter(l => /^\s*\d+\./.test(l))
-    .map(l => l.replace(/^\s*\d+\.\s*/, '').trim())
+    .filter((l: string) => /^\s*\d+\./.test(l))
+    .map((l: string) => l.replace(/^\s*\d+\.\s*/, '').trim())
     .filter(Boolean)
     .slice(0, 5);
 }

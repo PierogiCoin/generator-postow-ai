@@ -25,18 +25,6 @@
   ],
   "rewrites": [
     {
-      "source": "/api/health",
-      "destination": "https://generator-postow-api-production.up.railway.app/health"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://generator-postow-api-production.up.railway.app/api/:path*"
-    },
-    {
-      "source": "/health",
-      "destination": "https://generator-postow-api-production.up.railway.app/health"
-    },
-    {
       "source": "/((?!api/|assets/|favicon\\.svg|.*\\.[a-zA-Z0-9]+$).*)",
       "destination": "/index.html"
     }

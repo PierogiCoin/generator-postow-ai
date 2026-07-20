@@ -86,7 +86,7 @@ export const fetchAIAnalysis = async (
   const socialHistorySummary = socialHistory.map(p => ({
     source: 'social_media_platform',
     content: p.content?.substring(0, 200) + '...',
-    platform: (p as any).platform || 'Unknown',
+    platform: (p as unknown as Record<string, unknown>).platform as string || 'Unknown',
     publishedAt: p.publishedAt,
     metrics: p.metrics
   }));
@@ -134,7 +134,7 @@ export const fetchAIAnalysis = async (
 export const generateStrategySuggestions = async (
   analysis: AIAnalysisResult,
   userId: string,
-  historySummary: any[]
+  historySummary: unknown[]
 ): Promise<{ date: string; platform: string; topic: string; reason: string }[]> => {
   try {
     const result = await generateJson<{ suggestions: { date: string; platform: string; topic: string; reason: string }[] }>({

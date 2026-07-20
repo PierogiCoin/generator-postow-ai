@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { CampaignHistoryItem, AIInsight, OptimalTime, PostPerformanceData } from '../types';
 import type { SocialPost } from '../types/socialPublishing';
-import { UserPlan, NotificationType } from '../types';
+import { UserPlan, NotificationType, Platform } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useDataStore } from '../stores/dataStore';
 import { useUIStore } from '../stores/uiStore';
@@ -341,7 +341,7 @@ export const AnalyticsView: React.FC = () => {
             state: {
                 prefillData: {
                     topic: `Odśwież ten post zachowując jego wartość: ${content.substring(0, 100)}...`,
-                    platform: platform as any,
+                    platform: platform as Platform,
                     repurposeFrom: content
                 }
             }
@@ -520,7 +520,7 @@ export const AnalyticsView: React.FC = () => {
                         .sort((a, b) => getPostTimestamp(b) - getPostTimestamp(a))
                         .map((item, idx) => {
                             const platform = getPostPlatform(item);
-                            const config = platformConfig[platform] || platformConfig['Facebook'];
+                            const config = platformConfig[platform as Platform] || platformConfig[Platform.Facebook];
                             const PlatformIcon = config.icon;
                             const isExpanded = expandedPosts.has(item.id);
                             const title = getPostTitle(item);
@@ -584,8 +584,8 @@ export const AnalyticsView: React.FC = () => {
                                         </button>
                                         {isExpanded && isDraftPost(item) && (
                                             <div className="mt-4 space-y-4 animate-fade-in">
-                                                <SentimentDisplay result={item.sentimentAnalysis} isLoading={false} />
-                                                <SEOAnalysisDisplay result={item.seoAnalysis} isLoading={false} />
+                                                <SentimentDisplay result={item.sentimentAnalysis ?? null} isLoading={false} />
+                                                <SEOAnalysisDisplay result={item.seoAnalysis ?? null} isLoading={false} />
                                             </div>
                                         )}
                                     </div>

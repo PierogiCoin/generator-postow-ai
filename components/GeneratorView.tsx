@@ -18,6 +18,7 @@ const InputForm = lazy(() => import('./InputForm').then((m) => ({ default: m.Inp
 // Lazy — ładowane na żądanie (wynik, zakładki sidebara, optymalizator)
 const ResultCard = lazy(() => import('./ResultCard').then((m) => ({ default: m.ResultCard })));
 const MultiPlatformOptimizer = lazy(() => import('./MultiPlatformOptimizer').then((m) => ({ default: m.MultiPlatformOptimizer })));
+import type { PlatformOptimization } from './MultiPlatformOptimizer';
 const FavoritesList = lazy(() => import('./FavoritesList').then((m) => ({ default: m.FavoritesList })));
 const ScheduledPostsList = lazy(() => import('./ScheduledPostsList').then((m) => ({ default: m.ScheduledPostsList })));
 const StatsDashboard = lazy(() => import('./StatsDashboard').then((m) => ({ default: m.StatsDashboard })));
@@ -71,7 +72,7 @@ export const GeneratorView: React.FC = () => {
     const { setIsPricingModalOpen, setIsSocialConnectionsModalOpen } = useUIStore();
     const { confirm, confirmDialogProps } = useConfirm();
 
-    const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<any>(null);
+    const [multiPlatformOptimizations, setMultiPlatformOptimizations] = useState<PlatformOptimization[] | null>(null);
     const [isMobile, setIsMobile] = useState(() =>
         typeof window !== 'undefined' && window.innerWidth < 1024
     );
@@ -171,6 +172,27 @@ export const GeneratorView: React.FC = () => {
         { id: 'stats' as const, label: t('sidebar.tabs.stats'), icon: ChartBarIcon },
         ...(user ? [{ id: 'subscription' as const, label: t('sidebar.tabs.subscription'), icon: CreditCardIcon }] : []),
     ], [t, user, history.length, drafts.length, favorites.length, scheduledPosts.length]);
+
+    const handleTabsKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+        const currentIndex = sidebarTabs.findIndex((tab) => tab.id === activeSidebarTab);
+        let nextIndex = currentIndex;
+
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            nextIndex = (currentIndex + 1) % sidebarTabs.length;
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            nextIndex = (currentIndex - 1 + sidebarTabs.length) % sidebarTabs.length;
+        } else {
+            return;
+        }
+
+        const nextTab = sidebarTabs[nextIndex].id;
+        setActiveSidebarTab(nextTab);
+
+        const buttons = e.currentTarget.querySelectorAll('button');
+        buttons[nextIndex]?.focus();
+    }, [sidebarTabs, activeSidebarTab, setActiveSidebarTab]);
 
     const showFormColumn = !isResultVisible || !isMobile || mobilePanel === 'form';
     const showResultColumn = isResultVisible && (!isMobile || mobilePanel === 'result');
@@ -287,10 +309,10 @@ export const GeneratorView: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 min-h-[calc(100vh-140px)] relative">
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-fuchsia-500/5 rounded-full blur-[100px]" />
-                <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[120px]" />
+        <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 min-h-[calc(100vh-140px)] relative bg-transparent">
+            <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+                <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-fuchsia-500/[0.03] rounded-full blur-[120px]" />
+                <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-cyan-500/[0.03] rounded-full blur-[120px]" />
             </div>
 
             <ConfirmDialog {...confirmDialogProps} />
@@ -304,7 +326,7 @@ export const GeneratorView: React.FC = () => {
                 />
             )}
 
-            <aside className={`fixed lg:relative inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-300 ease-out ${isSidebarOpen ? 'translate-x-0 w-[min(360px,92vw)] xl:w-[400px]' : '-translate-x-full w-0'}`}>
+            <aside className={`fixed lg:sticky lg:top-8 inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-300 ease-out self-start lg:h-[calc(100vh-8rem)] ${isSidebarOpen ? 'translate-x-0 w-[min(360px,92vw)] xl:w-[400px] lg:flex-shrink-0' : '-translate-x-full w-0'}`}>
                 <div className={`h-full flex flex-col glass-premium rounded-[2.5rem] overflow-hidden transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
                     <div className="p-6 lg:p-8 pb-4 flex-shrink-0 flex items-center justify-between border-b border-white/5">
                         <div className="flex items-center gap-3">
@@ -316,23 +338,33 @@ export const GeneratorView: React.FC = () => {
                         <button 
                             onClick={() => setIsSidebarOpen(false)} 
                             aria-label="Close sidebar" 
-                            className="lg:hidden p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-slate-200 transition"
+                            className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                             <XMarkIcon className="w-5 h-5" />
                         </button>
                     </div>
 
                     <div className="px-6 py-4 flex-shrink-0">
-                        <div className="grid grid-cols-6 gap-1.5 p-1.5 bg-slate-100/50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/50 dark:border-white/5">
+                        <div 
+                            className="grid grid-cols-6 gap-1.5 p-1.5 bg-slate-100/50 dark:bg-slate-950/40 rounded-2xl border border-slate-200/50 dark:border-white/5 focus:outline-none"
+                            role="tablist"
+                            aria-label={t('sidebar.tabs.ariaLabel', 'Zakładki panelu bocznego')}
+                            onKeyDown={handleTabsKeyDown}
+                        >
                             {sidebarTabs.map(tab => {
                                 const badge = 'badge' in tab && tab.badge ? tab.badge : 0;
                                 const badgeLabel = badge > 99 ? '99+' : String(badge);
+                                const isSelected = activeSidebarTab === tab.id;
                                 return (
                                 <button
                                     key={tab.id}
+                                    role="tab"
+                                    aria-selected={isSelected}
+                                    tabIndex={isSelected ? 0 : -1}
                                     onClick={() => setActiveSidebarTab(tab.id as SidebarTab)}
                                     title={tab.label}
-                                    className={`relative p-2.5 rounded-xl transition-colors flex items-center justify-center ${activeSidebarTab === tab.id 
+                                    aria-label={tab.label}
+                                    className={`relative p-2.5 rounded-xl transition-colors flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${isSelected 
                                         ? 'bg-white dark:bg-slate-800 shadow-sm text-indigo-600 dark:text-indigo-400 border border-slate-200/60 dark:border-white/10' 
                                         : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/5'}`}
                                 >
@@ -421,7 +453,7 @@ export const GeneratorView: React.FC = () => {
                                 }}
                             />
                         )}
-                        <div className="mb-6">
+                        <div className="mb-8">
                             <StrategyAssistant />
                         </div>
                         {inspiration && (
@@ -463,7 +495,7 @@ export const GeneratorView: React.FC = () => {
                     )}
 
                     {showResultColumn && (
-                        <div id="generation-result" className="space-y-6 lg:space-y-8 animate-fade-in">
+                        <div id="generation-result" className="space-y-8 animate-fade-in lg:sticky lg:top-8 self-start">
                             {isLoading ? (
                                 <SkeletonCard />
                             ) : (
@@ -473,7 +505,7 @@ export const GeneratorView: React.FC = () => {
                             )}
 
                             {result && !isLoading && (
-                                <div className="glass-premium rounded-[2.5rem] border border-white/10 shadow-2xl p-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                                <div className="glass-premium rounded-[2.5rem] border border-white/10 shadow-2xl p-6 lg:p-8 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                                     <Suspense fallback={<SkeletonCard />}>
                                         <MultiPlatformOptimizer
                                         originalText={result.postText}
@@ -525,7 +557,7 @@ export const GeneratorView: React.FC = () => {
             {popover && (
                 <Suspense fallback={null}>
                     <PreviewPopover
-                    result={('result' in popover.item) ? (popover.item as CampaignHistoryItem | ScheduledPost).result : { id: popover.item.id, type: popover.item.formData?.generationType, platform: popover.item.formData?.platform, postText: popover.item.formData?.topic || '', hashtags: [], imageUrl: null, videoUrl: null, adHeadline: null, callToAction: null, metadata: { tone: popover.item.formData?.tone, audience: popover.item.formData?.audience }, approvalStatus: 'draft', comments: [], authorId: popover.item.userId } as GenerationResult}
+                    result={('result' in popover.item) ? (popover.item as CampaignHistoryItem | ScheduledPost).result : { id: popover.item.id, type: popover.item.formData?.generationType, platform: popover.item.formData?.platform, postText: popover.item.formData?.topic || '', hashtags: [], imageUrl: null, videoUrl: null, adHeadline: null, callToAction: null, metadata: { tone: popover.item.formData?.tone, audience: popover.item.formData?.audience, prompt: popover.item.formData?.topic || '' }, approvalStatus: 'draft', comments: [], authorId: popover.item.userId } as unknown as GenerationResult}
                     formData={popover.item.formData}
                     position={{ top: popover.rect.top + popover.rect.height / 2, left: popover.rect.right + 20 }}
                     />

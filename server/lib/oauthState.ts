@@ -1,14 +1,27 @@
 import crypto from 'crypto';
 
 const TTL_MS = 15 * 60 * 1000;
+const INSECURE_DEV_FALLBACK = 'dev-oauth-state-insecure';
+
+function isProduction(): boolean {
+  return process.env.NODE_ENV === 'production';
+}
 
 function stateSecret(): string {
-  return (
+  const secret =
     process.env.OAUTH_STATE_SECRET ||
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.STRIPE_SECRET_KEY ||
-    'dev-oauth-state-insecure'
-  );
+    process.env.STRIPE_SECRET_KEY;
+
+  if (secret) return secret;
+
+  if (isProduction()) {
+    throw new Error(
+      'OAUTH_STATE_SECRET (lub SUPABASE_SERVICE_ROLE_KEY) jest wymagany w produkcji'
+    );
+  }
+
+  return INSECURE_DEV_FALLBACK;
 }
 
 /** Podpisany state OAuth (userId + timestamp) — bezpieczniejszy niż surowy UUID w URL. */

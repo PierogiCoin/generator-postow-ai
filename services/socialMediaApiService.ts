@@ -9,7 +9,7 @@ import { Platform } from '../types';
 // Cross-environment env var helper (Vite uses import.meta.env, Node uses process.env)
 const getEnvVar = (name: string): string | undefined => {
   try {
-    return (import.meta as any).env?.[`VITE_${name}`] || (import.meta as any).env?.[name];
+    return (import.meta as unknown as Record<string, Record<string, string | undefined>>).env?.[`VITE_${name}`] || (import.meta as unknown as Record<string, Record<string, string | undefined>>).env?.[name];
   } catch {
     return undefined;
   }
@@ -348,7 +348,7 @@ class FacebookApiClient {
     }
   }
 
-  private extractMetricValue(data: any[], metricName: string): number {
+  private extractMetricValue(data: Array<{ name: string; values?: Array<{ value?: number }> }>, metricName: string): number {
     const metric = data.find(m => m.name === metricName);
     if (!metric || !metric.values || metric.values.length === 0) return 0;
     return metric.values[metric.values.length - 1].value || 0;

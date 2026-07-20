@@ -359,7 +359,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 genActions.setProgress('Inicjalizacja generowania wideo...');
                 const videoPrompt = formData.videoTranscript || formData.topic;
 
-                let operation = formData.imageForVideo?.base64
+                let operation: geminiService.VideoOperation = formData.imageForVideo?.base64
                     ? await geminiService.generateVideoFromImage(
                         videoPrompt,
                         formData.imageForVideo,

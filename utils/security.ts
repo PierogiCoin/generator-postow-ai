@@ -146,10 +146,6 @@ function containsSuspiciousPatterns(input: string): boolean {
     /<iframe/i,
     /<object/i,
     /<embed/i,
-    /--/g, // SQL comments
-    /;.*drop/i,
-    /;.*delete/i,
-    /union.*select/i,
   ];
 
   return suspiciousPatterns.some(pattern => pattern.test(input));

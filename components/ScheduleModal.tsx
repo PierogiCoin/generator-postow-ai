@@ -33,7 +33,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
     if (isOpen) {
       if (itemToSchedule) {
         // If editing an existing scheduled item
-        const d = new Date(itemToSchedule.scheduleTimestamp);
+        const d = new Date(itemToSchedule.scheduleTimestamp ?? Date.now());
         const dateString = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
         const timeString = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
         setDate(dateString);
@@ -44,8 +44,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
         // Default for new scheduling
         setDate(getTodayString());
         setTime('09:00');
-        setSelectedPlatforms([itemToSchedule?.formData.platform || Platform.Facebook]); // Default to post's platform or Facebook
-        setSelectedFormats([itemToSchedule?.formData.generationType || GenerationType.PostWithImage]); // Default to post's type or PostWithImage
+        setSelectedPlatforms([Platform.Facebook]);
+        setSelectedFormats([GenerationType.PostWithImage]);
       }
       setError('');
     }
@@ -212,3 +212,5 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
     </div>
   );
 };
+
+export default ScheduleModal;

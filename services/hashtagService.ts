@@ -310,8 +310,8 @@ function parseHashtagPerformance(text: string): ViralHashtagData[] {
     hashtags.push({
       hashtag,
       postsCount: postsMatch ? postsMatch[1] : 'Unknown',
-      growthRate: (growthMatch?.[1].toLowerCase() as any) || 'stable',
-      engagementRate: (engagementMatch?.[1].toLowerCase() as any) || 'medium',
+      growthRate: (growthMatch?.[1].toLowerCase() as ViralHashtagData['growthRate']) || 'stable',
+      engagementRate: (engagementMatch?.[1].toLowerCase() as ViralHashtagData['engagementRate']) || 'medium',
       viralPotential: viralMatch ? parseInt(viralMatch[1]) : 5,
       relatedHashtags: related.slice(0, 3),
       bestTimeToUse: ['Tuesday', 'Thursday', 'Saturday'],

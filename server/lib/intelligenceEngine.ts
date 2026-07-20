@@ -2,7 +2,7 @@ import { genAI } from './clients.js';
 import { retryWithBackoff, withTimeout } from './retry.js';
 import logger from '../logger.js';
 
-const GROUNDED_MODEL = 'gemini-2.0-flash-exp';
+const GROUNDED_MODEL = 'gemini-2.5-flash';
 
 export type GroundingSource = { title: string; url: string };
 

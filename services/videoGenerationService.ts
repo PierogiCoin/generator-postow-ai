@@ -461,7 +461,7 @@ export async function generateVideoFromStoryboard(
       prompt: storyboard.scenes[0]?.aiPrompt || 'AI generated video',
       provider,
       duration: storyboard.totalDuration,
-      aspectRatio: storyboard.aspectRatio as any,
+      aspectRatio: storyboard.aspectRatio as VideoGenerationRequest['aspectRatio'],
     },
     storyboard,
     results: [],
@@ -479,8 +479,8 @@ export async function generateVideoFromStoryboard(
         prompt: scene.aiPrompt,
         provider,
         duration: scene.duration,
-        aspectRatio: storyboard.aspectRatio as any,
-        cameraMotion: scene.cameraMotion as any,
+        aspectRatio: storyboard.aspectRatio as VideoGenerationRequest['aspectRatio'],
+        cameraMotion: scene.cameraMotion as VideoGenerationRequest['cameraMotion'],
       },
       userId
     );

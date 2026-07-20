@@ -5,7 +5,7 @@ import { buildCreditPacksConfig, buildSubscriptionsConfig } from './lib/pricingC
 import { resolveUserIdFromInvoice } from './lib/stripeUserResolve.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-11-20.acacia' as any,
+  apiVersion: '2024-11-20.acacia' as Stripe.LatestApiVersion,
 });
 
 // ============================================
@@ -434,7 +434,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
       credits: planConfig.credits,
       subscription_id: subscription.id,
       subscription_status: subscription.status,
-      subscription_current_period_end: new Date((subscription as any).current_period_end * 1000),
+      subscription_current_period_end: new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000),
     })
     .eq('id', userId);
 
@@ -443,8 +443,8 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     stripe_subscription_id: subscription.id,
     plan,
     status: subscription.status,
-    current_period_start: new Date((subscription as any).current_period_start * 1000),
-    current_period_end: new Date((subscription as any).current_period_end * 1000),
+    current_period_start: new Date((subscription as unknown as { current_period_start: number }).current_period_start * 1000),
+    current_period_end: new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000),
     cancel_at_period_end: subscription.cancel_at_period_end,
   });
 }
@@ -578,15 +578,15 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 export async function trackUsage(
   userId: string,
   action: keyof typeof PRICING.costs,
-  metadata?: any
+  metadata?: Record<string, unknown>
 ) {
   const cost = PRICING.costs[action];
 
   try {
     await deductCredits(userId, cost, action, metadata);
     return { success: true, cost };
-  } catch (error: any) {
-    if (error.message === 'Insufficient credits') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.message === 'Insufficient credits') {
       return { success: false, error: 'insufficient_credits', cost };
     }
     throw error;
