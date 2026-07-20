@@ -17,6 +17,9 @@
     "noDescription": "No description",
     "untitled": "Untitled"
   },
+  "auth": {
+    "loginToContinue": "Sign in to continue to the selected section."
+  },
   "header": {
     "title": "AI Content Pro",
     "nav": {

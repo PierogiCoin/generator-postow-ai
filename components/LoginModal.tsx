@@ -5,9 +5,10 @@ interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToSignUp: () => void;
+  subtitle?: string;
 }
 
-export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onSwitchToSignUp, onClose }) => {
+export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onSwitchToSignUp, onClose, subtitle }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -121,7 +122,9 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onSwitchToSignUp
           </svg>
         </button>
         <h2 id="login-modal-title" className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-2">Witaj ponownie!</h2>
-        <p className="text-center text-slate-500 dark:text-slate-400 mb-6">Zaloguj się, aby kontynuować.</p>
+        <p className="text-center text-slate-500 dark:text-slate-400 mb-6">
+          {subtitle || 'Zaloguj się, aby kontynuować.'}
+        </p>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 p-3 rounded-md text-sm">{error}</div>}
@@ -191,3 +194,5 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onSwitchToSignUp
     </div>
   );
 };
+
+export default LoginModal;

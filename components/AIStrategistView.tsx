@@ -251,7 +251,7 @@ const ReportDisplay: React.FC<{
             {/* Intelligence insights */}
             {report.intelligenceInsights && (
                 <div className="p-6 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-xl">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.intelligence', 'Live intelligence')}</h3>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">{t('strategist.report.intelligence', 'Inteligencja na żywo')}</h3>
                     {report.intelligenceInsights.industryPulse && (
                         <p className="text-sm text-slate-700 dark:text-slate-300 mb-4">{report.intelligenceInsights.industryPulse}</p>
                     )}

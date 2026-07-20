@@ -40,8 +40,11 @@ interface BrandVoiceManagerModalProps {
     isLearningStyle: boolean;
 }
 
-const emptyProfile: Partial<BrandVoiceProfile> = {
+const emptyProfile: BrandVoiceProfile = {
+    id: '',
     name: '',
+    userId: '',
+    teamId: null,
     settings: {
         brandName: '',
         description: '',
@@ -94,6 +97,10 @@ const ProfileForm: React.FC<{
             userId: profile?.userId || '',
             settings: {
                 ...initialSettings,
+                brandName: initialSettings.brandName ?? '',
+                description: initialSettings.description ?? '',
+                keywords: initialSettings.keywords ?? '',
+                avoid: initialSettings.avoid ?? '',
                 examplesToFollow: initialSettings.examplesToFollow || [],
                 examplesToAvoid: initialSettings.examplesToAvoid || [],
             },
@@ -109,6 +116,10 @@ const ProfileForm: React.FC<{
             userId: profile?.userId || '',
             settings: {
                 ...initialSettings,
+                brandName: initialSettings.brandName ?? '',
+                description: initialSettings.description ?? '',
+                keywords: initialSettings.keywords ?? '',
+                avoid: initialSettings.avoid ?? '',
                 examplesToFollow: initialSettings.examplesToFollow || [],
                 examplesToAvoid: initialSettings.examplesToAvoid || [],
             },
@@ -116,7 +127,7 @@ const ProfileForm: React.FC<{
         });
     }, [profile]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === 'name') {
             setFormData(prev => ({ ...prev, name: value }));
@@ -616,14 +627,14 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
         <>
         <ConfirmDialog {...confirmDialogProps} />
         <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] transition-all p-4"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-xl flex items-center justify-center z-[100] transition-all p-4 lg:p-8"
             onClick={onClose}
         >
             <div
-                className="bg-white/90 dark:bg-slate-900/90 border border-white/20 rounded-[3rem] shadow-2xl w-full max-w-6xl flex flex-col max-h-[90vh] overflow-hidden animate-scale-in"
+                className="bg-white/90 dark:bg-slate-900/90 border border-white/20 rounded-[3rem] shadow-2xl w-full max-w-7xl flex flex-col max-h-[92vh] overflow-hidden animate-scale-in"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="p-8 pb-4 flex justify-between items-center bg-gradient-to-r from-blue-600/5 to-purple-600/5">
+                <div className="p-6 lg:p-8 pb-4 flex justify-between items-center bg-gradient-to-r from-blue-600/5 to-purple-600/5 gap-4">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/30">
                             <IdentificationIcon className="w-6 h-6" />
@@ -635,13 +646,13 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                     </div>
                     <button
                         onClick={onClose}
-                        className="w-12 h-12 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-500 hover:text-white transition-all transform hover:rotate-90"
+                        className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-500 hover:text-white transition-all transform hover:rotate-90"
                     >
                         &times;
                     </button>
                 </div>
 
-                <div className="p-8 overflow-y-auto custom-scrollbar flex-grow">
+                <div className="p-6 lg:p-8 overflow-y-auto custom-scrollbar flex-grow">
                     {editingProfile ? (
                         <ProfileForm profile={editingProfile} onSave={handleSave} onCancel={() => setEditingProfile(null)} />
                     ) : (
@@ -669,7 +680,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <button
                                     onClick={() => setEditingProfile(emptyProfile)}
-                                    className="p-8 bg-blue-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 group"
+                                    className="p-8 bg-blue-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 group"
                                 >
                                     <div className="p-3 bg-white/20 rounded-2xl group-hover:rotate-12 transition-transform">
                                         <PlusCircleIcon className="w-8 h-8" />
@@ -680,7 +691,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                 <button
                                     onClick={() => void handleLearnHistory()}
                                     disabled={isLearningStyle}
-                                    className="p-8 bg-white dark:bg-slate-800 rounded-[2rem] border-2 border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 hover:border-blue-500 transition-all group"
+                                    className="p-8 bg-white dark:bg-slate-800 rounded-[2rem] border-2 border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:border-blue-500 transition-all group"
                                 >
                                     <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600 group-hover:scale-110 transition-transform">
                                         <SparklesIcon className="w-8 h-8" />
@@ -691,7 +702,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                 <button
                                     onClick={() => void handleLearnFavorites()}
                                     disabled={isLearningStyle}
-                                    className="p-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-purple-500/20 group"
+                                    className="p-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-purple-500/20 group"
                                 >
                                     <div className="p-3 bg-white/20 rounded-2xl group-hover:animate-pulse">
                                         <HeartIcon className="w-8 h-8" />
@@ -703,7 +714,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                     <button
                                         onClick={() => void handleLearnCompetitors()}
                                         disabled={isLearningStyle}
-                                        className="p-8 bg-gradient-to-br from-cyan-600 to-indigo-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-cyan-500/20 group"
+                                        className="p-8 bg-gradient-to-br from-cyan-600 to-indigo-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-cyan-500/20 group"
                                     >
                                         <div className="p-3 bg-white/20 rounded-2xl group-hover:scale-110 transition-transform">
                                             <UsersIcon className="w-8 h-8" />
@@ -725,24 +736,24 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                         profiles.map(profile => (
                                             <div
                                                 key={profile.id}
-                                                className={`p-6 rounded-[2rem] border-2 transition-all flex items-center justify-between ${activeId === profile.id ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500 shadow-lg shadow-blue-500/10' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
+                                                className={`p-6 rounded-[2rem] border-2 transition-all flex items-center justify-between gap-4 ${activeId === profile.id ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500 shadow-lg shadow-blue-500/10' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
                                             >
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`p-3 rounded-xl ${activeId === profile.id ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                                <div className="flex items-center gap-4 min-w-0 flex-grow">
+                                                    <div className={`p-3 rounded-xl flex-shrink-0 ${activeId === profile.id ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
                                                         <UserIcon className="w-5 h-5" />
                                                     </div>
-                                                    <div>
-                                                        <p className="font-black uppercase tracking-tight text-slate-900 dark:text-white">{profile.name}</p>
+                                                    <div className="min-w-0">
+                                                        <p className="font-black uppercase tracking-tight text-slate-900 dark:text-white truncate">{profile.name}</p>
                                                         <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{profile.settings.archetype || 'Expert'}</p>
                                                         <p className="text-[10px] text-slate-400">{computeBrandVoiceCompleteness(profile.settings).score}% kompletny</p>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 flex-shrink-0">
                                                     {activeId !== profile.id && (
                                                         <ModernButton onClick={() => onSetActive(profile.id)} variant="ghost" size="sm">Aktywuj</ModernButton>
                                                     )}
-                                                    <button onClick={() => setEditingProfile(profile)} aria-label="Edit profile" className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><PencilIcon className="w-4 h-4" /></button>
-                                                    <button onClick={() => handleDelete(profile.id)} aria-label="Delete profile" className="p-2 text-slate-400 hover:text-red-500 transition-colors"><TrashIcon className="w-4 h-4" /></button>
+                                                    <button onClick={() => setEditingProfile(profile)} aria-label="Edytuj profil" className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><PencilIcon className="w-4 h-4" /></button>
+                                                    <button onClick={() => handleDelete(profile.id)} aria-label="Usuń profil" className="p-2 text-slate-400 hover:text-red-500 transition-colors"><TrashIcon className="w-4 h-4" /></button>
                                                 </div>
                                             </div>
                                         ))

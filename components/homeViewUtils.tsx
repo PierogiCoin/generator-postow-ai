@@ -59,12 +59,17 @@ export const useInViewOnce = <T extends Element>(
 };
 
 export const useCountUp = (endValue: number, start: boolean, durationMs = 900) => {
-  const [value, setValue] = React.useState(0);
+  // Przed animacją pokazuj docelową wartość (unikaj flasha „0+”).
+  const [value, setValue] = React.useState(endValue);
 
   React.useEffect(() => {
-    if (!start) return;
     if (!Number.isFinite(endValue)) return;
+    if (!start) {
+      setValue(endValue);
+      return;
+    }
 
+    setValue(0);
     let frameId = 0;
     const startTime = performance.now();
 

@@ -26,7 +26,7 @@ interface NotificationSystemProps {
   onRemoveToast: (id: string) => void;
 }
 
-const typeConfig: Record<NotificationType, { icon: React.FC<any>, color: string }> = {
+const typeConfig: Record<NotificationType, { icon: React.ComponentType<{ className?: string }>, color: string }> = {
     [NotificationType.Success]: { icon: CheckCircleIcon, color: 'text-green-500' },
     [NotificationType.Error]: { icon: AlertTriangleIcon, color: 'text-red-500' },
     [NotificationType.Info]: { icon: SparklesIcon, color: 'text-blue-500' },
@@ -39,7 +39,7 @@ const ToastMessage: React.FC<{ toast: Toast; onRemove: (id: string) => void }> =
     const { t } = useTranslation();
     
     if (toast.component) {
-        return React.cloneElement(toast.component as React.ReactElement<any>, { toast, onRemove });
+        return React.cloneElement(toast.component as React.ReactElement<Record<string, unknown>>, { toast, onRemove });
     }
 
     const Icon = typeConfig[toast.type].icon;
@@ -62,7 +62,7 @@ const ToastMessage: React.FC<{ toast: Toast; onRemove: (id: string) => void }> =
                   <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2 font-medium">{toast.action}</p>
                 )}
             </div>
-            <button onClick={() => onRemove(toast.id)} aria-label="Close notification" className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full shrink-0">
+            <button onClick={() => onRemove(toast.id)} aria-label="Zamknij powiadomienie" className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full shrink-0">
                 <XMarkIcon className="w-5 h-5" />
             </button>
         </div>
@@ -159,7 +159,7 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = (props) => 
                         <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                             <h4 className="font-semibold text-slate-800 dark:text-white">{t('notifications.title')}</h4>
                             {notifications.length > 0 && (
-                                <button onClick={onMarkAllAsRead} aria-label="Mark all notifications as read" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                <button onClick={onMarkAllAsRead} aria-label="Oznacz wszystkie jako przeczytane" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
                                     {t('notifications.markAllRead')}
                                 </button>
                             )}

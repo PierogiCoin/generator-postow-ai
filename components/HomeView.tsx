@@ -273,7 +273,7 @@ const HeroSection: React.FC<{ onNavigateToApp: () => void; reducedMotion: boolea
             <button
               key={pill.id}
               type="button"
-              onClick={() => scrollToAnchor(pill.id as any, reducedMotion)}
+              onClick={() => scrollToAnchor(pill.id as HomeAnchor, reducedMotion)}
               className="px-4 py-2 rounded-full text-xs font-bold bg-white/60 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:border-slate-300 transition focus:outline-none"
             >
               {pill.label}
@@ -337,8 +337,8 @@ const StatsSection: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) =
 
   const stats = [
     {
-      value: reducedMotion ? '12+' : `${hours}+`,
-      suffix: 'h',
+      value: String(hours),
+      suffix: '+h',
       label: 'Oszczędności tygodniowo',
       glowClass: 'neon-glow-pink',
       icon: SparklesIcon,
@@ -346,8 +346,8 @@ const StatsSection: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) =
       gradient: 'from-fuchsia-500 to-pink-500'
     },
     {
-      value: reducedMotion ? '300%' : `${growth}%`,
-      suffix: '',
+      value: String(growth),
+      suffix: '%',
       label: 'Średni wzrost zaangażowania',
       glowClass: 'neon-glow-cyan',
       icon: ChartPieIcon,
@@ -355,8 +355,8 @@ const StatsSection: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) =
       gradient: 'from-cyan-500 to-indigo-500'
     },
     {
-      value: reducedMotion ? '30+' : `${posts}+`,
-      suffix: '',
+      value: String(posts),
+      suffix: '+',
       label: 'Treści na kampanię',
       glowClass: 'neon-glow-lime',
       icon: CampaignIcon,
@@ -453,7 +453,7 @@ const HowItWorksSection = () => {
 };
 
 const FeatureHighlight: React.FC<{
-  icon: React.FC<any>;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   imageMockup: React.ReactNode;
@@ -667,7 +667,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
             <FeatureHighlight
               icon={SparklesIcon}
               title="Generator Treści AI"
-              description="Twórz unikalne posty, reklamy i pomysły wideo dopasowane to Twojej marki. Nasz zaawansowany silnik AI rozumie kontekst i generuje treści, które angażują, informują i sprzedają."
+              description="Twórz unikalne posty, reklamy i pomysły wideo dopasowane do Twojej marki. Nasz zaawansowany silnik AI rozumie kontekst i generuje treści, które angażują, informują i sprzedają."
               imageMockup={
                 <ModernCard glass hover className="p-5 rounded-3xl border border-slate-200/50 dark:border-white/5 neon-glow-pink">
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">Live Feed Preview</p>

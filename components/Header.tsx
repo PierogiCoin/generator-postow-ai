@@ -37,7 +37,7 @@ const NavItem: React.FC<{ to: string, children: React.ReactNode, title?: string,
         title={title}
         onClick={onClick}
         className={({ isActive }) => `group flex items-center justify-center md:justify-start gap-3 px-4 md:px-5 py-3 text-sm font-semibold rounded-xl transition-all duration-300 relative overflow-hidden ${isActive
-                ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-white shadow-lg shadow-indigo-500/25 backdrop-blur-md border border-indigo-400/30 scale-[1.02] animate-pulse-subtle'
+                ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-white shadow-lg shadow-indigo-500/25 backdrop-blur-md border border-indigo-400/30 scale-[1.02]'
                 : 'text-slate-400 dark:text-slate-300 hover:text-white hover:bg-gradient-to-r hover:from-white/10 hover:to-white/5 border border-transparent hover:border-white/10 hover:scale-[1.01] hover:shadow-lg'
             } ${disabled ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''}`
         }
@@ -50,11 +50,11 @@ const NavItem: React.FC<{ to: string, children: React.ReactNode, title?: string,
     </NavLink>
 );
 
-const BottomNavItem: React.FC<{ to: string, icon: React.FC<any>, label: string }> = ({ to, icon: Icon, label }) => (
+const BottomNavItem: React.FC<{ to: string, icon: React.ComponentType<{ className?: string }>, label: string }> = ({ to, icon: Icon, label }) => (
     <NavLink
         to={to}
         className={({ isActive }) => `group flex flex-col items-center justify-center gap-2 w-full h-full py-2 transition-all duration-300 relative ${isActive 
-            ? 'text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text scale-105 animate-pulse-subtle' 
+            ? 'text-transparent bg-gradient-to-r from-indigo-500 to-purple-500 bg-clip-text scale-105'
             : 'text-slate-500 dark:text-slate-400 opacity-70 hover:opacity-100 hover:scale-105'}`
         }
     >
@@ -97,7 +97,7 @@ interface CreateNavItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   to: string;
-  state?: any;
+  state?: Record<string, unknown> | null;
   disabled?: boolean;
   badge?: string;
 }
@@ -243,8 +243,8 @@ export const Header: React.FC<HeaderProps> = ({
         <>
             <header className="glass sticky top-0 z-[50] border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.1)] backdrop-blur-xl">
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-6 lg:gap-8">
-                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group" aria-label="Strona główna">
+                    <div className="flex items-center gap-4 lg:gap-6 min-w-0">
+                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group flex-shrink-0" aria-label="Strona główna">
                             <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-2.5 shadow-[0_0_30px_rgba(99,102,241,0.4)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden group">
                                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                                 <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
@@ -254,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 {t('header.title')}
                             </h1>
                         </NavLink>
-                        {user && <TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} />}
+                        {user && <div className="min-w-0 hidden sm:block"><TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} /></div>}
                         {!user && isLandingPage && (
                             <nav className="hidden md:flex items-center gap-1 ml-2" aria-label={t('home.nav.ariaLabel')}>
                                 {landingNavItems.map((item) =>
@@ -317,7 +317,7 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="hidden sm:flex items-center gap-4">
                             <LanguageSwitcher />
                             <ThemeToggle />
-                            {notificationSystem}
+                            {user && notificationSystem}
                         </div>
                         {user ? (
                             <>

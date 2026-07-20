@@ -17,6 +17,9 @@
     "noDescription": "Brak opisu",
     "untitled": "Bez tytułu"
   },
+  "auth": {
+    "loginToContinue": "Zaloguj się, aby kontynuować do wybranej sekcji."
+  },
   "header": {
     "title": "AI Content Pro",
     "nav": {
