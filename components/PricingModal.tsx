@@ -136,7 +136,9 @@ const PlanCard: React.FC<{
           const Icon = FEATURE_ICONS[feature.id] ?? CheckCircleIcon;
           return (
             <div key={feature.id} className="flex items-start gap-3">
-              <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--hero-accent)' }} />
+              <span className="flex-shrink-0 mt-0.5 text-[var(--hero-accent)]">
+                <Icon className="w-5 h-5" />
+              </span>
               <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">
                 {t(`pricing.feature.${feature.id}`, { defaultValue: feature.labelPl })}
               </span>

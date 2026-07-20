@@ -91,7 +91,8 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
                     <button
                         type="button"
                         onClick={onOpenCreateMenu}
-                        className="w-14 h-14 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-600/30 flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-slate-950"
+                        className="w-14 h-14 rounded-full text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-slate-950 hover:brightness-110"
+                        style={{ backgroundColor: 'var(--hero-accent)', boxShadow: '0 10px 24px color-mix(in srgb, var(--hero-accent) 35%, transparent)' }}
                         aria-label={t('header.nav.create')}
                     >
                         <SparklesIcon className="w-7 h-7" />
@@ -308,12 +309,13 @@ export const Header: React.FC<HeaderProps> = ({
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-4 lg:gap-6 min-w-0">
                         <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group flex-shrink-0" aria-label="Strona główna">
-                            <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl p-2.5 shadow-[0_0_30px_rgba(99,102,241,0.4)] group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-purple-600/30 to-pink-600/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"></div>
-                                <SparklesIcon className="w-6 h-6 text-white relative z-10 transition-transform duration-500 group-hover:rotate-12" />
+                            <div
+                                className="rounded-xl p-2.5 shadow-md group-hover:brightness-110 transition-all duration-300 relative overflow-hidden"
+                                style={{ backgroundColor: 'var(--hero-accent)' }}
+                            >
+                                <SparklesIcon className="w-6 h-6 text-white relative z-10" />
                             </div>
-                            <h1 className="hidden sm:block text-2xl lg:text-3xl font-black bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-white dark:via-slate-200 dark:to-white bg-clip-text text-transparent tracking-tighter group-hover:scale-105 transition-all duration-300 group-hover:from-indigo-600 group-hover:via-purple-600 group-hover:to-pink-600 dark:group-hover:from-indigo-400 dark:group-hover:via-purple-400 dark:group-hover:to-pink-400">
+                            <h1 className="hidden sm:block text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:opacity-90 transition-opacity duration-300">
                                 {t('header.title')}
                             </h1>
                         </NavLink>
@@ -473,18 +475,18 @@ export const Header: React.FC<HeaderProps> = ({
                                     </button>
                                     <button
                                         onClick={onSignUpClick}
-                                        className="flex items-center gap-2 px-6 py-2.5 text-sm font-black text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all active:scale-95 shadow-lg"
+                                        className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-xl hover:brightness-110 transition-all active:scale-95 shadow-md"
+                                        style={{ backgroundColor: 'var(--hero-accent)' }}
                                     >
-                                        <SparklesIcon className="w-5 h-5" />
                                         {t('header.signup')}
                                     </button>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={onSignUpClick}
-                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-black text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg active:scale-95 transition-all"
+                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-white rounded-xl shadow-md active:scale-95 transition-all hover:brightness-110"
+                                    style={{ backgroundColor: 'var(--hero-accent)' }}
                                 >
-                                    <SparklesIcon className="w-4 h-4" />
                                     {t('header.signup')}
                                 </button>
                                 <button
@@ -601,8 +603,11 @@ export const Header: React.FC<HeaderProps> = ({
                                         <button onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl">
                                             {t('header.login')}
                                         </button>
-                                        <button onClick={() => { onSignUpClick(); setIsMobileMenuOpen(false); }} className="w-full flex items-center justify-center gap-3 py-4 text-base font-black text-white bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg">
-                                            <SparklesIcon className="w-6 h-6" />
+                                        <button
+                                            onClick={() => { onSignUpClick(); setIsMobileMenuOpen(false); }}
+                                            className="w-full flex items-center justify-center gap-3 py-4 text-base font-semibold text-white rounded-xl shadow-md hover:brightness-110"
+                                            style={{ backgroundColor: 'var(--hero-accent)' }}
+                                        >
                                             {t('header.signup')}
                                         </button>
                                     </div>

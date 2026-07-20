@@ -624,6 +624,21 @@
       "success": "Wideo wygenerowane pomyślnie!"
     }
   },
+  "trialBanner": {
+    "title": "7 dni Pro za darmo",
+    "subtitle": "Odblokuj {{credits}} kredytów, analitykę, strategistę i wideo — pełny plan Pro na tydzień.",
+    "feat_credits": "{{credits}} kredytów",
+    "feat_analytics": "Analityka AI",
+    "feat_strategist": "Strategista AI",
+    "feat_video": "10 wideo AI",
+    "feat_brand": "5 brand voices",
+    "cta": "Aktywuj darmowy Pro",
+    "fine_print": "Wymaga karty • Anuluj kiedy chcesz • Bez sztucznego odliczania",
+    "redirecting": "Przekierowanie…",
+    "close": "Zamknij",
+    "error_generic": "Nie udało się uruchomić triala",
+    "error_used": "Wykorzystałeś już darmowy okres próbny."
+  },
   "pricing": {
     "title": "Plany subskrypcji",
     "subtitle": "Wyższy plan = więcej kredytów i niższy koszt za kredyt. Płatność w USD (Stripe).",
@@ -709,14 +724,21 @@
       "cta": "Wygeneruj pierwszy post",
       "cta_logged_in": "Przejdź do generatora",
       "secondary_cta": "Zobacz jak to działa",
-      "preview_target": "Odbiorca: Social Media Manager",
-      "preview_tone": "Ton: konkretny i profesjonalny",
+      "preview_topic_label": "Temat",
+      "preview_topic": "Launch nowej funkcji AI Content Pro",
+      "preview_platform_label": "Platforma",
+      "preview_platform_ig": "Instagram",
+      "preview_platform_li": "LinkedIn",
+      "preview_tone_label": "Ton",
+      "preview_tone": "Profesjonalny",
       "preview_generate": "Generuj post",
-      "preview_label": "Podgląd posta",
+      "preview_label": "Wynik",
       "preview_status": "Gotowe",
-      "preview_body": "Odkryj przyszłość marketingu z generatorem postów AI. Harmonogram, analizy i copywriter w jednym miejscu.",
-      "preview_tag_ai": "#AI",
-      "preview_tag_marketing": "#Marketing"
+      "preview_hook": "Hook",
+      "preview_body": "Twój zespół może generować posty pod markę, planować publikacje i sprawdzać, co działa — w jednym workflow.",
+      "preview_cta_line": "CTA: Wygeneruj pierwszy post →",
+      "preview_tag_ai": "#ContentMarketing",
+      "preview_tag_marketing": "#SocialMedia"
     },
     "how_it_works": {
       "title": "Prostota w 3 krokach",

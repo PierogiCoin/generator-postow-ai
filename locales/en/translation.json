@@ -620,6 +620,21 @@
       "success": "Video generated successfully!"
     }
   },
+  "trialBanner": {
+    "title": "7 days of Pro free",
+    "subtitle": "Unlock {{credits}} credits, analytics, strategist, and video — full Pro for a week.",
+    "feat_credits": "{{credits}} credits",
+    "feat_analytics": "AI analytics",
+    "feat_strategist": "AI strategist",
+    "feat_video": "10 AI videos",
+    "feat_brand": "5 brand voices",
+    "cta": "Activate free Pro",
+    "fine_print": "Card required • Cancel anytime • No fake countdown",
+    "redirecting": "Redirecting…",
+    "close": "Close",
+    "error_generic": "Could not start the trial",
+    "error_used": "You’ve already used your free trial."
+  },
   "pricing": {
     "title": "Subscription plans",
     "subtitle": "Higher plan = more credits and a lower cost per credit. Billed in USD (Stripe).",
@@ -705,14 +720,21 @@
       "cta": "Generate your first post",
       "cta_logged_in": "Go to generator",
       "secondary_cta": "See how it works",
-      "preview_target": "Audience: Social Media Manager",
-      "preview_tone": "Tone: clear and professional",
+      "preview_topic_label": "Topic",
+      "preview_topic": "Launch of a new AI Content Pro feature",
+      "preview_platform_label": "Platform",
+      "preview_platform_ig": "Instagram",
+      "preview_platform_li": "LinkedIn",
+      "preview_tone_label": "Tone",
+      "preview_tone": "Professional",
       "preview_generate": "Generate post",
-      "preview_label": "Post preview",
+      "preview_label": "Output",
       "preview_status": "Ready",
-      "preview_body": "Discover the future of marketing with an AI post generator. Scheduling, insights, and copywriting in one place.",
-      "preview_tag_ai": "#AI",
-      "preview_tag_marketing": "#Marketing"
+      "preview_hook": "Hook",
+      "preview_body": "Your team can generate on-brand posts, plan publishing, and see what works — in one workflow.",
+      "preview_cta_line": "CTA: Generate your first post →",
+      "preview_tag_ai": "#ContentMarketing",
+      "preview_tag_marketing": "#SocialMedia"
     },
     "how_it_works": {
       "title": "Simple in 3 steps",

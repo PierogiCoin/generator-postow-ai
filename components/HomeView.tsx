@@ -34,65 +34,87 @@ const HeroPreview: React.FC = () => {
         style={{ backgroundColor: 'var(--hero-navy)' }}
       >
         <div className="max-w-6xl mx-auto">
-          <div className="flex min-h-[320px] flex-col md:flex-row">
-            <div className="w-full md:w-2/5 p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 flex flex-col justify-between gap-6">
-              <div className="space-y-3">
-                <div
-                  className="h-1 w-24 rounded-sm"
-                  style={{ backgroundColor: 'var(--hero-accent)' }}
-                />
-                <div className="space-y-2">
-                  <div className="h-10 px-3 rounded-lg border border-white/10 bg-white/5 flex items-center text-sm text-slate-300">
-                    {t('home.hero.preview_target')}
-                  </div>
-                  <div className="h-10 px-3 rounded-lg border border-white/10 bg-white/5 flex items-center text-sm text-slate-300">
-                    {t('home.hero.preview_tone')}
-                  </div>
+          <div className="flex min-h-[340px] flex-col md:flex-row">
+            {/* Form side — mirrors generator quick flow */}
+            <div className="w-full md:w-[42%] p-6 md:p-8 border-b md:border-b-0 md:border-r border-white/10 flex flex-col gap-5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  {t('home.hero.preview_topic_label')}
+                </p>
+                <div className="min-h-[72px] px-3 py-2.5 rounded-lg border border-white/10 bg-white/5 text-sm text-slate-200 leading-relaxed">
+                  {t('home.hero.preview_topic')}
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  {t('home.hero.preview_platform_label')}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white border"
+                    style={{ backgroundColor: 'var(--hero-accent)', borderColor: 'var(--hero-accent)' }}
+                  >
+                    {t('home.hero.preview_platform_ig')}
+                  </span>
+                  <span className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 border border-white/10 bg-white/5">
+                    {t('home.hero.preview_platform_li')}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  {t('home.hero.preview_tone_label')}
+                </p>
+                <div className="h-10 px-3 rounded-lg border border-white/10 bg-white/5 flex items-center text-sm text-slate-300">
+                  {t('home.hero.preview_tone')}
                 </div>
               </div>
               <div
-                className="h-11 rounded-lg text-white font-semibold text-sm flex items-center justify-center"
+                className="mt-auto h-11 rounded-lg text-white font-semibold text-sm flex items-center justify-center gap-2"
                 style={{ backgroundColor: 'var(--hero-accent)' }}
               >
+                <PencilIcon className="w-4 h-4" />
                 {t('home.hero.preview_generate')}
               </div>
             </div>
 
+            {/* Result side — structured post output */}
             <div
-              className="w-full md:w-3/5 p-6 md:p-8 flex flex-col justify-between gap-4"
+              className="w-full md:w-[58%] p-6 md:p-8 flex flex-col gap-4"
               style={{ backgroundColor: 'var(--hero-navy-muted)' }}
             >
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-6 h-6 rounded-md"
-                    style={{ backgroundColor: 'var(--hero-accent)' }}
-                  />
-                  <span className="text-sm font-semibold text-white">{t('home.hero.preview_label')}</span>
-                </div>
+                <span className="text-sm font-semibold text-white">{t('home.hero.preview_label')}</span>
                 <span
-                  className="text-xs font-semibold tracking-wide"
-                  style={{ color: 'var(--hero-accent)' }}
+                  className="text-xs font-semibold tracking-wide px-2 py-0.5 rounded-md"
+                  style={{ color: 'var(--hero-accent)', backgroundColor: 'var(--hero-accent-soft)' }}
                 >
                   {t('home.hero.preview_status')}
                 </span>
               </div>
-              <p className="text-sm text-slate-300 leading-relaxed">
-                {t('home.hero.preview_body')}
-              </p>
-              <div className="flex gap-2">
-                <span className="text-xs border border-white/10 px-2.5 py-1 rounded-md text-slate-400">
-                  {t('home.hero.preview_tag_ai')}
-                </span>
-                <span className="text-xs border border-white/10 px-2.5 py-1 rounded-md text-slate-400">
-                  {t('home.hero.preview_tag_marketing')}
-                </span>
-              </div>
-              <div
-                className="h-24 rounded-lg border border-white/10 flex items-center justify-center"
-                style={{ backgroundColor: 'var(--hero-accent-soft)' }}
-              >
-                <PencilIcon className="w-7 h-7 text-slate-300" />
+              <div className="space-y-3 flex-1">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    {t('home.hero.preview_hook')}
+                  </p>
+                  <p className="text-sm font-semibold text-white leading-snug">
+                    {t('home.hero.preview_topic')}
+                  </p>
+                </div>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  {t('home.hero.preview_body')}
+                </p>
+                <p className="text-sm font-medium" style={{ color: 'var(--hero-accent)' }}>
+                  {t('home.hero.preview_cta_line')}
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <span className="text-xs border border-white/10 px-2.5 py-1 rounded-md text-slate-400">
+                    {t('home.hero.preview_tag_ai')}
+                  </span>
+                  <span className="text-xs border border-white/10 px-2.5 py-1 rounded-md text-slate-400">
+                    {t('home.hero.preview_tag_marketing')}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
