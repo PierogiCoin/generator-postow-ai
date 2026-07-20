@@ -589,7 +589,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                   ) : (
                     <SparklesIcon className="w-5 h-5" />
                   )}
-                  className="min-h-[52px] sm:min-h-[56px] text-base font-bold touch-manipulation !bg-cyan-600 hover:!bg-cyan-500 ![background-image:none] shadow-md shadow-cyan-600/25"
+                  className="min-h-[52px] sm:min-h-[56px] text-base font-bold touch-manipulation shadow-md"
                 >
                   {isLoading ? t('common.generating') : t('common.generate')}
                 </ModernButton>

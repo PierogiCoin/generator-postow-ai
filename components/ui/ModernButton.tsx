@@ -28,11 +28,13 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
   const baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl focus:ring-blue-500',
+    primary:
+      '!bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white shadow-md focus:ring-[var(--hero-accent)]',
     secondary: 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white shadow-md hover:shadow-lg focus:ring-slate-500',
     outline: 'border-2 border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 focus:ring-slate-500',
     ghost: 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 focus:ring-slate-500',
-    gradient: 'bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 hover:from-purple-600 hover:via-pink-600 hover:to-blue-600 text-white shadow-xl hover:shadow-2xl focus:ring-purple-500',
+    gradient:
+      '!bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white shadow-md focus:ring-[var(--hero-accent)]',
   };
   
   const sizeClasses = {

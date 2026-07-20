@@ -46,7 +46,9 @@ Complete payment system with:
 | **Agency** | $249 | 18,000 | 2,000 | 400 | 80 |
 | **Enterprise** | $299 | 28,000 | ∞ | ∞ | ∞ |
 
-PLN on the UI is approximate (~4.2 PLN/USD). Stripe charges **USD**, monthly only.
+PLN on the UI is approximate (~4.2 PLN/USD). Stripe charges **USD**.
+
+**Annual billing:** 10× monthly USD (2 months free ≈ −17%). Env: `STRIPE_{PLAN}_YEARLY_PRICE_ID`. UI toggle in `PricingModal`. Run `scripts/stripe-bootstrap.sh` (or live) to create yearly prices.
 
 ### **Credit costs**
 

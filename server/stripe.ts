@@ -439,7 +439,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
 
   let plan = 'free';
   for (const [key, value] of Object.entries(PRICING.subscriptions)) {
-    if (value.priceId === priceId) {
+    if (value.priceId === priceId || value.yearlyPriceId === priceId) {
       plan = key;
       break;
     }

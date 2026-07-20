@@ -305,13 +305,22 @@
     "fill": {
       "title": "Wypełnij kalendarz",
       "subtitle": "Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).",
+      "subtitleRange": "AI uzupełni widoczny tydzień ({{range}}) slotami — posty i rolki.",
       "weekTheme": "Temat tygodnia",
       "weekThemePlaceholder": "np. Letnia kolekcja 2025",
       "fillWeek": "Wypełnij tydzień",
+      "fillThisWeek": "Wypełnij ten tydzień",
       "filling": "Generowanie…",
       "themeRequired": "Podaj temat tygodnia",
       "success": "Dodano {{count}} slotów do kalendarza",
+      "successWeek": "Dodano {{count}} slotów na tydzień {{range}}",
       "error": "Nie udało się wypełnić kalendarza"
+    },
+    "clearPlanConfirmTitle": "Wyczyścić plan strategiczny?",
+    "clearPlanConfirmMessage": "Usuniesz wszystkie sloty planu z kalendarza. Zaplanowane publikacje zostaną.",
+    "intelligence": {
+      "appliedToSlots": "Ustawiono {{time}} na {{count}} slot(ów) — {{label}}",
+      "pinnedTime": "Preferowana godzina {{time}} zapisana — użyjemy jej przy nowych slotach."
     },
     "audit": {
       "title": "Audyt dnia",
@@ -360,10 +369,17 @@
     "slot": {
       "generate": "Generuj",
       "edit": "Edytuj",
+      "duplicate": "Duplikuj",
+      "deleteTitle": "Usunąć slot?",
+      "deleteMessage": "Slot zniknie z planu. Tej operacji nie cofniesz.",
+      "deleted": "Slot usunięty",
+      "duplicated": "Slot zduplikowany",
       "generateNow": "Generuj teraz",
       "bannerLabel": "Generowanie ze slotu kalendarza",
       "bannerHint": "Po wygenerowaniu treść przejdzie bramę jakości (auto-poprawka do 2×), potem trafi do zaplanowanych publikacji.",
-      "batchLabel": "Batch dnia {{current}}/{{total}}"
+      "batchLabel": "Batch dnia {{current}}/{{total}}",
+      "cancelBatch": "Anuluj batch",
+      "batchCancelled": "Anulowano kolejkę generowania dnia."
     },
     "bulk": {
       "title": "Kolejka publikacji",
@@ -644,7 +660,12 @@
     "subtitle": "Wyższy plan = więcej kredytów i niższy koszt za kredyt. Płatność w USD (Stripe).",
     "guest_banner": "Wybierz plan — po rejestracji przeniesiemy Cię do bezpiecznej płatności Stripe.",
     "recommended": "Polecany",
+    "billing_toggle_label": "Okres rozliczenia",
+    "billing_monthly": "Miesięcznie",
+    "billing_yearly": "Rocznie",
+    "billing_yearly_badge": "−17%",
     "per_month": "/mies.",
+    "per_month_equiv": "/mies.",
     "savings_per_credit": "−{{percent}}% / kredyt",
     "cta_register": "Zarejestruj się i wybierz",
     "cta_pay": "Przejdź do płatności",

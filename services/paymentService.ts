@@ -4,6 +4,9 @@ import { UserPlan } from '../types';
 import { analytics, AnalyticsEvents } from './analytics';
 
 export const PENDING_CHECKOUT_PLAN_KEY = 'pendingCheckoutPlan';
+export const PENDING_CHECKOUT_INTERVAL_KEY = 'pendingCheckoutInterval';
+
+export type CheckoutInterval = 'month' | 'year';
 
 const PAID_PLANS: UserPlan[] = [
   UserPlan.Creator,
@@ -17,8 +20,12 @@ export function isPaidPlan(plan: UserPlan): boolean {
   return PAID_PLANS.includes(plan);
 }
 
-export function setPendingCheckoutPlan(plan: UserPlan): void {
+export function setPendingCheckoutPlan(
+  plan: UserPlan,
+  interval: CheckoutInterval = 'month'
+): void {
   sessionStorage.setItem(PENDING_CHECKOUT_PLAN_KEY, plan);
+  sessionStorage.setItem(PENDING_CHECKOUT_INTERVAL_KEY, interval);
 }
 
 export function consumePendingCheckoutPlan(): UserPlan | null {
@@ -27,6 +34,12 @@ export function consumePendingCheckoutPlan(): UserPlan | null {
   if (!raw) return null;
   if (!PAID_PLANS.includes(raw as UserPlan)) return null;
   return raw as UserPlan;
+}
+
+export function consumePendingCheckoutInterval(): CheckoutInterval {
+  const raw = sessionStorage.getItem(PENDING_CHECKOUT_INTERVAL_KEY);
+  sessionStorage.removeItem(PENDING_CHECKOUT_INTERVAL_KEY);
+  return raw === 'year' ? 'year' : 'month';
 }
 
 async function getAccessToken(): Promise<string> {
@@ -38,7 +51,10 @@ async function getAccessToken(): Promise<string> {
   return session.access_token;
 }
 
-export async function createSubscriptionCheckout(plan: UserPlan): Promise<string> {
+export async function createSubscriptionCheckout(
+  plan: UserPlan,
+  interval: CheckoutInterval = 'month'
+): Promise<string> {
   if (plan === UserPlan.Free) {
     throw new Error('Plan Free nie wymaga płatności.');
   }
@@ -52,7 +68,7 @@ export async function createSubscriptionCheckout(plan: UserPlan): Promise<string
       Authorization: `Bearer ${token}`,
     },
     credentials: 'include',
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify({ plan, interval }),
   });
 
   const data = await response.json().catch(() => ({}));
@@ -68,13 +84,21 @@ export async function createSubscriptionCheckout(plan: UserPlan): Promise<string
   return data.url as string;
 }
 
-export async function redirectToSubscriptionCheckout(plan: UserPlan): Promise<void> {
-  analytics.track(AnalyticsEvents.CHECKOUT_STARTED, { plan, type: 'subscription' });
+export async function redirectToSubscriptionCheckout(
+  plan: UserPlan,
+  interval: CheckoutInterval = 'month'
+): Promise<void> {
+  analytics.track(AnalyticsEvents.CHECKOUT_STARTED, { plan, type: 'subscription', interval });
   try {
-    const url = await createSubscriptionCheckout(plan);
+    const url = await createSubscriptionCheckout(plan, interval);
     window.location.assign(url);
   } catch (err) {
-    analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, { plan, type: 'subscription', reason: 'error' });
+    analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, {
+      plan,
+      type: 'subscription',
+      interval,
+      reason: 'error',
+    });
     throw err;
   }
 }

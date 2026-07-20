@@ -8,7 +8,12 @@ import {
   formatUsdPrice,
   formatPlnPrice,
   savingsVsRetailPercent,
+  yearlyPlnFromMonthly,
+  yearlyUsdFromMonthly,
+  type BillingInterval,
 } from './pricingMath';
+
+export type { BillingInterval };
 
 export type PlanStripeKey =
   | 'free'
@@ -31,6 +36,8 @@ export interface SubscriptionPlanConfig {
   namePl: string;
   priceUsd: number;
   pricePln: number;
+  priceUsdYearly: number;
+  pricePlnYearly: number;
   credits: number;
   /** Szacunek postów tekstowych / mies. (10 kredytów/post) */
   estimatedPosts: number;
@@ -39,6 +46,7 @@ export interface SubscriptionPlanConfig {
   descriptionPl: string;
   recommended?: boolean;
   stripePriceEnv: string | null;
+  stripePriceEnvYearly: string | null;
   features: PlanFeatureRow[];
   usageLimits: {
     text: number;
@@ -52,6 +60,14 @@ export interface SubscriptionPlanConfig {
     strategist: boolean;
     brandVoices: number;
     apiAccess: boolean;
+  };
+}
+
+function withYearlyPricing(monthly: { priceUsd: number; pricePln: number; credits: number; estimatedPosts: number }) {
+  return {
+    ...monthly,
+    priceUsdYearly: yearlyUsdFromMonthly(monthly.priceUsd),
+    pricePlnYearly: yearlyPlnFromMonthly(monthly.priceUsd),
   };
 }
 
@@ -78,10 +94,11 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     stripeKey: 'free',
     name: 'Free',
     namePl: 'Darmowy',
-    ...SUBSCRIPTION_PRICING.free,
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.free),
     savingsPercent: 0,
     descriptionPl: 'Poznaj AI bez karty — limit zgodny z limitem konta.',
     stripePriceEnv: null,
+    stripePriceEnvYearly: null,
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.free.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(10) },
@@ -102,13 +119,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     stripeKey: 'creator',
     name: 'Creator',
     namePl: 'Creator',
-    ...SUBSCRIPTION_PRICING.creator,
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.creator),
     savingsPercent: savingsVsRetailPercent(
       SUBSCRIPTION_PRICING.creator.priceUsd,
       SUBSCRIPTION_PRICING.creator.credits
     ),
     descriptionPl: 'Freelancerzy i twórcy — kalendarz, wideo i głos marki.',
     stripePriceEnv: 'STRIPE_CREATOR_PRICE_ID',
+    stripePriceEnvYearly: 'STRIPE_CREATOR_YEARLY_PRICE_ID',
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.creator.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(100) },
@@ -131,7 +149,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     stripeKey: 'pro',
     name: 'Pro',
     namePl: 'Pro',
-    ...SUBSCRIPTION_PRICING.pro,
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.pro),
     savingsPercent: savingsVsRetailPercent(
       SUBSCRIPTION_PRICING.pro.priceUsd,
       SUBSCRIPTION_PRICING.pro.credits
@@ -139,6 +157,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     recommended: true,
     descriptionPl: 'Najlepszy wybór solo — analityka, strategista i 5 profili marki.',
     stripePriceEnv: 'STRIPE_PRO_PRICE_ID',
+    stripePriceEnvYearly: 'STRIPE_PRO_YEARLY_PRICE_ID',
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.pro.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(500) },
@@ -161,13 +180,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     stripeKey: 'business',
     name: 'Business',
     namePl: 'Business',
-    ...SUBSCRIPTION_PRICING.business,
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.business),
     savingsPercent: savingsVsRetailPercent(
       SUBSCRIPTION_PRICING.business.priceUsd,
       SUBSCRIPTION_PRICING.business.credits
     ),
     descriptionPl: 'Zespoły marketingowe — API, 6 000 kredytów i 20 profili marki.',
     stripePriceEnv: 'STRIPE_BUSINESS_PRICE_ID',
+    stripePriceEnvYearly: 'STRIPE_BUSINESS_YEARLY_PRICE_ID',
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.business.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(800) },
@@ -190,13 +210,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     stripeKey: 'agency',
     name: 'Agency',
     namePl: 'Agency',
-    ...SUBSCRIPTION_PRICING.agency,
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.agency),
     savingsPercent: savingsVsRetailPercent(
       SUBSCRIPTION_PRICING.agency.priceUsd,
       SUBSCRIPTION_PRICING.agency.credits
     ),
     descriptionPl: 'Agencje — 18 000 kredytów, więcej wideo niż Business, ∞ kampanii.',
     stripePriceEnv: 'STRIPE_AGENCY_PRICE_ID',
+    stripePriceEnvYearly: 'STRIPE_AGENCY_YEARLY_PRICE_ID',
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.agency.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(2000) },
@@ -219,13 +240,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     stripeKey: 'enterprise',
     name: 'Enterprise',
     namePl: 'Enterprise',
-    ...SUBSCRIPTION_PRICING.enterprise,
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.enterprise),
     savingsPercent: savingsVsRetailPercent(
       SUBSCRIPTION_PRICING.enterprise.priceUsd,
       SUBSCRIPTION_PRICING.enterprise.credits
     ),
     descriptionPl: '28 000 kredytów, white-label i priorytetowy support.',
     stripePriceEnv: 'STRIPE_ENTERPRISE_PRICE_ID',
+    stripePriceEnvYearly: 'STRIPE_ENTERPRISE_YEARLY_PRICE_ID',
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.enterprise.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: '∞' },
@@ -259,6 +281,9 @@ export {
   formatPlnPrice,
   formatSubscriptionPrice,
   formatCreditPackPrice,
+  yearlyUsdFromMonthly,
+  yearlyPlnFromMonthly,
+  ANNUAL_MONTHS_BILLED,
 } from './pricingMath';
 
 export function buildUsageLimitsRecord(): Record<

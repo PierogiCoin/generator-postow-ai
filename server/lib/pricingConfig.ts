@@ -26,7 +26,10 @@ export function buildSubscriptionsConfig() {
       name: string;
       price: number;
       pricePln: number;
+      priceYearly: number;
+      pricePlnYearly: number;
       priceId: string | null;
+      yearlyPriceId: string | null;
       credits: number;
       estimatedPosts: number;
       savingsPercent: number;
@@ -59,10 +62,13 @@ export function buildSubscriptionsConfig() {
       name: plan.name,
       price: plan.priceUsd,
       pricePln: plan.pricePln,
+      priceYearly: plan.priceUsdYearly,
+      pricePlnYearly: plan.pricePlnYearly,
       credits: plan.credits,
       estimatedPosts: plan.estimatedPosts,
       savingsPercent: plan.savingsPercent,
       priceId: readStripePrice(plan.stripePriceEnv),
+      yearlyPriceId: readStripePrice(plan.stripePriceEnvYearly),
       features: {
         postsPerMonth: limitToFeatureValue(plan.usageLimits.text),
         imagesPerMonth: limitToFeatureValue(plan.usageLimits.image),

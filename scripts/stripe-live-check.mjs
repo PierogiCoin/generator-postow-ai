@@ -18,6 +18,14 @@ const SUB_PRICE_KEYS = [
   'STRIPE_ENTERPRISE_PRICE_ID',
 ];
 
+const SUB_YEARLY_PRICE_KEYS = [
+  'STRIPE_CREATOR_YEARLY_PRICE_ID',
+  'STRIPE_PRO_YEARLY_PRICE_ID',
+  'STRIPE_BUSINESS_YEARLY_PRICE_ID',
+  'STRIPE_AGENCY_YEARLY_PRICE_ID',
+  'STRIPE_ENTERPRISE_YEARLY_PRICE_ID',
+];
+
 const PACK_PRICE_KEYS = [
   'STRIPE_CREDITS_SMALL_PRICE_ID',
   'STRIPE_CREDITS_MEDIUM_PRICE_ID',
@@ -68,8 +76,13 @@ async function main() {
     console.log(`  ${key}: ${keyStatus(key, merged)}`);
   }
 
-  console.log('\n── 2. Price IDs subskrypcji ──\n');
+  console.log('\n── 2. Price IDs subskrypcji (miesięczne) ──\n');
   for (const key of SUB_PRICE_KEYS) {
+    console.log(`  ${key}: ${keyStatus(key, merged)}`);
+  }
+
+  console.log('\n── 2b. Price IDs subskrypcji (roczne) ──\n');
+  for (const key of SUB_YEARLY_PRICE_KEYS) {
     console.log(`  ${key}: ${keyStatus(key, merged)}`);
   }
 

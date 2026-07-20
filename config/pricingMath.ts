@@ -45,8 +45,13 @@ export function charmPricePln(usd: number): number {
     129: 529,
     197: 799,
     249: 999,
+    290: 1199, // Creator yearly (10×)
     299: 1199,
+    490: 1999, // Pro yearly
     497: 1999,
+    990: 3999, // Business yearly
+    2490: 9999, // Agency yearly
+    2990: 11999, // Enterprise yearly
   };
 
   if (explicit[usd] !== undefined) return explicit[usd];
@@ -109,12 +114,45 @@ export interface PriceDisplay {
   perCredit: string | null;
 }
 
+/** Roczna subskrypcja = 10× miesięczna (2 miesiące gratis ≈ −17%) */
+export const ANNUAL_MONTHS_BILLED = 10;
+
+export type BillingInterval = 'month' | 'year';
+
+export function yearlyUsdFromMonthly(monthlyUsd: number): number {
+  if (monthlyUsd <= 0) return 0;
+  return Math.round(monthlyUsd * ANNUAL_MONTHS_BILLED);
+}
+
+export function yearlyPlnFromMonthly(monthlyUsd: number): number {
+  return charmPricePln(yearlyUsdFromMonthly(monthlyUsd));
+}
+
 export function formatSubscriptionPrice(
-  plan: { priceUsd: number; pricePln: number; credits: number }
+  plan: {
+    priceUsd: number;
+    pricePln: number;
+    credits: number;
+    priceUsdYearly?: number;
+    pricePlnYearly?: number;
+  },
+  interval: BillingInterval = 'month'
 ): PriceDisplay {
   if (plan.priceUsd === 0) {
     return { primary: '0 zł', secondary: null, perCredit: null };
   }
+
+  if (interval === 'year') {
+    const yearlyUsd = plan.priceUsdYearly ?? yearlyUsdFromMonthly(plan.priceUsd);
+    const yearlyPln = plan.pricePlnYearly ?? yearlyPlnFromMonthly(plan.priceUsd);
+    const monthlyEquivPln = Math.round(yearlyPln / 12);
+    return {
+      primary: formatPlnPrice(monthlyEquivPln),
+      secondary: `${formatPlnPrice(yearlyPln)} / rok · ${formatUsdPrice(yearlyUsd)}`,
+      perCredit: `${formatPerCreditPln(yearlyPln / 12, plan.credits)} / kredyt`,
+    };
+  }
+
   return {
     primary: formatPlnPrice(plan.pricePln),
     secondary: `rozliczenie ${formatUsdPrice(plan.priceUsd)}`,

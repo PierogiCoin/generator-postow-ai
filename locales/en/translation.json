@@ -302,13 +302,22 @@
     "fill": {
       "title": "Fill calendar",
       "subtitle": "Pick a cadence template and AI will fill the week with slots (posts + reels).",
+      "subtitleRange": "AI will fill the visible week ({{range}}) with slots — posts and reels.",
       "weekTheme": "Week theme",
       "weekThemePlaceholder": "e.g. Summer collection 2025",
       "fillWeek": "Fill week",
+      "fillThisWeek": "Fill this week",
       "filling": "Generating…",
       "themeRequired": "Enter a week theme",
       "success": "Added {{count}} slots to the calendar",
+      "successWeek": "Added {{count}} slots for week {{range}}",
       "error": "Could not fill the calendar"
+    },
+    "clearPlanConfirmTitle": "Clear strategic plan?",
+    "clearPlanConfirmMessage": "This removes all plan slots from the calendar. Scheduled posts stay.",
+    "intelligence": {
+      "appliedToSlots": "Set {{time}} on {{count}} slot(s) — {{label}}",
+      "pinnedTime": "Preferred time {{time}} saved — we’ll use it for new slots."
     },
     "audit": {
       "title": "Day audit",
@@ -357,10 +366,17 @@
     "slot": {
       "generate": "Generate",
       "edit": "Edit",
+      "duplicate": "Duplicate",
+      "deleteTitle": "Delete slot?",
+      "deleteMessage": "The slot will be removed from the plan. This can’t be undone.",
+      "deleted": "Slot deleted",
+      "duplicated": "Slot duplicated",
       "generateNow": "Generate now",
       "bannerLabel": "Generating from calendar slot",
       "bannerHint": "After generation, content passes the quality gate (up to 2 auto-fixes), then is added to scheduled posts.",
-      "batchLabel": "Day batch {{current}}/{{total}}"
+      "batchLabel": "Day batch {{current}}/{{total}}",
+      "cancelBatch": "Cancel batch",
+      "batchCancelled": "Day generation queue cancelled."
     },
     "bulk": {
       "title": "Publish queue",
@@ -640,7 +656,12 @@
     "subtitle": "Higher plan = more credits and a lower cost per credit. Billed in USD (Stripe).",
     "guest_banner": "Pick a plan — after sign-up we’ll take you to secure Stripe checkout.",
     "recommended": "Recommended",
+    "billing_toggle_label": "Billing period",
+    "billing_monthly": "Monthly",
+    "billing_yearly": "Yearly",
+    "billing_yearly_badge": "−17%",
     "per_month": "/mo",
+    "per_month_equiv": "/mo",
     "savings_per_credit": "−{{percent}}% / credit",
     "cta_register": "Sign up and choose",
     "cta_pay": "Continue to payment",

@@ -56,6 +56,7 @@ import { NotificationType, UserPlan } from './types';
 import type { VideoStoryStyle, VideoStoryProvider } from './components/VideoStoryModal';
 import { parseUserFacingError } from './utils/userFacingError';
 import {
+  consumePendingCheckoutInterval,
   consumePendingCheckoutPlan,
   redirectToSubscriptionCheckout,
 } from './services/paymentService';
@@ -221,8 +222,9 @@ export const App: React.FC = () => {
 
     const pendingPlan = consumePendingCheckoutPlan();
     if (pendingPlan) {
+      const pendingInterval = consumePendingCheckoutInterval();
       try {
-        await redirectToSubscriptionCheckout(pendingPlan);
+        await redirectToSubscriptionCheckout(pendingPlan, pendingInterval);
         return;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Nie udało się rozpocząć płatności.';
@@ -246,9 +248,10 @@ export const App: React.FC = () => {
 
     const pendingPlan = consumePendingCheckoutPlan();
     if (!pendingPlan) return;
+    const pendingInterval = consumePendingCheckoutInterval();
 
     setIsPricingModalOpen(true);
-    redirectToSubscriptionCheckout(pendingPlan).catch((error: unknown) => {
+    redirectToSubscriptionCheckout(pendingPlan, pendingInterval).catch((error: unknown) => {
       const message = error instanceof Error ? error.message : 'Nie udało się rozpocząć płatności.';
       notificationSystem.addToast(message, NotificationType.Error);
     });

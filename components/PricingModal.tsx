@@ -12,6 +12,7 @@ import {
   redirectToCreditPackCheckout,
   redirectToSubscriptionCheckout,
   setPendingCheckoutPlan,
+  type CheckoutInterval,
 } from '../services/paymentService';
 import { UserPlan } from '../types';
 import {
@@ -20,6 +21,7 @@ import {
   formatCreditPackPrice,
   formatSubscriptionPrice,
   formatUsageLimit,
+  type BillingInterval,
   type SubscriptionPlanConfig,
 } from '../config/subscriptionPlans';
 import { useEscapeClose } from '../hooks/useEscapeClose';
@@ -59,13 +61,14 @@ const PlanCard: React.FC<{
   currentPlan: UserPlan;
   isGuest: boolean;
   loadingPlan: UserPlan | null;
+  billingInterval: BillingInterval;
   onSubscribe: (plan: UserPlan) => Promise<void>;
-}> = ({ plan, currentPlan, isGuest, loadingPlan, onSubscribe }) => {
+}> = ({ plan, currentPlan, isGuest, loadingPlan, billingInterval, onSubscribe }) => {
   const { t } = useTranslation();
   const isCurrent = !isGuest && plan.id === currentPlan;
   const isLoading = loadingPlan === plan.id;
   const isFree = plan.id === UserPlan.Free;
-  const priceDisplay = formatSubscriptionPrice(plan);
+  const priceDisplay = formatSubscriptionPrice(plan, billingInterval);
 
   let buttonText = isGuest && isPaidPlan(plan.id) ? t('pricing.cta_register') : t('pricing.cta_pay');
   let buttonDisabled = isLoading;
@@ -116,7 +119,9 @@ const PlanCard: React.FC<{
       <div className="text-center my-4">
         <p className="text-4xl font-bold text-slate-900 dark:text-white">
           {priceDisplay.primary}
-          <span className="text-base font-normal text-slate-500 dark:text-slate-400">{t('pricing.per_month')}</span>
+          <span className="text-base font-normal text-slate-500 dark:text-slate-400">
+            {billingInterval === 'year' ? t('pricing.per_month_equiv') : t('pricing.per_month')}
+          </span>
         </p>
         {priceDisplay.secondary && (
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">{priceDisplay.secondary}</p>
@@ -176,6 +181,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   const [loadingPlan, setLoadingPlan] = useState<UserPlan | null>(null);
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [billingInterval, setBillingInterval] = useState<BillingInterval>('month');
   const [showAllPlans, setShowAllPlans] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
   const [showCredits, setShowCredits] = useState(false);
@@ -202,7 +208,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     if (!isPaidPlan(newPlan)) return;
 
     if (!user) {
-      setPendingCheckoutPlan(newPlan);
+      setPendingCheckoutPlan(newPlan, billingInterval as CheckoutInterval);
       onSignUpRequest?.(newPlan);
       return;
     }
@@ -211,7 +217,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
     setLoadingPlan(newPlan);
     try {
-      await redirectToSubscriptionCheckout(newPlan);
+      await redirectToSubscriptionCheckout(newPlan, billingInterval as CheckoutInterval);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : t('pricing.error_checkout'));
       setLoadingPlan(null);
@@ -310,7 +316,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     },
     {
       label: t('pricing.compare.price'),
-      render: (plan) => formatSubscriptionPrice(plan).primary,
+      render: (plan) => formatSubscriptionPrice(plan, billingInterval).primary,
     },
   ];
 
@@ -356,6 +362,40 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </div>
         )}
 
+        <div className="mt-6 flex justify-center">
+          <div
+            role="group"
+            aria-label={t('pricing.billing_toggle_label')}
+            className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 p-1 bg-slate-50 dark:bg-slate-800/60"
+          >
+            <button
+              type="button"
+              onClick={() => setBillingInterval('month')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                billingInterval === 'month'
+                  ? 'text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/5'
+              }`}
+              style={billingInterval === 'month' ? { backgroundColor: 'var(--hero-accent)' } : undefined}
+            >
+              {t('pricing.billing_monthly')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingInterval('year')}
+              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
+                billingInterval === 'year'
+                  ? 'text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/5'
+              }`}
+              style={billingInterval === 'year' ? { backgroundColor: 'var(--hero-accent)' } : undefined}
+            >
+              {t('pricing.billing_yearly')}
+              <span className="ml-1.5 text-[10px] font-bold opacity-90">{t('pricing.billing_yearly_badge')}</span>
+            </button>
+          </div>
+        </div>
+
         {error && (
           <div className="mt-6 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 p-3 rounded-md text-sm text-center max-w-2xl mx-auto">
             {error}
@@ -370,6 +410,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               currentPlan={user?.plan || UserPlan.Free}
               isGuest={!user}
               loadingPlan={loadingPlan}
+              billingInterval={billingInterval}
               onSubscribe={handleSubscribe}
             />
           ))}
@@ -443,7 +484,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
         {(() => {
           const ent = SUBSCRIPTION_PLANS.find((p) => p.id === UserPlan.Enterprise)!;
-          const entPrice = formatSubscriptionPrice(ent);
+          const entPrice = formatSubscriptionPrice(ent, billingInterval);
           return (
             <div className="mt-8 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-slate-50 dark:bg-slate-800/40">
               <div>
@@ -453,7 +494,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 </p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white mt-2 whitespace-nowrap">
                   {entPrice.primary}
-                  <span className="text-sm font-normal text-slate-500">{t('pricing.per_month')}</span>
+                  <span className="text-sm font-normal text-slate-500">
+                    {billingInterval === 'year' ? t('pricing.per_month_equiv') : t('pricing.per_month')}
+                  </span>
                 </p>
                 {entPrice.secondary && (
                   <p className="text-xs text-slate-400 mt-0.5">{entPrice.secondary}</p>

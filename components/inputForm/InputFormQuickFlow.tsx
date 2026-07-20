@@ -96,7 +96,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 }}
                 className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-xl text-[11px] sm:text-xs font-bold transition-colors ${
                   active
-                    ? 'bg-cyan-600 text-white shadow-sm shadow-cyan-600/25'
+                    ? 'bg-[var(--hero-accent)] text-white shadow-sm'
                     : done
                       ? 'bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-500/25'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
@@ -177,7 +177,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
           )}
 
           <div className="flex justify-end">
-            <ModernButton type="button" variant="gradient" onClick={goNext} disabled={!canGoStep2} className="!bg-cyan-600 hover:!bg-cyan-500 ![background-image:none]">
+            <ModernButton type="button" variant="gradient" onClick={goNext} disabled={!canGoStep2}>
               {t('form.quick.next', 'Dalej')} →
             </ModernButton>
           </div>
@@ -219,7 +219,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             <ModernButton type="button" variant="secondary" onClick={goBack}>
               ← {t('form.quick.back', 'Wstecz')}
             </ModernButton>
-            <ModernButton type="button" variant="gradient" onClick={goNext} className="!bg-cyan-600 hover:!bg-cyan-500 ![background-image:none]">
+            <ModernButton type="button" variant="gradient" onClick={goNext}>
               {t('form.quick.next', 'Dalej')} →
             </ModernButton>
           </div>
@@ -284,7 +284,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 disabled={isLoading || !topicPlain}
                 fullWidth
                 icon={<SparklesIcon className="w-5 h-5" />}
-                className="!bg-cyan-600 hover:!bg-cyan-500 ![background-image:none] shadow-md shadow-cyan-600/25"
+                className="shadow-md"
               >
                 {isLoading ? t('common.generating', 'Generowanie…') : t('common.generate', 'Generuj post')}
               </ModernButton>

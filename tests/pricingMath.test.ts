@@ -7,6 +7,7 @@ import {
   pricePerCreditUsd,
   subscriptionCreditCostLadder,
   savingsVsRetailPercent,
+  yearlyUsdFromMonthly,
 } from '../config/pricingMath';
 
 describe('pricingMath — strategia sprzedaży', () => {
@@ -77,5 +78,11 @@ describe('pricingMath — strategia sprzedaży', () => {
 
   it('retail credit anchor jest z pakietu small', () => {
     expect(RETAIL_CREDIT_USD).toBeCloseTo(9.99 / 400, 4);
+  });
+
+  it('roczna cena to 10× miesięczna (2 miesiące gratis)', () => {
+    expect(yearlyUsdFromMonthly(49)).toBe(490);
+    expect(yearlyUsdFromMonthly(29)).toBe(290);
+    expect(yearlyUsdFromMonthly(0)).toBe(0);
   });
 });

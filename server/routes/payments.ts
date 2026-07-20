@@ -43,23 +43,36 @@ router.post(
   requireSupabaseAuth,
   async (req: SupabaseAuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { plan } = req.body as { plan?: string };
+      const { plan, interval = 'month' } = req.body as {
+        plan?: string;
+        interval?: 'month' | 'year';
+      };
       const userId = req.user!.id;
 
       if (!plan || !isPaidPlan(plan)) {
         return res.status(400).json({ error: 'Nieprawidłowy plan subskrypcji' });
       }
 
+      if (interval !== 'month' && interval !== 'year') {
+        return res.status(400).json({ error: 'Nieprawidłowy okres rozliczenia' });
+      }
+
       const planConfig = PRICING.subscriptions[plan];
-      if (!planConfig?.priceId) {
+      const priceId =
+        interval === 'year' ? planConfig?.yearlyPriceId : planConfig?.priceId;
+
+      if (!priceId) {
         return res.status(503).json({
-          error: 'Ten plan nie jest jeszcze skonfigurowany w Stripe. Skontaktuj się z supportem.',
+          error:
+            interval === 'year'
+              ? 'Rozliczenie roczne nie jest jeszcze skonfigurowane w Stripe dla tego planu.'
+              : 'Ten plan nie jest jeszcze skonfigurowany w Stripe. Skontaktuj się z supportem.',
         });
       }
 
-      const session = await createCheckoutSession(userId, planConfig.priceId, 'subscription');
+      const session = await createCheckoutSession(userId, priceId, 'subscription');
 
-      res.json({ sessionId: session.id, url: session.url });
+      res.json({ sessionId: session.id, url: session.url, interval });
     } catch (error: unknown) {
       logger.error('Checkout error:', error);
       next(error);
