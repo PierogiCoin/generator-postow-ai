@@ -427,8 +427,8 @@
     "mobileTabForm": "Formularz",
     "mobileTabResult": "Wynik",
     "mobileNav": "Nawigacja generatora",
-    "openSidebar": "Otwórz panel boczny",
-    "closeSidebar": "Zamknij panel"
+    "openSidebar": "Biblioteka",
+    "closeSidebar": "Zamknij bibliotekę"
   },
   "strategyAssistant": {
     "title": "Wskazówka strategii",
@@ -490,7 +490,7 @@
     }
   },
   "sidebar": {
-    "title": "Panel Boczny",
+    "title": "Biblioteka",
     "tabs": {
       "history": "Historia",
       "drafts": "Szkice",
@@ -498,7 +498,7 @@
       "scheduled": "Plan",
       "stats": "Statystyki",
       "subscription": "Sub",
-      "ariaLabel": "Zakładki panelu bocznego"
+      "ariaLabel": "Zakładki biblioteki"
     },
     "historySection": {
       "title": "Historia",

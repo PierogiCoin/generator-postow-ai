@@ -54,9 +54,9 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
               role="radio"
               aria-checked={isSelected}
               onClick={() => handleSelect(platform)}
-              className={`group flex flex-col items-center justify-center p-4 text-center border rounded-2xl transition-all duration-300 relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${isSelected
-                  ? `bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-xl shadow-cyan-500/10 scale-105 neon-glow-cyan`
-                  : `border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35 hover:scale-105`
+              className={`group flex flex-col items-center justify-center p-3 sm:p-4 text-center border rounded-2xl transition-colors relative overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${isSelected
+                  ? `bg-slate-900/60 dark:bg-white/5 border-cyan-500 shadow-md shadow-cyan-500/10`
+                  : `border-slate-200/50 dark:border-white/5 bg-white dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 hover:border-cyan-500/35`
                 }`}
               title={platform}
             >

@@ -424,8 +424,8 @@
     "mobileTabForm": "Form",
     "mobileTabResult": "Result",
     "mobileNav": "Generator navigation",
-    "openSidebar": "Open sidebar",
-    "closeSidebar": "Close sidebar"
+    "openSidebar": "Library",
+    "closeSidebar": "Close library"
   },
   "strategyAssistant": {
     "title": "Strategy tip",
@@ -486,7 +486,7 @@
     }
   },
   "sidebar": {
-    "title": "Side Panel",
+    "title": "Library",
     "tabs": {
       "history": "History",
       "drafts": "Drafts",
@@ -494,7 +494,7 @@
       "scheduled": "Plan",
       "stats": "Stats",
       "subscription": "Sub",
-      "ariaLabel": "Side panel tabs"
+      "ariaLabel": "Library tabs"
     },
     "historySection": {
       "title": "History",

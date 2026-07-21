@@ -97,16 +97,23 @@ export const GeneratorView: React.FC = () => {
     useEffect(() => {
         const mq = window.matchMedia('(min-width: 1024px)');
         const onBreakpoint = (e: MediaQueryListEvent) => {
-            setIsSidebarOpen(e.matches);
+            if (!e.matches) {
+                setIsSidebarOpen(false);
+                return;
+            }
+            // Desktop: otwórz bibliotekę tylko gdy nie ma wyniku (3 kolumny = chaos)
+            const hasResult = Boolean(useGenerationStore.getState().result);
+            setIsSidebarOpen(!hasResult);
         };
         mq.addEventListener('change', onBreakpoint);
         return () => mq.removeEventListener('change', onBreakpoint);
     }, []);
 
+    // Przy wyniku — zwiń bibliotekę (form + wynik dostają przestrzeń)
     useEffect(() => {
-        if (result && !isLoading && isMobile) {
-            setMobilePanel('result');
+        if (result && !isLoading) {
             setIsSidebarOpen(false);
+            if (isMobile) setMobilePanel('result');
         }
     }, [result, isLoading, isMobile]);
 
@@ -319,35 +326,37 @@ export const GeneratorView: React.FC = () => {
             {isSidebarOpen && (
                 <button
                     type="button"
-                    aria-label={t('generatorView.closeSidebar', 'Zamknij panel')}
+                    aria-label={t('generatorView.closeSidebar', 'Zamknij bibliotekę')}
                     className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
-            <aside className={`fixed lg:sticky lg:top-8 inset-y-0 left-0 z-50 transform lg:transform-none transition-all duration-300 ease-out self-start lg:h-[calc(100vh-8rem)] ${isSidebarOpen ? 'translate-x-0 w-[min(340px,92vw)] xl:w-[380px] lg:flex-shrink-0' : '-translate-x-full w-0'}`}>
-                <div className={`h-full flex flex-col glass-premium rounded-2xl sm:rounded-[1.75rem] overflow-hidden border border-white/10 transition-opacity duration-500 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    <div className="p-5 lg:p-6 pb-3 flex-shrink-0 flex items-center justify-between border-b border-white/5">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 bg-cyan-500/10 rounded-xl flex items-center justify-center border border-cyan-500/20">
-                                <SidebarIcon className="w-5 h-5 text-cyan-500" />
-                            </div>
-                            <h3 className="text-base font-black text-slate-900 dark:text-white tracking-tight uppercase">{t('sidebar.title')}</h3>
-                        </div>
-                        <button 
-                            onClick={() => setIsSidebarOpen(false)} 
-                            aria-label={t('generatorView.closeSidebar', 'Zamknij panel')} 
-                            className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+            {isSidebarOpen && (
+            <aside
+                className="fixed inset-y-0 left-0 z-50 w-[min(340px,92vw)] p-3 sm:p-4 lg:p-0 lg:static lg:z-auto lg:w-[300px] xl:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-8 lg:self-start lg:h-[calc(100vh-8rem)]"
+                aria-label={t('sidebar.title', 'Biblioteka')}
+            >
+                <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-[1.75rem] overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg lg:shadow-sm">
+                    <div className="p-4 lg:p-5 pb-3 flex-shrink-0 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                        <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                            {t('sidebar.title', 'Biblioteka')}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setIsSidebarOpen(false)}
+                            aria-label={t('generatorView.closeSidebar', 'Zamknij bibliotekę')}
+                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
                         >
                             <XMarkIcon className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="px-3 py-3 flex-shrink-0 border-b border-white/5">
+                    <div className="px-3 py-3 flex-shrink-0 border-b border-slate-100 dark:border-slate-800">
                         <div
                             className="flex gap-1 overflow-x-auto overscroll-x-contain pb-0.5 custom-scrollbar snap-x snap-mandatory focus:outline-none"
                             role="tablist"
-                            aria-label={t('sidebar.tabs.ariaLabel', 'Zakładki panelu bocznego')}
+                            aria-label={t('sidebar.tabs.ariaLabel', 'Zakładki biblioteki')}
                             onKeyDown={handleTabsKeyDown}
                         >
                             {sidebarTabs.map(tab => {
@@ -364,8 +373,8 @@ export const GeneratorView: React.FC = () => {
                                     title={tab.label}
                                     aria-label={badge > 0 ? `${tab.label} (${badgeLabel})` : tab.label}
                                     className={`relative snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${isSelected
-                                        ? 'bg-white dark:bg-slate-800 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25'
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 border border-transparent'}`}
+                                        ? 'bg-cyan-50 dark:bg-cyan-950/40 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'}`}
                                 >
                                     <tab.icon className="w-[18px] h-[18px]" />
                                     <span className="text-[9px] font-bold uppercase tracking-wide leading-tight max-w-[3.25rem] truncate">
@@ -381,13 +390,14 @@ export const GeneratorView: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="p-6 lg:p-8 pt-2 overflow-y-auto flex-grow custom-scrollbar">
+                    <div className="p-5 lg:p-6 pt-3 overflow-y-auto flex-grow custom-scrollbar">
                         <div key={activeSidebarTab} className="animate-fade-in">
                             {renderActiveTabContent()}
                         </div>
                     </div>
                 </div>
             </aside>
+            )}
 
             {isLoading && (
                 <LoadingOverlay
@@ -401,11 +411,11 @@ export const GeneratorView: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
-                        aria-label={t('generatorView.openSidebar', 'Otwórz panel boczny')}
-                        className="mb-3 inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 hover:border-cyan-500/30 transition-colors backdrop-blur-md"
+                        aria-label={t('generatorView.openSidebar', 'Otwórz bibliotekę')}
+                        className="mb-3 inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 hover:border-cyan-500/30 transition-colors"
                     >
                         <SidebarIcon className="w-5 h-5 flex-shrink-0" />
-                        <span className="text-sm font-semibold">{t('generatorView.openSidebar', 'Panel boczny')}</span>
+                        <span className="text-sm font-semibold">{t('generatorView.openSidebar', 'Biblioteka')}</span>
                     </button>
                 )}
 
