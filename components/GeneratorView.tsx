@@ -223,7 +223,7 @@ export const GeneratorView: React.FC = () => {
         setActiveSidebarTab(nextTab);
         if (nextTab === 'stats' || nextTab === 'subscription') setShowMoreTabs(true);
 
-        const buttons = e.currentTarget.querySelectorAll('button[role="tab"]');
+        const buttons = e.currentTarget.querySelectorAll<HTMLButtonElement>('button[role="tab"]');
         buttons[nextIndex]?.focus();
     }, [sidebarTabs, primarySidebarTabs, activeSidebarTab, showMoreTabs, isMoreTabActive]);
 
