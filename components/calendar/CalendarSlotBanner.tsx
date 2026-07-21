@@ -4,12 +4,14 @@ import type { CalendarSlotContext } from '../../types';
 import { slotTypeBadge } from '../../services/calendarCadenceService';
 import { CalendarIcon } from '../icons/CalendarIcon';
 import { SparklesIcon } from '../icons/SparklesIcon';
+import { XMarkIcon } from '../icons/XMarkIcon';
 
 interface CalendarSlotBannerProps {
   slot: CalendarSlotContext;
   batchIndex?: number;
   batchTotal?: number;
   onGenerate?: () => void;
+  onCancelBatch?: () => void;
   isGenerating?: boolean;
 }
 
@@ -18,6 +20,7 @@ export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
   batchIndex,
   batchTotal,
   onGenerate,
+  onCancelBatch,
   isGenerating,
 }) => {
   const { t } = useTranslation();
@@ -26,13 +29,14 @@ export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
     day: 'numeric',
     month: 'long',
   });
+  const isBatch = Boolean(batchTotal && batchTotal > 1);
 
   return (
     <div className="mb-4 p-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 dark:bg-cyan-500/5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
-            {batchTotal && batchTotal > 1
+            {isBatch
               ? t('calendar.slot.batchLabel', 'Batch dnia {{current}}/{{total}}', {
                   current: batchIndex ?? 1,
                   total: batchTotal,
@@ -62,19 +66,32 @@ export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
             )}
           </p>
         </div>
-        {onGenerate && (
-          <button
-            type="button"
-            onClick={onGenerate}
-            disabled={isGenerating}
-            className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white text-sm font-bold transition-colors"
-          >
-            <SparklesIcon className="w-4 h-4" />
-            {isGenerating
-              ? t('common.generating', 'Generowanie...')
-              : t('calendar.slot.generateNow', 'Generuj teraz')}
-          </button>
-        )}
+        <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+          {onCancelBatch && isBatch && (
+            <button
+              type="button"
+              onClick={onCancelBatch}
+              disabled={isGenerating}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 text-slate-700 dark:text-slate-200 text-sm font-bold hover:bg-white/60 dark:hover:bg-white/5 disabled:opacity-60 transition-colors"
+            >
+              <XMarkIcon className="w-4 h-4" />
+              {t('calendar.slot.cancelBatch', 'Anuluj batch')}
+            </button>
+          )}
+          {onGenerate && (
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={isGenerating}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white text-sm font-bold transition-colors"
+            >
+              <SparklesIcon className="w-4 h-4" />
+              {isGenerating
+                ? t('common.generating', 'Generowanie...')
+                : t('calendar.slot.generateNow', 'Generuj teraz')}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

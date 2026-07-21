@@ -41,6 +41,8 @@ interface DayDetailDrawerProps {
     itemId: string,
     patch: Partial<Pick<IntelligentCalendarPlanItem, 'topic' | 'time' | 'platform'>>
   ) => void;
+  onDeleteSlot?: (itemId: string) => void;
+  onDuplicateSlot?: (item: IntelligentCalendarPlanItem) => void;
   onEditPost: (post: ScheduledPost) => void;
   onOpenBulkQueue?: () => void;
 }
@@ -186,6 +188,8 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
   onAddSuggestionToPlan,
   onGenerateSlot,
   onUpdateSlot,
+  onDeleteSlot,
+  onDuplicateSlot,
   onEditPost,
   onOpenBulkQueue,
 }) => {
@@ -398,18 +402,36 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                         )}
                       </div>
                     </div>
-                    <div className="mt-2.5 flex gap-2">
+                    <div className="mt-2.5 flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => startSlotEdit(item)}
-                        className="flex-1 text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300"
+                        className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300"
                       >
                         {t('calendar.slot.edit', 'Edytuj')}
                       </button>
+                      {onDuplicateSlot && (
+                        <button
+                          type="button"
+                          onClick={() => onDuplicateSlot(item)}
+                          className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300"
+                        >
+                          {t('calendar.slot.duplicate', 'Duplikuj')}
+                        </button>
+                      )}
+                      {onDeleteSlot && (
+                        <button
+                          type="button"
+                          onClick={() => onDeleteSlot(item.id)}
+                          className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                        >
+                          {t('common.delete', 'Usuń')}
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => onGenerateSlot(item)}
-                        className="flex-1 text-xs font-bold py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center gap-1"
+                        className="flex-[1.2] min-w-[5.5rem] text-xs font-bold py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center gap-1"
                       >
                         <SparklesIcon className="w-3.5 h-3.5" />
                         {t('calendar.slot.generate', 'Generuj')}

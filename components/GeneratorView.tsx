@@ -50,6 +50,7 @@ import { isOnboardingGuideActive } from '../utils/onboarding';
 import { CalendarSlotBanner } from './calendar/CalendarSlotBanner';
 
 import type { FormData, CampaignHistoryItem, FavoritePost, Draft, GenerationResult, ScheduledPost, CalendarSlotContext } from '../types';
+import { NotificationType } from '../types';
 
 type SidebarTab = 'history' | 'drafts' | 'favorites' | 'scheduled' | 'stats' | 'subscription';
 
@@ -480,11 +481,25 @@ export const GeneratorView: React.FC = () => {
                                         slot={pendingCalendarSlot}
                                         batchIndex={
                                             calendarBatchTotal > 0
-                                                ? calendarBatchTotal - calendarBatchQueue.length
+                                                ? Math.max(
+                                                    1,
+                                                    calendarBatchTotal - calendarBatchQueue.length
+                                                  )
                                                 : undefined
                                         }
                                         batchTotal={calendarBatchTotal > 1 ? calendarBatchTotal : undefined}
                                         isGenerating={isLoading}
+                                        onCancelBatch={() => {
+                                            useGenerationStore.getState().clearCalendarBatch();
+                                            useGenerationStore.getState().clearPendingCalendarSlot();
+                                            notificationSystem.addToast(
+                                                t(
+                                                    'calendar.slot.batchCancelled',
+                                                    'Anulowano kolejkę generowania dnia.'
+                                                ),
+                                                NotificationType.Info
+                                            );
+                                        }}
                                     />
                                 )}
                             </div>

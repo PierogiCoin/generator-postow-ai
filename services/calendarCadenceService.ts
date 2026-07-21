@@ -6,6 +6,7 @@ import {
   IntelligentCalendarPlanItem,
   ScheduledPost,
 } from '../types';
+import { formatDateYMDLocal } from '../utils/calendarDate';
 
 export type CadencePresetId = 'starter' | 'growth' | 'aggressive';
 
@@ -95,7 +96,7 @@ interface CadenceSlotDraft {
 }
 
 function formatDateYMD(d: Date): string {
-  return d.toISOString().split('T')[0];
+  return formatDateYMDLocal(d);
 }
 
 export function slotFormat(slotType: 'post' | 'reel' | 'story'): GenerationType {

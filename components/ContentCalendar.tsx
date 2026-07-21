@@ -49,15 +49,24 @@ import { fetchTrackedCompetitors } from '../services/competitorService';
 import {
   analyzeScheduleGaps,
   getCachedGapHours,
+  pinPreferredGapTime,
   type GapSlotResult,
 } from '../services/intelligenceService';
 import { getUserNiche as getUserNicheShared } from '../utils/userNiche';
 import { IntelligenceGapStrip } from './intelligence/IntelligenceGapStrip';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useConfirm } from '../hooks/useConfirm';
+import {
+  formatDateYMDLocal,
+  getWeekStartLocal,
+  dateInWeekForWeekday,
+} from '../utils/calendarDate';
+import { v4 as uuidv4 } from 'uuid';
 
 const WEEK_DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
 
 function formatCellDate(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return formatDateYMDLocal(d);
 }
 
 function isSameCalendarDay(tsOrDate: number | string, cellDate: Date): boolean {
@@ -100,12 +109,14 @@ export const ContentCalendar: React.FC = () => {
     intelligentCalendarPlan,
     clearIntelligentCalendarPlan,
     setIntelligentCalendarPlan,
+    removeIntelligentCalendarPlanItem,
   } = useDataStore();
   const { user } = useAuth();
   const { addToast } = useNotifications();
   const handlers = useAppHandlers(() => {}, () => {});
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { confirm, confirmDialogProps } = useConfirm();
 
   const savedPrefs = useMemo(() => loadCalendarCadencePrefs(), []);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -150,14 +161,6 @@ export const ContentCalendar: React.FC = () => {
     [presetId, weekTheme, platform]
   );
 
-  const getWeekStart = (from: Date = new Date()): Date => {
-    const d = new Date(from);
-    const dow = d.getDay();
-    d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-
   const changePeriod = (amount: number) => {
     setCurrentDate((prev) => {
       const newDate = new Date(prev);
@@ -170,7 +173,14 @@ export const ContentCalendar: React.FC = () => {
     });
   };
 
-  const weekStartDate = useMemo(() => getWeekStart(currentDate), [currentDate]);
+  const weekStartDate = useMemo(() => getWeekStartLocal(currentDate), [currentDate]);
+
+  const weekFillLabel = useMemo(() => {
+    const end = new Date(weekStartDate);
+    end.setDate(weekStartDate.getDate() + 6);
+    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    return `${weekStartDate.toLocaleDateString('pl-PL', opts)} – ${end.toLocaleDateString('pl-PL', opts)}`;
+  }, [weekStartDate]);
 
   const weekBulkRange = useMemo(() => {
     const start = new Date(weekStartDate);
@@ -383,7 +393,7 @@ export const ContentCalendar: React.FC = () => {
 
     setIsFilling(true);
     try {
-      const start = getWeekStart();
+      const start = weekStartDate;
       const niche = getUserNicheForCalendar();
       const previousTopics = (intelligentCalendarPlan || []).map((p) => p.topic);
 
@@ -400,7 +410,10 @@ export const ContentCalendar: React.FC = () => {
       const merged = mergeCalendarPlans(intelligentCalendarPlan, newPlan);
       await setIntelligentCalendarPlan(merged);
       addToast(
-        t('calendar.fill.success', 'Dodano {{count}} slotów do kalendarza', { count: newPlan.length }),
+        t('calendar.fill.successWeek', 'Dodano {{count}} slotów na tydzień {{range}}', {
+          count: newPlan.length,
+          range: weekFillLabel,
+        }),
         NotificationType.Success
       );
     } catch (e: unknown) {
@@ -412,6 +425,94 @@ export const ContentCalendar: React.FC = () => {
       setIsFilling(false);
     }
   };
+
+  const handleClearPlan = useCallback(async () => {
+    const ok = await confirm({
+      title: t('calendar.clearPlanConfirmTitle', 'Wyczyścić plan strategiczny?'),
+      message: t(
+        'calendar.clearPlanConfirmMessage',
+        'Usuniesz wszystkie sloty planu z kalendarza. Zaplanowane publikacje zostaną.'
+      ),
+      variant: 'danger',
+      confirmLabel: t('calendar.clearStrategicPlan', 'Wyczyść plan'),
+    });
+    if (ok) clearIntelligentCalendarPlan();
+  }, [confirm, clearIntelligentCalendarPlan, t]);
+
+  const handleDeletePlanSlot = useCallback(
+    async (itemId: string) => {
+      const ok = await confirm({
+        title: t('calendar.slot.deleteTitle', 'Usunąć slot?'),
+        message: t('calendar.slot.deleteMessage', 'Slot zniknie z planu. Tej operacji nie cofniesz.'),
+        variant: 'danger',
+        confirmLabel: t('common.delete', 'Usuń'),
+      });
+      if (!ok) return;
+      await removeIntelligentCalendarPlanItem(itemId);
+      addToast(t('calendar.slot.deleted', 'Slot usunięty'), NotificationType.Success);
+    },
+    [confirm, removeIntelligentCalendarPlanItem, addToast, t]
+  );
+
+  const handleDuplicatePlanSlot = useCallback(
+    async (item: IntelligentCalendarPlanItem) => {
+      const plan = intelligentCalendarPlan || [];
+      const copy: IntelligentCalendarPlanItem = {
+        ...item,
+        id: uuidv4(),
+        topic: `${item.topic} (kopia)`,
+        time: item.time
+          ? (() => {
+              const [h, m] = item.time.split(':').map(Number);
+              const next = new Date(2000, 0, 1, h, m + 30);
+              return `${String(next.getHours()).padStart(2, '0')}:${String(next.getMinutes()).padStart(2, '0')}`;
+            })()
+          : item.time,
+      };
+      await setIntelligentCalendarPlan([...plan, copy]);
+      addToast(t('calendar.slot.duplicated', 'Slot zduplikowany'), NotificationType.Success);
+    },
+    [intelligentCalendarPlan, setIntelligentCalendarPlan, addToast, t]
+  );
+
+  const handleApplyGapSlot = useCallback(
+    async (slot: GapSlotResult) => {
+      pinPreferredGapTime(slot.time);
+      const targetDate = dateInWeekForWeekday(weekStartDate, slot.weekday);
+      const dateStr = formatDateYMDLocal(targetDate);
+      const plan = intelligentCalendarPlan || [];
+      const dayItems = plan.filter((p) => p.date === dateStr || p.date.startsWith(dateStr));
+
+      if (dayItems.length > 0) {
+        const updated = plan.map((p) =>
+          p.date === dateStr || p.date.startsWith(dateStr) ? { ...p, time: slot.time } : p
+        );
+        await setIntelligentCalendarPlan(updated);
+        addToast(
+          t('calendar.intelligence.appliedToSlots', 'Ustawiono {{time}} na {{count}} slot(ów) — {{label}}', {
+            time: slot.time,
+            count: dayItems.length,
+            label: slot.label,
+          }),
+          NotificationType.Success
+        );
+      } else {
+        addToast(
+          t(
+            'calendar.intelligence.pinnedTime',
+            'Preferowana godzina {{time}} zapisana — użyjemy jej przy nowych slotach.',
+            { time: slot.time }
+          ),
+          NotificationType.Success
+        );
+      }
+
+      setSelectedDay(targetDate);
+      if (calendarView === 'month') setCalendarView('week');
+      setCurrentDate(targetDate);
+    },
+    [weekStartDate, intelligentCalendarPlan, setIntelligentCalendarPlan, addToast, t, calendarView]
+  );
 
   const handleFillMissingDay = async () => {
     if (!user?.id || !selectedDay) return;
@@ -763,11 +864,14 @@ export const ContentCalendar: React.FC = () => {
     <div className="glass-premium rounded-[2.5rem] border border-white/10 shadow-2xl p-6 md:p-8 animate-fade-in relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[40%] h-56 bg-gradient-to-l from-cyan-500/5 to-transparent pointer-events-none" />
 
+      <ConfirmDialog {...confirmDialogProps} />
+
       <CalendarFillToolbar
         presetId={presetId}
         weekTheme={weekTheme}
         platform={platform}
         isFilling={isFilling}
+        weekRangeLabel={weekFillLabel}
         onPresetChange={(id) => {
           setPresetId(id);
           persistPrefs({ presetId: id });
@@ -790,14 +894,7 @@ export const ContentCalendar: React.FC = () => {
         recommendation={gapRecommendation}
         isLoading={isLoadingGaps}
         onRefresh={() => void warmGapIntelligence()}
-        onSelectSlot={(slot) => {
-          addToast(
-            t('calendar.intelligence.slotHint', 'Preferowany slot: {{label}} — użyj przy planowaniu dnia', {
-              label: slot.label,
-            }),
-            NotificationType.Info
-          );
-        }}
+        onSelectSlot={(slot) => void handleApplyGapSlot(slot)}
       />
 
       <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4 relative z-10">
@@ -832,7 +929,7 @@ export const ContentCalendar: React.FC = () => {
           {intelligentCalendarPlan && (
             <button
               type="button"
-              onClick={clearIntelligentCalendarPlan}
+              onClick={() => void handleClearPlan()}
               className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1.5"
             >
               <XMarkIcon className="w-3.5 h-3.5" />
@@ -866,15 +963,23 @@ export const ContentCalendar: React.FC = () => {
       </div>
 
       <div className="overflow-x-auto -mx-2 px-2 pb-2 relative z-10">
-        <div className="min-w-0 sm:min-w-[720px] lg:min-w-[900px]">
-          <div className="grid grid-cols-7 gap-2.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-            {WEEK_DAYS.map((d) => (
-              <div key={d} className="py-2">
-                {d}
-              </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-2.5">
+        <div className={`min-w-0 ${calendarView === 'month' ? 'min-w-[640px] sm:min-w-[720px] lg:min-w-[900px]' : ''}`}>
+          {calendarView === 'month' && (
+            <div className="grid grid-cols-7 gap-2.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
+              {WEEK_DAYS.map((d) => (
+                <div key={d} className="py-2">
+                  {d}
+                </div>
+              ))}
+            </div>
+          )}
+          <div
+            className={
+              calendarView === 'week'
+                ? 'grid grid-cols-1 sm:grid-cols-7 gap-2.5'
+                : 'grid grid-cols-7 gap-2.5'
+            }
+          >
             {calendarView === 'week' ? renderWeekDays() : renderCalendarDays()}
           </div>
         </div>
@@ -921,6 +1026,8 @@ export const ContentCalendar: React.FC = () => {
           onAddSuggestionToPlan={handleAddSuggestionToPlan}
           onGenerateSlot={(item) => handleGenerateForSlot(item, true)}
           onUpdateSlot={handleUpdatePlanSlot}
+          onDeleteSlot={(itemId) => void handleDeletePlanSlot(itemId)}
+          onDuplicateSlot={(item) => void handleDuplicatePlanSlot(item)}
           onEditPost={(post) => handlers.handleEditScheduledPost(post)}
           onOpenBulkQueue={openBulkQueueForDay}
         />

@@ -15,6 +15,8 @@ interface CalendarFillToolbarProps {
   weekTheme: string;
   platform: Platform;
   isFilling: boolean;
+  /** Zakres widocznego tygodnia — fill zawsze dotyczy tego zakresu */
+  weekRangeLabel?: string;
   onPresetChange: (id: CadencePresetId) => void;
   onThemeChange: (theme: string) => void;
   onPlatformChange: (platform: Platform) => void;
@@ -28,6 +30,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
   weekTheme,
   platform,
   isFilling,
+  weekRangeLabel,
   onPresetChange,
   onThemeChange,
   onPlatformChange,
@@ -53,7 +56,11 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
             {t('calendar.fill.title', 'Wypełnij kalendarz')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            {t('calendar.fill.subtitle', 'Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).')}
+            {weekRangeLabel
+              ? t('calendar.fill.subtitleRange', 'AI uzupełni widoczny tydzień ({{range}}) slotami — posty i rolki.', {
+                  range: weekRangeLabel,
+                })
+              : t('calendar.fill.subtitle', 'Wybierz szablon cadence i AI uzupełni tydzień slotami (posty + rolki).')}
           </p>
         </div>
         <ChevronDownIcon className={`w-5 h-5 shrink-0 text-slate-400 transition-transform sm:hidden ${isExpanded ? 'rotate-180' : ''}`} />
@@ -121,7 +128,9 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
           >
             {isFilling
               ? t('calendar.fill.filling', 'Generowanie…')
-              : t('calendar.fill.fillWeek', 'Wypełnij tydzień')}
+              : weekRangeLabel
+                ? t('calendar.fill.fillThisWeek', 'Wypełnij ten tydzień')
+                : t('calendar.fill.fillWeek', 'Wypełnij tydzień')}
           </ModernButton>
           {onOpenBulkQueue && (
             <ModernButton

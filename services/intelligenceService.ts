@@ -208,11 +208,35 @@ export async function fetchUserBestTimes(
   return response.json();
 }
 
+const PINNED_GAP_KEY = 'so_pinned_gap_time';
+
+/** Przypnij godzinę z analizy luk — używana pierwsza przy nowych slotach. */
+export function pinPreferredGapTime(time: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PINNED_GAP_KEY, time);
+  } catch {
+    // ignore
+  }
+}
+
+export function getPinnedGapTime(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem(PINNED_GAP_KEY);
+  } catch {
+    return null;
+  }
+}
+
 /** Preferowane godziny slotów z analizy luk (fallback: stałe) */
 export function getPreferredGapTimes(userId: string, platform: Platform): string[] {
+  const pinned = getPinnedGapTime();
   const cached = getCachedGapHours(userId, platform);
-  if (!cached?.length) return [];
-  return cached.slice(0, 6).map((s) => s.time);
+  const fromCache = cached?.length ? cached.slice(0, 6).map((s) => s.time) : [];
+  if (pinned && !fromCache.includes(pinned)) return [pinned, ...fromCache];
+  if (pinned) return [pinned, ...fromCache.filter((t) => t !== pinned)];
+  return fromCache;
 }
 
 export { GAP_CACHE_KEY as INTELLIGENCE_GAP_CACHE_KEY };

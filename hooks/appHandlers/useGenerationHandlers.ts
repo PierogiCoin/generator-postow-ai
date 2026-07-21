@@ -112,13 +112,19 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
     };
 
     const finishCalendarBatchIfDone = () => {
-        const { calendarBatchQueue, calendarBatchTotal, clearCalendarBatch } = useGenerationStore.getState();
+        const {
+            calendarBatchQueue,
+            calendarBatchTotal,
+            clearCalendarBatch,
+            clearPendingCalendarSlot,
+        } = useGenerationStore.getState();
         if (calendarBatchQueue.length === 0 && calendarBatchTotal > 0) {
             showSuccess(
                 'Dzień uzupełniony',
                 `Przetworzono ${calendarBatchTotal} slot(ów) kalendarza.`
             );
             clearCalendarBatch();
+            clearPendingCalendarSlot();
         }
     };
 
@@ -164,8 +170,9 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             if (!quality.scheduledAllowed) {
                 showWarning(
                     'Slot nie zaplanowany',
-                    formatSlotQualityMessage(quality.score, quality.improved, quality.attempts)
+                    `${formatSlotQualityMessage(quality.score, quality.improved, quality.attempts)} Możesz poprawić treść w wyniku albo zaplanować ręcznie — batch przechodzi dalej.`
                 );
+                useGenerationStore.getState().clearPendingCalendarSlot();
                 await continueCalendarBatch();
                 return;
             }
@@ -194,6 +201,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 'Treść wygenerowana',
                 'Nie udało się automatycznie dodać do kalendarza — zaplanuj ręcznie z wyniku.'
             );
+            useGenerationStore.getState().clearPendingCalendarSlot();
             await continueCalendarBatch();
         }
     };
@@ -572,6 +580,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             genActions.generationFailure(errorPayload);
             if (useGenerationStore.getState().calendarBatchTotal > 0) {
                 useGenerationStore.getState().clearCalendarBatch();
+                useGenerationStore.getState().clearPendingCalendarSlot();
                 showWarning('Przerwano generowanie dnia', errorPayload.message);
             }
         } finally {

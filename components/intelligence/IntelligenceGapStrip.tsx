@@ -72,6 +72,9 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
           <h3 className="text-xs font-black uppercase tracking-widest text-cyan-700 dark:text-cyan-300">
             Najlepsze godziny vs konkurencja
           </h3>
+          <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+            kliknij → zastosuj w tym tygodniu
+          </span>
         </div>
         {onRefresh && (
           <button
