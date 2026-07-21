@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   hasLiveMetrics,
   enrichHistoryWithLiveMetrics,
@@ -172,5 +172,67 @@ describe('aggregateAnalyticsKpis', () => {
     expect(kpi.liveCount).toBe(2);
     expect(kpi.estimatedCount).toBe(1);
     expect(kpi.noDataCount).toBe(1);
+  });
+});
+
+describe('analytics analysis cache', () => {
+  const store = new Map<string, string>();
+
+  beforeEach(() => {
+    store.clear();
+    vi.stubGlobal('localStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, v);
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+      clear: () => store.clear(),
+      key: (i: number) => [...store.keys()][i] ?? null,
+      get length() {
+        return store.size;
+      },
+    });
+  });
+
+  it('zapisuje i odczytuje cache', async () => {
+    const {
+      saveAnalyticsCache,
+      loadAnalyticsCache,
+      clearAnalyticsCache,
+    } = await import('../services/analyticsService');
+
+    saveAnalyticsCache({
+      userId: 'u1',
+      analyzedAt: 123,
+      insights: [{ id: '1', type: 'positive', text: 'ok' }],
+      optimalTimes: [],
+      strategySuggestions: [{ date: '2026-07-21', platform: 'Facebook', topic: 'T', reason: 'R' }],
+      unavailable: false,
+    });
+
+    const loaded = loadAnalyticsCache('u1');
+    expect(loaded?.insights[0].text).toBe('ok');
+    expect(loaded?.strategySuggestions).toHaveLength(1);
+    expect(loadAnalyticsCache('other')).toBeNull();
+
+    clearAnalyticsCache('u1');
+    expect(loadAnalyticsCache('u1')).toBeNull();
+  });
+});
+
+describe('fetchAIAnalysis fallback', () => {
+  it('przy błędzie Gemini zwraca unavailable bez fake tipów', async () => {
+    vi.resetModules();
+    vi.doMock('../services/apiClient', () => ({
+      generateJson: vi.fn().mockRejectedValue(new Error('gemini down')),
+    }));
+
+    const { fetchAIAnalysis } = await import('../services/analyticsService');
+    const result = await fetchAIAnalysis([], 'u1', []);
+    expect(result.unavailable).toBe(true);
+    expect(result.insights).toEqual([]);
+    expect(result.optimalTimes).toEqual([]);
   });
 });

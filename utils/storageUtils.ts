@@ -40,6 +40,8 @@ export const STORAGE_KEYS = {
   USER_NICHE: 'userNiche',
   USER_PLATFORM: 'userPlatform',
   USER_TONE: 'userTone',
+  // analyticsService.ts — prefix + userId
+  ANALYTICS_ANALYSIS: 'so_analytics_analysis_',
 } as const;
 
 /**
@@ -50,6 +52,14 @@ export const clearAllPersistedStores = (): void => {
   Object.values(STORAGE_KEYS).forEach(key => {
     localStorage.removeItem(key);
   });
+  // Prefixed per-user caches
+  const prefixes = [STORAGE_KEYS.ANALYTICS_ANALYSIS];
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const key = localStorage.key(i);
+    if (key && prefixes.some((p) => key.startsWith(p))) {
+      localStorage.removeItem(key);
+    }
+  }
 };
 
 /**

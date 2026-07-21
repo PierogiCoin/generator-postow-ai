@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { CampaignHistoryItem, AIInsight, OptimalTime, PostPerformanceData } from '../types';
@@ -9,7 +9,13 @@ import { useDataStore } from '../stores/dataStore';
 import { useUIStore } from '../stores/uiStore';
 import { useNotifications } from '../hooks/useNotifications';
 import * as analyticsService from '../services/analyticsService';
-import { aggregateAnalyticsKpis, hasLiveMetrics } from '../services/analyticsService';
+import {
+  aggregateAnalyticsKpis,
+  hasLiveMetrics,
+  loadAnalyticsCache,
+  saveAnalyticsCache,
+  type StrategySuggestion,
+} from '../services/analyticsService';
 import { socialConnectionsService } from '../services/socialConnectionsService';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { Spinner } from './ui/LoadingStates';
@@ -251,87 +257,157 @@ export const AnalyticsView: React.FC = () => {
     const { setIsPricingModalOpen } = useUIStore();
     const { addToast } = useNotifications();
 
+    const cacheUserId = user?.id || 'anonymous';
+
     const [analyzedHistory, setAnalyzedHistory] = useState<CampaignHistoryItem[]>([]);
     const [realHistory, setRealHistory] = useState<SocialPost[]>([]);
     const [matchedSocialIds, setMatchedSocialIds] = useState<string[]>([]);
-    const [strategySuggestions, setStrategySuggestions] = useState<{ date: string; platform: string; topic: string; reason: string }[]>([]);
+    const [strategySuggestions, setStrategySuggestions] = useState<StrategySuggestion[]>([]);
     const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
     const [insights, setInsights] = useState<AIInsight[]>([]);
     const [optimalTimes, setOptimalTimes] = useState<OptimalTime[]>([]);
+    const [analysisUnavailable, setAnalysisUnavailable] = useState(false);
+    const [analyzedAt, setAnalyzedAt] = useState<number | null>(null);
+    const [hasRestoredCache, setHasRestoredCache] = useState(false);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isHydratingMetrics, setIsHydratingMetrics] = useState(false);
     const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
     const { t } = useTranslation();
     const navigate = useNavigate();
 
     const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
+    const hasAnalysisSession = insights.length > 0 || analysisUnavailable;
 
     const kpiSummary = useMemo(
         () => aggregateAnalyticsKpis(analyzedHistory, realHistory, matchedSocialIds),
         [analyzedHistory, realHistory, matchedSocialIds]
     );
 
+    const filterDraftHistory = (items: CampaignHistoryItem[]) =>
+        items.filter((h) => {
+            const topic = (h.formData?.topic || '').trim().toLowerCase();
+            return topic !== '' && topic !== 'bez tytułu';
+        });
+
+    const hydrateMetrics = async (): Promise<{
+        historyWithPerformance: CampaignHistoryItem[];
+        realSocialHistory: SocialPost[];
+        matchedIds: string[];
+        liveMatched: number;
+        estimatedCount: number;
+    }> => {
+        let realSocialHistory: SocialPost[] = [];
+        if (user) {
+            try {
+                const fetched = await socialConnectionsService.getAggregateHistory(user.id);
+                realSocialHistory = fetched.filter(
+                    (p) => p.content && p.content.trim() !== '' && !p.content.toLowerCase().includes('bez tytułu')
+                );
+            } catch {
+                // tylko lokalna historia
+            }
+        }
+
+        const filteredHistory = filterDraftHistory(history);
+        const { items: historyWithPerformance, liveMatched, estimatedCount, matchedSocialIds: matchedIds } =
+            analyticsService.enrichHistoryWithLiveMetrics(filteredHistory, realSocialHistory);
+
+        setAnalyzedHistory(historyWithPerformance);
+        setRealHistory(realSocialHistory);
+        setMatchedSocialIds(matchedIds);
+        setState({ history: historyWithPerformance });
+
+        return { historyWithPerformance, realSocialHistory, matchedIds, liveMatched, estimatedCount };
+    };
+
+    // Przywróć ostatnią analizę AI z localStorage
+    useEffect(() => {
+        if (!isAnalyticsEnabled) return;
+        const cached = loadAnalyticsCache(cacheUserId);
+        if (cached) {
+            setInsights(cached.insights);
+            setOptimalTimes(cached.optimalTimes);
+            setStrategySuggestions(cached.strategySuggestions);
+            setAnalysisUnavailable(cached.unavailable);
+            setAnalyzedAt(cached.analyzedAt);
+        }
+        setHasRestoredCache(true);
+    }, [cacheUserId, isAnalyticsEnabled]);
+
+    // Po cache — odśwież metryki bez ponownego wywołania AI
+    useEffect(() => {
+        if (!isAnalyticsEnabled || !hasRestoredCache) return;
+        const cached = loadAnalyticsCache(cacheUserId);
+        if (!cached || (cached.insights.length === 0 && !cached.unavailable)) return;
+
+        let cancelled = false;
+        (async () => {
+            setIsHydratingMetrics(true);
+            try {
+                await hydrateMetrics();
+            } finally {
+                if (!cancelled) setIsHydratingMetrics(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAnalyticsEnabled, hasRestoredCache, cacheUserId]);
+
     const handleRunAnalysis = async () => {
         setIsAnalyzing(true);
         try {
-            // 1. Pobierz posty z połączonych platform społecznościowych (FB, Instagram, LinkedIn, etc.)
-            let realSocialHistory: SocialPost[] = [];
-            if (user) {
-                try {
-                    const fetched = await socialConnectionsService.getAggregateHistory(user.id);
-                    // Filtrowanie postów bez treści lub z placeholderami
-                    realSocialHistory = fetched.filter(p => p.content && p.content.trim() !== "" && !p.content.toLowerCase().includes("bez tytułu"));
-                } catch {
-                    // Fallback to app history only
-                }
-            }
+            const { historyWithPerformance, realSocialHistory, liveMatched, estimatedCount } =
+                await hydrateMetrics();
 
-            // 2. Wzbogać historię metrykami live z social_posts (bez fałszywych liczb)
-            // Filtrowanie Szkiców bez tytułu (bardziej odporne na wielkość liter i spacje)
-            const filteredHistory = history.filter(h => {
-                const topic = (h.formData?.topic || "").trim().toLowerCase();
-                return topic !== "" && topic !== "bez tytułu";
-            });
-            const { items: historyWithPerformance, liveMatched, estimatedCount, matchedSocialIds: matchedIds } =
-              analyticsService.enrichHistoryWithLiveMetrics(filteredHistory, realSocialHistory);
-
-            // 3. Uruchom analizę AI przekazując RZECZYWISTE dane z platform jeśli są dostępne
             const analysisResult = await analyticsService.fetchAIAnalysis(
                 historyWithPerformance,
-                user?.id || 'anonymous',
+                cacheUserId,
                 realSocialHistory
             );
 
-            setAnalyzedHistory(historyWithPerformance);
-            setRealHistory(realSocialHistory);
-            setMatchedSocialIds(matchedIds);
+            const unavailable = Boolean(analysisResult.unavailable);
+            setAnalysisUnavailable(unavailable);
             setInsights(analysisResult.insights);
             setOptimalTimes(analysisResult.optimalTimes);
-            setState({ history: historyWithPerformance }); // Update store with performance data
 
-            // 4. Generowanie strategii (automatyczne po analizie)
-            setIsGeneratingStrategy(true);
-            const suggestions = await analyticsService.generateStrategySuggestions(
-                analysisResult,
-                user?.id || 'anonymous',
-                [...historyWithPerformance, ...realSocialHistory]
-            );
+            let suggestions: StrategySuggestion[] = [];
+            if (!unavailable) {
+                setIsGeneratingStrategy(true);
+                suggestions = await analyticsService.generateStrategySuggestions(
+                    analysisResult,
+                    cacheUserId,
+                    [...historyWithPerformance, ...realSocialHistory]
+                );
+            }
             setStrategySuggestions(suggestions);
             setIsGeneratingStrategy(false);
 
-            if (realSocialHistory.length > 0) {
+            const now = Date.now();
+            setAnalyzedAt(now);
+            saveAnalyticsCache({
+                userId: cacheUserId,
+                analyzedAt: now,
+                insights: analysisResult.insights,
+                optimalTimes: analysisResult.optimalTimes,
+                strategySuggestions: suggestions,
+                unavailable,
+            });
+
+            if (unavailable) {
+                addToast('Analiza AI tymczasowo niedostępna. Spróbuj ponownie za chwilę.', NotificationType.Error);
+            } else if (realSocialHistory.length > 0) {
                 addToast(
-                  liveMatched > 0
-                    ? `Analiza: ${liveMatched} live, ${estimatedCount} szacowanych (z ${realSocialHistory.length} postów z kont).`
-                    : `Brak dopasowań live — ${estimatedCount} postów oznaczono jako szacowane.`,
-                  liveMatched > 0 ? NotificationType.Success : NotificationType.Info
+                    liveMatched > 0
+                        ? `Analiza: ${liveMatched} live, ${estimatedCount} szacowanych (z ${realSocialHistory.length} postów z kont).`
+                        : `Brak dopasowań live — ${estimatedCount} postów oznaczono jako szacowane.`,
+                    liveMatched > 0 ? NotificationType.Success : NotificationType.Info
                 );
-            } else if (filteredHistory.length > 0) {
-                addToast(
-                  'Brak połączonych kont — metryki historii nie są danymi live.',
-                  NotificationType.Info
-                );
+            } else if (historyWithPerformance.length > 0) {
+                addToast('Brak połączonych kont — metryki historii nie są danymi live.', NotificationType.Info);
             }
-        } catch (error) {
+        } catch {
             addToast(t('errors.analysis_failed'), NotificationType.Error);
         } finally {
             setIsAnalyzing(false);
@@ -369,6 +445,23 @@ export const AnalyticsView: React.FC = () => {
         addToast("Przygotowano post do inteligentnego recyklingu.", NotificationType.Success);
     };
 
+    const handleEnqueueEvergreen = async (content: string, platform: string) => {
+        try {
+            const { evergreenService } = await import('../services/evergreenService');
+            await evergreenService.enqueue({
+                content,
+                platform,
+                recycleAfterDays: 30,
+            });
+            addToast('Dodano do kolejki evergreen (odświeżenie za ~30 dni).', NotificationType.Success);
+        } catch (e) {
+            addToast(
+                e instanceof Error ? e.message : 'Nie udało się dodać do evergreen',
+                NotificationType.Error
+            );
+        }
+    };
+
     const handleClearInsights = () => {
         setLearnedInsights(null);
         addToast(t('insights.cleared'), NotificationType.Info);
@@ -389,11 +482,55 @@ export const AnalyticsView: React.FC = () => {
     };
 
     if (!isAnalyticsEnabled) return <LockedState onUpgrade={onUpgrade} />;
-    if (isAnalyzing) return <LoadingState />;
-    if (insights.length === 0) return <EmptyState onRunAnalysis={handleRunAnalysis} hasHistory={history.length > 0} />;
+    if (!hasRestoredCache) return <LoadingState />;
+    if (isAnalyzing && !hasAnalysisSession) return <LoadingState />;
+    if (!hasAnalysisSession) return <EmptyState onRunAnalysis={handleRunAnalysis} hasHistory={history.length > 0} />;
+
+    const analyzedAtLabel = analyzedAt
+        ? new Date(analyzedAt).toLocaleString('pl-PL', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+          })
+        : null;
 
     return (
         <div className="space-y-8 animate-fade-in">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Analityka</h2>
+                    {analyzedAtLabel && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            Ostatnia analiza: {analyzedAtLabel}
+                            {isHydratingMetrics ? ' · odświeżanie metryk…' : ''}
+                        </p>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={handleRunAnalysis}
+                    disabled={isAnalyzing}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white text-sm font-bold transition"
+                >
+                    {isAnalyzing ? <Spinner size="sm" /> : <RefreshCwIcon className="w-4 h-4" />}
+                    {isAnalyzing ? 'Analizowanie…' : 'Odśwież analizę'}
+                </button>
+            </div>
+
+            {analysisUnavailable && (
+                <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 flex items-start gap-3">
+                    <AlertTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="font-semibold text-amber-900 dark:text-amber-100">Analiza AI niedostępna</p>
+                        <p className="text-sm text-amber-800 dark:text-amber-200/90 mt-1">
+                            Nie udało się pobrać wskazówek od modelu. Metryki Live poniżej są nadal aktualne — kliknij „Odśwież analizę”, aby spróbować ponownie.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
                     <TrendingUpIcon className="w-6 h-6 text-blue-500" />
@@ -425,52 +562,68 @@ export const AnalyticsView: React.FC = () => {
                             <SparklesIcon className="w-6 h-6 text-blue-500" />
                             Wskazówki od AI
                         </h3>
-                        <div className="space-y-3">
-                            {insights.map((insight, idx) => {
-                                const config = insightConfig[insight.type];
-                                const Icon = config.icon;
-                                return (
-                                    <div key={`${insight.id}-${idx}`} className={`p-4 rounded-lg flex items-start gap-4 ${config.color}`}>
-                                        <Icon className={`w-6 h-6 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
-                                        <p className="text-sm text-gray-700 dark:text-gray-300">{insight.text}</p>
+                        {analysisUnavailable ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Brak wskazówek — analiza AI nie została zakończona. Użyj „Odśwież analizę”.
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {insights.map((insight, idx) => {
+                                    const config = insightConfig[insight.type];
+                                    const Icon = config.icon;
+                                    return (
+                                        <div key={`${insight.id}-${idx}`} className={`p-4 rounded-lg flex items-start gap-4 ${config.color}`}>
+                                            <Icon className={`w-6 h-6 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
+                                            <p className="text-sm text-gray-700 dark:text-gray-300">{insight.text}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {!analysisUnavailable && insights.length > 0 && (
+                            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                {learnedInsights ? (
+                                    <div className="text-center p-3 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                                        <p className="text-sm font-semibold text-green-800 dark:text-green-200">{t('insights.active')}</p>
+                                        <button onClick={handleClearInsights} className="mt-2 text-xs text-green-700 dark:text-green-300 hover:underline">{t('insights.clear')}</button>
                                     </div>
-                                );
-                            })}
-                        </div>
-                        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            {learnedInsights ? (
-                                <div className="text-center p-3 bg-green-100 dark:bg-green-900/50 rounded-lg">
-                                    <p className="text-sm font-semibold text-green-800 dark:text-green-200">{t('insights.active')}</p>
-                                    <button onClick={handleClearInsights} className="mt-2 text-xs text-green-700 dark:text-green-300 hover:underline">{t('insights.clear')}</button>
-                                </div>
-                            ) : (
-                                <button onClick={() => handleApplyInsights(insights)} className="w-full flex items-center justify-center gap-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 font-bold py-2.5 px-4 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition">
-                                    <SparklesIcon className="w-5 h-5" />
-                                    {t('insights.apply')}
-                                </button>
-                            )}
-                        </div>
+                                ) : (
+                                    <button onClick={() => handleApplyInsights(insights)} className="w-full flex items-center justify-center gap-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 font-bold py-2.5 px-4 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition">
+                                        <SparklesIcon className="w-5 h-5" />
+                                        {t('insights.apply')}
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Optimal Times */}
                     <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Optymalne czasy publikacji</h3>
-                        <div className="space-y-3">
-                            {optimalTimes.map((time, idx) => {
-                                const config = platformConfig[time.platform];
-                                const Icon = config ? config.icon : SparklesIcon;
-                                return (
-                                    <div key={`${time.platform}-${idx}`} className="flex items-center gap-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                                        <Icon className="w-8 h-8 text-gray-600 dark:text-gray-300" />
-                                        <div className="flex-grow">
-                                            <p className="font-semibold text-gray-800 dark:text-white">{config ? config.name : time.platform}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">{time.day}</p>
+                        {analysisUnavailable || optimalTimes.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {analysisUnavailable
+                                    ? 'Czasy publikacji niedostępne bez udanej analizy AI.'
+                                    : 'Brak wystarczających danych do wyznaczenia godzin.'}
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {optimalTimes.map((time, idx) => {
+                                    const config = platformConfig[time.platform];
+                                    const Icon = config ? config.icon : SparklesIcon;
+                                    return (
+                                        <div key={`${time.platform}-${idx}`} className="flex items-center gap-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                            <Icon className="w-8 h-8 text-gray-600 dark:text-gray-300" />
+                                            <div className="flex-grow">
+                                                <p className="font-semibold text-gray-800 dark:text-white">{config ? config.name : time.platform}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{time.day}</p>
+                                            </div>
+                                            <p className="font-semibold text-blue-600 dark:text-blue-400 text-sm">{time.time}</p>
                                         </div>
-                                        <p className="font-semibold text-blue-600 dark:text-blue-400 text-sm">{time.time}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     {/* AI Strategy Suggestions */}
@@ -614,9 +767,17 @@ export const AnalyticsView: React.FC = () => {
                                             <button
                                                 onClick={() => handleRecyclePost(getPostContentForRecycle(item), platform)}
                                                 className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg text-blue-500 transition"
-                                                title="Inteligentny Recykling"
+                                                title="Inteligentny Recykling (teraz)"
                                             >
                                                 <RefreshCwIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleEnqueueEvergreen(getPostContentForRecycle(item), platform)}
+                                                className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg text-emerald-600 transition text-[10px] font-black uppercase tracking-wider px-2"
+                                                title="Evergreen — automatyczny recycle za 30 dni"
+                                            >
+                                                EV
                                             </button>
                                         </div>
                                     </div>
@@ -637,18 +798,28 @@ export const AnalyticsView: React.FC = () => {
                                     </div>
 
                                     <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                                        <button
-                                            onClick={() => toggleExpand(item.id)}
-                                            className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1"
-                                        >
-                                            <span>{isExpanded ? 'Ukryj' : 'Pokaż'} analizę</span>
-                                            <ArrowUpIcon className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-0' : 'rotate-180'}`} />
-                                        </button>
-                                        {isExpanded && isDraftPost(item) && (
-                                            <div className="mt-4 space-y-4 animate-fade-in">
-                                                <SentimentDisplay result={item.sentimentAnalysis ?? null} isLoading={false} />
-                                                <SEOAnalysisDisplay result={item.seoAnalysis ?? null} isLoading={false} />
-                                            </div>
+                                        {isDraftPost(item) ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleExpand(item.id)}
+                                                    className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1"
+                                                >
+                                                    <span>{isExpanded ? 'Ukryj' : 'Pokaż'} analizę</span>
+                                                    <ArrowUpIcon className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-0' : 'rotate-180'}`} />
+                                                </button>
+                                                {isExpanded && (
+                                                    <div className="mt-4 space-y-4 animate-fade-in">
+                                                        <SentimentDisplay result={item.sentimentAnalysis ?? null} isLoading={false} />
+                                                        <SEOAnalysisDisplay result={item.seoAnalysis ?? null} isLoading={false} />
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                Brak analizy SEO / sentiment — dostępna tylko dla szkiców z generatora.
+                                                {item.url ? ' Otwórz post zewnętrznym linkiem powyżej.' : ''}
+                                            </p>
                                         )}
                                     </div>
                                 </div>

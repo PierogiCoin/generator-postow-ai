@@ -1,4 +1,5 @@
-import type { CampaignHistoryItem, AIInsight, OptimalTime, Platform, PostPerformanceData } from '../types';
+import type { CampaignHistoryItem, AIInsight, OptimalTime, PostPerformanceData } from '../types';
+import { STORAGE_KEYS } from '../utils/storageUtils';
 import type { SocialPost } from '../types/socialPublishing';
 
 import { generateJson } from './apiClient';
@@ -183,9 +184,69 @@ export function aggregateAnalyticsKpis(
   return { reach, likes, comments, shares, liveCount, estimatedCount, noDataCount };
 }
 
-interface AIAnalysisResult {
+export interface AIAnalysisResult {
   insights: AIInsight[];
   optimalTimes: OptimalTime[];
+  /** true = Gemini niedostępne; UI nie powinno traktować tego jak realnej analizy */
+  unavailable?: boolean;
+}
+
+export type StrategySuggestion = {
+  date: string;
+  platform: string;
+  topic: string;
+  reason: string;
+};
+
+export interface AnalyticsAnalysisCache {
+  userId: string;
+  analyzedAt: number;
+  insights: AIInsight[];
+  optimalTimes: OptimalTime[];
+  strategySuggestions: StrategySuggestion[];
+  unavailable: boolean;
+}
+
+const ANALYTICS_CACHE_PREFIX = STORAGE_KEYS.ANALYTICS_ANALYSIS;
+
+function analyticsCacheKey(userId: string): string {
+  return `${ANALYTICS_CACHE_PREFIX}${userId || 'anonymous'}`;
+}
+
+export function loadAnalyticsCache(userId: string): AnalyticsAnalysisCache | null {
+  try {
+    const raw = localStorage.getItem(analyticsCacheKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AnalyticsAnalysisCache;
+    if (!parsed || parsed.userId !== userId) return null;
+    if (!Array.isArray(parsed.insights)) return null;
+    return {
+      userId: parsed.userId,
+      analyzedAt: typeof parsed.analyzedAt === 'number' ? parsed.analyzedAt : Date.now(),
+      insights: parsed.insights,
+      optimalTimes: Array.isArray(parsed.optimalTimes) ? parsed.optimalTimes : [],
+      strategySuggestions: Array.isArray(parsed.strategySuggestions) ? parsed.strategySuggestions : [],
+      unavailable: Boolean(parsed.unavailable),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function saveAnalyticsCache(cache: AnalyticsAnalysisCache): void {
+  try {
+    localStorage.setItem(analyticsCacheKey(cache.userId), JSON.stringify(cache));
+  } catch {
+    // quota / private mode — ignore
+  }
+}
+
+export function clearAnalyticsCache(userId: string): void {
+  try {
+    localStorage.removeItem(analyticsCacheKey(userId));
+  } catch {
+    // ignore
+  }
 }
 
 /**
@@ -244,25 +305,17 @@ export const fetchAIAnalysis = async (
       userId
     );
 
-    return result;
-  } catch {
     return {
-      insights: [
-        {
-          id: 'err-1',
-          type: 'observation',
-          text: 'Analiza w czasie rzeczywistym tymczasowo niedostępna. Wykorzystano dane archiwalne.',
-        },
-        {
-          id: 'err-2',
-          type: 'suggestion',
-          text: 'Opierając się na trendach rynkowych, posty z wideo angażują o 40% lepiej niż same obrazy.',
-        },
-      ],
-      optimalTimes: [
-        { platform: 'Facebook' as Platform, day: 'Wtorek', time: '18:00' },
-        { platform: 'Instagram' as Platform, day: 'Czwartek', time: '20:00' },
-      ],
+      insights: Array.isArray(result.insights) ? result.insights : [],
+      optimalTimes: Array.isArray(result.optimalTimes) ? result.optimalTimes : [],
+      unavailable: false,
+    };
+  } catch {
+    // Bez gotowych tipów — UI pokazuje stan błędu, nie fake analizę
+    return {
+      insights: [],
+      optimalTimes: [],
+      unavailable: true,
     };
   }
 };
@@ -274,7 +327,9 @@ export const generateStrategySuggestions = async (
   analysis: AIAnalysisResult,
   userId: string,
   historySummary: unknown[]
-): Promise<{ date: string; platform: string; topic: string; reason: string }[]> => {
+): Promise<StrategySuggestion[]> => {
+  if (analysis.unavailable) return [];
+
   try {
     const result = await generateJson<{
       suggestions: { date: string; platform: string; topic: string; reason: string }[];
