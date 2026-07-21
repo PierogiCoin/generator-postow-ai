@@ -164,7 +164,7 @@ export const ScheduledPostsList: React.FC<ScheduledPostsListProps> = ({ schedule
       )}
 
       {sortedPosts.length > 0 && (
-        <div className="space-y-3 max-h-60 overflow-y-auto pr-2 -mr-2">
+        <div className="space-y-3 pr-1">
           {sortedPosts
             .map((post) => {
               const postType = getPostType(post);

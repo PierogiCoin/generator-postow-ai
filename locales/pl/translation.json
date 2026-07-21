@@ -495,9 +495,10 @@
       "history": "Historia",
       "drafts": "Szkice",
       "favorites": "Ulubione",
-      "scheduled": "Zaplanowane",
+      "scheduled": "Plan",
       "stats": "Statystyki",
-      "subscription": "Subskrypcja"
+      "subscription": "Sub",
+      "ariaLabel": "Zakładki panelu bocznego"
     },
     "historySection": {
       "title": "Historia",

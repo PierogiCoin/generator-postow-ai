@@ -93,10 +93,14 @@ export const GeneratorView: React.FC = () => {
         return () => mq.removeEventListener('change', update);
     }, []);
 
+    // Tylko przy przejściu breakpointu lg — nie przy każdym resize (np. pasek adresu iOS)
     useEffect(() => {
-        const handleResize = () => setIsSidebarOpen(window.innerWidth > 1024);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
+        const mq = window.matchMedia('(min-width: 1024px)');
+        const onBreakpoint = (e: MediaQueryListEvent) => {
+            setIsSidebarOpen(e.matches);
+        };
+        mq.addEventListener('change', onBreakpoint);
+        return () => mq.removeEventListener('change', onBreakpoint);
     }, []);
 
     useEffect(() => {
@@ -109,6 +113,7 @@ export const GeneratorView: React.FC = () => {
     useEffect(() => {
         if (inspiration && isMobile) {
             setMobilePanel('result');
+            setIsSidebarOpen(false);
         }
     }, [inspiration, isMobile]);
 
@@ -208,7 +213,7 @@ export const GeneratorView: React.FC = () => {
                             )}
                         </div>
                         {history.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.historySection.empty')}</p> : (
-                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="space-y-3 pr-1">
                                 {history.map((item, index) => {
                                     const isSelected = inspiration?.id === item.id;
                                     return (
@@ -253,7 +258,7 @@ export const GeneratorView: React.FC = () => {
                     <section className="space-y-4">
                         <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">{t('sidebar.draftsSection.title')}</h2>
                         {drafts.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.draftsSection.empty')}</p> : (
-                            <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="space-y-3 pr-1">
                                 {drafts.map((draft, index) => (
                                     <div key={draft.id} style={{ animationDelay: `${index * 50}ms` }} onMouseEnter={(e) => handleMouseEnter(e, draft)} onMouseLeave={handleMouseLeave} className="group p-4 rounded-2xl bg-white/40 dark:bg-slate-950/20 border border-slate-200/50 dark:border-white/5 flex justify-between items-center animate-fade-in-up hover:border-cyan-500/35 transition-all">
                                         <div className="min-w-0 flex-grow" onClick={() => selectInspiration(draft)} style={{ cursor: 'pointer' }}>
@@ -338,9 +343,9 @@ export const GeneratorView: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="px-4 py-3 flex-shrink-0">
-                        <div 
-                            className="grid grid-cols-6 gap-1 p-1 bg-slate-100/60 dark:bg-slate-950/40 rounded-xl border border-slate-200/60 dark:border-white/5 focus:outline-none"
+                    <div className="px-3 py-3 flex-shrink-0 border-b border-white/5">
+                        <div
+                            className="flex gap-1 overflow-x-auto overscroll-x-contain pb-0.5 custom-scrollbar snap-x snap-mandatory focus:outline-none"
                             role="tablist"
                             aria-label={t('sidebar.tabs.ariaLabel', 'Zakładki panelu bocznego')}
                             onKeyDown={handleTabsKeyDown}
@@ -357,14 +362,17 @@ export const GeneratorView: React.FC = () => {
                                     tabIndex={isSelected ? 0 : -1}
                                     onClick={() => setActiveSidebarTab(tab.id as SidebarTab)}
                                     title={tab.label}
-                                    aria-label={tab.label}
-                                    className={`relative p-2.5 rounded-lg transition-colors flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${isSelected 
-                                        ? 'bg-white dark:bg-slate-800 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25' 
-                                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100/60 dark:hover:bg-white/5'}`}
+                                    aria-label={badge > 0 ? `${tab.label} (${badgeLabel})` : tab.label}
+                                    className={`relative snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${isSelected
+                                        ? 'bg-white dark:bg-slate-800 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/5 border border-transparent'}`}
                                 >
-                                    <tab.icon className="w-4 h-4" />
+                                    <tab.icon className="w-[18px] h-[18px]" />
+                                    <span className="text-[9px] font-bold uppercase tracking-wide leading-tight max-w-[3.25rem] truncate">
+                                        {tab.label}
+                                    </span>
                                     {badge > 0 && (
-                                        <span className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] px-0.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                                        <span className="absolute top-0.5 right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center leading-none">
                                             {badgeLabel}
                                         </span>
                                     )}
@@ -394,9 +402,10 @@ export const GeneratorView: React.FC = () => {
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
                         aria-label={t('generatorView.openSidebar', 'Otwórz panel boczny')}
-                        className="fixed bottom-24 left-3 sm:left-5 z-[60] w-11 h-11 sm:w-12 sm:h-12 bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 rounded-xl shadow-lg flex items-center justify-center text-slate-500 hover:text-cyan-600 transition-colors backdrop-blur-md"
+                        className="mb-3 inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 shadow-sm text-slate-600 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 hover:border-cyan-500/30 transition-colors backdrop-blur-md"
                     >
-                        <SidebarIcon className="w-5 h-5" />
+                        <SidebarIcon className="w-5 h-5 flex-shrink-0" />
+                        <span className="text-sm font-semibold">{t('generatorView.openSidebar', 'Panel boczny')}</span>
                     </button>
                 )}
 

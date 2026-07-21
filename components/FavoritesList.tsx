@@ -60,7 +60,7 @@ export const FavoritesList: React.FC<FavoritesListProps> = ({ favorites, inspira
         </div>
       ) : (
         <>
-          <div className="space-y-2 max-h-60 overflow-y-auto pr-2 -mr-2">
+          <div className="space-y-2 pr-1">
             {favorites.map((item) => {
               const isSelected = inspiration?.id === item.id;
               return (

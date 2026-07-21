@@ -491,9 +491,10 @@
       "history": "History",
       "drafts": "Drafts",
       "favorites": "Favorites",
-      "scheduled": "Scheduled",
-      "stats": "Statistics",
-      "subscription": "Subscription"
+      "scheduled": "Plan",
+      "stats": "Stats",
+      "subscription": "Sub",
+      "ariaLabel": "Side panel tabs"
     },
     "historySection": {
       "title": "History",
