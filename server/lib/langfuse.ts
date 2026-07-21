@@ -14,7 +14,7 @@ type TraceHandle = {
   }) => void;
 };
 
-let langfuseClient: {
+type LangfuseLike = {
   trace: (opts: Record<string, unknown>) => {
     generation: (opts: Record<string, unknown>) => {
       end: (opts?: Record<string, unknown>) => void;
@@ -22,11 +22,12 @@ let langfuseClient: {
     update: (opts: Record<string, unknown>) => void;
   };
   flushAsync?: () => Promise<void>;
-} | null = null;
+};
 
+let langfuseClient: LangfuseLike | null = null;
 let initAttempted = false;
 
-function getClient() {
+async function getClientAsync(): Promise<LangfuseLike | null> {
   if (initAttempted) return langfuseClient;
   initAttempted = true;
 
@@ -37,18 +38,13 @@ function getClient() {
   }
 
   try {
-    // Dynamic require-style import — package optional until installed
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Langfuse } = require('langfuse') as {
-      Langfuse: new (opts: Record<string, string>) => typeof langfuseClient extends null
-        ? never
-        : NonNullable<typeof langfuseClient>;
-    };
+    const mod = await import('langfuse');
+    const Langfuse = (mod as { Langfuse: new (o: Record<string, string>) => LangfuseLike }).Langfuse;
     langfuseClient = new Langfuse({
       publicKey,
       secretKey,
       baseUrl: process.env.LANGFUSE_HOST || process.env.LANGFUSE_BASE_URL || 'https://cloud.langfuse.com',
-    }) as typeof langfuseClient;
+    });
     logger.info('[Langfuse] tracing enabled');
   } catch (e) {
     logger.warn('[Langfuse] init failed (is langfuse installed?)', e);
@@ -58,13 +54,7 @@ function getClient() {
   return langfuseClient;
 }
 
-export function isLangfuseEnabled(): boolean {
-  return Boolean(process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY);
-}
-
-/**
- * Start a generation observation. Always returns a handle (no-op if disabled).
- */
+/** Sync start — uses cached client; first call may no-op until warm. */
 export function startGenerationTrace(input: {
   name: string;
   userId?: string | null;
@@ -73,7 +63,10 @@ export function startGenerationTrace(input: {
   tags?: string[];
   metadata?: Record<string, unknown>;
 }): TraceHandle {
-  const client = getClient();
+  // Kick off async init without blocking
+  void getClientAsync();
+
+  const client = langfuseClient;
   if (!client) {
     return { end: () => undefined };
   }
@@ -116,13 +109,6 @@ export function startGenerationTrace(input: {
   }
 }
 
-export async function flushLangfuse(): Promise<void> {
-  const client = getClient();
-  if (client?.flushAsync) {
-    try {
-      await client.flushAsync();
-    } catch {
-      /* ignore */
-    }
-  }
+export function isLangfuseEnabled(): boolean {
+  return Boolean(process.env.LANGFUSE_PUBLIC_KEY && process.env.LANGFUSE_SECRET_KEY);
 }

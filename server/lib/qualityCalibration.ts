@@ -1,24 +1,20 @@
 /**
  * Quality gate calibration from real social_posts.metrics.
- * Adjusts auto-publish threshold and blends LLM score with historical engagement prior.
  */
 
 import { supabase } from './clients.js';
 import logger from '../logger.js';
+import {
+  DEFAULT_AUTO_PUBLISH_MIN,
+  applyCalibrationToScore,
+  type CalibrationResult,
+} from './qualityCalibrationCore.js';
 
-export const DEFAULT_AUTO_PUBLISH_MIN = 70;
-
-export interface CalibrationResult {
-  /** Min overall score for auto-publish (clamped 60–80). */
-  minScore: number;
-  /** Sample size used. */
-  sampleSize: number;
-  /** Median engagement proxy of top quartile posts. */
-  topQuartileEngagement: number;
-  /** Soft prior added to LLM engagement dimension (−5…+8). */
-  engagementPriorBoost: number;
-  calibrated: boolean;
-}
+export {
+  DEFAULT_AUTO_PUBLISH_MIN,
+  applyCalibrationToScore,
+  type CalibrationResult,
+} from './qualityCalibrationCore.js';
 
 function engagementProxy(metrics: Record<string, unknown> | null | undefined): number {
   if (!metrics) return 0;
@@ -36,10 +32,6 @@ function percentile(sorted: number[], p: number): number {
   return sorted[idx];
 }
 
-/**
- * Derive a user-specific auto-publish threshold from posts that actually got engagement.
- * Sparse data → defaults (not calibrated).
- */
 export async function getQualityCalibration(
   userId: string,
   platform?: string
@@ -81,8 +73,6 @@ export async function getQualityCalibration(
     const p50 = percentile(eng, 50);
     const p75 = percentile(eng, 75);
 
-    // If user typically gets strong engagement, allow slightly lower LLM score (trust track record).
-    // If engagement is weak, raise the bar.
     let minScore = DEFAULT_AUTO_PUBLISH_MIN;
     if (p75 > p50 * 1.5 && p50 > 10) {
       minScore = 65;
@@ -90,7 +80,6 @@ export async function getQualityCalibration(
       minScore = 75;
     }
 
-    // Prior boost: how far above median the draft's "style class" sits — applied as soft nudge
     const spread = p75 - p25 || 1;
     const engagementPriorBoost = Math.max(
       -5,
@@ -108,28 +97,4 @@ export async function getQualityCalibration(
     logger.warn('[QualityCalibration] exception', e);
     return fallback;
   }
-}
-
-export function applyCalibrationToScore(
-  overall: number,
-  engagementScore: number,
-  calibration: CalibrationResult
-): { overall: number; engagementScore: number; minScore: number } {
-  if (!calibration.calibrated) {
-    return { overall, engagementScore, minScore: DEFAULT_AUTO_PUBLISH_MIN };
-  }
-
-  const boostedEng = Math.max(
-    0,
-    Math.min(100, engagementScore + calibration.engagementPriorBoost)
-  );
-  // Re-weight overall: keep original mix but nudge with calibrated engagement
-  const delta = boostedEng - engagementScore;
-  const newOverall = Math.max(0, Math.min(100, Math.round(overall + delta * 0.4)));
-
-  return {
-    overall: newOverall,
-    engagementScore: boostedEng,
-    minScore: calibration.minScore,
-  };
 }
