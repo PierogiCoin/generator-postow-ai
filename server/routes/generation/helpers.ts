@@ -57,10 +57,14 @@ export async function runTextGeneration(
 }
 
 export function modelsWithFallback(modelName: string): string[] {
-  if (modelName.includes('2.0') || modelName.includes('2.5')) return [modelName];
   if (modelName.includes('lite')) return [modelName];
-  if (modelName.includes('pro')) return [modelName, 'gemini-flash-lite-latest'];
-  return ['gemini-flash-lite-latest', 'gemini-flash-latest'];
+  if (modelName.includes('2.0') || modelName.includes('2.5')) {
+    return [modelName, 'gemini-flash-latest', 'gemini-flash-lite-latest'];
+  }
+  if (modelName.includes('pro')) {
+    return [modelName, 'gemini-2.5-flash', 'gemini-flash-lite-latest'];
+  }
+  return ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
 }
 
 export function sendGenerationError(res: Response, error: unknown): void {

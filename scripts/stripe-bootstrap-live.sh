@@ -5,6 +5,7 @@ set -euo pipefail
 APP_META="generator-postow-ai"
 WEBHOOK_URL="${WEBHOOK_URL:-https://generator-postow-api-production.up.railway.app/api/payments/webhook}"
 OUT_FILE="${OUT_FILE:-/tmp/generator-postow-stripe-live-env.txt}"
+CURRENCY="${STRIPE_BOOTSTRAP_CURRENCY:-pln}"
 
 : > "$OUT_FILE"
 
@@ -53,7 +54,7 @@ create_sub() {
     price_id=$(stripe --live prices create \
       -d "product=${product_id}" \
       -d "unit_amount=${amount_cents}" \
-      -d "currency=usd" \
+      -d "currency=${CURRENCY}" \
       -d "recurring[interval]=${interval}" \
       -d "metadata[app]=${APP_META}" \
       -d "metadata[plan_key]=${plan_key}" \
@@ -107,7 +108,7 @@ create_pack() {
     price_id=$(stripe --live prices create \
       -d "product=${product_id}" \
       -d "unit_amount=${amount_cents}" \
-      -d "currency=usd" \
+      -d "currency=${CURRENCY}" \
       -d "metadata[app]=${APP_META}" \
       -d "metadata[plan_key]=${plan_key}" \
       | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
@@ -126,20 +127,34 @@ create_pack() {
   echo "${env_key}=${price_id}" >> "$OUT_FILE"
 }
 
-echo "=== Subskrypcje (USD / mies.) ==="
-create_sub creator "Generator Postów AI — Creator" 2900 month
-create_sub pro "Generator Postów AI — Pro" 4900 month
-create_sub business "Generator Postów AI — Business" 9900 month
-create_sub agency "Generator Postów AI — Agency" 24900 month
-create_sub enterprise "Generator Postów AI — Enterprise" 29900 month
+if [ "$CURRENCY" = "pln" ]; then
+  CREATOR_M=7900; CREATOR_Y=79000
+  PRO_M=19900; PRO_Y=199000
+  BIZ_M=39900; BIZ_Y=399000
+  AGY_M=99900; AGY_Y=999000
+  ENT_M=119900; ENT_Y=1199000
+else
+  CREATOR_M=1900; CREATOR_Y=19000
+  PRO_M=4900; PRO_Y=49000
+  BIZ_M=9900; BIZ_Y=99000
+  AGY_M=24900; AGY_Y=249000
+  ENT_M=29900; ENT_Y=299000
+fi
+
+echo "=== Subskrypcje ($CURRENCY / mies.) ==="
+create_sub creator "Generator Postów AI — Creator" "$CREATOR_M" month
+create_sub pro "Generator Postów AI — Pro" "$PRO_M" month
+create_sub business "Generator Postów AI — Business" "$BIZ_M" month
+create_sub agency "Generator Postów AI — Agency" "$AGY_M" month
+create_sub enterprise "Generator Postów AI — Enterprise" "$ENT_M" month
 
 echo ""
-echo "=== Subskrypcje (USD / rok — 10× miesiąc, 2 miesiące gratis) ==="
-create_sub creator "Generator Postów AI — Creator" 29000 year
-create_sub pro "Generator Postów AI — Pro" 49000 year
-create_sub business "Generator Postów AI — Business" 99000 year
-create_sub agency "Generator Postów AI — Agency" 249000 year
-create_sub enterprise "Generator Postów AI — Enterprise" 299000 year
+echo "=== Subskrypcje ($CURRENCY / rok — 10× miesiąc, 2 miesiące gratis) ==="
+create_sub creator "Generator Postów AI — Creator" "$CREATOR_Y" year
+create_sub pro "Generator Postów AI — Pro" "$PRO_Y" year
+create_sub business "Generator Postów AI — Business" "$BIZ_Y" year
+create_sub agency "Generator Postów AI — Agency" "$AGY_Y" year
+create_sub enterprise "Generator Postów AI — Enterprise" "$ENT_Y" year
 
 echo ""
 echo "=== Pakiety kredytów (one-time) ==="

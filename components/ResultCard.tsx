@@ -309,9 +309,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
                 onSchedule={() =>
                   formData && appHandlers.handleOpenScheduleModal(result, formData)
                 }
-                onPublishNow={(connectionId) =>
+                onPublishNow={(connectionId, options) =>
                   formData &&
-                  appHandlers.handlePublishNow(result, formData.platform, connectionId)
+                  appHandlers.handlePublishNow(result, formData.platform, connectionId, options)
                 }
                 onOpenRepurpose={() => appHandlers.handleOpenRepurposeModal(result)}
                 onToast={notificationSystem.addToast}

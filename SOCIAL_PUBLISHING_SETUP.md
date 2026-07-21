@@ -320,16 +320,16 @@ curl -X POST http://localhost:3001/api/social/publish \
 - [x] Analytics import (likes, comments, shares) — `socialSync` → `social_posts.metrics` + `enrichHistoryWithLiveMetrics` (bez mocków)
 - [ ] Auto-retry failed posts
 - [ ] Bulk publishing
-- [ ] Multi-account per platform
-- [ ] Post preview przed publikacją
+- [x] Multi-account per platform — `DATABASE_SCHEMA_SOCIAL_MULTI.sql` + upsert `(user_id,platform,account_id)`
+- [x] Post preview przed publikacją — confirm modal w `ResultPublishTab`
 - [ ] Error notifications
 
 ### Faza 3: Advanced (TODO)
 - [ ] Best time scheduler AI
 - [ ] Auto cross-posting
-- [ ] Thread/carousel support
-- [ ] Video publishing
-- [ ] Stories publishing
+- [x] Thread/carousel support — IG carousel + Threads OAuth/publish
+- [x] Video publishing — IG Reels, FB video, TikTok, YouTube Shorts
+- [x] Stories publishing — IG Stories
 - [ ] Engagement monitoring
 
 ---

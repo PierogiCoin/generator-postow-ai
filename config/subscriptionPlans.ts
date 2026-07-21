@@ -96,18 +96,19 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
     namePl: 'Darmowy',
     ...withYearlyPricing(SUBSCRIPTION_PRICING.free),
     savingsPercent: 0,
-    descriptionPl: 'Poznaj AI bez karty — limit zgodny z limitem konta.',
+    descriptionPl: 'Poznaj AI bez karty — więcej kredytów i podstawowe planowanie.',
     stripePriceEnv: null,
     stripePriceEnvYearly: null,
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.free.credits) },
-      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(10) },
-      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(3) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(15) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(5) },
+      { id: 'schedule', labelPl: 'Planowanie (podstawowe)' },
       { id: 'campaign', labelPl: 'Kampanie AI', limit: formatUsageLimit(1) },
     ],
-    usageLimits: { text: 10, image: 3, video: 0, campaign: 1 },
+    usageLimits: { text: 15, image: 5, video: 0, campaign: 1 },
     flags: {
-      scheduling: false,
+      scheduling: true,
       analytics: false,
       strategist: false,
       brandVoices: 1,
@@ -124,7 +125,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       SUBSCRIPTION_PRICING.creator.priceUsd,
       SUBSCRIPTION_PRICING.creator.credits
     ),
-    descriptionPl: 'Freelancerzy i twórcy — kalendarz, wideo i głos marki.',
+    descriptionPl: 'Freelancerzy i twórcy — kalendarz, wideo i głos marki (od 79 zł).',
     stripePriceEnv: 'STRIPE_CREATOR_PRICE_ID',
     stripePriceEnvYearly: 'STRIPE_CREATOR_YEARLY_PRICE_ID',
     features: [

@@ -223,7 +223,9 @@ Format as JSON with these fields:
 }
 
 /**
- * Generate video using selected provider
+ * Generate video using selected provider.
+ * No mock/theater results — missing keys or unimplemented providers fail loudly.
+ * Product video path: VideoStoryModal → Veo/Luma/Replicate via /api/generate-video-story.
  */
 export async function generateVideo(
   request: VideoGenerationRequest,
@@ -237,11 +239,12 @@ export async function generateVideo(
     case 'luma':
       return generateWithLuma(request, userId);
     case 'kling':
-      return generateWithKling(request, userId);
     case 'haiper':
-      return generateWithHaiper(request, userId);
     case 'stability':
-      return generateWithStability(request, userId);
+    case 'leonardo':
+      throw new Error(
+        `Provider ${request.provider} nie jest dostępny. Użyj Video Story (Veo/Luma) z karty wyniku.`
+      );
     default:
       throw new Error(`Provider ${request.provider} not implemented`);
   }
@@ -252,11 +255,13 @@ export async function generateVideo(
  */
 async function generateWithRunway(
   request: VideoGenerationRequest,
-  userId: string
+  _userId: string
 ): Promise<VideoGenerationResult> {
   const apiKey = import.meta.env.VITE_RUNWAY_API_KEY as string | undefined;
   if (!apiKey) {
-    return createMockResult(request, 'runway');
+    throw new Error(
+      'Runway nie jest skonfigurowany. Użyj Video Story (Veo/Luma) z karty wyniku.'
+    );
   }
 
   try {
@@ -292,8 +297,9 @@ async function generateWithRunway(
       cost: { credits: 25, estimatedUsd: 0.5 },
       createdAt: new Date().toISOString(),
     };
-  } catch {
-    return createMockResult(request, 'runway');
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error('Runway generation failed');
   }
 }
 
@@ -302,11 +308,13 @@ async function generateWithRunway(
  */
 async function generateWithPika(
   request: VideoGenerationRequest,
-  userId: string
+  _userId: string
 ): Promise<VideoGenerationResult> {
   const apiKey = import.meta.env.VITE_PIKA_API_KEY as string | undefined;
   if (!apiKey) {
-    return createMockResult(request, 'pika');
+    throw new Error(
+      'Pika nie jest skonfigurowana. Użyj Video Story (Veo/Luma) z karty wyniku.'
+    );
   }
 
   try {
@@ -340,21 +348,24 @@ async function generateWithPika(
       cost: { credits: 15, estimatedUsd: 0.3 },
       createdAt: new Date().toISOString(),
     };
-  } catch {
-    return createMockResult(request, 'pika');
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error('Pika generation failed');
   }
 }
 
 /**
- * Luma Dream Machine integration
+ * Luma Dream Machine — prefer server Video Story for production.
  */
 async function generateWithLuma(
   request: VideoGenerationRequest,
-  userId: string
+  _userId: string
 ): Promise<VideoGenerationResult> {
   const apiKey = import.meta.env.VITE_LUMA_API_KEY as string | undefined;
   if (!apiKey) {
-    return createMockResult(request, 'luma');
+    throw new Error(
+      'Luma nie jest skonfigurowana po stronie klienta. Użyj Video Story (Veo/Luma) z karty wyniku.'
+    );
   }
 
   try {
@@ -386,65 +397,10 @@ async function generateWithLuma(
       cost: { credits: 20, estimatedUsd: 0.4 },
       createdAt: new Date().toISOString(),
     };
-  } catch {
-    return createMockResult(request, 'luma');
+  } catch (error) {
+    if (error instanceof Error) throw error;
+    throw new Error('Luma generation failed');
   }
-}
-
-/**
- * Kling AI integration
- */
-async function generateWithKling(
-  request: VideoGenerationRequest,
-  userId: string
-): Promise<VideoGenerationResult> {
-  // Kling requires different auth method
-  return createMockResult(request, 'kling');
-}
-
-/**
- * Haiper AI integration
- */
-async function generateWithHaiper(
-  request: VideoGenerationRequest,
-  userId: string
-): Promise<VideoGenerationResult> {
-  return createMockResult(request, 'haiper');
-}
-
-/**
- * Stability AI video integration
- */
-async function generateWithStability(
-  request: VideoGenerationRequest,
-  userId: string
-): Promise<VideoGenerationResult> {
-  return createMockResult(request, 'stability');
-}
-
-/**
- * Create mock result for demo/development
- */
-function createMockResult(
-  request: VideoGenerationRequest,
-  provider: VideoProvider
-): VideoGenerationResult {
-  return {
-    id: `${provider}-mock-${Date.now()}`,
-    provider,
-    status: 'completed',
-    videoUrl: `https://example.com/mock-video-${provider}.mp4`,
-    thumbnailUrl: `https://via.placeholder.com/640x360/4F46E5/FFFFFF?text=${provider}+video`,
-    duration: request.duration || 5,
-    aspectRatio: request.aspectRatio || '16:9',
-    cost: {
-      credits: provider === 'runway' ? 25 : provider === 'pika' ? 15 : 20,
-      estimatedUsd: provider === 'runway' ? 0.5 : provider === 'pika' ? 0.3 : 0.4,
-    },
-    generationTime: 45,
-    createdAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-  };
 }
 
 /**

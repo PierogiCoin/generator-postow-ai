@@ -62,7 +62,9 @@ describe('pricingMath — strategia sprzedaży', () => {
   });
 
   it('PLN jest spójne z tabelą charm', () => {
-    expect(SUBSCRIPTION_PRICING.creator.pricePln).toBe(119);
+    expect(SUBSCRIPTION_PRICING.creator.priceUsd).toBe(19);
+    expect(SUBSCRIPTION_PRICING.creator.pricePln).toBe(79);
+    expect(SUBSCRIPTION_PRICING.free.credits).toBe(150);
     expect(SUBSCRIPTION_PRICING.pro.pricePln).toBe(199);
     expect(SUBSCRIPTION_PRICING.business.pricePln).toBe(399);
     expect(SUBSCRIPTION_PRICING.agency.pricePln).toBe(999);

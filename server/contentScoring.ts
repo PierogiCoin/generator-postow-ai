@@ -28,6 +28,9 @@ export interface ContentScore {
   };
   suggestions: string[];
   badge: 'red' | 'yellow' | 'green';
+  /** Calibrated auto-publish threshold (may differ from default 70). */
+  calibratedMinScore?: number;
+  calibrationSampleSize?: number;
 }
 
 /**

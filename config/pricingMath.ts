@@ -10,8 +10,16 @@
  * Koszty akcji (kredyty): post 10 · obraz 50 · wideo 200 · optymalizacja 25
  */
 
-/** Kurs do wyświetlania PLN (marketing); Stripe nadal w USD */
+/** Kurs do wyświetlania PLN (marketing). Charge: VITE_STRIPE_CURRENCY=pln|usd */
 export const USD_TO_PLN_DISPLAY = 4.2;
+
+/** Waluta rozliczenia Stripe (UI). Domyślnie pln — charge = Price ID w Stripe. */
+export function getStripeChargeCurrency(): 'pln' | 'usd' {
+  const raw = (typeof import.meta !== 'undefined'
+    && (import.meta as { env?: { VITE_STRIPE_CURRENCY?: string } }).env?.VITE_STRIPE_CURRENCY)
+    || 'pln';
+  return raw.toLowerCase() === 'usd' ? 'usd' : 'pln';
+}
 
 /** Referencyjny koszt kredytu w pakiecie startowym (USD) */
 export const RETAIL_CREDIT_USD = 9.99 / 400; // $0,02498
@@ -30,12 +38,15 @@ export function charmPricePln(usd: number): number {
 
   const explicit: Record<number, number> = {
     9.99: 39,
+    19: 79,
     19.99: 79,
+    24: 99,
     24.99: 99,
     49.99: 199,
     99.99: 399,
     27: 109,
     29: 119,
+    190: 790, // Creator yearly (10× $19)
     47: 199,
     49: 199,
     59: 249,
@@ -142,20 +153,26 @@ export function formatSubscriptionPrice(
     return { primary: '0 zł', secondary: null, perCredit: null };
   }
 
+  const chargePln = getStripeChargeCurrency() === 'pln';
+
   if (interval === 'year') {
     const yearlyUsd = plan.priceUsdYearly ?? yearlyUsdFromMonthly(plan.priceUsd);
     const yearlyPln = plan.pricePlnYearly ?? yearlyPlnFromMonthly(plan.priceUsd);
     const monthlyEquivPln = Math.round(yearlyPln / 12);
     return {
       primary: formatPlnPrice(monthlyEquivPln),
-      secondary: `${formatPlnPrice(yearlyPln)} / rok · ${formatUsdPrice(yearlyUsd)}`,
+      secondary: chargePln
+        ? `${formatPlnPrice(yearlyPln)} / rok · faktura VAT`
+        : `${formatPlnPrice(yearlyPln)} / rok · ${formatUsdPrice(yearlyUsd)}`,
       perCredit: `${formatPerCreditPln(yearlyPln / 12, plan.credits)} / kredyt`,
     };
   }
 
   return {
     primary: formatPlnPrice(plan.pricePln),
-    secondary: `rozliczenie ${formatUsdPrice(plan.priceUsd)}`,
+    secondary: chargePln
+      ? 'rozliczenie w PLN · faktura VAT'
+      : `rozliczenie ${formatUsdPrice(plan.priceUsd)}`,
     perCredit: `${formatPerCreditPln(plan.pricePln, plan.credits)} / kredyt`,
   };
 }
@@ -178,9 +195,9 @@ export const SUBSCRIPTION_PRICING: Record<
   'free' | 'creator' | 'pro' | 'business' | 'agency' | 'enterprise',
   TierPricing
 > = {
-  free: { priceUsd: 0, pricePln: 0, credits: 100, estimatedPosts: 10 },
-  // Wejście: ~2× więcej kredytów niż Free, wideo + kalendarz
-  creator: { priceUsd: 29, pricePln: charmPricePln(29), credits: 750, estimatedPosts: 75 },
+  free: { priceUsd: 0, pricePln: 0, credits: 150, estimatedPosts: 15 },
+  // Wejście konkurencyjne vs Predis/Ocoya (~$19) — kalendarz + wideo; $/kredyt gorszy niż Pro
+  creator: { priceUsd: 19, pricePln: charmPricePln(19), credits: 600, estimatedPosts: 60 },
   // Polecany: najlepszy stosunek cena/funkcje dla solo (analityka, 5 brand voices)
   pro: { priceUsd: 49, pricePln: charmPricePln(49), credits: 1800, estimatedPosts: 180 },
   // Zespół: API + duży pool kredytów

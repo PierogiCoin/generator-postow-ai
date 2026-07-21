@@ -6,7 +6,6 @@ import { SparklesIcon } from '../icons/SparklesIcon';
 import { CheckCircleIcon } from '../icons/CheckCircleIcon';
 import { CollectionIcon } from '../icons/CollectionIcon';
 import { GlobeIcon } from '../icons/GlobeIcon';
-import { VideoCameraIcon } from '../icons/VideoCameraIcon';
 
 export interface AiToolPanel {
   id: string;
@@ -32,7 +31,6 @@ export interface AiToolPanelOpeners {
   setIsRepurposingOpen: (open: boolean) => void;
   setIsCrossPlatformOpen: (open: boolean) => void;
   setIsSocialMediaOpen: (open: boolean) => void;
-  setIsVideoGeneratorOpen: (open: boolean) => void;
   setIsOmniOpen: (open: boolean) => void;
 }
 
@@ -127,14 +125,6 @@ export function createAiToolPanels(
           icon: GlobeIcon,
           iconGradient: 'from-blue-500 to-cyan-500',
           onClick: () => openers.setIsSocialMediaOpen(true),
-        },
-        {
-          id: 'video',
-          title: t('aiTools.video.title', 'Generator wideo AI'),
-          description: t('aiTools.video.desc', 'Twórz krótkie wideo z posta'),
-          icon: VideoCameraIcon,
-          iconGradient: 'from-rose-500 to-orange-500',
-          onClick: () => openers.setIsVideoGeneratorOpen(true),
         },
         {
           id: 'omni',

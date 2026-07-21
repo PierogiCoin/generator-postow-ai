@@ -96,17 +96,26 @@ export async function createCheckoutSession(
       .eq('id', userId);
   }
 
+  const automaticTax = process.env.STRIPE_AUTOMATIC_TAX !== 'false';
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode,
-    payment_method_types: ['card'],
+    // payment_method_types pominięte — Stripe dobiera metody (card/BLIK/P24) wg waluty Price + lokalizacji
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${frontendUrl()}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${frontendUrl()}/pricing?canceled=1`,
     metadata: { userId },
+    billing_address_collection: 'required',
+    tax_id_collection: { enabled: true },
+    customer_update: { address: 'auto', name: 'auto' },
+    ...(automaticTax ? { automatic_tax: { enabled: true } } : {}),
+    locale: 'pl',
     ...(mode === 'subscription'
       ? { subscription_data: { metadata: { userId } } }
-      : {}),
+      : {
+          invoice_creation: { enabled: true },
+        }),
   });
 
   // Zaloguj rozpoczęty checkout dla abandoned checkout recovery
@@ -165,10 +174,11 @@ export async function createTrialCheckoutSession(
 
   const trialEnd = Math.floor(Date.now() / 1000) + trialDays * 24 * 60 * 60;
 
+  const automaticTax = process.env.STRIPE_AUTOMATIC_TAX !== 'false';
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
-    payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
       trial_end: trialEnd,
@@ -177,6 +187,11 @@ export async function createTrialCheckoutSession(
     success_url: `${frontendUrl()}/dashboard?checkout=trial&session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${frontendUrl()}/pricing?canceled=1`,
     metadata: { userId, trial: 'true' },
+    billing_address_collection: 'required',
+    tax_id_collection: { enabled: true },
+    customer_update: { address: 'auto', name: 'auto' },
+    ...(automaticTax ? { automatic_tax: { enabled: true } } : {}),
+    locale: 'pl',
   });
 
   // Zapisz że trial został użyty

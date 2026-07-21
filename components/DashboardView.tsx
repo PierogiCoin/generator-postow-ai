@@ -39,6 +39,7 @@ import { ReferralCard } from './ReferralCard';
 import { ApprovalQueuePanel } from './ApprovalQueuePanel';
 import { EngagementInboxPanel } from './EngagementInboxPanel';
 import { RssToPostPanel } from './RssToPostPanel';
+import { ProductToPostPanel } from './ProductToPostPanel';
 import { loadAutoPublishPrefs } from '../utils/autoPublishPrefs';
 
 // Zustand stores
@@ -465,6 +466,7 @@ export const DashboardView: React.FC = () => {
                     <ApprovalQueuePanel />
                     <EngagementInboxPanel />
                     <RssToPostPanel />
+                    <ProductToPostPanel />
                     <StrategyAssistant />
                 </div>
                 <div className="lg:col-span-1 space-y-8">

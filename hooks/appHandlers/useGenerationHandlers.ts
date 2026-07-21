@@ -36,7 +36,7 @@ interface GenerationHandlerDeps {
 }
 
 export const useGenerationHandlers = ({ addToast, t, handleApiError }: GenerationHandlerDeps) => {
-    const { user, adjustCredits } = useAuth();
+    const { user, refreshUserCredits } = useAuth();
     const abortControllerRef = useRef<AbortController | null>(null);
     const handleGenerateRef = useRef<((formData: FormData) => Promise<void>) | undefined>(undefined);
 
@@ -47,13 +47,14 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
     const activeBrandVoiceId = useDataStore(state => state.activeBrandVoiceId);
     const learnedInsights = useDataStore(state => state.learnedInsights);
 
-    const { canGenerate, estimateCost } = useUsageLimiter({
+    const { canGenerate } = useUsageLimiter({
         credits: user?.credits ?? 0,
         addToast,
     });
 
-    const deductCreditsOnSuccess = (formData: FormData) => {
-        adjustCredits(-estimateCost(formData));
+    /** Server creditGate already deducts; sync UI from DB (avoid double subtract). */
+    const syncCreditsAfterSuccess = () => {
+        void refreshUserCredits();
     };
 
     const markOnboardingFirstPostDone = () => {
@@ -266,7 +267,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 await dataActions.addGenerationToHistory({ formData, result: abTestResultContainer });
                 await dataActions.addGenerationStat({ ...formData, generationType: GenerationType.Idea });
 
-                deductCreditsOnSuccess(formData);
+                syncCreditsAfterSuccess();
                 genActions.generationSuccess(abTestResultContainer);
                 markOnboardingFirstPostDone();
                 addToast('Test A/B wygenerowany pomyślnie!', NotificationType.Success);
@@ -302,7 +303,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 await dataActions.addGenerationToHistory({ formData, result: multiVariantResult });
                 await dataActions.addGenerationStat(formData);
 
-                deductCreditsOnSuccess(formData);
+                syncCreditsAfterSuccess();
                 genActions.generationSuccess(multiVariantResult);
                 markOnboardingFirstPostDone();
                 addToast('3 warianty posta wygenerowane! Wybierz najlepszy hook.', NotificationType.Success);
@@ -342,7 +343,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 await dataActions.addGenerationToHistory({ formData, result: omnichannelResult });
                 await dataActions.addGenerationStat(formData);
 
-                deductCreditsOnSuccess(formData);
+                syncCreditsAfterSuccess();
                 genActions.generationSuccess(omnichannelResult);
                 markOnboardingFirstPostDone();
                 addToast('Omnichannel wygenerowany pomyślnie!', NotificationType.Success);
@@ -444,7 +445,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
 
                 await dataActions.addGenerationToHistory({ formData, result: videoResult });
                 await dataActions.addGenerationStat(formData);
-                deductCreditsOnSuccess(formData);
+                syncCreditsAfterSuccess();
                 genActions.generationSuccess(videoResult);
                 markOnboardingFirstPostDone();
                 addToast('Wideo (Placeholder) wygenerowane pomyślnie!', NotificationType.Success);
@@ -568,7 +569,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 seoAnalysis: seo,
             });
             await dataActions.addGenerationStat(formData);
-            deductCreditsOnSuccess(formData);
+            syncCreditsAfterSuccess();
             genActions.generationSuccess(finalResult);
             markOnboardingFirstPostDone();
 
@@ -597,8 +598,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         activeBrandVoiceId,
         learnedInsights,
         canGenerate,
-        adjustCredits,
-        estimateCost,
+        refreshUserCredits,
     ]);
 
     handleGenerateRef.current = handleGenerate;

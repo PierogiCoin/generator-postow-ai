@@ -19,6 +19,8 @@ import {
 } from '../utils/platformVisualSpec';
 import { normalizeCtaUrl } from '../utils/publishCaption';
 import { buildCompetitorPromptBlock } from '../utils/competitorBrandVoice';
+import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
+import { retrieveBrandMemoryContext } from './brandMemoryService';
 
 function attachBrandCtaUrl(
     details: Record<string, unknown>,
@@ -46,7 +48,7 @@ export async function* generateSocialMediaContentStream(
     signal?: AbortSignal
 ): AsyncGenerator<string> {
     let visualVibe: string | undefined;
-    const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-flash-lite-latest";
+    const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-2.5-flash";
 
     const contents = `Generate an engaging ${formData.platform} post. 
 TOPIC: ${formData.topic || 'General engaging content'}
@@ -58,15 +60,7 @@ CRITICAL: Do not ask for more information. Do not respond conversationally. Prov
     const currentDateStr = new Date().toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' });
     let systemInstruction = `You are an elite social media growth expert. Your task is to generate high-converting, creative, and human-like social media content.
 CURRENT DATE: ${currentDateStr} (Ensure any temporal references, years, or dates in the post align with this date. Never reference outdated years like 2024 or 2025 unless explicitly asked to describe past events).
-CRITICAL STYLE REQUIREMENT: Avoid generic AI-sounding clichés, placeholders, and introductory fluff.
-NEVER use the following phrases or their variations:
-- "In today's fast-paced/dynamic digital world..." (or "W dzisiejszym dynamicznym świecie...")
-- "Have you ever wondered..." (or "Czy kiedykolwiek zastanawiałeś się...")
-- "It is important to remember/bear in mind..." (or "Warto pamiętać...")
-- "Key to success is..." (or "Klucz do sukcesu tkwi w...")
-- "Look no further..." (or "Nie szukaj dalej...")
-- "Here is/are..." (or "Oto...") when introducing lists.
-Focus on strong, immediate emotional hooks, concrete examples, active verbs, and highly readable, mobile-friendly spacing (max 2-3 sentences per paragraph).`;
+${buildAntiSlopBlock()}`;
 
     const platformInstructions: Record<string, string> = {
         [Platform.Facebook]: `
@@ -188,6 +182,21 @@ YOUTUBE STYLE GUIDELINES:
             systemInstruction += competitorBlock;
         }
     }
+
+    // Brand Memory RAG (top posts + ingested docs)
+    try {
+        const memory = await retrieveBrandMemoryContext(userId, {
+            topic: formData.topic,
+            platform: formData.platform,
+            limit: 5,
+        });
+        if (memory.promptBlock) {
+            systemInstruction += `\n\n${memory.promptBlock}`;
+        }
+    } catch {
+        /* non-blocking */
+    }
+
     if (insights && insights.length > 0) {
         systemInstruction += ` Use these high-performance insights retrieved from analytics: ${JSON.stringify(insights)}. Focus on "positive" insights to replicate success.`;
 

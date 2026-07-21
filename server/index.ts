@@ -2,7 +2,7 @@ import { createApp } from './app.js';
 import { loadEnv } from './config/env.js';
 import { startBackgroundJobs } from './jobs/index.js';
 import logger from './logger.js';
-import { apiKey, openai, luma, replicate } from './lib/clients.js';
+import { apiKey, luma, replicate } from './lib/clients.js';
 
 const env = loadEnv();
 const app = createApp();
@@ -23,7 +23,6 @@ app.listen(port, () => {
     nodeVersion: process.version,
     apis: {
       gemini: !!apiKey,
-      openai: !!openai,
       luma: !!luma,
       replicate: !!replicate,
     },

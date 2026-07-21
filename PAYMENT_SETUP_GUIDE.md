@@ -37,10 +37,10 @@ Complete payment system with:
 
 ### **Monthly Subscriptions:**
 
-| Plan | Price (USD) | Credits | Posts (limit) | Images | Videos |
-|------|-------------|---------|---------------|--------|--------|
-| **Free** | $0 | 100 | 10 | 3 | 0 |
-| **Creator** | $29 | 750 | 100 | 20 | 2 |
+| Plan | Price (USD / PLN) | Credits | Posts (limit) | Images | Videos |
+|------|-------------------|---------|---------------|--------|--------|
+| **Free** | $0 | 150 | 15 | 5 | 0 |
+| **Creator** | $19 / ~79 zł | 600 | 100 | 20 | 2 |
 | **Pro** | $49 | 1,800 | 500 | 100 | 10 |
 | **Business** | $99 | 6,000 | 800 | 200 | 50 |
 | **Agency** | $249 | 18,000 | 2,000 | 400 | 80 |

@@ -136,8 +136,6 @@ export const InputForm: React.FC<InputFormProps> = ({
     setIsCrossPlatformOpen,
     isSocialMediaOpen,
     setIsSocialMediaOpen,
-    isVideoGeneratorOpen,
-    setIsVideoGeneratorOpen,
     isOmniOpen,
     setIsOmniOpen,
     aiToolPanels,
@@ -618,7 +616,6 @@ export const InputForm: React.FC<InputFormProps> = ({
         isRepurposingOpen={isRepurposingOpen}
         isCrossPlatformOpen={isCrossPlatformOpen}
         isSocialMediaOpen={isSocialMediaOpen}
-        isVideoGeneratorOpen={isVideoGeneratorOpen}
         isOmniOpen={isOmniOpen}
         onCloseSaveModal={() => setIsSaveModalOpen(false)}
         onCloseTemplateBrowser={() => setIsTemplateBrowserOpen(false)}
@@ -632,7 +629,6 @@ export const InputForm: React.FC<InputFormProps> = ({
         onCloseRepurposing={() => setIsRepurposingOpen(false)}
         onCloseCrossPlatform={() => setIsCrossPlatformOpen(false)}
         onCloseSocialMedia={() => setIsSocialMediaOpen(false)}
-        onCloseVideoGenerator={() => setIsVideoGeneratorOpen(false)}
         onCloseOmni={() => setIsOmniOpen(false)}
         onSaveTemplate={handleSaveTemplate}
         onSelectTemplate={handleSelectTemplate}

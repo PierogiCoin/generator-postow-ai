@@ -57,8 +57,8 @@ export async function publishToConnection(
   switch (connection.platform) {
     case 'facebook': {
       const fb = new FacebookPublisher(connection.access_token);
-      if (publishFormat === 'reel' || (videoUrl && publishFormat !== 'feed')) {
-        return fb.publishVideo(connection.account_id, connection.access_token, caption, videoUrl!);
+      if (publishFormat === 'reel' && videoUrl) {
+        return fb.publishVideo(connection.account_id, connection.access_token, caption, videoUrl);
       }
       return fb.publishPost(
         connection.account_id,

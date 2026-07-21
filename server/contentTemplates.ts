@@ -14,7 +14,9 @@ export interface ContentTemplate {
   hashtagCount: number;
   videoLength?: 'short' | 'medium' | 'long'; // 5s, 15s, 30s
   icon: string;
-  category: 'social' | 'professional' | 'marketing' | 'educational';
+  category: 'social' | 'professional' | 'marketing' | 'educational' | 'industry';
+  /** Prefill topic / niche hint for PL industry packs */
+  topicHint?: string;
 }
 
 export const CONTENT_TEMPLATES: ContentTemplate[] = [
@@ -174,7 +176,73 @@ export const CONTENT_TEMPLATES: ContentTemplate[] = [
     videoLength: 'long',
     icon: '💡',
     category: 'educational'
-  }
+  },
+
+  // 🇵🇱 BRANŻE PL — starter packs
+  {
+    id: 'pl-fryzjer',
+    name: 'Fryzjer / beauty',
+    description: 'Promocje, metamorfozy, tipy pielęgnacyjne — Instagram + Stories',
+    platform: 'Instagram',
+    tone: 'Casual',
+    style: 'Aesthetic',
+    aspectRatio: '4:5',
+    includeMusic: true,
+    includeHashtags: true,
+    hashtagCount: 12,
+    videoLength: 'short',
+    icon: '💇',
+    category: 'industry',
+    topicHint: 'Salon fryzjerski: pokaż metamorfozę / promocję sezonową / tip pielęgnacyjny dla klientek w PL',
+  },
+  {
+    id: 'pl-lokal',
+    name: 'Lokal / gastronomia',
+    description: 'Menu dnia, atmosfera, wydarzenia — Facebook + Instagram',
+    platform: 'Facebook',
+    tone: 'Friendly',
+    style: 'Warm',
+    aspectRatio: '1:1',
+    includeMusic: false,
+    includeHashtags: true,
+    hashtagCount: 8,
+    videoLength: 'short',
+    icon: '🍽️',
+    category: 'industry',
+    topicHint: 'Lokal gastronomiczny w Polsce: menu dnia, nowość w karcie lub zaproszenie na event',
+  },
+  {
+    id: 'pl-b2b-saas',
+    name: 'B2B SaaS',
+    description: 'Thought leadership, case study, CTA demo — LinkedIn',
+    platform: 'LinkedIn',
+    tone: 'Professional',
+    style: 'Authoritative',
+    aspectRatio: '1:1',
+    includeMusic: false,
+    includeHashtags: true,
+    hashtagCount: 5,
+    videoLength: 'medium',
+    icon: '🚀',
+    category: 'industry',
+    topicHint: 'Polski SaaS B2B: insight rynkowy, mini case study lub zaproszenie na demo z konkretną korzyścią',
+  },
+  {
+    id: 'pl-ecom',
+    name: 'E-commerce',
+    description: 'Produkt, benefit, social proof — Instagram / TikTok',
+    platform: 'Instagram',
+    tone: 'Persuasive',
+    style: 'Bold',
+    aspectRatio: '9:16',
+    includeMusic: true,
+    includeHashtags: true,
+    hashtagCount: 10,
+    videoLength: 'short',
+    icon: '🛒',
+    category: 'industry',
+    topicHint: 'Sklep online PL: wyróżnij produkt, 3 benefity i CTA z linkiem do oferty',
+  },
 ];
 
 // Helper functions

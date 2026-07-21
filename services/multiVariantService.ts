@@ -7,7 +7,7 @@ import {
     MultiVariantPost,
     CopywritingFramework
 } from '../types';
-
+import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
 /**
  * Multi-Variant Generation Service
  * Generates 3 variants (A/B/C) of a post with different hooks and approaches
@@ -38,7 +38,7 @@ async function generateSingleVariant({
     hookType,
     insights
 }: GenerateVariantParams): Promise<MultiVariantPost> {
-    const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-flash-latest";
+    const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-2.5-flash";
 
     const hookDescriptions: Record<typeof hookType, string> = {
         emotional: 'Focus on triggering emotions: FOMO, fear of missing out, aspirations, dreams, frustrations. Use powerful emotional words. Make reader FEEL something immediately.',
@@ -70,7 +70,9 @@ RULES:
 5. Include 3-5 relevant hashtags at the end
 6. Add a subtle call-to-action
 
-NEVER ask for more information. Generate the best possible content for this specific hook type.`;
+NEVER ask for more information. Generate the best possible content for this specific hook type.
+
+${buildAntiSlopBlock()}`;
 
     // Add copywriting framework if selected
     const framework = formData.copywritingFramework;

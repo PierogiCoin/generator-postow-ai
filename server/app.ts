@@ -13,10 +13,12 @@ import { createVideoRouter } from './routes/video.js';
 import { createMiscRouter } from './routes/misc.js';
 import { createIntelligenceRouter } from './routes/intelligence.js';
 import { createContentFetchRouter } from './routes/contentFetch.js';
+import { createBrandMemoryRouter } from './routes/brandMemory.js';
 import paymentsRouter, { stripeWebhookHandler } from './routes/payments.js';
 import emailRouter from './routes/email.js';
 import referralRouter from './routes/referral.js';
 import teamsRouter from './routes/teams.js';
+import evergreenRouter from './routes/evergreen.js';
 
 const NOT_FOUND_ENDPOINTS = [
   'GET /health',
@@ -28,6 +30,8 @@ const NOT_FOUND_ENDPOINTS = [
   'POST /api/score-content',
   'POST /api/benchmark-content',
   'POST /api/content/fetch-url',
+  'POST /api/brand-memory/retrieve',
+  'POST /api/brand-memory/ingest',
   'GET /api/social/comments',
   'POST /api/intelligence/news',
   'POST /api/intelligence/trends',
@@ -86,9 +90,11 @@ export function createApp(): express.Application {
   app.use(createVideoRouter());
   app.use(createMiscRouter());
   app.use(createContentFetchRouter());
+  app.use(createBrandMemoryRouter());
   app.use('/api/email', emailRouter);
   app.use('/api/referral', referralRouter);
   app.use('/api/teams', teamsRouter);
+  app.use('/api/evergreen', evergreenRouter);
 
   app.use(errorHandler);
 

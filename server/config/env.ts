@@ -13,7 +13,6 @@ const envSchema = z
     PORT: z.coerce.number().default(3001),
     NODE_ENV: z.string().optional(),
     ALLOWED_ORIGINS: z.string().optional(),
-    OPENAI_API_KEY: z.string().optional(),
     LUMA_API_KEY: z.string().optional(),
     REPLICATE_API_TOKEN: z.string().optional(),
     RESEND_API_KEY: z.string().optional(),
@@ -32,7 +31,6 @@ export type Env = {
   PORT: number;
   NODE_ENV?: string;
   ALLOWED_ORIGINS?: string;
-  OPENAI_API_KEY?: string;
   LUMA_API_KEY?: string;
   REPLICATE_API_TOKEN?: string;
   VITE_SUPABASE_URL?: string;

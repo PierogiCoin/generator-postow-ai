@@ -1,6 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
-import OpenAI from 'openai';
 import LumaAI from 'lumaai';
 import Replicate from 'replicate';
 import { initCostTracker, costTracker } from '../costTracking.js';
@@ -11,7 +10,6 @@ const env = loadEnv();
 export const apiKey = env.GOOGLE_API_KEY;
 export const genAI = new GoogleGenerativeAI(env.GOOGLE_API_KEY);
 
-export const openai = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 export const luma = env.LUMA_API_KEY ? new LumaAI({ authToken: env.LUMA_API_KEY }) : null;
 export const replicate = env.REPLICATE_API_TOKEN
   ? new Replicate({ auth: env.REPLICATE_API_TOKEN })

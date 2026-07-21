@@ -85,7 +85,6 @@ export function useInputFormController({
   const [isRepurposingOpen, setIsRepurposingOpen] = useState(false);
   const [isCrossPlatformOpen, setIsCrossPlatformOpen] = useState(false);
   const [isSocialMediaOpen, setIsSocialMediaOpen] = useState(false);
-  const [isVideoGeneratorOpen, setIsVideoGeneratorOpen] = useState(false);
   const [isOmniOpen, setIsOmniOpen] = useState(false);
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
   const [formMode, setFormMode] = useState<InputFormMode>(() => {
@@ -410,7 +409,6 @@ export function useInputFormController({
           setIsRepurposingOpen,
           setIsCrossPlatformOpen,
           setIsSocialMediaOpen,
-          setIsVideoGeneratorOpen,
           setIsOmniOpen,
         },
         (key, fallback) => t(key, fallback ?? key)
@@ -511,8 +509,6 @@ export function useInputFormController({
     setIsCrossPlatformOpen,
     isSocialMediaOpen,
     setIsSocialMediaOpen,
-    isVideoGeneratorOpen,
-    setIsVideoGeneratorOpen,
     isOmniOpen,
     setIsOmniOpen,
     aiToolPanels,

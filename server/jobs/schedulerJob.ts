@@ -255,7 +255,71 @@ async function processScheduledPosts() {
   }
 }
 
+/**
+ * Evergreen: gdy next_run_at minął — wrzuć odświeżony post do scheduled_posts
+ * (draft do akceptacji / natychmiastowy schedule za 1h).
+ */
+async function processEvergreenQueue() {
+  const nowIso = new Date().toISOString();
+  try {
+    const { data: due, error } = await supabase
+      .from('evergreen_queue')
+      .select('*')
+      .eq('status', 'active')
+      .lte('next_run_at', nowIso)
+      .limit(20);
+
+    if (error || !due?.length) return;
+
+    for (const item of due) {
+      try {
+        const days = item.recycle_after_days || 30;
+        const scheduledAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        const topic = `Odśwież ten post zachowując jego wartość: ${String(item.source_content).slice(0, 100)}…`;
+
+        await supabase.from('scheduled_posts').insert({
+          user_id: item.user_id,
+          scheduled_at: scheduledAt,
+          status: 'scheduled',
+          approval_status: 'draft',
+          connection_id: item.connection_id || null,
+          form_data: {
+            platform: item.platform,
+            topic,
+            publishFormat: 'feed',
+            evergreenId: item.id,
+          },
+          result: {
+            postText: item.source_content,
+            hashtags: [],
+          },
+        });
+
+        const nextRun = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+        await supabase
+          .from('evergreen_queue')
+          .update({
+            next_run_at: nextRun,
+            last_published_at: nowIso,
+            times_recycled: (item.times_recycled || 0) + 1,
+            updated_at: nowIso,
+          })
+          .eq('id', item.id);
+
+        logger.info(`[Evergreen] Zaplanowano recycle ${item.id} → ${scheduledAt}`);
+      } catch (e) {
+        logger.error(`[Evergreen] Błąd item ${item.id}:`, e);
+      }
+    }
+  } catch (e) {
+    logger.error('[Evergreen] process error:', e);
+  }
+}
+
 export function startSchedulerJob(): void {
-  setInterval(processScheduledPosts, 60000);
-  logger.info('🚀 Automat publikujący (Scheduler) został uruchomiony.');
+  setInterval(() => {
+    void processScheduledPosts();
+    void processEvergreenQueue();
+  }, 60000);
+  logger.info('🚀 Automat publikujący (Scheduler + Evergreen) został uruchomiony.');
 }

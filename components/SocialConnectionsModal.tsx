@@ -40,21 +40,35 @@ const PLATFORM_CONFIG: Record<
     icon: '📸',
     color: 'bg-gradient-to-br from-purple-500 to-pink-500',
     descKey: 'socialConnections.desc.instagram',
-    descFallback: 'Publikuj zdjęcia (wymagany obraz)',
+    descFallback: 'Posty, karuzele, Stories i Reels',
   },
   facebook: {
     name: 'Facebook',
     icon: '👥',
     color: 'bg-blue-500',
     descKey: 'socialConnections.desc.facebook',
-    descFallback: 'Publikuj na stronie / w sieci',
+    descFallback: 'Publikuj na stronach (multi-account)',
   },
   tiktok: {
     name: 'TikTok',
     icon: '🎵',
     color: 'bg-black',
     descKey: 'socialConnections.desc.tiktok',
-    descFallback: 'Połączenie konta — publikacja API wkrótce',
+    descFallback: 'Publikuj wideo z URL',
+  },
+  youtube: {
+    name: 'YouTube',
+    icon: '▶️',
+    color: 'bg-red-600',
+    descKey: 'socialConnections.desc.youtube',
+    descFallback: 'Upload Shorts na kanał',
+  },
+  threads: {
+    name: 'Threads',
+    icon: '@',
+    color: 'bg-slate-900',
+    descKey: 'socialConnections.desc.threads',
+    descFallback: 'Publikuj tekst i obrazy',
   },
 };
 
@@ -108,8 +122,8 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
     }
   };
 
-  const getConnectionForPlatform = (platform: SocialPlatform) => {
-    return connections.find((c) => c.platform === platform && c.isActive);
+  const getConnectionsForPlatform = (platform: SocialPlatform) => {
+    return connections.filter((c) => c.platform === platform && c.isActive);
   };
 
   return (
@@ -126,7 +140,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
               {t('socialConnections.title', 'Połączenia social media')}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {t('socialConnections.subtitle', 'Połącz konta, aby publikować bezpośrednio')}
+              {t('socialConnections.subtitle', 'Połącz konta — możesz dodać wiele na platformę')}
             </p>
           </div>
           <button
@@ -142,16 +156,14 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
         <div className="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-180px)]">
           {Object.entries(PLATFORM_CONFIG).map(([key, config]) => {
             const platform = key as SocialPlatform;
-            const connection = getConnectionForPlatform(platform);
-            const isConnected = !!connection;
+            const platformConnections = getConnectionsForPlatform(platform);
             const isConnecting = connectingPlatform === platform;
-            const isDisconnecting = disconnectingId === connection?.id;
             const canPublish = isPlatformPublishable(platform as SP);
 
             return (
               <div
                 key={platform}
-                className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700"
+                className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-4 min-w-0">
@@ -163,6 +175,11 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                     <div className="min-w-0">
                       <div className="font-semibold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
                         {config.name}
+                        {platformConnections.length > 0 && (
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                            {platformConnections.length} kont
+                          </span>
+                        )}
                         {!canPublish && (
                           <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                             {t('socialConnections.publishSoon', 'Publikacja wkrótce')}
@@ -172,73 +189,80 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                       <div className="text-sm text-slate-500 dark:text-slate-400">
                         {t(config.descKey, config.descFallback)}
                       </div>
-                      {isConnected && connection && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <div className="w-6 h-6 bg-slate-300 dark:bg-slate-600 rounded-full overflow-hidden">
-                            {connection.profileImageUrl ? (
-                              <img
-                                src={connection.profileImageUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs">
-                                {connection.accountName[0]}
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                            {connection.accountName}
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
-                    {isConnected ? (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => onViewHistory(connection!)}
-                          className="px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition"
-                        >
-                          {t('socialConnections.history', 'Historia')}
-                        </button>
-                        <div className="flex items-center gap-2 px-3 py-1.5 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium">
-                          <Check className="w-4 h-4" />
-                          <span>{t('socialConnections.connected', 'Połączono')}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => void handleDisconnect(connection!.id)}
-                          disabled={isDisconnecting}
-                          className="px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition disabled:opacity-50"
-                        >
-                          {isDisconnecting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            t('socialConnections.disconnect', 'Rozłącz')
-                          )}
-                        </button>
-                      </>
+                  <button
+                    type="button"
+                    onClick={() => void handleConnect(platform)}
+                    disabled={isConnecting}
+                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold rounded-xl disabled:opacity-50 shrink-0"
+                  >
+                    {isConnecting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : platformConnections.length > 0 ? (
+                      t('socialConnections.addAccount', 'Dodaj konto')
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => void handleConnect(platform)}
-                        disabled={isConnecting}
-                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold rounded-xl disabled:opacity-50"
-                      >
-                        {isConnecting ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          t('socialConnections.connect', 'Połącz')
-                        )}
-                      </button>
+                      t('socialConnections.connect', 'Połącz')
                     )}
-                  </div>
+                  </button>
                 </div>
+
+                {platformConnections.length > 0 && (
+                  <ul className="space-y-2 pl-1">
+                    {platformConnections.map((connection) => {
+                      const isDisconnecting = disconnectingId === connection.id;
+                      return (
+                        <li
+                          key={connection.id}
+                          className="flex items-center justify-between gap-2 bg-white dark:bg-slate-800/60 rounded-lg px-3 py-2 border border-slate-100 dark:border-slate-700/80"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 bg-slate-300 dark:bg-slate-600 rounded-full overflow-hidden shrink-0">
+                              {connection.profileImageUrl ? (
+                                <img
+                                  src={connection.profileImageUrl}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs">
+                                  {connection.accountName?.[0] || '?'}
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate">
+                              {connection.accountName}
+                            </span>
+                            <Check className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => onViewHistory(connection)}
+                              className="px-2 py-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md"
+                            >
+                              {t('socialConnections.history', 'Historia')}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDisconnect(connection.id)}
+                              disabled={isDisconnecting}
+                              className="px-2 py-1 text-[11px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md disabled:opacity-50"
+                            >
+                              {isDisconnecting ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                t('socialConnections.disconnect', 'Rozłącz')
+                              )}
+                            </button>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             );
           })}

@@ -1,12 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FormData, GenerationResult } from '../../types';
 import { NotificationType } from '../../types';
-import type { SocialConnection, SocialPlatform } from '../../types/socialPublishing';
+import type { PublishFormat, SocialConnection, SocialPlatform } from '../../types/socialPublishing';
 import { socialConnectionsService } from '../../services/socialConnectionsService';
 import { ModernButton } from '../ui/ModernButton';
 import { Spinner } from '../ui/LoadingStates';
-import { MobilePreview } from '../MobilePreview';
 import { RocketLaunchIcon } from '../icons/RocketLaunchIcon';
 import { ClockIcon } from '../icons/ClockIcon';
 import { CalendarIcon } from '../icons/CalendarIcon';
@@ -19,9 +18,20 @@ interface ResultPublishTabProps {
   publishCaptionPreview: string;
   resolvedCtaUrl: string | null | undefined;
   onSchedule: () => void;
-  onPublishNow: (connectionId?: string) => void;
+  onPublishNow: (connectionId?: string, options?: { publishFormat?: PublishFormat }) => void;
   onOpenRepurpose: () => void;
   onToast: (message: string, type: NotificationType) => void;
+}
+
+function collectMediaUrls(result: GenerationResult): string[] {
+  const urls: string[] = [];
+  if (result.imageUrl) urls.push(result.imageUrl);
+  if (Array.isArray(result.variants)) {
+    for (const v of result.variants) {
+      if (v?.imageUrl && !urls.includes(v.imageUrl)) urls.push(v.imageUrl);
+    }
+  }
+  return urls;
 }
 
 export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
@@ -39,7 +49,10 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [selectedConnectionId, setSelectedConnectionId] = useState('');
   const [isLoadingConnections, setIsLoadingConnections] = useState(false);
-  const [publishPreviewType, setPublishPreviewType] = useState<'text' | 'social'>('text');
+  const [publishFormat, setPublishFormat] = useState<PublishFormat>('feed');
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const mediaUrls = useMemo(() => collectMediaUrls(result), [result]);
 
   const loadConnections = useCallback(async () => {
     if (!userId) return;
@@ -66,6 +79,14 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
     if (userId) void loadConnections();
   }, [userId, loadConnections]);
 
+  useEffect(() => {
+    const p = (formData?.platform || '').toLowerCase();
+    if ((p === 'tiktok' || p === 'youtube') && result.videoUrl) setPublishFormat('reel');
+    else if (p === 'instagram' && mediaUrls.length > 1) setPublishFormat('carousel');
+    else if (p === 'instagram' && result.videoUrl && !result.imageUrl) setPublishFormat('reel');
+    else setPublishFormat('feed');
+  }, [formData?.platform, result.videoUrl, result.imageUrl, mediaUrls.length]);
+
   const handleConnectSocial = async (platform: string) => {
     try {
       if (!userId) throw new Error('Zaloguj się, aby połączyć konto');
@@ -87,6 +108,22 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
         (c) => c.platform.toLowerCase() === formData.platform.toLowerCase() && c.isActive
       )
     : [];
+
+  const selectedConnection =
+    platformConnections.find((c) => c.id === selectedConnectionId) || platformConnections[0];
+
+  const platformLower = (formData?.platform || '').toLowerCase();
+  const showIgFormats = platformLower === 'instagram';
+  const showVideoFormats =
+    platformLower === 'instagram' ||
+    platformLower === 'facebook' ||
+    platformLower === 'tiktok' ||
+    platformLower === 'youtube';
+
+  const handleConfirmPublish = () => {
+    setConfirmOpen(false);
+    onPublishNow(selectedConnectionId || undefined, { publishFormat });
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -111,65 +148,81 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
               {resolvedCtaUrl}
             </a>
           )}
-          <p className="text-[10px] text-slate-500 font-medium">
-            {t(
-              'resultCard.publish.ctaHint',
-              'Link zostanie dołączony do opisu na Facebooku i innych platformach.'
-            )}
-          </p>
         </div>
       )}
 
-      <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            {t('resultCard.publish.captionPreview', 'Podgląd publikacji')}
-          </p>
-          <div className="flex bg-slate-200 dark:bg-slate-850 p-0.5 rounded-lg border border-slate-300 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setPublishPreviewType('text')}
-              className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md transition-all ${
-                publishPreviewType === 'text'
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
-            >
-              Tekst
-            </button>
-            <button
-              type="button"
-              onClick={() => setPublishPreviewType('social')}
-              className={`px-2.5 py-1 text-[10px] font-extrabold rounded-md transition-all ${
-                publishPreviewType === 'social'
-                  ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
-              }`}
-            >
-              Social Feed
-            </button>
-          </div>
-        </div>
-        {publishPreviewType === 'text' ? (
-          <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
-            {publishCaptionPreview}
-          </p>
-        ) : (
-          <div className="pt-2">
-            <MobilePreview
-              content={result.postText}
-              hashtags={result.hashtags}
-              platform={
-                (['instagram', 'twitter', 'linkedin', 'facebook'].includes(
-                  (formData?.platform?.toLowerCase() || '')
-                )
-                  ? formData!.platform.toLowerCase()
-                  : 'linkedin') as 'instagram' | 'twitter' | 'linkedin' | 'facebook'
-              }
-            />
+      {/* Live publish preview */}
+      <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-3">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          {t('resultCard.publish.captionPreview', 'Podgląd publikacji')}
+        </p>
+        {(mediaUrls[0] || result.videoUrl) && (
+          <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-black/5 dark:bg-black/30">
+            {result.videoUrl && (publishFormat === 'reel' || !mediaUrls[0]) ? (
+              <video
+                src={result.videoUrl}
+                className="w-full max-h-56 object-contain bg-black"
+                controls
+                muted
+                playsInline
+              />
+            ) : mediaUrls[0] ? (
+              <img
+                src={mediaUrls[0]}
+                alt="Podgląd"
+                className="w-full max-h-56 object-cover"
+              />
+            ) : null}
+            {publishFormat === 'carousel' && mediaUrls.length > 1 && (
+              <p className="text-[10px] font-bold text-center py-1.5 text-slate-500">
+                Karuzela · {mediaUrls.length} slajdów
+              </p>
+            )}
           </div>
         )}
+        <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-40 overflow-y-auto">
+          {publishCaptionPreview}
+        </p>
       </div>
+
+      {showVideoFormats && (
+        <div className="p-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            Format publikacji
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(['feed', ...(showIgFormats ? (['carousel', 'story', 'reel'] as const) : []), ...(platformLower === 'facebook' || platformLower === 'tiktok' || platformLower === 'youtube' ? (['reel'] as const) : [])] as PublishFormat[])
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .map((fmt) => (
+                <button
+                  key={fmt}
+                  type="button"
+                  onClick={() => setPublishFormat(fmt)}
+                  className={`px-3 py-1.5 text-[11px] font-bold rounded-lg border transition ${
+                    publishFormat === fmt
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                  }`}
+                >
+                  {fmt === 'feed' && 'Post'}
+                  {fmt === 'carousel' && 'Karuzela'}
+                  {fmt === 'story' && 'Story'}
+                  {fmt === 'reel' && (platformLower === 'youtube' ? 'Short' : platformLower === 'tiktok' ? 'Wideo' : 'Reel')}
+                </button>
+              ))}
+          </div>
+          {publishFormat === 'carousel' && mediaUrls.length < 2 && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400">
+              Karuzela potrzebuje ≥2 obrazów (główny + warianty A/B).
+            </p>
+          )}
+          {(publishFormat === 'reel' || platformLower === 'tiktok' || platformLower === 'youtube') && !result.videoUrl && (
+            <p className="text-[10px] text-amber-600 dark:text-amber-400">
+              Ten format wymaga wygenerowanego wideo.
+            </p>
+          )}
+        </div>
+      )}
 
       {result.suggestedPostingTime && (
         <div className="p-5 bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/50 rounded-3xl">
@@ -183,12 +236,6 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
             {t('resultCard.publish.todayAt', 'Dziś o {{time}}', {
               time: result.suggestedPostingTime,
             })}
-          </p>
-          <p className="text-[10px] text-slate-500 font-medium italic">
-            {t(
-              'resultCard.publish.timeHint',
-              'Sugerowana godzina na podstawie aktywności grupy docelowej.'
-            )}
           </p>
         </div>
       )}
@@ -229,45 +276,19 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
                 Połącz konto {formData.platform}
               </ModernButton>
             </div>
-          ) : platformConnections.length > 1 ? (
+          ) : (
             <select
-              value={selectedConnectionId}
+              value={selectedConnectionId || platformConnections[0]?.id}
               onChange={(e) => setSelectedConnectionId(e.target.value)}
               className="w-full text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-800 dark:text-white"
             >
               {platformConnections.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.accountName}
+                  {c.accountHandle ? ` (@${c.accountHandle})` : ''}
                 </option>
               ))}
             </select>
-          ) : (
-            (() => {
-              const conn = platformConnections[0];
-              return (
-                <div className="flex items-center gap-3 bg-white dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80">
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-600 dark:text-slate-300">
-                    {conn.profileImageUrl ? (
-                      <img
-                        src={conn.profileImageUrl}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      conn.accountName?.[0] || '?'
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-white truncate">
-                      {conn.accountName}
-                    </p>
-                    <p className="text-[9px] text-green-500 font-bold uppercase tracking-wider">
-                      Połączono
-                    </p>
-                  </div>
-                </div>
-              );
-            })()
           )}
         </div>
       )}
@@ -282,7 +303,7 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
           {t('resultCard.actions.schedule', 'Zaplanuj')}
         </ModernButton>
         <ModernButton
-          onClick={() => onPublishNow(selectedConnectionId || undefined)}
+          onClick={() => setConfirmOpen(true)}
           variant="primary"
           fullWidth
           disabled={platformConnections.length === 0}
@@ -301,6 +322,50 @@ export const ResultPublishTab: React.FC<ResultPublishTabProps> = ({
       >
         {t('resultCard.publish.repurpose', 'Przetwórz na inny format')}
       </ModernButton>
+
+      {confirmOpen && (
+        <div className="fixed inset-0 z-[60] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="publish-confirm-title"
+            className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-200 dark:border-slate-700"
+          >
+            <h3 id="publish-confirm-title" className="text-lg font-bold text-slate-900 dark:text-white">
+              Potwierdź publikację
+            </h3>
+            <p className="text-xs text-slate-500">
+              {formData?.platform} · {selectedConnection?.accountName || 'konto'} · format:{' '}
+              <span className="font-bold text-slate-700 dark:text-slate-200">{publishFormat}</span>
+            </p>
+            {(mediaUrls[0] || result.videoUrl) && (
+              <div className="rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+                {result.videoUrl && publishFormat === 'reel' ? (
+                  <video src={result.videoUrl} className="w-full max-h-40 object-contain bg-black" muted />
+                ) : mediaUrls[0] ? (
+                  <img src={mediaUrls[0]} alt="" className="w-full max-h-40 object-cover" />
+                ) : null}
+              </div>
+            )}
+            <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap max-h-32 overflow-y-auto border border-slate-100 dark:border-slate-700 rounded-lg p-3">
+              {publishCaptionPreview}
+            </p>
+            <div className="flex gap-2">
+              <ModernButton variant="secondary" fullWidth onClick={() => setConfirmOpen(false)}>
+                Anuluj
+              </ModernButton>
+              <ModernButton
+                variant="primary"
+                fullWidth
+                onClick={handleConfirmPublish}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                Publikuj
+              </ModernButton>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

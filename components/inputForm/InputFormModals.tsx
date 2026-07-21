@@ -17,7 +17,6 @@ const ContentSafetyPanel = lazy(() => import('../ContentSafetyPanel').then((m) =
 const ContentRepurposingPanel = lazy(() => import('../ContentRepurposingPanel').then((m) => ({ default: m.ContentRepurposingPanel })));
 const CrossPlatformCommandCenter = lazy(() => import('../CrossPlatformCommandCenter').then((m) => ({ default: m.CrossPlatformCommandCenter })));
 const SocialMediaManager = lazy(() => import('../SocialMediaManager').then((m) => ({ default: m.SocialMediaManager })));
-const VideoGenerator = lazy(() => import('../VideoGenerator').then((m) => ({ default: m.VideoGenerator })));
 const GeminiOmniPanel = lazy(() => import('../GeminiOmniPanel').then((m) => ({ default: m.GeminiOmniPanel })));
 
 export interface InputFormModalsProps {
@@ -38,7 +37,6 @@ export interface InputFormModalsProps {
   isRepurposingOpen: boolean;
   isCrossPlatformOpen: boolean;
   isSocialMediaOpen: boolean;
-  isVideoGeneratorOpen: boolean;
   isOmniOpen: boolean;
   onCloseSaveModal: () => void;
   onCloseTemplateBrowser: () => void;
@@ -52,7 +50,6 @@ export interface InputFormModalsProps {
   onCloseRepurposing: () => void;
   onCloseCrossPlatform: () => void;
   onCloseSocialMedia: () => void;
-  onCloseVideoGenerator: () => void;
   onCloseOmni: () => void;
   onSaveTemplate: (name: string) => void;
   onSelectTemplate: (templateId: string) => void;
@@ -83,7 +80,6 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   isRepurposingOpen,
   isCrossPlatformOpen,
   isSocialMediaOpen,
-  isVideoGeneratorOpen,
   isOmniOpen,
   onCloseSaveModal,
   onCloseTemplateBrowser,
@@ -97,7 +93,6 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onCloseRepurposing,
   onCloseCrossPlatform,
   onCloseSocialMedia,
-  onCloseVideoGenerator,
   onCloseOmni,
   onSaveTemplate,
   onSelectTemplate,
@@ -266,18 +261,6 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
       <SectionErrorBoundary sectionName="Social Media Manager">
         <FeaturePanelModal open={isSocialMediaOpen} onClose={onCloseSocialMedia} sectionName="Social Media Manager">
           <SocialMediaManager currentContent={formData.topic} />
-        </FeaturePanelModal>
-      </SectionErrorBoundary>
-    )}
-    {isVideoGeneratorOpen && (
-      <SectionErrorBoundary sectionName="Video Generator">
-        <FeaturePanelModal open={isVideoGeneratorOpen} onClose={onCloseVideoGenerator} sectionName="Video Generator">
-          <VideoGenerator
-            topic={formData.topic}
-            platform={formData.platform}
-            tone={formData.tone}
-            contentType={formData.contentType}
-          />
         </FeaturePanelModal>
       </SectionErrorBoundary>
     )}
