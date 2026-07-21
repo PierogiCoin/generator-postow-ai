@@ -29,7 +29,7 @@ export const InputFormSection: React.FC<InputFormSectionProps> = ({
     <header className="flex items-start gap-3">
       {step != null && (
         <span
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-cyan-500/15 text-[11px] font-black text-cyan-700 dark:text-cyan-300 border border-cyan-500/25"
+          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--hero-accent-soft)] text-[11px] font-bold text-[var(--hero-accent)] border border-[var(--hero-accent)]/25"
           aria-hidden
         >
           {step}

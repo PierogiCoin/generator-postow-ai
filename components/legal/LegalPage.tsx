@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { PageHeader } from '../ui/PageHeader';
 
 type LegalKind = 'terms' | 'privacy';
 
@@ -65,17 +66,31 @@ const CONTENT: Record<LegalKind, { title: string; updated: string; sections: { h
 export const LegalPage: React.FC<{ kind: LegalKind }> = ({ kind }) => {
   const doc = CONTENT[kind];
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12 animate-fade-in">
-      <Link to="/" className="text-sm text-cyan-600 hover:underline">
+    <div className="max-w-3xl mx-auto px-4 py-10 md:py-14 animate-fade-in">
+      <Link
+        to="/"
+        className="text-sm font-semibold hover:opacity-80 transition-opacity"
+        style={{ color: 'var(--hero-accent)' }}
+      >
         ← Strona główna
       </Link>
-      <h1 className="mt-6 text-3xl font-black text-slate-900 dark:text-white">{doc.title}</h1>
-      <p className="mt-2 text-sm text-slate-500">Ostatnia aktualizacja: {doc.updated}</p>
-      <div className="mt-8 space-y-8">
+
+      <PageHeader
+        className="mt-8"
+        eyebrow="Dokumenty"
+        title={doc.title}
+        subtitle={`Ostatnia aktualizacja: ${doc.updated}`}
+      />
+
+      <div className="mt-10 space-y-0 border-y border-slate-200 dark:border-white/10">
         {doc.sections.map((s) => (
-          <section key={s.h}>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">{s.h}</h2>
-            <p className="mt-2 text-slate-600 dark:text-slate-400 leading-relaxed">{s.p}</p>
+          <section key={s.h} className="border-b border-slate-200 dark:border-white/10 last:border-b-0 py-7">
+            <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+              {s.h}
+            </h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400 leading-relaxed text-sm md:text-base">
+              {s.p}
+            </p>
           </section>
         ))}
       </div>

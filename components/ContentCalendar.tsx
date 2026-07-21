@@ -861,9 +861,7 @@ export const ContentCalendar: React.FC = () => {
   };
 
   return (
-    <div className="glass-premium rounded-[2.5rem] border border-white/10 shadow-2xl p-6 md:p-8 animate-fade-in relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[40%] h-56 bg-gradient-to-l from-cyan-500/5 to-transparent pointer-events-none" />
-
+    <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 p-6 md:p-8 animate-fade-in relative overflow-hidden">
       <ConfirmDialog {...confirmDialogProps} />
 
       <CalendarFillToolbar
@@ -897,31 +895,41 @@ export const ContentCalendar: React.FC = () => {
         onSelectSlot={(slot) => void handleApplyGapSlot(slot)}
       />
 
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4 relative z-10">
-        <h2 className="text-xl md:text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tighter font-sans capitalize">
-          {periodLabel}
-        </h2>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-end mb-8 gap-4 relative z-10">
+        <div>
+          <p
+            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: 'var(--hero-accent)' }}
+          >
+            Calendar
+          </p>
+          <h2 className="mt-1 font-display text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight capitalize">
+            {periodLabel}
+          </h2>
+        </div>
         <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex rounded-xl border border-slate-200/50 dark:border-white/10 overflow-hidden">
+          <div className="flex rounded-lg border border-slate-200/80 dark:border-white/10 overflow-hidden">
             <button
               type="button"
               onClick={() => setCalendarView('month')}
-              className={`px-3 py-2 text-xs font-bold uppercase tracking-wide transition ${
+              className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide transition ${
                 calendarView === 'month'
-                  ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300'
+                  ? 'text-white'
                   : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
               }`}
+              style={calendarView === 'month' ? { backgroundColor: 'var(--hero-accent)' } : undefined}
             >
               {t('calendar.viewMonth', 'Miesiąc')}
             </button>
             <button
               type="button"
               onClick={() => setCalendarView('week')}
-              className={`px-3 py-2 text-xs font-bold uppercase tracking-wide transition ${
+              className={`px-3 py-2 text-xs font-semibold uppercase tracking-wide transition ${
                 calendarView === 'week'
-                  ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300'
+                  ? 'text-white'
                   : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5'
               }`}
+              style={calendarView === 'week' ? { backgroundColor: 'var(--hero-accent)' } : undefined}
             >
               {t('calendar.viewWeek', 'Tydzień')}
             </button>
@@ -930,7 +938,8 @@ export const ContentCalendar: React.FC = () => {
             <button
               type="button"
               onClick={() => void handleClearPlan()}
-              className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1.5"
+              className="text-xs font-semibold hover:underline flex items-center gap-1.5"
+              style={{ color: 'var(--hero-accent)' }}
             >
               <XMarkIcon className="w-3.5 h-3.5" />
               {t('calendar.clearStrategicPlan')}

@@ -110,42 +110,66 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   const toneLabel = TONE_OPTIONS.find((t) => t.value === tone)?.label ?? tone;
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="w-full max-w-lg my-8">
+    <div className="fixed inset-0 home-hero-wash flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="absolute inset-0 home-grid-bg opacity-40 pointer-events-none" aria-hidden="true" />
+      <div className="relative w-full max-w-lg my-8">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl shadow-2xl mb-4">
-            <SparklesIcon className="w-8 h-8 text-white" />
+          <div
+            className="inline-flex items-center justify-center w-14 h-14 rounded-lg mb-4"
+            style={{ backgroundColor: 'var(--hero-accent)' }}
+          >
+            <SparklesIcon className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-3xl font-black text-white">Witaj w SocialOS</h1>
-          <p className="text-slate-400 mt-1">Skonfiguruj profil i wygeneruj pierwszy post</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--hero-accent)' }}>
+            Setup
+          </p>
+          <h1 className="mt-2 font-display text-3xl font-extrabold text-white tracking-tight">
+            Witaj w AI Content Pro
+          </h1>
+          <p className="text-slate-400 mt-2 text-sm">Skonfiguruj profil i wygeneruj pierwszy post</p>
         </div>
 
         <div className="flex items-center justify-center gap-1 sm:gap-2 mb-8 overflow-x-auto pb-1">
           {steps.map((label, i) => (
             <React.Fragment key={`step-${i}`}>
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                  i < step ? 'bg-green-500 text-white' :
-                  i === step ? 'bg-indigo-500 text-white ring-2 ring-indigo-300' :
-                  'bg-slate-700 text-slate-400'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-semibold transition-all ${
+                    i < step
+                      ? 'bg-emerald-500 text-white'
+                      : i === step
+                        ? 'text-white ring-2 ring-[var(--hero-accent)]/50'
+                        : 'bg-white/10 text-slate-400'
+                  }`}
+                  style={i === step ? { backgroundColor: 'var(--hero-accent)' } : undefined}
+                >
                   {i < step ? <CheckCircleIcon className="w-4 h-4" /> : i + 1}
                 </div>
-                <span className={`text-[10px] sm:text-xs text-center ${i === step ? 'text-indigo-300 font-semibold' : 'text-slate-500'}`}>{label}</span>
+                <span
+                  className={`text-[10px] sm:text-xs text-center ${
+                    i === step ? 'text-[var(--hero-accent)] font-semibold' : 'text-slate-500'
+                  }`}
+                >
+                  {label}
+                </span>
               </div>
               {i < steps.length - 1 && (
-                <div className={`h-0.5 w-6 sm:w-8 mb-4 transition-all shrink-0 ${i < step ? 'bg-green-500' : 'bg-slate-700'}`} />
+                <div
+                  className={`h-0.5 w-6 sm:w-8 mb-4 transition-all shrink-0 ${
+                    i < step ? 'bg-emerald-500' : 'bg-white/10'
+                  }`}
+                />
               )}
             </React.Fragment>
           ))}
         </div>
 
-        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl">
+        <div className="border border-white/10 bg-white/[0.04] p-6 sm:p-8 rounded-lg">
 
           {step === 0 && (
             <div className="space-y-5 animate-fade-in">
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">Jaka jest Twoja nisza?</h2>
+                <h2 className="font-display text-xl font-bold text-white mb-1 tracking-tight">Jaka jest Twoja nisza?</h2>
                 <p className="text-slate-400 text-sm">AI będzie generować treści dopasowane do Twojej branży.</p>
               </div>
               <input
@@ -153,7 +177,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 value={niche}
                 onChange={e => setNiche(e.target.value)}
                 placeholder="np. fitness, moda, gotowanie..."
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/50"
                 autoFocus
               />
               <div>
@@ -164,11 +188,12 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                       key={s}
                       type="button"
                       onClick={() => setNiche(s)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         niche === s
-                          ? 'bg-indigo-500 text-white'
-                          : 'bg-white/10 text-slate-300 hover:bg-white/20'
+                          ? 'text-white'
+                          : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
                       }`}
+                      style={niche === s ? { backgroundColor: 'var(--hero-accent)' } : undefined}
                     >
                       {s}
                     </button>
@@ -181,7 +206,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           {step === 1 && (
             <div className="space-y-5 animate-fade-in">
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">Główna platforma</h2>
+                <h2 className="font-display text-xl font-bold text-white mb-1 tracking-tight">Główna platforma</h2>
                 <p className="text-slate-400 text-sm">Gdzie przede wszystkim publikujesz treści?</p>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -190,15 +215,17 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     key={value}
                     type="button"
                     onClick={() => setPlatform(value)}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all ${
+                    className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-colors ${
                       platform === value
-                        ? 'bg-indigo-500/20 border-indigo-400 text-white'
+                        ? 'border-[var(--hero-accent)] bg-[var(--hero-accent-soft)] text-white'
                         : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
                     }`}
                   >
                     <span className="text-2xl">{emoji}</span>
                     <span className="text-sm font-semibold">{label}</span>
-                    {platform === value && <CheckCircleIcon className="w-4 h-4 text-indigo-400" />}
+                    {platform === value && (
+                      <CheckCircleIcon className="w-4 h-4" style={{ color: 'var(--hero-accent)' }} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -208,7 +235,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           {step === 2 && (
             <div className="space-y-5 animate-fade-in">
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">Styl komunikacji</h2>
+                <h2 className="font-display text-xl font-bold text-white mb-1 tracking-tight">Styl komunikacji</h2>
                 <p className="text-slate-400 text-sm">Jak chcesz brzmieć? AI dopasuje ton wszystkich treści.</p>
               </div>
               <div className="space-y-2">
@@ -217,15 +244,18 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     key={value}
                     type="button"
                     onClick={() => setTone(value)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
                       tone === value
-                        ? 'bg-indigo-500/20 border-indigo-400'
+                        ? 'border-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
                         : 'bg-white/5 border-white/10 hover:bg-white/10'
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
-                      tone === value ? 'bg-indigo-500 border-indigo-400' : 'border-slate-500'
-                    }`} />
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex-shrink-0 ${
+                        tone === value ? 'border-[var(--hero-accent)]' : 'border-slate-500'
+                      }`}
+                      style={tone === value ? { backgroundColor: 'var(--hero-accent)' } : undefined}
+                    />
                     <div>
                       <p className={`text-sm font-semibold ${tone === value ? 'text-white' : 'text-slate-300'}`}>{label}</p>
                       <p className="text-xs text-slate-500">{desc}</p>
@@ -242,7 +272,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   value={brandKeywords}
                   onChange={e => setBrandKeywords(e.target.value)}
                   placeholder="np. autentyczny, nowoczesny, pro-ekologiczny"
-                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2.5 bg-white/5 border border-white/15 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/50"
                 />
               </div>
             </div>
@@ -251,13 +281,13 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           {step === 3 && (
             <div className="space-y-5 animate-fade-in">
               <div>
-                <h2 className="text-xl font-bold text-white mb-1">Twój pierwszy post</h2>
+                <h2 className="font-display text-xl font-bold text-white mb-1 tracking-tight">Twój pierwszy post</h2>
                 <p className="text-slate-400 text-sm">
                   Sprawdź temat — po zakończeniu przejdziesz do generatora z gotowym prefill.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2 text-sm">
+              <div className="p-4 rounded-lg bg-white/5 border border-white/10 space-y-2 text-sm">
                 <p className="text-slate-300"><span className="text-slate-500">Nisza:</span> {niche}</p>
                 <p className="text-slate-300"><span className="text-slate-500">Platforma:</span> {platformLabel}</p>
                 <p className="text-slate-300"><span className="text-slate-500">Ton:</span> {toneLabel}</p>
@@ -271,7 +301,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                   value={firstPostTopic.replace(/<[^>]*>?/gm, '')}
                   onChange={(e) => setFirstPostTopic(`<p>${e.target.value}</p>`)}
                   rows={4}
-                  className="w-full px-3 py-2.5 bg-white/10 border border-white/20 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-3 py-2.5 bg-white/5 border border-white/15 rounded-lg text-white text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/50 resize-none"
                   placeholder="Opisz, o czym ma być pierwszy post..."
                 />
               </div>
@@ -292,7 +322,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 type="button"
                 onClick={() => setStep(s => s + 1)}
                 disabled={!canProceed}
-                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold rounded-xl transition-all"
+                className="px-6 py-2.5 text-white font-semibold rounded-lg transition-all hover:brightness-110 disabled:opacity-40"
+                style={{ backgroundColor: 'var(--hero-accent)' }}
               >
                 Dalej →
               </button>
@@ -301,9 +332,10 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                 type="button"
                 onClick={handleComplete}
                 disabled={saving || !canProceed}
-                className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-60 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/30"
+                className="px-6 py-2.5 text-white font-semibold rounded-lg transition-all hover:brightness-110 disabled:opacity-60"
+                style={{ backgroundColor: 'var(--hero-accent)' }}
               >
-                {saving ? 'Zapisuję...' : 'Wygeneruj pierwszy post ✨'}
+                {saving ? 'Zapisuję...' : 'Wygeneruj pierwszy post'}
               </button>
             )}
           </div>

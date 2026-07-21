@@ -498,11 +498,19 @@ export const AnalyticsView: React.FC = () => {
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">Analityka</h2>
+                    <p
+                        className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                        style={{ color: 'var(--hero-accent)' }}
+                    >
+                        Metrics
+                    </p>
+                    <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        Analityka
+                    </h1>
                     {analyzedAtLabel && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Ostatnia analiza: {analyzedAtLabel}
                             {isHydratingMetrics ? ' · odświeżanie metryk…' : ''}
                         </p>
@@ -512,7 +520,8 @@ export const AnalyticsView: React.FC = () => {
                     type="button"
                     onClick={handleRunAnalysis}
                     disabled={isAnalyzing}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white text-sm font-bold transition"
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg disabled:opacity-60 text-white text-sm font-semibold transition hover:brightness-110"
+                    style={{ backgroundColor: 'var(--hero-accent)' }}
                 >
                     {isAnalyzing ? <Spinner size="sm" /> : <RefreshCwIcon className="w-4 h-4" />}
                     {isAnalyzing ? 'Analizowanie…' : 'Odśwież analizę'}

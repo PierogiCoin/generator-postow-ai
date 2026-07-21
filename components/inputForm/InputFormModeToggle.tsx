@@ -36,9 +36,9 @@ export const InputFormModeToggle: React.FC<InputFormModeToggleProps> = ({ mode, 
         aria-selected={mode === 'quick'}
         tabIndex={mode === 'quick' ? 0 : -1}
         onClick={() => onChange('quick')}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hero-accent)] ${
           mode === 'quick'
-            ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/20'
+            ? 'bg-white dark:bg-slate-800 text-[var(--hero-accent)] shadow-sm border border-[var(--hero-accent)]/25'
             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
         }`}
       >
@@ -51,9 +51,9 @@ export const InputFormModeToggle: React.FC<InputFormModeToggleProps> = ({ mode, 
         aria-selected={mode === 'advanced'}
         tabIndex={mode === 'advanced' ? 0 : -1}
         onClick={() => onChange('advanced')}
-        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hero-accent)] ${
           mode === 'advanced'
-            ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/20'
+            ? 'bg-white dark:bg-slate-800 text-[var(--hero-accent)] shadow-sm border border-[var(--hero-accent)]/25'
             : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
         }`}
       >

@@ -93,7 +93,7 @@ export const OnboardingChecklist: React.FC = () => {
   const progress = Math.round((completed.size / STEPS.length) * 100);
 
   return (
-    <div className="relative rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+    <div className="relative border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 p-5">
       <button
         onClick={handleDismiss}
         className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
@@ -104,19 +104,19 @@ export const OnboardingChecklist: React.FC = () => {
 
       <div className="flex items-center gap-2 mb-4">
         <Trophy className="w-5 h-5 text-amber-500" />
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+        <h3 className="font-display text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">
           Rozpocznij swoją przygodę
         </h3>
-        <span className="ml-auto text-xs font-bold text-indigo-600 dark:text-indigo-400">
+        <span className="ml-auto text-xs font-bold" style={{ color: 'var(--hero-accent)' }}>
           {progress}%
         </span>
       </div>
 
       {/* Progress bar */}
-      <div className="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden mb-4">
+      <div className="h-1.5 bg-slate-100 dark:bg-white/10 overflow-hidden mb-4">
         <div
-          className="h-full bg-gradient-to-r from-fuchsia-500 to-indigo-500 transition-all duration-500 ease-out"
-          style={{ width: `${progress}%` }}
+          className="h-full transition-all duration-500 ease-out"
+          style={{ width: `${progress}%`, backgroundColor: 'var(--hero-accent)' }}
         />
       </div>
 

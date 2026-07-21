@@ -91,18 +91,21 @@ export const RssToPostPanel: React.FC = () => {
   };
 
   return (
-    <div className="glass-premium p-6 md:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+    <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-3 text-left"
         aria-expanded={expanded}
       >
-        <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 flex items-center justify-center shrink-0">
-          <SparklesIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+        <div
+          className="w-10 h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center shrink-0"
+          style={{ color: 'var(--hero-accent)' }}
+        >
+          <SparklesIcon className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+          <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
             {t('rss.title', 'RSS / Blog → Post')}
           </h3>
           <p className="text-xs text-slate-500 mt-0.5">

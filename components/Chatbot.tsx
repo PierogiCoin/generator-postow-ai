@@ -191,7 +191,8 @@ export const Chatbot: React.FC = () => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 rounded-2xl shadow-2xl hover:scale-110 hover:rotate-3 transition-all z-[60] group"
+        className="fixed bottom-6 right-6 text-white p-3.5 rounded-lg hover:brightness-110 transition-all z-[60] group"
+        style={{ backgroundColor: 'var(--hero-accent)' }}
         aria-label={t('chatbot.open', 'Otwórz asystenta AI')}
       >
         <SparklesIcon className="w-7 h-7 group-hover:animate-pulse" />
@@ -199,14 +200,15 @@ export const Chatbot: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-full max-w-sm h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col animate-fade-in-up z-[60] overflow-hidden">
-          <div className="p-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white flex justify-between items-center">
+        <div className="fixed bottom-24 right-6 w-full max-w-sm h-[600px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg border border-slate-200 dark:border-white/10 shadow-xl flex flex-col animate-fade-in-up z-[60] overflow-hidden">
+          <div className="p-5 text-white flex justify-between items-center"
+            style={{ backgroundColor: 'var(--hero-accent)' }}>
             <div className="flex items-center gap-3">
               <div className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
                 <ChatBubbleLeftRightIcon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-black text-sm uppercase tracking-wider">Content AI</h3>
+                <h3 className="font-display font-extrabold text-sm tracking-tight">Content AI</h3>
                 <p className="text-[10px] opacity-80 font-bold">Twój strateg treści jest online</p>
               </div>
             </div>
@@ -221,8 +223,8 @@ export const Chatbot: React.FC = () => {
                 <div key={`msg-${msg.role}-${msg.text?.slice(0, 20) || 'no-content'}`} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in-up`} style={{ animationDelay: `${index * 0.1}s` }}>
                   <div
                     className={`max-w-[85%] sm:max-w-[85%] p-3 sm:p-3.5 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md group ${msg.role === 'user'
-                      ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-tr-none hover:scale-[1.02] hover:shadow-lg hover:shadow-indigo-500/25'
-                      : 'bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none hover:scale-[1.02] hover:shadow-lg hover:border-indigo-200 dark:hover:border-indigo-600'
+                      ? 'bg-[var(--hero-accent)] text-white rounded-tr-none'
+                      : 'bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 text-slate-800 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-tl-none hover:scale-[1.02] hover:shadow-lg hover:border-[var(--hero-accent)]/40'
                       }`}
                   >
                     <p className="text-xs sm:text-xs leading-relaxed whitespace-pre-wrap transition-colors duration-300 font-medium group-hover:text-white group-hover:drop-shadow-sm">{msg.text}</p>
@@ -230,7 +232,7 @@ export const Chatbot: React.FC = () => {
                       <button 
                         type="button"
                         onClick={() => applyUpdate(msg.text)}
-                        className="mt-3 w-full py-2.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-[10px] sm:text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation min-h-[44px] hover:scale-105 hover:shadow-lg hover:shadow-indigo-500/25"
+                        className="mt-3 w-full py-2.5 sm:py-2 bg-[var(--hero-accent)] hover:brightness-110 text-white text-[10px] font-semibold uppercase tracking-wider rounded-lg transition-all flex items-center justify-center gap-2 touch-manipulation min-h-[44px]"
                       >
                         <RocketLaunchIcon className="w-3 h-3 sm:w-3 sm:h-3 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" /> Zastosuj w edytorze
                       </button>
@@ -252,9 +254,9 @@ export const Chatbot: React.FC = () => {
                   <div className="p-4 bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-lg">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full animate-bounce shadow-lg shadow-indigo-500/50"></div>
-                        <div className="w-2 h-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full animate-bounce shadow-lg shadow-indigo-500/50" style={{ animationDelay: '-0.3s' }}></div>
-                        <div className="w-2 h-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full animate-bounce shadow-lg shadow-indigo-500/50" style={{ animationDelay: '-0.5s' }}></div>
+                        <div className="w-2 h-2 bg-[var(--hero-accent)] rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-[var(--hero-accent)] rounded-full animate-bounce" style={{ animationDelay: '-0.3s' }}></div>
+                        <div className="w-2 h-2 bg-[var(--hero-accent)] rounded-full animate-bounce" style={{ animationDelay: '-0.5s' }}></div>
                       </div>
                       <span className="text-xs text-slate-500 dark:text-slate-400 font-medium animate-pulse">AI pisze...</span>
                     </div>
@@ -269,7 +271,7 @@ export const Chatbot: React.FC = () => {
           {result && (
             <div className="px-4 py-3 sm:px-4 sm:py-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
               <p className="text-[9px] sm:text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2.5 sm:mb-2.5 flex items-center gap-1.5 sm:gap-1.5">
-                <RocketLaunchIcon className="w-3 h-3 sm:w-3 sm:h-3 text-indigo-500" /> Szybkie ulepszenia
+                <RocketLaunchIcon className="w-3 h-3 sm:w-3 sm:h-3 text-[var(--hero-accent)]" /> Szybkie ulepszenia
               </p>
               <div className="grid grid-cols-2 gap-2 sm:gap-2">
                 {quickActions.map((action, i) => (
@@ -277,7 +279,7 @@ export const Chatbot: React.FC = () => {
                     key={`action-${action.label}`}
                     onClick={() => handleSend(action.prompt)}
                     disabled={isLoading}
-                    className="text-[10px] sm:text-[10px] font-bold p-3 sm:p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-indigo-500/50 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 transition-all text-left truncate touch-manipulation min-h-[44px] sm:min-h-[40px]"
+                    className="text-[10px] sm:text-[10px] font-bold p-3 sm:p-2 bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl hover:border-[var(--hero-accent)]/50 hover:bg-[var(--hero-accent-soft)] hover:text-[var(--hero-accent)] transition-all text-left truncate touch-manipulation min-h-[44px] sm:min-h-[40px]"
                   >
                     {action.label}
                   </button>
@@ -294,13 +296,13 @@ export const Chatbot: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 placeholder="Zapytaj asystenta..."
                 rows={1}
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 sm:py-3.5 pl-4 pr-14 sm:pr-12 text-xs sm:text-xs focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-inner touch-manipulation min-h-[48px] sm:min-h-[44px]"
+                className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-2xl py-4 sm:py-3.5 pl-4 pr-14 sm:pr-12 text-xs sm:text-xs focus:ring-2 focus:ring-[var(--hero-accent)] transition-all resize-none shadow-inner touch-manipulation min-h-[48px] sm:min-h-[44px]"
                 disabled={isLoading}
               />
               <button
                 onClick={() => handleSend()}
                 disabled={isLoading || !input.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg touch-manipulation"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-3 sm:p-2 bg-[var(--hero-accent)] text-white rounded-lg hover:brightness-110 transition-all disabled:opacity-50 shadow-lg touch-manipulation"
                 aria-label={t('chatbot.send', 'Wyślij wiadomość')}
               >
                 <SendIcon className="w-4 h-4" />

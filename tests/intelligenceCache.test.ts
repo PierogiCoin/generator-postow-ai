@@ -3,6 +3,7 @@ import {
   buildIntelligenceCacheKey,
   getIntelligenceCache,
   setIntelligenceCache,
+  deleteIntelligenceCache,
 } from '../server/lib/intelligenceCache';
 
 describe('intelligenceCache', () => {
@@ -16,5 +17,12 @@ describe('intelligenceCache', () => {
     const a = buildIntelligenceCacheKey('x', { niche: 'fit', platform: 'ig' });
     const b = buildIntelligenceCacheKey('x', { platform: 'ig', niche: 'fit' });
     expect(a).toBe(b);
+  });
+
+  it('deletes entries on force refresh', () => {
+    const key = buildIntelligenceCacheKey('competitor', { handle: 'x', platform: 'ig', niche: 'fit' });
+    setIntelligenceCache(key, { analysis: { summary: 'old' } }, 60_000);
+    expect(deleteIntelligenceCache(key)).toBe(true);
+    expect(getIntelligenceCache(key)).toBeNull();
   });
 });

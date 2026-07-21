@@ -86,14 +86,17 @@ export const EngagementInboxPanel: React.FC = () => {
   }
 
   return (
-    <div className="glass-premium p-6 md:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+    <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-fuchsia-500/15 flex items-center justify-center">
-            <ChatBubbleIcon className="w-5 h-5 text-fuchsia-600 dark:text-fuchsia-400" />
+          <div
+            className="w-10 h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center"
+            style={{ color: 'var(--hero-accent)' }}
+          >
+            <ChatBubbleIcon className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+            <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white tracking-tight">
               {t('inbox.title', 'Skrzynka engagement')}
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -105,7 +108,7 @@ export const EngagementInboxPanel: React.FC = () => {
           type="button"
           onClick={() => void refresh()}
           disabled={isLoading || !user}
-          className="text-xs font-bold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 disabled:opacity-40"
+          className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 disabled:opacity-40"
         >
           {isLoading ? t('inbox.refreshing', 'Odświeżam…') : t('inbox.refresh', 'Odśwież')}
         </button>
@@ -160,7 +163,8 @@ export const EngagementInboxPanel: React.FC = () => {
                     type="button"
                     disabled={busyId === message.id}
                     onClick={() => void handleDraft(message)}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white hover:bg-fuchsia-500 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg text-white hover:brightness-110 disabled:opacity-50"
+                    style={{ backgroundColor: 'var(--hero-accent)' }}
                   >
                     <SparklesIcon className="w-3.5 h-3.5" />
                     {busyId === message.id
@@ -198,7 +202,7 @@ export const EngagementInboxPanel: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => void copyText(text, `${message.id}-${key}`)}
-                            className="p-1 text-slate-400 hover:text-fuchsia-500"
+                            className="p-1 text-slate-400 hover:text-[var(--hero-accent)]"
                             aria-label={t('inbox.copy', 'Kopiuj')}
                           >
                             {copied === `${message.id}-${key}` ? (

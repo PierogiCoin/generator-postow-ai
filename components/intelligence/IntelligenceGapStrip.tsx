@@ -21,8 +21,8 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="mb-6 p-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 animate-pulse">
-        <p className="text-sm text-cyan-600 dark:text-cyan-400 font-medium">
+      <div className="mb-6 p-4 rounded-lg border border-[var(--hero-accent)]/25 bg-[var(--hero-accent-soft)] animate-pulse">
+        <p className="text-sm text-[var(--hero-accent)] font-medium">
           Analizuję luki godzinowe vs konkurencja…
         </p>
       </div>
@@ -31,11 +31,11 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
 
   if (gapSlots.length === 0) {
     return (
-      <div className="mb-6 p-4 rounded-2xl border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="mb-6 p-4 rounded-lg border border-dashed border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.03] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-start gap-3">
           <TrendingUpIcon className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
               Brak analizy luk godzinowych
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -48,14 +48,15 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
             <button
               type="button"
               onClick={onRefresh}
-              className="px-3 py-1.5 text-xs font-bold rounded-lg bg-cyan-600 text-white hover:bg-cyan-500"
+              className="px-3 py-1.5 text-xs font-semibold rounded-lg text-white hover:brightness-110"
+              style={{ backgroundColor: 'var(--hero-accent)' }}
             >
               Analizuj luki
             </button>
           )}
           <Link
             to="/competitors"
-            className="px-3 py-1.5 text-xs font-bold rounded-lg border border-cyan-500/40 text-cyan-700 dark:text-cyan-300 hover:bg-cyan-500/10"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-[var(--hero-accent)]/40 text-[var(--hero-accent)] hover:bg-[var(--hero-accent-soft)]"
           >
             Konkurenci →
           </Link>
@@ -65,11 +66,11 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
   }
 
   return (
-    <div className="mb-6 p-4 rounded-2xl border border-cyan-500/25 bg-gradient-to-r from-cyan-500/8 to-indigo-500/8 relative z-10">
+    <div className="mb-6 p-4 rounded-lg border border-[var(--hero-accent)]/25 bg-[var(--hero-accent-soft)] relative z-10">
       <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <SparklesIcon className="w-4 h-4 text-cyan-500" />
-          <h3 className="text-xs font-black uppercase tracking-widest text-cyan-700 dark:text-cyan-300">
+          <SparklesIcon className="w-4 h-4 text-[var(--hero-accent)]" />
+          <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--hero-accent)]">
             Najlepsze godziny vs konkurencja
           </h3>
           <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
@@ -80,7 +81,7 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
           <button
             type="button"
             onClick={onRefresh}
-            className="text-[10px] font-bold uppercase text-cyan-600 hover:underline"
+            className="text-[10px] font-semibold uppercase text-[var(--hero-accent)] hover:underline"
           >
             Odśwież
           </button>
@@ -97,11 +98,11 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
             key={`${slot.weekday}-${slot.hour}`}
             type="button"
             onClick={() => onSelectSlot?.(slot)}
-            className="group px-3 py-2 rounded-xl bg-white/60 dark:bg-slate-900/60 border border-cyan-500/30 hover:border-cyan-500 hover:bg-cyan-500/10 transition-all text-left"
+            className="group px-3 py-2 rounded-lg bg-white/70 dark:bg-[#071018]/60 border border-[var(--hero-accent)]/30 hover:border-[var(--hero-accent)] hover:bg-[var(--hero-accent-soft)] transition-colors text-left"
             title={slot.reason}
           >
-            <span className="text-sm font-black text-slate-800 dark:text-white">{slot.label}</span>
-            <span className="ml-2 text-[10px] font-bold text-cyan-600 dark:text-cyan-400">
+            <span className="text-sm font-bold text-slate-800 dark:text-white">{slot.label}</span>
+            <span className="ml-2 text-[10px] font-semibold text-[var(--hero-accent)]">
               luka {slot.gapScore}/10
             </span>
           </button>

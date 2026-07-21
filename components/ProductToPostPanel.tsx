@@ -82,18 +82,21 @@ export const ProductToPostPanel: React.FC = () => {
   };
 
   return (
-    <div className="glass-premium p-6 md:p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+    <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-3 text-left"
         aria-expanded={expanded}
       >
-        <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center">
-          <SparklesIcon className="w-5 h-5 text-emerald-500" />
+        <div
+          className="w-10 h-10 rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 flex items-center justify-center"
+          style={{ color: 'var(--hero-accent)' }}
+        >
+          <SparklesIcon className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-slate-900 dark:text-white">Produkt → Post</p>
+          <p className="font-display text-sm font-extrabold text-slate-900 dark:text-white tracking-tight">Produkt → Post</p>
           <p className="text-xs text-slate-500">
             Shopify / Woo / własny sklep — wklej dane produktu
           </p>

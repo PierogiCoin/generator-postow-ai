@@ -209,14 +209,17 @@ export const StoryboardView: React.FC = () => {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8 space-y-12 min-h-screen">
-            <header className="text-center space-y-4 animate-fade-in-down">
-                <div className="inline-flex p-4 bg-blue-500/10 dark:bg-blue-500/20 rounded-3xl mb-2">
-                    <FilmIcon className="w-12 h-12 text-blue-500 animate-float" />
-                </div>
-                <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
-                    {t('storyboard.title')} <span className="gradient-text">{t('storyboard.ai')}</span>
+            <header className="space-y-3 animate-fade-in-down max-w-2xl">
+                <p
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: 'var(--hero-accent)' }}
+                >
+                    {t('storyboard.ai')}
+                </p>
+                <h1 className="font-display text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    {t('storyboard.title')}
                 </h1>
-                <p className="max-w-2xl mx-auto text-slate-500 dark:text-slate-400 text-lg">
+                <p className="text-slate-500 dark:text-slate-400 text-base md:text-lg leading-relaxed">
                     {t('storyboard.subtitle')}
                 </p>
             </header>

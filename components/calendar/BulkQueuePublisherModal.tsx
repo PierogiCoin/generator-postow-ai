@@ -168,11 +168,11 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
         role="dialog"
         aria-modal="true"
         aria-labelledby="bulk-queue-title"
-        className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-2xl flex flex-col"
+        className="w-full max-w-lg max-h-[90vh] overflow-hidden rounded-t-3xl sm:rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 shadow-xl flex flex-col"
       >
         <header className="flex items-start justify-between gap-3 p-5 border-b border-slate-200 dark:border-white/10">
           <div>
-            <h2 id="bulk-queue-title" className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">
+            <h2 id="bulk-queue-title" className="text-lg font-extrabold text-slate-900 dark:text-white uppercase tracking-tight">
               {t('calendar.bulk.title', 'Kolejka publikacji')}
             </h2>
             <p className="text-xs text-slate-500 mt-1">
@@ -195,7 +195,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
 
         <div className="flex-1 overflow-y-auto p-5 space-y-3">
           {candidates.length === 0 ? (
-            <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl">
+            <div className="text-center py-10 border-2 border-dashed border-slate-200 dark:border-white/10 rounded-lg">
               <p className="text-sm text-slate-500">
                 {t(
                   'calendar.bulk.empty',
@@ -212,7 +212,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
                   onClick={() => setMode('confirm_schedule')}
                   className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${
                     mode === 'confirm_schedule'
-                      ? 'bg-white dark:bg-slate-900 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                      ? 'bg-white dark:bg-slate-900 text-[var(--hero-accent)] shadow-sm'
                       : 'text-slate-500'
                   }`}
                 >
@@ -224,7 +224,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
                   onClick={() => setMode('publish_now')}
                   className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${
                     mode === 'publish_now'
-                      ? 'bg-white dark:bg-slate-900 text-cyan-700 dark:text-cyan-300 shadow-sm'
+                      ? 'bg-white dark:bg-slate-900 text-[var(--hero-accent)] shadow-sm'
                       : 'text-slate-500'
                   }`}
                 >
@@ -237,7 +237,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
                   type="button"
                   onClick={toggleAll}
                   disabled={isRunning}
-                  className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline disabled:opacity-40"
+                  className="text-xs font-bold text-[var(--hero-accent)] hover:underline disabled:opacity-40"
                 >
                   {selectedIds.size === candidates.length
                     ? t('calendar.bulk.deselectAll', 'Odznacz wszystkie')
@@ -257,7 +257,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
                       key={post.id}
                       className={`flex items-start gap-3 p-3 rounded-xl border ${
                         checked
-                          ? 'border-cyan-500/40 bg-cyan-500/5'
+                          ? 'border-[var(--hero-accent)]/40 bg-[var(--hero-accent-soft)]'
                           : 'border-slate-200 dark:border-white/10'
                       }`}
                     >
@@ -290,7 +290,7 @@ export const BulkQueuePublisherModal: React.FC<BulkQueuePublisherModalProps> = (
                                 : prog.status === 'failed'
                                   ? 'text-red-600'
                                   : prog.status === 'publishing'
-                                    ? 'text-cyan-600'
+                                    ? 'text-[var(--hero-accent)]'
                                     : 'text-slate-500'
                             }`}
                           >

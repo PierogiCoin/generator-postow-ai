@@ -132,7 +132,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="social-connections-title"
-        className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
           <div>
@@ -163,12 +163,12 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
             return (
               <div
                 key={platform}
-                className="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-3"
+                className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700 space-y-3"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-4 min-w-0">
                     <div
-                      className={`w-12 h-12 ${config.color} rounded-xl flex items-center justify-center text-2xl shrink-0`}
+                      className={`w-12 h-12 ${config.color} rounded-lg flex items-center justify-center text-2xl shrink-0`}
                     >
                       {config.icon}
                     </div>
@@ -196,7 +196,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
                     type="button"
                     onClick={() => void handleConnect(platform)}
                     disabled={isConnecting}
-                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-bold rounded-xl disabled:opacity-50 shrink-0"
+                    className="px-4 py-2 bg-[var(--hero-accent)] hover:brightness-110 text-white text-sm font-bold rounded-lg disabled:opacity-50 shrink-0"
                   >
                     {isConnecting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -273,7 +273,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
             type="button"
             onClick={() => void handleRefresh()}
             disabled={isRefreshing}
-            className="text-xs font-bold text-slate-500 hover:text-cyan-600 disabled:opacity-50"
+            className="text-xs font-bold text-slate-500 hover:text-[var(--hero-accent)] disabled:opacity-50"
           >
             {isRefreshing
               ? t('socialConnections.refreshing', 'Odświeżam…')

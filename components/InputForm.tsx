@@ -219,7 +219,7 @@ export const InputForm: React.FC<InputFormProps> = ({
   return (
     <>
       <div id="input-form-anchor">
-      <ModernCard className="p-4 sm:p-6 lg:p-7 glass-premium rounded-2xl sm:rounded-[1.75rem] border border-white/10">
+      <ModernCard className="p-4 sm:p-6 lg:p-7 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg">
         {(showFirstPostBanner || hasStoredDraft) && (
           <div className="mb-5 space-y-3">
             {showFirstPostBanner && (
@@ -236,7 +236,10 @@ export const InputForm: React.FC<InputFormProps> = ({
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 pb-5 border-b border-slate-200/60 dark:border-white/10">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400 mb-1">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-1"
+              style={{ color: 'var(--hero-accent)' }}
+            >
               {t('form.workspaceLabel', 'Workspace')}
             </p>
             <InputFormModeToggle mode={formMode} onChange={handleModeChange} />
@@ -304,7 +307,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                     }
                   }
                 }}
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 bg-white/70 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200/70 dark:border-white/10"
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-[var(--hero-accent)] bg-white/70 dark:bg-white/5 px-2.5 py-1.5 rounded-lg border border-slate-200/70 dark:border-white/10"
                 title={t('form.topic.repurposeTooltip', 'Wklej tekst aby wyciągnąć temat')}
               >
                 <LayersIcon className="w-3.5 h-3.5" />
@@ -313,14 +316,14 @@ export const InputForm: React.FC<InputFormProps> = ({
               <button
                 type="button"
                 onClick={() => setIsAssistantModalOpen(true)}
-                className="flex items-center gap-1.5 text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/10 px-2.5 py-1.5 rounded-lg border border-cyan-500/25"
+                className="flex items-center gap-1.5 text-xs font-bold text-[var(--hero-accent)] bg-[var(--hero-accent-soft)] px-2.5 py-1.5 rounded-lg border border-[var(--hero-accent)]/25"
                 title={t('form.topic.assistantTooltip')}
               >
                 <SparklesIcon className="w-3.5 h-3.5" />
                 {t('form.topic.assistant', 'Asystent AI')}
               </button>
             </div>
-            <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-slate-950/40 focus-within:border-cyan-500/45 focus-within:ring-2 focus-within:ring-cyan-500/15 transition-all">
+            <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-white/70 dark:bg-slate-950/40 focus-within:border-[var(--hero-accent)]/45 focus-within:ring-2 focus-within:ring-[var(--hero-accent)]/15 transition-all">
               <InteractiveEditor
                 id="topic"
                 ariaLabel={t('form.topic.label')}
@@ -393,10 +396,10 @@ export const InputForm: React.FC<InputFormProps> = ({
                 <div className="flex-grow px-3.5 h-11 border border-slate-200/70 dark:border-white/10 rounded-xl bg-white/70 dark:bg-slate-950/40 text-sm text-slate-700 dark:text-slate-300 truncate flex items-center font-medium">
                   {selectedTemplate ? templates.find(tmpl => tmpl.id === selectedTemplate)?.name : t('common.newPost')}
                 </div>
-                <button type="button" onClick={() => setIsTemplateBrowserOpen(true)} className="w-11 h-11 flex items-center justify-center bg-white/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl hover:border-cyan-500/35 text-slate-500" title={t('form.template.browse')} aria-label={t('form.template.browse', 'Przeglądaj szablony')}>
+                <button type="button" onClick={() => setIsTemplateBrowserOpen(true)} className="w-11 h-11 flex items-center justify-center bg-white/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl hover:border-[var(--hero-accent)]/40 text-slate-500" title={t('form.template.browse')} aria-label={t('form.template.browse', 'Przeglądaj szablony')}>
                   <CollectionIcon className="w-5 h-5" />
                 </button>
-                <button type="button" onClick={() => { setTemplateToEdit(null); setIsSaveModalOpen(true); }} className="w-11 h-11 flex items-center justify-center bg-white/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl hover:border-cyan-500/35 text-slate-500" title={t('form.template.saveNew')} aria-label={t('form.template.saveNew', 'Zapisz jako nowy szablon')}>
+                <button type="button" onClick={() => { setTemplateToEdit(null); setIsSaveModalOpen(true); }} className="w-11 h-11 flex items-center justify-center bg-white/80 dark:bg-white/5 border border-slate-200/70 dark:border-white/10 rounded-xl hover:border-[var(--hero-accent)]/40 text-slate-500" title={t('form.template.saveNew')} aria-label={t('form.template.saveNew', 'Zapisz jako nowy szablon')}>
                   <SaveIcon className="w-5 h-5" />
                 </button>
               </div>
@@ -444,7 +447,7 @@ export const InputForm: React.FC<InputFormProps> = ({
                       <label htmlFor="audience" className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{t('form.audience.label')}</label>
                       <Tooltip text={t('form.audience.tooltip')} />
                     </div>
-                    <button type="button" onClick={handleGeneratePersona} disabled={!formData.audience.trim() || isGeneratingPersona} className="text-xs font-bold text-cyan-700 dark:text-cyan-400 hover:underline disabled:opacity-50 flex items-center gap-1.5">
+                    <button type="button" onClick={handleGeneratePersona} disabled={!formData.audience.trim() || isGeneratingPersona} className="text-xs font-bold text-[var(--hero-accent)] hover:underline disabled:opacity-50 flex items-center gap-1.5">
                       {isGeneratingPersona ? <Spinner size="sm" /> : <><SparklesIcon className="w-3.5 h-3.5" /> {t('form.audience.persona', 'Persona AI')}</>}
                     </button>
                   </div>
@@ -551,7 +554,7 @@ export const InputForm: React.FC<InputFormProps> = ({
           )}
 
           {autoPublishSection && (
-            <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/30 dark:bg-slate-950/20 p-4 sm:p-5">
+            <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-slate-50/30 dark:bg-slate-950/20 p-4 sm:p-5">
               {autoPublishSection}
             </div>
           )}

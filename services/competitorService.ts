@@ -219,10 +219,11 @@ export async function analyzeCompetitor(
   handle: string,
   platform: Platform,
   niche: string,
-  userId: string
+  userId: string,
+  options?: { forceRefresh?: boolean }
 ): Promise<CompetitorAnalysis> {
   try {
-    const { analysis, sources } = await analyzeCompetitorDeep(handle, platform, niche, userId);
+    const { analysis, sources } = await analyzeCompetitorDeep(handle, platform, niche, userId, options);
     return mapDeepAnalysis(analysis, sources);
   } catch {
     return analyzeCompetitorLegacy(handle, platform, niche, userId);
@@ -256,7 +257,7 @@ function mapDeepAnalysis(analysis: DeepCompetitorAnalysis, sources: Intelligence
     opportunities: analysis.opportunities || [],
     contentGaps: analysis.contentGaps || [],
     summary: analysis.summary || '',
-    estimated: analysis.estimated,
+    estimated: analysis.estimated === true,
     sources,
     recentNewsAngles: analysis.recentNewsAngles,
   };

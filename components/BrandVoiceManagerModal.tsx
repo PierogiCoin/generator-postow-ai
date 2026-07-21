@@ -208,7 +208,7 @@ const ProfileForm: React.FC<{
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">
+                <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white uppercase tracking-tighter">
                     {profile.id ? 'Edytuj Tożsamość' : 'Nowa Tożsamość Marki'}
                 </h3>
                 <div className="flex gap-2">
@@ -217,13 +217,13 @@ const ProfileForm: React.FC<{
                 </div>
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <div className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-800">
                 <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kompletność profilu</span>
-                    <span className="text-sm font-black text-blue-600">{completeness.score}%</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Kompletność profilu</span>
+                    <span className="text-sm font-extrabold text-[var(--hero-accent)]">{completeness.score}%</span>
                 </div>
                 <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-600 transition-all" style={{ width: `${completeness.score}%` }} />
+                    <div className="h-full bg-[var(--hero-accent)] transition-all" style={{ width: `${completeness.score}%` }} />
                 </div>
                 {completeness.missing.length > 0 && (
                     <p className="text-[10px] text-slate-500 mt-2">Brakuje: {completeness.missing.slice(0, 4).join(', ')}</p>
@@ -233,7 +233,7 @@ const ProfileForm: React.FC<{
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                     <div className="space-y-4">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-500">Podstawowe Dane</label>
+                        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Podstawowe Dane</label>
                         <ModernInput
                             label="Nazwa Profilu"
                             name="name"
@@ -255,7 +255,7 @@ const ProfileForm: React.FC<{
                                 value={formData.settings.description}
                                 onChange={handleChange}
                                 rows={4}
-                                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm focus:border-blue-500 transition-all outline-none"
+                                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-lg p-4 text-sm focus:border-[var(--hero-accent)] transition-all outline-none"
                                 placeholder="Czym zajmuje się Twoja marka? Jaka jest jej misja?"
                             />
                         </div>
@@ -287,7 +287,7 @@ const ProfileForm: React.FC<{
                                 value={formData.settings.visualStyle || ''}
                                 onChange={handleChange}
                                 rows={2}
-                                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-2xl p-4 text-sm focus:border-blue-500 transition-all outline-none"
+                                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-lg p-4 text-sm focus:border-[var(--hero-accent)] transition-all outline-none"
                                 placeholder="np. jasne zdjęcia, minimalistyczny styl, kolory marki, ciepłe światło"
                             />
                         </div>
@@ -307,18 +307,18 @@ const ProfileForm: React.FC<{
                     </div>
 
                     <div className="space-y-4">
-                        <label className="text-xs font-black uppercase tracking-widest text-slate-500">Archetyp Osobowości</label>
+                        <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Archetyp Osobowości</label>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {ARCHETYPES.map((arch) => (
                                 <button
                                     key={arch.id}
                                     type="button"
                                     onClick={() => setFormData(prev => ({ ...prev, settings: { ...prev.settings, archetype: arch.id } }))}
-                                    className={`p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2 ${formData.settings.archetype === arch.id ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/20' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-400 group'}`}
+                                    className={`p-4 rounded-lg border-2 transition-all text-left flex flex-col gap-2 ${formData.settings.archetype === arch.id ? 'bg-[var(--hero-accent)] border-[var(--hero-accent)] text-white' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-[var(--hero-accent)] group'}`}
                                 >
                                     <arch.icon className={`w-6 h-6 ${formData.settings.archetype === arch.id ? 'text-white' : 'text-blue-500 group-hover:scale-110 transition-transform'}`} />
                                     <div>
-                                        <p className="text-xs font-black uppercase tracking-tight">{arch.label}</p>
+                                        <p className="text-xs font-extrabold uppercase tracking-tight">{arch.label}</p>
                                         <p className={`text-[10px] leading-tight ${formData.settings.archetype === arch.id ? 'text-blue-100' : 'text-slate-500'}`}>{arch.desc}</p>
                                     </div>
                                 </button>
@@ -328,19 +328,19 @@ const ProfileForm: React.FC<{
                 </div>
 
                 <div className="space-y-8">
-                    <div className="p-8 bg-slate-900 dark:bg-slate-950 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
+                    <div className="p-8 bg-slate-900 dark:bg-slate-950 rounded-lg border border-white/5 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform duration-700">
                             <RocketIcon className="w-24 h-24 text-blue-500" />
                         </div>
                         <div className="relative z-10 space-y-6">
-                            <h4 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
+                            <h4 className="text-xl font-extrabold text-white uppercase tracking-tighter flex items-center gap-3">
                                 <SparklesIcon className="w-6 h-6 text-blue-400" />
                                 Wizualne Aktywa
                             </h4>
                             <div className="space-y-2">
-                                <label className="text-xs font-black text-white/50 uppercase tracking-widest block mb-2">Logo Marki</label>
-                                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-3xl border border-white/10 group-hover:border-blue-500/50 transition-all">
-                                    <div className="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
+                                <label className="text-xs font-extrabold text-white/50 uppercase tracking-widest block mb-2">Logo Marki</label>
+                                <div className="flex items-center gap-4 p-4 bg-white/5 rounded-3xl border border-white/10 group-hover:border-[var(--hero-accent)]/50 transition-all">
+                                    <div className="w-16 h-16 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
                                         {formData.settings.logoUrl ? (
                                             <img src={formData.settings.logoUrl} alt="Logo" className="w-full h-full object-contain" loading="lazy" />
                                         ) : (
@@ -357,7 +357,7 @@ const ProfileForm: React.FC<{
                                         />
                                         <label
                                             htmlFor="logo-upload"
-                                            className={`inline-flex items-center px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer transition-all ${isUploading === 'logos' ? 'bg-slate-700 text-slate-400' : 'bg-blue-600 text-white hover:bg-blue-500'}`}
+                                            className={`inline-flex items-center px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-[0.14em] cursor-pointer transition-all ${isUploading === 'logos' ? 'bg-slate-700 text-slate-400' : 'bg-[var(--hero-accent)] text-white hover:brightness-110'}`}
                                         >
                                             {isUploading === 'logos' ? 'Wgrywanie...' : 'Wgraj Logo'}
                                         </label>
@@ -366,7 +366,7 @@ const ProfileForm: React.FC<{
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-white/50 uppercase tracking-widest">Pozycja logo</label>
+                                        <label className="text-[10px] font-extrabold text-white/50 uppercase tracking-widest">Pozycja logo</label>
                                         <select
                                             value={formData.settings.logoPosition || 'bottom-right'}
                                             onChange={(e) => setFormData((prev) => ({
@@ -384,7 +384,7 @@ const ProfileForm: React.FC<{
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-white/50 uppercase tracking-widest">
+                                        <label className="text-[10px] font-extrabold text-white/50 uppercase tracking-widest">
                                             Rozmiar logo ({formData.settings.logoSizePercent ?? 13}%)
                                         </label>
                                         <input
@@ -403,18 +403,18 @@ const ProfileForm: React.FC<{
                             </div>
                             <div className="p-6 bg-white/5 rounded-3xl border border-white/10 space-y-4">
                                 <div className="flex items-center justify-between mb-2">
-                                    <label className="text-xs font-black text-white/30 uppercase tracking-widest">Maskotka Marki</label>
+                                    <label className="text-xs font-extrabold text-white/30 uppercase tracking-widest">Maskotka Marki</label>
                                     <button
                                         type="button"
                                         onClick={() => setFormData(prev => ({ ...prev, settings: { ...prev.settings, includeMascotInGeneration: !prev.settings.includeMascotInGeneration } }))}
-                                        className={`w-12 h-6 rounded-full transition-all relative ${formData.settings.includeMascotInGeneration ? 'bg-blue-500' : 'bg-slate-700'}`}
+                                        className={`w-12 h-6 rounded-full transition-all relative ${formData.settings.includeMascotInGeneration ? 'bg-[var(--hero-accent)]' : 'bg-slate-700'}`}
                                     >
                                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.settings.includeMascotInGeneration ? 'left-7' : 'left-1'}`} />
                                     </button>
                                 </div>
 
                                 <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-2xl bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
+                                    <div className="w-20 h-20 rounded-lg bg-slate-800 flex items-center justify-center overflow-hidden border border-white/10">
                                         {formData.settings.mascotUrl ? (
                                             <img src={formData.settings.mascotUrl} alt="Mascot" className="w-full h-full object-contain" loading="lazy" />
                                         ) : (
@@ -431,7 +431,7 @@ const ProfileForm: React.FC<{
                                         />
                                         <label
                                             htmlFor="mascot-upload"
-                                            className={`inline-flex items-center px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest cursor-pointer transition-all ${isUploading === 'mascots' ? 'bg-slate-700 text-slate-400' : 'bg-purple-600 text-white hover:bg-purple-500'}`}
+                                            className={`inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-[0.14em] cursor-pointer transition-all ${isUploading === 'mascots' ? 'bg-slate-700 text-slate-400' : 'bg-[var(--hero-accent)] text-white hover:brightness-110'}`}
                                         >
                                             {isUploading === 'mascots' ? 'Wgrywanie...' : 'Wgraj Maskotkę'}
                                         </label>
@@ -449,7 +449,7 @@ const ProfileForm: React.FC<{
                                     value={formData.settings.mascotDescription || ''}
                                     onChange={handleChange}
                                     rows={2}
-                                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-xs text-white outline-none focus:border-blue-500 transition-all"
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-4 text-xs text-white outline-none focus:border-[var(--hero-accent)] transition-all"
                                     placeholder="Opisz maskotkę dla AI gen-grafiki..."
                                 />
                             </div>
@@ -458,10 +458,10 @@ const ProfileForm: React.FC<{
                 </div>
 
                 <div className="space-y-4 md:col-span-2">
-                    <label className="text-xs font-black uppercase tracking-widest text-slate-500">Przykłady (Long-term Learn)</label>
+                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Przykłady (Long-term Learn)</label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-6 bg-green-50/50 dark:bg-green-900/10 rounded-3xl border border-green-100 dark:border-green-800/30">
-                            <p className="text-xs font-black text-green-700 dark:text-green-400 uppercase tracking-widest mb-4">Używaj takich sformułowań:</p>
+                            <p className="text-xs font-extrabold text-green-700 dark:text-green-400 uppercase tracking-widest mb-4">Używaj takich sformułowań:</p>
                             <div className="space-y-3">
                                 {formData.settings.examplesToFollow?.map((ex, i) => (
                                     <div key={`follow-${i}`} className="flex gap-2">
@@ -469,11 +469,11 @@ const ProfileForm: React.FC<{
                                         <button type="button" onClick={() => removeExample('examplesToFollow', i)} aria-label="Usuń przykład" className="text-red-400 hover:text-red-600">&times;</button>
                                     </div>
                                 ))}
-                                <button type="button" onClick={() => addExample('examplesToFollow')} className="text-[10px] font-black text-green-600 uppercase">+ Dodaj przykład</button>
+                                <button type="button" onClick={() => addExample('examplesToFollow')} className="text-[10px] font-extrabold text-green-600 uppercase">+ Dodaj przykład</button>
                             </div>
                         </div>
                         <div className="p-6 bg-red-50/50 dark:bg-red-900/10 rounded-3xl border border-red-100 dark:border-red-800/30">
-                            <p className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-widest mb-4">Unikaj takich sformułowań:</p>
+                            <p className="text-xs font-extrabold text-red-700 dark:text-red-400 uppercase tracking-widest mb-4">Unikaj takich sformułowań:</p>
                             <div className="space-y-3">
                                 {formData.settings.examplesToAvoid?.map((ex, i) => (
                                     <div key={`avoid-${i}`} className="flex gap-2">
@@ -481,13 +481,13 @@ const ProfileForm: React.FC<{
                                         <button type="button" onClick={() => removeExample('examplesToAvoid', i)} aria-label="Usuń przykład" className="text-red-400 hover:text-red-600">&times;</button>
                                     </div>
                                 ))}
-                                <button type="button" onClick={() => addExample('examplesToAvoid')} className="text-[10px] font-black text-red-600 uppercase">+ Dodaj przykład</button>
+                                <button type="button" onClick={() => addExample('examplesToAvoid')} className="text-[10px] font-extrabold text-red-600 uppercase">+ Dodaj przykład</button>
                             </div>
                         </div>
                     </div>
                     {(formData.settings.successPatterns?.length ?? 0) > 0 && (
-                        <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 rounded-2xl border border-amber-100 dark:border-amber-800/30">
-                            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-2">Wzorce sukcesu (z analizy postów)</p>
+                        <div className="p-4 bg-amber-50/50 dark:bg-amber-900/10 rounded-lg border border-amber-100 dark:border-amber-800/30">
+                            <p className="text-[10px] font-extrabold text-amber-700 uppercase tracking-widest mb-2">Wzorce sukcesu (z analizy postów)</p>
                             <ul className="text-xs text-slate-600 dark:text-slate-400 space-y-1 list-disc pl-4">
                                 {formData.settings.successPatterns?.map((p, i) => (
                                     <li key={`pattern-${i}`}>{p}</li>
@@ -496,8 +496,8 @@ const ProfileForm: React.FC<{
                         </div>
                     )}
                     {formData.settings.competitorIntel && (
-                        <div className="p-4 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-2xl border border-indigo-100 dark:border-indigo-800/30 space-y-3">
-                            <p className="text-[10px] font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-widest flex items-center gap-2">
+                        <div className="p-4 bg-[var(--hero-accent-soft)] rounded-lg border border-[var(--hero-accent)]/20 space-y-3">
+                            <p className="text-[10px] font-extrabold text-[var(--hero-accent)] uppercase tracking-widest flex items-center gap-2">
                                 <UsersIcon className="w-4 h-4" />
                                 Intel konkurencji
                                 <span className="text-slate-400 font-normal normal-case">
@@ -636,24 +636,25 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="brand-voice-modal-title"
-                className="bg-white/90 dark:bg-slate-900/90 border border-white/20 rounded-[3rem] shadow-2xl w-full max-w-7xl flex flex-col max-h-[92vh] overflow-hidden animate-scale-in"
+                className="bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl w-full max-w-7xl flex flex-col max-h-[92vh] overflow-hidden animate-scale-in"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="p-6 lg:p-8 pb-4 flex justify-between items-center bg-gradient-to-r from-blue-600/5 to-purple-600/5 gap-4">
+                <div className="p-6 lg:p-8 pb-4 flex justify-between items-center border-b border-slate-200/80 dark:border-white/10 gap-4">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-500/30">
+                        <div className="p-3 rounded-lg text-white" style={{ backgroundColor: 'var(--hero-accent)' }}>
                             <IdentificationIcon className="w-6 h-6" />
                         </div>
                         <div>
-                            <h2 id="brand-voice-modal-title" className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">Tożsamość Marki</h2>
-                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Brand Voice & Assets Manager</p>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--hero-accent)' }}>Brand</p>
+                            <h2 id="brand-voice-modal-title" className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Tożsamość Marki</h2>
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-[0.14em]">Brand Voice & Assets</p>
                         </div>
                     </div>
                     <button
                         type="button"
                         onClick={onClose}
                         aria-label="Zamknij"
-                        className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-red-500 hover:text-white transition-all transform hover:rotate-90"
+                        className="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/5 text-slate-500 hover:bg-red-500 hover:text-white transition-colors"
                     >
                         &times;
                     </button>
@@ -665,13 +666,13 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                     ) : (
                         <div className="space-y-8">
                             {onExtractFromUrl && (
-                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
+                                <div className="p-6 bg-slate-50 dark:bg-slate-900/50 rounded-lg border-2 border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
                                     <input
                                         type="url"
                                         value={extractUrl}
                                         onChange={(e) => setExtractUrl(e.target.value)}
                                         placeholder="https://twojafirma.pl — importuj styl ze strony"
-                                        className="flex-grow bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500"
+                                        className="flex-grow bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--hero-accent)]"
                                     />
                                     <ModernButton
                                         onClick={() => void handleExtract()}
@@ -687,55 +688,55 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <button
                                     onClick={() => setEditingProfile(emptyProfile)}
-                                    className="p-8 bg-blue-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20 group"
+                                    className="p-8 text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:brightness-110 transition-all group" style={{ backgroundColor: 'var(--hero-accent)' }}
                                 >
-                                    <div className="p-3 bg-white/20 rounded-2xl group-hover:rotate-12 transition-transform">
+                                    <div className="p-3 bg-white/20 rounded-lg group-hover:rotate-12 transition-transform">
                                         <PlusCircleIcon className="w-8 h-8" />
                                     </div>
-                                    <span className="font-black uppercase tracking-widest text-sm text-white">{t('brandVoiceManager.addNewProfile')}</span>
+                                    <span className="font-semibold uppercase tracking-[0.14em] text-sm text-white">{t('brandVoiceManager.addNewProfile')}</span>
                                 </button>
 
                                 <button
                                     onClick={() => void handleLearnHistory()}
                                     disabled={isLearningStyle}
-                                    className="p-8 bg-white dark:bg-slate-800 rounded-[2rem] border-2 border-slate-100 dark:border-slate-700 flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:border-blue-500 transition-all group"
+                                    className="p-8 bg-white dark:bg-[#071018] rounded-lg border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:border-[var(--hero-accent)] transition-colors group"
                                 >
-                                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-2xl text-blue-600 group-hover:scale-110 transition-transform">
+                                    <div className="p-3 bg-[var(--hero-accent-soft)] rounded-lg text-[var(--hero-accent)] group-hover:scale-110 transition-transform">
                                         <SparklesIcon className="w-8 h-8" />
                                     </div>
-                                    <span className="font-black uppercase tracking-widest text-sm text-slate-800 dark:text-white">Ucz się z Historii</span>
+                                    <span className="font-semibold uppercase tracking-[0.14em] text-sm text-slate-800 dark:text-white">Ucz się z Historii</span>
                                 </button>
 
                                 <button
                                     onClick={() => void handleLearnFavorites()}
                                     disabled={isLearningStyle}
-                                    className="p-8 bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-purple-500/20 group"
+                                    className="p-8 text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:brightness-110 transition-all group border border-white/10" style={{ backgroundColor: 'var(--hero-navy)' }}
                                 >
-                                    <div className="p-3 bg-white/20 rounded-2xl group-hover:animate-pulse">
+                                    <div className="p-3 bg-white/20 rounded-lg group-hover:animate-pulse">
                                         <HeartIcon className="w-8 h-8" />
                                     </div>
-                                    <span className="font-black uppercase tracking-widest text-sm text-white">Ucz się z Ulubionych</span>
+                                    <span className="font-semibold uppercase tracking-[0.14em] text-sm text-white">Ucz się z Ulubionych</span>
                                 </button>
 
                                 {onLearnFromCompetitors && (
                                     <button
                                         onClick={() => void handleLearnCompetitors()}
                                         disabled={isLearningStyle}
-                                        className="p-8 bg-gradient-to-br from-cyan-600 to-indigo-600 rounded-[2rem] text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-cyan-500/20 group"
+                                        className="p-8 text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:brightness-110 transition-all group" style={{ backgroundColor: 'var(--hero-accent)' }}
                                     >
-                                        <div className="p-3 bg-white/20 rounded-2xl group-hover:scale-110 transition-transform">
+                                        <div className="p-3 bg-white/20 rounded-lg group-hover:scale-110 transition-transform">
                                             <UsersIcon className="w-8 h-8" />
                                         </div>
-                                        <span className="font-black uppercase tracking-widest text-sm text-white text-center">Ucz się z Konkurencji</span>
+                                        <span className="font-semibold uppercase tracking-[0.14em] text-sm text-white text-center">Ucz się z Konkurencji</span>
                                     </button>
                                 )}
                             </div>
 
                             <div className="space-y-4">
-                                <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest">Aktywne Profile Głosowe</h4>
+                                <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Aktywne Profile Głosowe</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {profiles.length === 0 ? (
-                                        <div className="col-span-full py-12 flex flex-col items-center gap-4 bg-slate-50 dark:bg-slate-900/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                        <div className="col-span-full py-12 flex flex-col items-center gap-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800">
                                             <ArchiveBoxIcon className="w-12 h-12 text-slate-300" />
                                             <p className="text-slate-400 font-medium">Brak zdefiniowanych profili marki.</p>
                                         </div>
@@ -743,14 +744,14 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                         profiles.map(profile => (
                                             <div
                                                 key={profile.id}
-                                                className={`p-6 rounded-[2rem] border-2 transition-all flex items-center justify-between gap-4 ${activeId === profile.id ? 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-500 shadow-lg shadow-blue-500/10' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
+                                                className={`p-6 rounded-lg border-2 transition-all flex items-center justify-between gap-4 ${activeId === profile.id ? 'bg-[var(--hero-accent-soft)] border-[var(--hero-accent)]' : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800'}`}
                                             >
                                                 <div className="flex items-center gap-4 min-w-0 flex-grow">
-                                                    <div className={`p-3 rounded-xl flex-shrink-0 ${activeId === profile.id ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
+                                                    <div className={`p-3 rounded-xl flex-shrink-0 ${activeId === profile.id ? 'bg-[var(--hero-accent)] text-white' : 'bg-slate-100 dark:bg-white/5 text-slate-500'}`}>
                                                         <UserIcon className="w-5 h-5" />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="font-black uppercase tracking-tight text-slate-900 dark:text-white truncate">{profile.name}</p>
+                                                        <p className="font-extrabold uppercase tracking-tight text-slate-900 dark:text-white truncate">{profile.name}</p>
                                                         <p className="text-[10px] font-bold text-blue-500 uppercase tracking-widest">{profile.settings.archetype || 'Expert'}</p>
                                                         <p className="text-[10px] text-slate-400">{computeBrandVoiceCompleteness(profile.settings).score}% kompletny</p>
                                                     </div>

@@ -112,12 +112,22 @@ const ReportDisplay: React.FC<{
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t('strategist.report.title')}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div>
+                    <p
+                        className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                        style={{ color: 'var(--hero-accent)' }}
+                    >
+                        Report
+                    </p>
+                    <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        {t('strategist.report.title')}
+                    </h1>
+                </div>
                 <button
                     type="button"
                     onClick={onNewAudit}
-                    className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800 transition"
+                    className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/15 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition"
                 >
                     {t('strategist.report.newAudit', 'Nowy audyt')}
                 </button>
@@ -505,20 +515,29 @@ export const AIStrategistView: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-            <div className="text-center">
-                <BrainCircuitIcon className="w-16 h-16 mx-auto text-blue-500 mb-4" />
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white">{t('strategist.title')}</h1>
-                <p className="mt-2 text-slate-500 dark:text-slate-400">{t('strategist.subtitle')}</p>
+            <div>
+                <p
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: 'var(--hero-accent)' }}
+                >
+                    Strategy
+                </p>
+                <h1 className="mt-2 font-display text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    {t('strategist.title')}
+                </h1>
+                <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed max-w-xl">
+                    {t('strategist.subtitle')}
+                </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg space-y-6">
+            <form onSubmit={handleSubmit} className="p-6 bg-white/70 dark:bg-[#0a1220]/70 border border-slate-200/80 dark:border-white/10 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('strategist.form.brandProfileLabel')}</label>
                         <select
                             value={selectedBrandId}
                             onChange={e => setSelectedBrandId(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500"
+                            className="w-full bg-white dark:bg-[#071018] border border-slate-300 dark:border-white/15 rounded-lg p-2 text-sm focus:ring-2 focus:ring-[var(--hero-accent)]/40"
                         >
                             <option value="">{t('strategist.form.brandProfilePlaceholder')}</option>
                             {brandVoiceProfiles.map(p => (

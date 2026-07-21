@@ -89,25 +89,34 @@ export const AnalyzerView: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-            <div className="text-center">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">AI Analyzer</h1>
-                <p className="mt-2 text-gray-500 dark:text-gray-400">
+            <div>
+                <p
+                    className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                    style={{ color: 'var(--hero-accent)' }}
+                >
+                    Insights
+                </p>
+                <h1 className="mt-2 font-display text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    AI Analyzer
+                </h1>
+                <p className="mt-2 text-slate-500 dark:text-slate-400 text-sm md:text-base leading-relaxed max-w-xl">
                     Get deep insights from your media or solve complex problems with Gemini.
                 </p>
             </div>
 
-            <div className="bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg">
-                <div className="p-2 border-b border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center gap-2">
+            <div className="bg-white/70 dark:bg-[#0a1220]/70 border border-slate-200/80 dark:border-white/10">
+                <div className="p-2 border-b border-slate-200 dark:border-white/10">
+                    <div className="flex items-center gap-2 flex-wrap">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => resetState(tab.id as AnalyzerTab)}
-                                className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
+                                className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${
                                     activeTab === tab.id
-                                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-300'
-                                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                                    ? 'text-white'
+                                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5'
                                 }`}
+                                style={activeTab === tab.id ? { backgroundColor: 'var(--hero-accent)' } : undefined}
                             >
                                 <tab.icon className="w-5 h-5"/>
                                 {tab.label}

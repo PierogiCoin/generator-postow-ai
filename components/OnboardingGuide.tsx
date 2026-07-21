@@ -72,13 +72,16 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
   };
 
   return (
-    <div className="mb-6 p-4 sm:p-5 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-500/20 rounded-2xl">
+    <div
+      className="mb-6 p-4 sm:p-5 border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1c2e]"
+      style={{ boxShadow: 'inset 3px 0 0 0 var(--hero-accent)' }}
+    >
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--hero-accent)]">
             Pierwsze kroki
           </p>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+          <h3 className="font-display text-lg font-extrabold tracking-tight text-slate-900 dark:text-white mt-0.5">
             Twój pierwszy sukces ({completedCount}/{steps.length})
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -88,7 +91,7 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
         <button
           type="button"
           onClick={handleDismiss}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-800/50"
+          className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 touch-manipulation"
           aria-label="Zamknij przewodnik"
         >
           <XMarkIcon className="w-5 h-5" />
@@ -101,14 +104,14 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
           return (
             <div
               key={step.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border ${
+              className={`flex items-center gap-3 p-3 rounded-lg border ${
                 step.done
-                  ? 'bg-green-500/10 border-green-500/30'
-                  : 'bg-white/60 dark:bg-slate-900/40 border-slate-200/80 dark:border-slate-700/80'
+                  ? 'bg-emerald-500/10 border-emerald-500/30'
+                  : 'bg-[var(--hero-surface)] dark:bg-[#071018] border-slate-200 dark:border-white/10'
               }`}
             >
-              <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                step.done ? 'bg-green-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+              <div className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                step.done ? 'bg-emerald-500 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-500'
               }`}>
                 {step.done ? <CheckCircleIcon className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
               </div>
@@ -120,7 +123,7 @@ export const OnboardingGuide: React.FC<OnboardingGuideProps> = ({
                   <button
                     type="button"
                     onClick={step.action}
-                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline mt-0.5"
+                    className="text-xs font-semibold text-[var(--hero-accent)] hover:underline mt-0.5 min-h-[32px]"
                   >
                     {step.actionLabel} →
                   </button>

@@ -133,27 +133,34 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
         role="dialog"
         aria-modal="true"
         aria-labelledby="signup-modal-title"
-        className={`relative bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-8 w-full max-w-md m-4 transform transition-all duration-300 ease-out ${isOpen && !isClosing ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+        className={`relative bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl p-8 w-full max-w-md m-4 transform transition-all duration-300 ease-out ${isOpen && !isClosing ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
         onClick={e => e.stopPropagation()}
       >
         <button
           type="button"
           onClick={handleClose}
           aria-label="Zamknij"
-          className="absolute top-4 right-4 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors"
+          className="absolute top-4 right-4 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        <h2 id="signup-modal-title" className="text-2xl font-bold text-center text-slate-900 dark:text-white mb-2">Stwórz swoje konto</h2>
-        <p className="text-center text-slate-500 dark:text-slate-400 mb-6">Zacznij generować niesamowite treści w kilka sekund.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-center" style={{ color: 'var(--hero-accent)' }}>
+          Start
+        </p>
+        <h2 id="signup-modal-title" className="mt-2 font-display text-2xl font-extrabold text-center text-slate-900 dark:text-white tracking-tight">
+          Stwórz konto
+        </h2>
+        <p className="text-center text-slate-500 dark:text-slate-400 mt-2 mb-6 text-sm">
+          Zacznij generować treści w kilka sekund.
+        </p>
         
         <button
           type="button"
           onClick={handleGoogle}
           disabled={isLoading || !termsAccepted}
-          className="w-full flex items-center justify-center gap-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-semibold py-3 px-4 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700/50 disabled:opacity-50 transition-colors mb-3"
+          className="w-full flex items-center justify-center gap-3 border border-slate-300 dark:border-white/15 bg-white dark:bg-[#071018] text-slate-800 dark:text-slate-100 font-semibold py-3 px-4 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-colors mb-3"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -169,15 +176,15 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
             type="checkbox"
             checked={termsAccepted}
             onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+            className="mt-0.5 rounded border-slate-300 text-[var(--hero-accent)] focus:ring-[var(--hero-accent)]"
           />
           <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
             Akceptuję{' '}
-            <Link to="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">
+            <Link to="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: 'var(--hero-accent)' }}>
               regulamin
             </Link>{' '}
             oraz{' '}
-            <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline dark:text-blue-400">
+            <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: 'var(--hero-accent)' }}>
               politykę prywatności
             </Link>
             .
@@ -185,12 +192,12 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
         </label>
 
         <div className="relative mb-4">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-slate-600" /></div>
-          <div className="relative flex justify-center text-xs"><span className="px-2 bg-white dark:bg-slate-800 text-slate-400">lub e-mail</span></div>
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-white/10" /></div>
+          <div className="relative flex justify-center text-xs"><span className="px-2 bg-white dark:bg-[#0a1220] text-slate-400">lub e-mail</span></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 p-3 rounded-md text-sm">{error}</div>}
+          {error && <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 p-3 rounded-lg text-sm">{error}</div>}
           
           <div>
             <label htmlFor="signup-email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Adres e-mail</label>
@@ -202,7 +209,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               onChange={e => setEmail(e.target.value)}
               onBlur={handleBlur}
               required
-              className={`w-full bg-slate-50 dark:bg-slate-900 border rounded-md py-3 px-3 focus:ring-2 focus:border-blue-500 transition ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'}`}
+              className={`w-full bg-slate-50 dark:bg-[#071018] border rounded-lg py-3 px-3 focus:ring-2 focus:border-[var(--hero-accent)] transition ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-white/15 focus:ring-[var(--hero-accent)]/40'}`}
               placeholder="ty@example.com"
               aria-invalid={!!validationErrors.email}
               aria-describedby="signup-email-error"
@@ -221,7 +228,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               onBlur={handleBlur}
               required
               minLength={6}
-              className={`w-full bg-slate-50 dark:bg-slate-900 border rounded-md py-3 px-3 focus:ring-2 focus:border-blue-500 transition ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-slate-600 focus:ring-blue-500'}`}
+              className={`w-full bg-slate-50 dark:bg-[#071018] border rounded-lg py-3 px-3 focus:ring-2 focus:border-[var(--hero-accent)] transition ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-white/15 focus:ring-[var(--hero-accent)]/40'}`}
               placeholder="•••••••• (min. 6 znaków)"
               aria-invalid={!!validationErrors.password}
               aria-describedby="signup-password-error"
@@ -232,7 +239,8 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
           <button
             type="submit"
             disabled={isSubmitDisabled}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg mt-6"
+            className="w-full flex items-center justify-center gap-2 text-white font-semibold py-3 px-4 rounded-lg hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all mt-6"
+            style={{ backgroundColor: 'var(--hero-accent)' }}
           >
             {isLoading ? (
               <>
@@ -250,7 +258,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
         
         <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
           Masz już konto?{' '}
-          <button onClick={onSwitchToLogin} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+          <button onClick={onSwitchToLogin} className="font-semibold hover:underline" style={{ color: 'var(--hero-accent)' }}>
             Zaloguj się
           </button>
         </p>

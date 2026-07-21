@@ -735,15 +735,15 @@
       "faq": "FAQ"
     },
     "trust": {
-      "title": "Zbudowane dla marketerów i twórców",
+      "title": "Jeden workflow dla contentu",
       "item_generate": "Generator postów",
       "item_plan": "Planer kampanii",
       "item_analyze": "Analityka treści"
     },
     "hero": {
       "brand": "AI Content Pro",
-      "title": "Posty social media dopasowane do Twojej marki",
-      "subtitle": "Generuj gotowe treści i planuj publikacje w jednym miejscu — bez karty kredytowej.",
+      "title": "Posty social media w tonie Twojej marki",
+      "subtitle": "Generuj, planuj i publikuj w jednym studio — bez karty kredytowej.",
       "cta": "Wygeneruj pierwszy post",
       "cta_logged_in": "Przejdź do generatora",
       "secondary_cta": "Zobacz jak to działa",
@@ -758,24 +758,24 @@
       "preview_label": "Wynik",
       "preview_status": "Gotowe",
       "preview_hook": "Hook",
-      "preview_body": "Twój zespół może generować posty pod markę, planować publikacje i sprawdzać, co działa — w jednym workflow.",
+      "preview_body": "Twój zespół generuje posty pod markę, planuje publikacje i widzi, co działa — w jednym miejscu.",
       "preview_cta_line": "CTA: Wygeneruj pierwszy post →",
       "preview_tag_ai": "#ContentMarketing",
       "preview_tag_marketing": "#SocialMedia"
     },
     "how_it_works": {
-      "title": "Prostota w 3 krokach",
-      "subtitle": "Od pomysłu do gotowego posta w mniej niż minutę — bez przełączania narzędzi.",
-      "step1_title": "1. Opisz cel",
+      "title": "Od briefu do posta",
+      "subtitle": "Trzy kroki. Bez przełączania narzędzi i bez pustej kartki.",
+      "step1_title": "Opisz cel",
       "step1_desc": "Temat, odbiorcy i ton — tyle wystarczy, żeby zacząć.",
-      "step2_title": "2. Wybierz styl",
-      "step2_desc": "Dopasuj platformę i typ treści do swojego brandu.",
-      "step3_title": "3. Generuj i publikuj",
+      "step2_title": "Dopasuj styl",
+      "step2_desc": "Wybierz platformę i typ treści pod swój brand.",
+      "step3_title": "Generuj i publikuj",
       "step3_desc": "Skopiuj, zaplanuj albo dopracuj propozycję przed publikacją."
     },
     "features": {
-      "title": "Trzy moduły, jeden workflow",
-      "subtitle": "Generowanie, planowanie i analiza treści w jednym miejscu.",
+      "title": "Studio zamiast stosu narzędzi",
+      "subtitle": "Generowanie, planowanie i analiza — spięte w jeden rytm pracy.",
       "generator_title": "Generator treści",
       "generator_desc": "Posty dopasowane do marki — gotowe do edycji i publikacji.",
       "generator_mock_label": "Podgląd posta",
@@ -788,7 +788,7 @@
       "analytics_mock_label": "Zaangażowanie"
     },
     "use_cases": {
-      "title": "Jak z tego korzystać",
+      "title": "Dla kogo to jest",
       "subtitle": "Konkretne scenariusze — bez fikcyjnych recenzji.",
       "item1_title": "Zespół marketingu",
       "item1_desc": "Szybkie warianty postów pod jedną markę i spójny ton.",
@@ -798,8 +798,8 @@
       "item3_desc": "Regularna publikacja bez zaczynania od pustej kartki."
     },
     "faq": {
-      "title": "Najczęstsze pytania",
-      "subtitle": "Krótko o działaniu generatora — albo od razu wygeneruj pierwszy post.",
+      "title": "Pytania",
+      "subtitle": "Krótko o generatorze — albo od razu stwórz pierwszy post.",
       "q1": "Czy muszę mieć doświadczenie w marketingu?",
       "a1": "Nie. Narzędzie prowadzi Cię od celu i grupy docelowej po gotowy post z CTA i hasztagami.",
       "q2": "Czy mogę edytować treści przed publikacją?",
@@ -808,8 +808,8 @@
       "a3": "Najczęściej od razu: lepsza regularność i szybsze iteracje. Analityka pomaga potem dopracować timing."
     },
     "final_cta": {
-      "title": "Wygeneruj pierwszy post w kilka minut",
-      "subtitle": "Załóż konto i zacznij od generatora — bez karty kredytowej.",
+      "title": "Pierwszy post w kilka minut",
+      "subtitle": "Załóż konto i wejdź do generatora — bez karty kredytowej.",
       "subtitle_logged_in": "Wróć do generatora i kontynuuj tworzenie treści.",
       "button": "Wygeneruj pierwszy post"
     }

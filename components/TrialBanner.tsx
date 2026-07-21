@@ -76,72 +76,70 @@ export const TrialBanner: React.FC = () => {
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl border p-0.5 shadow-md"
-      style={{ borderColor: 'var(--hero-accent)', backgroundColor: 'var(--hero-accent)' }}
+      className="relative overflow-hidden border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0f1c2e] p-5 sm:p-6"
+      style={{ boxShadow: 'inset 3px 0 0 0 var(--hero-accent)' }}
     >
-      <div className="relative rounded-[14px] bg-white dark:bg-slate-900 p-5 sm:p-6">
-        <button
-          type="button"
-          onClick={handleDismiss}
-          className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-          aria-label={t('trialBanner.close')}
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="absolute top-3 right-3 min-h-[40px] min-w-[40px] inline-flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors touch-manipulation"
+        aria-label={t('trialBanner.close')}
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pr-8">
+        <div
+          className="shrink-0 w-12 h-12 rounded-lg flex items-center justify-center"
+          style={{ backgroundColor: 'var(--hero-accent)' }}
         >
-          <X className="w-5 h-5" />
-        </button>
+          <Sparkles className="w-6 h-6 text-white" />
+        </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pr-6">
-          <div
-            className="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: 'var(--hero-accent)' }}
-          >
-            <Sparkles className="w-6 h-6 text-white" />
-          </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-display text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {t('trialBanner.title')}
+          </h3>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+            {t('trialBanner.subtitle', { credits: proCreditsLabel })}
+          </p>
 
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              {t('trialBanner.title')}
-            </h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              {t('trialBanner.subtitle', { credits: proCreditsLabel })}
-            </p>
-
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-              {features.map((feat) => (
-                <span key={feat} className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                  <Check className="w-3.5 h-3.5 text-emerald-500" />
-                  {feat}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="shrink-0 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={handleStartTrial}
-              disabled={loading}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-xl hover:brightness-110 transition disabled:opacity-50"
-              style={{ backgroundColor: 'var(--hero-accent)' }}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t('trialBanner.redirecting')}
-                </>
-              ) : (
-                t('trialBanner.cta')
-              )}
-            </button>
-            <p className="mt-1.5 text-[11px] text-slate-400 text-center sm:text-right">
-              {t('trialBanner.fine_print')}
-            </p>
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+            {features.map((feat) => (
+              <span key={feat} className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                {feat}
+              </span>
+            ))}
           </div>
         </div>
 
-        {error && (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
-        )}
+        <div className="shrink-0 w-full sm:w-auto">
+          <button
+            type="button"
+            onClick={handleStartTrial}
+            disabled={loading}
+            className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-3 text-white text-sm font-semibold rounded-lg hover:brightness-110 transition disabled:opacity-50 touch-manipulation"
+            style={{ backgroundColor: 'var(--hero-accent)' }}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t('trialBanner.redirecting')}
+              </>
+            ) : (
+              t('trialBanner.cta')
+            )}
+          </button>
+          <p className="mt-1.5 text-[11px] text-slate-400 text-center sm:text-right">
+            {t('trialBanner.fine_print')}
+          </p>
+        </div>
       </div>
+
+      {error && (
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>
+      )}
     </div>
   );
 };

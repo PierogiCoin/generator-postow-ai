@@ -113,21 +113,21 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-modal-title"
-        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-6 w-full max-w-xl m-4 transform transition-all flex flex-col gap-6"
+        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-6 w-full max-w-xl m-4 transform transition-all flex flex-col gap-6"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
-          <h2 id="schedule-modal-title" className="text-2xl font-black text-blue-600 dark:text-blue-300">Zaplanuj publikację</h2>
+          <h2 id="schedule-modal-title" className="text-2xl font-extrabold text-blue-600 dark:text-blue-300">Zaplanuj publikację</h2>
           <button type="button" onClick={onClose} aria-label="Zamknij" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"><XMarkIcon className="w-5 h-5" /></button>
         </div>
 
         {itemToSchedule && (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+          <div className="p-4 bg-[var(--hero-accent-soft)] rounded-lg border border-[var(--hero-accent)]/25">
             <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">Planujesz na podstawie:</p>
             <strong className="text-slate-800 dark:text-white font-semibold text-base">{itemToSchedule.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}</strong>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">{itemToSchedule.formData.platform}</span>
-              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-xs font-medium rounded-full">{itemToSchedule.formData.generationType}</span>
+              <span className="px-2 py-0.5 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] text-xs font-medium rounded-full">{itemToSchedule.formData.platform}</span>
+              <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full">{itemToSchedule.formData.generationType}</span>
             </div>
           </div>
         )}
@@ -173,7 +173,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
                     key={platform}
                     type="button"
                     onClick={() => handlePlatformToggle(platform)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected ? config.color.replace('bg-', 'bg-') + ' text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected ? config.color.replace('bg-', 'bg-') + ' text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
                   >
                     <Icon className="w-4 h-4" /> {platform}
                   </button>
@@ -194,7 +194,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
                     key={format}
                     type="button"
                     onClick={() => handleFormatToggle(format)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${isSelected ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected ? 'bg-[var(--hero-accent)] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
                   >
                     <Icon className="w-4 h-4" /> {format === GenerationType.PostWithImage ? 'Post ze zdjęciem' : format === GenerationType.Video ? 'Video' : 'Pomysł'}
                   </button>

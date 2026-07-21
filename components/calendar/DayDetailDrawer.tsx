@@ -78,14 +78,14 @@ function AiIdeasSection({
   return (
     <section>
       <div className="flex items-center justify-between gap-2 mb-2">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
           {t('calendar.dayDrawer.aiIdeas', 'Pomysły AI')}
         </h3>
         <button
           type="button"
           disabled={isLoadingSuggestions}
           onClick={onLoadSuggestions}
-          className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline disabled:opacity-50 flex items-center gap-1"
+          className="text-xs font-bold text-[var(--hero-accent)] hover:underline disabled:opacity-50 flex items-center gap-1"
         >
           <SparklesIcon className="w-3.5 h-3.5" />
           {isLoadingSuggestions
@@ -98,7 +98,7 @@ function AiIdeasSection({
 
       {isLoadingSuggestions ? (
         <div className="flex flex-col items-center justify-center py-10 gap-3">
-          <svg className="animate-spin h-8 w-8 text-cyan-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="animate-spin h-8 w-8 text-[var(--hero-accent)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
@@ -108,9 +108,9 @@ function AiIdeasSection({
         <button
           type="button"
           onClick={onLoadSuggestions}
-          className="w-full p-4 rounded-2xl border-2 border-dashed border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/5 transition-all text-center group"
+          className="w-full p-4 rounded-lg border-2 border-dashed border-[var(--hero-accent)]/30 hover:border-[var(--hero-accent)]/60 hover:bg-[var(--hero-accent-soft)] transition-all text-center group"
         >
-          <PlusCircleIcon className="w-8 h-8 mx-auto text-cyan-500/70 group-hover:text-cyan-500 mb-2" />
+          <PlusCircleIcon className="w-8 h-8 mx-auto text-[var(--hero-accent)]/70 group-hover:text-[var(--hero-accent)] mb-2" />
           <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
             {t('calendar.dayDrawer.ideasCta', 'Wygeneruj 3 pomysły na ten dzień')}
           </p>
@@ -126,14 +126,14 @@ function AiIdeasSection({
             return (
               <li
                 key={`idea-${i}-${s.topic.slice(0, 12)}`}
-                className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-cyan-500/5 dark:from-slate-900/60 dark:to-cyan-500/10 border border-slate-200 dark:border-slate-800"
+                className="p-3 rounded-xl bg-gradient-to-br from-slate-50 to-[var(--hero-accent-soft)] dark:from-[#071018]/60 dark:to-[var(--hero-accent-soft)] border border-slate-200 dark:border-slate-800"
               >
                 <div className="flex flex-wrap items-center gap-1.5 mb-2">
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                     <Icon className={`w-3 h-3 ${config.iconColor}`} />
                     {s.platform}
                   </span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-700 dark:text-cyan-300">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]">
                     {formatLabel(s.format)}
                   </span>
                 </div>
@@ -145,14 +145,14 @@ function AiIdeasSection({
                   <button
                     type="button"
                     onClick={() => onAddSuggestionToPlan(s)}
-                    className="flex-1 text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300"
+                    className="flex-1 text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[var(--hero-accent)] text-slate-700 dark:text-slate-300"
                   >
                     {t('calendar.dayDrawer.addToPlan', 'Dodaj do planu')}
                   </button>
                   <button
                     type="button"
                     onClick={() => onSelectSuggestion(s)}
-                    className="flex-1 text-xs font-bold py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center gap-1"
+                    className="flex-1 text-xs font-bold py-2 rounded-lg bg-[var(--hero-accent)] hover:brightness-110 text-white flex items-center justify-center gap-1"
                   >
                     <SparklesIcon className="w-3.5 h-3.5" />
                     {t('calendar.useIdea', 'Użyj pomysłu')}
@@ -269,14 +269,14 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
   const scheduledSection = (
     <section>
       <div className="flex items-center justify-between gap-2 mb-2">
-        <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+        <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
           {t('calendar.dayDrawer.scheduled', 'Zaplanowane publikacje')} ({sortedPosts.length})
         </h3>
         {onOpenBulkQueue && sortedPosts.length > 0 && (
           <button
             type="button"
             onClick={onOpenBulkQueue}
-            className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline"
+            className="text-xs font-bold text-[var(--hero-accent)] hover:underline"
           >
             {t('calendar.bulk.open', 'Kolejka publikacji')}
           </button>
@@ -322,7 +322,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
 
   const planSection = (
     <section>
-      <h3 className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mb-2">
         {t('calendar.dayDrawer.planSlots', 'Sloty w planie')} ({sortedPlan.length})
       </h3>
       {sortedPlan.length === 0 ? (
@@ -338,7 +338,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
             return (
               <li
                 key={item.id}
-                className="p-3 rounded-xl border border-dashed border-cyan-500/35 bg-cyan-500/5"
+                className="p-3 rounded-xl border border-dashed border-[var(--hero-accent)]/35 bg-[var(--hero-accent-soft)]"
               >
                 {isEditing ? (
                   <div className="space-y-2">
@@ -379,7 +379,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => saveSlotEdit(item.id)}
-                        className="flex-1 text-xs font-bold py-2 rounded-lg bg-cyan-600 text-white"
+                        className="flex-1 text-xs font-bold py-2 rounded-lg bg-[var(--hero-accent)] text-white"
                       >
                         {t('common.save', 'Zapisz')}
                       </button>
@@ -389,14 +389,14 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                   <>
                     <div className="flex items-start gap-2">
                       <span className="text-sm shrink-0">{slotTypeBadge(item.slotType)}</span>
-                      <Icon className="w-4 h-4 shrink-0 text-cyan-500 mt-0.5" />
+                      <Icon className="w-4 h-4 shrink-0 text-[var(--hero-accent)] mt-0.5" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-slate-800 dark:text-white">{item.topic}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
                           {item.strategy}
                         </p>
                         {item.time && (
-                          <p className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 mt-1">
+                          <p className="text-[10px] font-bold text-[var(--hero-accent)] mt-1">
                             {item.time}
                           </p>
                         )}
@@ -406,7 +406,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => startSlotEdit(item)}
-                        className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300"
+                        className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[var(--hero-accent)] text-slate-700 dark:text-slate-300"
                       >
                         {t('calendar.slot.edit', 'Edytuj')}
                       </button>
@@ -414,7 +414,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                         <button
                           type="button"
                           onClick={() => onDuplicateSlot(item)}
-                          className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-cyan-500 text-slate-700 dark:text-slate-300"
+                          className="flex-1 min-w-[4.5rem] text-xs font-bold py-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-[var(--hero-accent)] text-slate-700 dark:text-slate-300"
                         >
                           {t('calendar.slot.duplicate', 'Duplikuj')}
                         </button>
@@ -431,7 +431,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                       <button
                         type="button"
                         onClick={() => onGenerateSlot(item)}
-                        className="flex-[1.2] min-w-[5.5rem] text-xs font-bold py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center gap-1"
+                        className="flex-[1.2] min-w-[5.5rem] text-xs font-bold py-2 rounded-lg bg-[var(--hero-accent)] hover:brightness-110 text-white flex items-center justify-center gap-1"
                       >
                         <SparklesIcon className="w-3.5 h-3.5" />
                         {t('calendar.slot.generate', 'Generuj')}
@@ -461,12 +461,12 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
         aria-label={t('common.close', 'Zamknij')}
       />
 
-      <div className="relative w-full sm:max-w-md h-[min(92vh,720px)] sm:h-full sm:max-h-none flex flex-col bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 shadow-2xl rounded-t-[1.75rem] sm:rounded-none sm:rounded-l-[1.75rem] overflow-hidden">
+      <div className="relative w-full sm:max-w-md h-[min(92vh,720px)] sm:h-full sm:max-h-none flex flex-col bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 shadow-xl rounded-t-[1.75rem] sm:rounded-none sm:rounded-l-[1.75rem] overflow-hidden">
         <div className="sm:hidden flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
         </div>
 
-        <header className="shrink-0 px-5 pt-4 pb-3 border-b border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-cyan-500/5 to-fuchsia-500/5">
+        <header className="shrink-0 px-5 pt-4 pb-3 border-b border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-[var(--hero-accent)]/8 to-transparent">
           <div className="flex items-center gap-2 mb-3">
             <button
               type="button"
@@ -477,10 +477,10 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
               <ArrowLeftIcon className="w-4 h-4" />
             </button>
             <div className="flex-1 min-w-0 text-center">
-              <p className="text-[10px] font-black uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--hero-accent)]">
                 {t('calendar.dayDrawer.label', 'Plan dnia')}
               </p>
-              <h2 id="day-drawer-title" className="text-base font-black text-slate-900 dark:text-white capitalize leading-tight truncate">
+              <h2 id="day-drawer-title" className="text-base font-extrabold text-slate-900 dark:text-white capitalize leading-tight truncate">
                 {dateLabel}
               </h2>
             </div>
@@ -520,8 +520,8 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6 custom-scrollbar">
           {isEmptyDay && !isLoadingSuggestions && suggestions.length === 0 && (
-            <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-center">
-              <SparklesIcon className="w-8 h-8 mx-auto text-cyan-500 mb-2" />
+            <div className="p-4 rounded-lg bg-[var(--hero-accent-soft)] border border-[var(--hero-accent)]/20 text-center">
+              <SparklesIcon className="w-8 h-8 mx-auto text-[var(--hero-accent)] mb-2" />
               <p className="text-sm font-bold text-slate-800 dark:text-white">
                 {t('calendar.dayDrawer.emptyHero', 'Pusty dzień — czas na treść!')}
               </p>
@@ -571,9 +571,9 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
               type="button"
               disabled={busy}
               onClick={onFillMissing}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-cyan-500 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-[var(--hero-accent)] disabled:opacity-50"
             >
-              <SparklesIcon className="w-4 h-4 text-cyan-500" />
+              <SparklesIcon className="w-4 h-4 text-[var(--hero-accent)]" />
               {isFilling
                 ? t('calendar.audit.filling', 'Uzupełnianie…')
                 : t('calendar.audit.fillMissing', 'Uzupełnij brakujące sloty')}
@@ -584,7 +584,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
               type="button"
               disabled={busy}
               onClick={onGenerateAll}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-cyan-600 hover:bg-cyan-500 text-white disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold bg-[var(--hero-accent)] hover:brightness-110 text-white disabled:opacity-50"
             >
               <CalendarIcon className="w-4 h-4" />
               {isGenerating

@@ -29,8 +29,8 @@ interface NotificationSystemProps {
 const typeConfig: Record<NotificationType, { icon: React.ComponentType<{ className?: string }>, color: string }> = {
     [NotificationType.Success]: { icon: CheckCircleIcon, color: 'text-green-500' },
     [NotificationType.Error]: { icon: AlertTriangleIcon, color: 'text-red-500' },
-    [NotificationType.Info]: { icon: SparklesIcon, color: 'text-blue-500' },
-    [NotificationType.Comment]: { icon: ChatBubbleLeftRightIcon, color: 'text-purple-500' },
+    [NotificationType.Info]: { icon: SparklesIcon, color: 'text-[var(--hero-accent)]' },
+    [NotificationType.Comment]: { icon: ChatBubbleLeftRightIcon, color: 'text-[var(--hero-accent)]' },
     [NotificationType.Status]: { icon: CheckBadgeIcon, color: 'text-yellow-500' },
     [NotificationType.Achievement]: { icon: TrophyIcon, color: 'text-yellow-500' },
 };
@@ -53,16 +53,16 @@ const ToastMessage: React.FC<{ toast: Toast; onRemove: (id: string) => void }> =
           : t('notifications.toast.title', 'Powiadomienie'));
 
     return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg p-4 flex items-start gap-4 animate-fade-in-up w-full max-w-sm">
+        <div className="bg-white dark:bg-[#0f1c2e] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg p-4 flex items-start gap-4 animate-fade-in-up w-full max-w-sm">
             <Icon className={`w-6 h-6 ${color} flex-shrink-0 mt-0.5`} />
             <div className="flex-grow min-w-0">
                 <p className="text-sm font-semibold text-slate-800 dark:text-white">{title}</p>
                 <p className="text-sm text-slate-600 dark:text-slate-300 mt-0.5">{toast.message}</p>
                 {toast.action && (
-                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2 font-medium">{toast.action}</p>
+                  <p className="text-xs text-[var(--hero-accent)] mt-2 font-medium">{toast.action}</p>
                 )}
             </div>
-            <button onClick={() => onRemove(toast.id)} aria-label="Zamknij powiadomienie" className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full shrink-0">
+            <button onClick={() => onRemove(toast.id)} aria-label="Zamknij powiadomienie" className="min-h-[40px] min-w-[40px] inline-flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg shrink-0 touch-manipulation">
                 <XMarkIcon className="w-5 h-5" />
             </button>
         </div>
@@ -71,7 +71,7 @@ const ToastMessage: React.FC<{ toast: Toast; onRemove: (id: string) => void }> =
 
 const ToastContainer: React.FC<{ toasts: Toast[]; onRemove: (id: string) => void }> = ({ toasts, onRemove }) => {
     return (
-        <div className="fixed top-20 right-4 z-[60] space-y-3">
+        <div className="fixed top-20 left-4 right-4 sm:left-auto sm:right-4 z-[60] space-y-3 flex flex-col items-stretch sm:items-end">
             {toasts.map(toast => (
                 <ToastMessage key={toast.id} toast={toast} onRemove={onRemove} />
             ))}
@@ -112,7 +112,7 @@ const NotificationItem: React.FC<{ notification: Notification; onMarkAsRead: (id
             onClick={handleClick}
             className={`p-3 flex items-start gap-3 rounded-lg transition-colors ${notification.link ? 'cursor-pointer' : ''} ${!notification.read ? 'bg-blue-50 dark:bg-blue-900/30' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
         >
-            {!notification.read && <div className="w-2.5 h-2.5 bg-blue-500 rounded-full flex-shrink-0 mt-1.5"></div>}
+            {!notification.read && <div className="w-2.5 h-2.5 bg-[var(--hero-accent)] rounded-full flex-shrink-0 mt-1.5"></div>}
             <Icon className={`w-5 h-5 ${color} flex-shrink-0 mt-0.5 ${notification.read ? 'ml-[18px]' : ''}`} />
             <div className="flex-grow min-w-0">
                 <p className="text-sm text-slate-700 dark:text-slate-300">{notification.message}</p>
@@ -144,22 +144,22 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = (props) => 
             <div className="relative" ref={panelRef}>
                 <button
                     onClick={() => setIsOpen(p => !p)}
-                    className="relative p-2 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                    className="relative min-h-[40px] min-w-[40px] inline-flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/15 transition-colors touch-manipulation"
                     aria-label={t('notifications.label', { count: unreadCount })}
                 >
                     <BellIcon className="w-5 h-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-slate-900/80">
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold ring-2 ring-white dark:ring-[#071018]">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}
                 </button>
                 {isOpen && (
-                    <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md shadow-lg z-50 animate-fade-in flex flex-col max-h-[70vh]" style={{ animationDuration: '150ms' }}>
-                        <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                    <div className="absolute right-0 mt-2 w-[min(100vw-2rem,20rem)] md:w-96 bg-white dark:bg-[#0f1c2e] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg z-50 animate-fade-in flex flex-col max-h-[70vh]" style={{ animationDuration: '150ms' }}>
+                        <div className="p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
                             <h4 className="font-semibold text-slate-800 dark:text-white">{t('notifications.title')}</h4>
                             {notifications.length > 0 && (
-                                <button onClick={onMarkAllAsRead} aria-label="Oznacz wszystkie jako przeczytane" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+                                <button onClick={onMarkAllAsRead} aria-label="Oznacz wszystkie jako przeczytane" className="text-xs font-semibold text-[var(--hero-accent)] hover:underline min-h-[32px]">
                                     {t('notifications.markAllRead')}
                                 </button>
                             )}

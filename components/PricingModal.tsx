@@ -90,10 +90,10 @@ const PlanCard: React.FC<{
     }
   }
 
-  const cardClasses = `border-2 rounded-xl p-6 flex flex-col h-full transition-all duration-300 relative ${
+  const cardClasses = `border rounded-lg p-6 flex flex-col h-full transition-colors duration-300 relative ${
     plan.recommended
-      ? 'border-[var(--hero-accent)] bg-[var(--hero-accent-soft)] dark:bg-slate-800/60 md:scale-[1.02]'
-      : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800'
+      ? 'border-[var(--hero-accent)] bg-[var(--hero-accent-soft)] dark:bg-slate-800/60'
+      : 'border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a1220]/80'
   }`;
 
   return (
@@ -343,10 +343,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         </button>
 
         <div className="text-center max-w-2xl mx-auto pr-8">
-          <h2 id="pricing-modal-title" className="text-3xl font-bold text-slate-900 dark:text-white">
+          <p
+            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: 'var(--hero-accent)' }}
+          >
+            Pricing
+          </p>
+          <h2 id="pricing-modal-title" className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {t('pricing.title')}
           </h2>
-          <p className="mt-3 text-lg text-slate-500 dark:text-slate-400">{t('pricing.subtitle')}</p>
+          <p className="mt-3 text-base text-slate-500 dark:text-slate-400 leading-relaxed">{t('pricing.subtitle')}</p>
         </div>
 
         {!user && (

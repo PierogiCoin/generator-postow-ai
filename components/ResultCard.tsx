@@ -133,7 +133,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
 
   if (isLoading && !result) {
     return (
-      <div className="glass-premium border border-white/10 rounded-[2.5rem] shadow-2xl p-6 min-h-[400px] flex items-center justify-center">
+      <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-6 min-h-[400px] flex items-center justify-center">
         <ResultCardLoadingState progressMessage={generationProgress} />
       </div>
     );
@@ -141,7 +141,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
 
   if (error) {
     return (
-      <div className="glass-premium border border-white/10 rounded-[2.5rem] shadow-2xl p-6">
+      <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-6">
         <ErrorDisplay error={error} onRetry={appHandlers.handleRetry} />
       </div>
     );
@@ -149,7 +149,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
 
   if (!result) {
     return (
-      <div className="glass-premium border border-white/10 rounded-[2.5rem] shadow-2xl p-6 min-h-[400px] flex items-center justify-center">
+      <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-6 min-h-[400px] flex items-center justify-center">
         <ResultCardReadyState />
       </div>
     );
@@ -171,7 +171,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
 
   if (result.multiVariantPosts && result.multiVariantPosts.length > 0) {
     return (
-      <div className="glass-premium border border-white/10 rounded-[2.5rem] shadow-2xl p-8 space-y-8 animate-fade-in-up">
+      <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-8 space-y-8 animate-fade-in-up">
         <MultiVariantResult
           variants={result.multiVariantPosts}
           onSelectVariant={(variant: MultiVariantPost) => {
@@ -338,7 +338,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
   };
 
   return (
-    <div className="glass-premium border border-white/10 rounded-[2.5rem] shadow-2xl p-6 md:p-8">
+    <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-6 md:p-8">
       {renderContent()}
 
       {isCreativeStudioOpen && result?.imageUrl && (
@@ -377,11 +377,11 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
 
       {isHashtagGeneratorOpen && formData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl">
             <button
               type="button"
               onClick={() => setIsHashtagGeneratorOpen(false)}
-              className="absolute top-4 right-4 z-10 p-2 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="absolute top-4 right-4 z-10 p-2 bg-slate-100 dark:bg-white/5 rounded-lg hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
             >
               <XMarkIcon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
             </button>

@@ -1,62 +1,65 @@
 /**
- * NotFoundPage — strona 404 z friendly UX.
- * Oferuje nawigację do głównych secji aplikacji.
+ * NotFoundPage — 404 w stylu Studio Ink.
  */
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Sparkles, LayoutDashboard, HelpCircle } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
-      <div className="text-center max-w-lg">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-fuchsia-500 to-indigo-500 shadow-lg mb-8">
-          <span className="text-4xl font-black text-white">404</span>
-        </div>
+    <div className="min-h-screen flex flex-col home-hero-wash text-white">
+      <div className="absolute inset-0 home-grid-bg opacity-50 pointer-events-none" aria-hidden="true" />
 
-        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-          Ups! Ta strona nie istnieje
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+        <p
+          className="font-display text-[11px] font-semibold uppercase tracking-[0.2em]"
+          style={{ color: 'var(--hero-accent)' }}
+        >
+          Błąd
+        </p>
+        <p className="mt-4 font-display text-8xl md:text-9xl font-extrabold tracking-tight text-white/90 leading-none">
+          404
+        </p>
+        <div className="mx-auto mt-5 h-px w-16 bg-[var(--hero-accent)]" aria-hidden="true" />
+        <h1 className="mt-6 font-display text-2xl md:text-3xl font-bold tracking-tight">
+          Ta strona nie istnieje
         </h1>
-
-        <p className="mt-4 text-slate-600 dark:text-slate-400">
-          Wygląda na to, że link jest nieprawidłowy lub strona została przeniesiona.
-          Wróć do strony głównej lub skorzystaj z nawigacji poniżej.
+        <p className="mt-3 max-w-md text-slate-400 text-base leading-relaxed">
+          Link jest nieprawidłowy albo treść została przeniesiona. Wróć do studia albo otwórz cennik.
         </p>
 
-        <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             to="/"
-            className="inline-flex flex-col items-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors"
+            className="inline-flex items-center justify-center px-8 py-3.5 rounded-lg text-sm font-semibold text-white hover:brightness-110 transition-all"
+            style={{ backgroundColor: 'var(--hero-accent)' }}
           >
-            <Home className="w-6 h-6 text-indigo-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Strona główna</span>
+            Strona główna
           </Link>
-
           <Link
-            to="/app"
-            className="inline-flex flex-col items-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-fuchsia-300 dark:hover:border-fuchsia-700 transition-colors"
+            to="/dashboard"
+            className="inline-flex items-center justify-center px-8 py-3.5 rounded-lg text-sm font-semibold text-slate-200 border border-white/20 hover:bg-white/5 transition-colors"
           >
-            <LayoutDashboard className="w-6 h-6 text-fuchsia-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Dashboard</span>
+            Dashboard
           </Link>
-
           <Link
             to="/pricing"
-            className="inline-flex flex-col items-center gap-2 p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-700 transition-colors"
+            className="inline-flex items-center justify-center px-8 py-3.5 rounded-lg text-sm font-semibold text-slate-200 border border-white/20 hover:bg-white/5 transition-colors"
           >
-            <Sparkles className="w-6 h-6 text-amber-500" />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Cennik</span>
+            Cennik
           </Link>
         </div>
 
-        <div className="mt-8 inline-flex items-center gap-2 text-sm text-slate-400">
-          <HelpCircle className="w-4 h-4" />
+        <p className="mt-12 text-sm text-slate-500">
           Potrzebujesz pomocy?{' '}
-          <a href="mailto:support@generatorpostow.pl" className="text-indigo-600 dark:text-indigo-400 underline">
+          <a
+            href="mailto:support@generatorpostow.pl"
+            className="underline underline-offset-2 hover:text-slate-300"
+            style={{ color: 'var(--hero-accent)' }}
+          >
             Napisz do nas
           </a>
-        </div>
+        </p>
       </div>
     </div>
   );

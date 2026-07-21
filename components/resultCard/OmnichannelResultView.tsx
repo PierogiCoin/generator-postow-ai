@@ -24,7 +24,7 @@ export const OmnichannelResultView: React.FC<OmnichannelResultViewProps> = ({
   const posts = result.omnichannelPosts ?? [];
 
   return (
-    <div className="glass-premium border border-white/10 rounded-[2.5rem] shadow-2xl p-8 space-y-8 animate-fade-in-up">
+    <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-8 space-y-8 animate-fade-in-up">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">

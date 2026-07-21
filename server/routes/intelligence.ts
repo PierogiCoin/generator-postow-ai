@@ -24,6 +24,7 @@ import {
   buildIntelligenceCacheKey,
   getIntelligenceCache,
   setIntelligenceCache,
+  deleteIntelligenceCache,
   INTELLIGENCE_CACHE_TTL,
 } from '../lib/intelligenceCache.js';
 
@@ -43,12 +44,14 @@ const competitorSchema = z.object({
   handle: z.string().min(1).max(80),
   platform: z.string().min(1).max(50),
   niche: z.string().min(2).max(200),
+  forceRefresh: z.boolean().optional(),
 });
 
 const competitorBatchSchema = z.object({
   handles: z.array(z.string().min(1).max(80)).min(1).max(8),
   platform: z.string().min(1).max(50),
   niche: z.string().min(2).max(200),
+  forceRefresh: z.boolean().optional(),
 });
 
 const scheduleGapsSchema = z.object({
@@ -246,11 +249,15 @@ JSON:
     async (req, res) => {
       try {
         const handle = normalizeHandle(req.body.handle);
-        const { platform, niche } = req.body;
+        const { platform, niche, forceRefresh } = req.body;
         const cacheKey = buildIntelligenceCacheKey('competitor', { handle, platform, niche });
-        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
-        if (cached) {
-          return res.json({ ...cached, cached: true });
+        if (forceRefresh) {
+          deleteIntelligenceCache(cacheKey);
+        } else {
+          const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+          if (cached) {
+            return res.json({ ...cached, cached: true });
+          }
         }
 
         const prompt = `Jesteś analitykiem competitive intelligence. Użyj Google Search.
@@ -322,15 +329,19 @@ weekday: 0=Pon … 6=Ndz. density 1=niska aktywność, 10=peak konkurencji.`;
     async (req, res) => {
       try {
         const handles = (req.body.handles as string[]).map(normalizeHandle);
-        const { platform, niche } = req.body;
+        const { platform, niche, forceRefresh } = req.body;
         const cacheKey = buildIntelligenceCacheKey('competitor-batch', {
           handles: handles.sort().join(','),
           platform,
           niche,
         });
-        const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
-        if (cached) {
-          return res.json({ ...cached, cached: true });
+        if (forceRefresh) {
+          deleteIntelligenceCache(cacheKey);
+        } else {
+          const cached = getIntelligenceCache<Record<string, unknown>>(cacheKey);
+          if (cached) {
+            return res.json({ ...cached, cached: true });
+          }
         }
 
         const prompt = `Analityk competitive intelligence. Użyj Google Search.

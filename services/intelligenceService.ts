@@ -150,18 +150,28 @@ export async function analyzeCompetitorDeep(
   handle: string,
   platform: Platform,
   niche: string,
-  userId: string
+  userId: string,
+  options?: { forceRefresh?: boolean }
 ): Promise<{ analysis: DeepCompetitorAnalysis; sources: IntelligenceSource[] }> {
-  return callApi('intelligence/competitor', { handle, platform, niche }, userId);
+  return callApi(
+    'intelligence/competitor',
+    { handle, platform, niche, forceRefresh: options?.forceRefresh === true },
+    userId
+  );
 }
 
 export async function analyzeCompetitorBatch(
   handles: string[],
   platform: Platform,
   niche: string,
-  userId: string
+  userId: string,
+  options?: { forceRefresh?: boolean }
 ): Promise<{ batch: Record<string, unknown>; sources: IntelligenceSource[]; analyzedAt?: string }> {
-  return callApi('intelligence/competitor-batch', { handles, platform, niche }, userId);
+  return callApi(
+    'intelligence/competitor-batch',
+    { handles, platform, niche, forceRefresh: options?.forceRefresh === true },
+    userId
+  );
 }
 
 export async function analyzeScheduleGaps(

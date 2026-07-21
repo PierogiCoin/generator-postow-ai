@@ -86,7 +86,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             <React.Fragment key={s.id}>
               {i > 0 && (
                 <div
-                  className={`hidden sm:block h-0.5 w-8 rounded ${done ? 'bg-cyan-500' : 'bg-slate-200 dark:bg-slate-700'}`}
+                  className={`hidden sm:block h-0.5 w-8 rounded ${done ? 'bg-[var(--hero-accent)]' : 'bg-slate-200 dark:bg-slate-700'}`}
                 />
               )}
               <button
@@ -94,17 +94,17 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 onClick={() => {
                   if (s.id < step || (s.id === 2 && canGoStep2) || s.id === 1) setStep(s.id);
                 }}
-                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-xl text-[11px] sm:text-xs font-bold transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 min-h-[36px] rounded-lg text-[11px] sm:text-xs font-bold transition-colors ${
                   active
                     ? 'bg-[var(--hero-accent)] text-white shadow-sm'
                     : done
-                      ? 'bg-cyan-500/15 text-cyan-800 dark:text-cyan-300 border border-cyan-500/25'
+                      ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] border border-[var(--hero-accent)]/25'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
                 }`}
               >
                 <span
                   className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-black ${
-                    active ? 'bg-white/20' : done ? 'bg-cyan-500 text-white' : 'bg-slate-200 dark:bg-slate-700'
+                    active ? 'bg-white/20' : done ? 'bg-[var(--hero-accent)] text-white' : 'bg-slate-200 dark:bg-slate-700'
                   }`}
                 >
                   {done ? '✓' : s.id}
@@ -131,7 +131,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                 <button
                   type="button"
                   onClick={onOpenTechRadar}
-                  className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-50 dark:bg-cyan-900/30 px-3 py-1.5 rounded-xl border border-cyan-100 dark:border-cyan-800/50"
+                  className="flex items-center gap-2 text-xs font-bold text-[var(--hero-accent)] bg-[var(--hero-accent-soft)] px-3 py-1.5 rounded-lg border border-[var(--hero-accent)]/25"
                 >
                   <GlobeIcon className="w-4 h-4" />
                   {t('form.techRadar.quickButton', 'Znajdź nowinki w niszy')}
@@ -140,7 +140,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
               <button
                 type="button"
                 onClick={onOpenAssistant}
-                className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/10 px-3 py-1.5 rounded-xl border border-cyan-500/25"
+                className="flex items-center gap-2 text-xs font-bold text-[var(--hero-accent)] bg-[var(--hero-accent-soft)] px-3 py-1.5 rounded-lg border border-[var(--hero-accent)]/25"
               >
                 <SparklesIcon className="w-4 h-4" />
                 {t('form.topic.assistant', 'Asystent AI')}
@@ -149,7 +149,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/30 focus-within:border-cyan-500/45 focus-within:ring-2 focus-within:ring-cyan-500/15 transition-colors">
+          <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-900/30 focus-within:border-[var(--hero-accent)]/45 focus-within:ring-2 focus-within:ring-[var(--hero-accent)]/15 transition-colors">
             <InteractiveEditor
               id="topic-quick"
               ariaLabel={t('form.topic.label', 'Temat')}
@@ -164,7 +164,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
           </div>
 
           {duplicateCheck?.mostSimilar && (
-            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-xl">
+            <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 rounded-lg">
               <span className="text-amber-600 dark:text-amber-400 shrink-0 text-xs font-black" aria-hidden>!</span>
               <div className="flex-1 min-w-0 text-xs text-amber-800 dark:text-amber-300">
                 {t('form.quick.duplicateWarning', 'Podobny post w historii')} ({Math.round(duplicateCheck.mostSimilar.similarity * 100)}%) —{' '}
@@ -256,14 +256,14 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
 
           <p className="text-xs text-slate-500 text-center leading-relaxed">
             {t('form.quick.needAdvanced', 'Potrzebujesz kampanii, wideo lub A/B testu?')}{' '}
-            <button type="button" onClick={onSwitchToAdvanced} className="text-cyan-700 dark:text-cyan-400 font-semibold hover:underline">
+            <button type="button" onClick={onSwitchToAdvanced} className="text-[var(--hero-accent)] font-semibold hover:underline">
               {t('form.quick.switchToAdvanced', 'Przełącz na tryb zaawansowany')}
             </button>
           </p>
 
           {autoPublishSection}
 
-          <div className="sticky bottom-20 sm:bottom-4 z-20 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl p-3 shadow-lg">
+          <div className="sticky bottom-20 sm:bottom-4 z-20 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl p-3 shadow-lg">
             <div className="flex flex-col sm:flex-row gap-3">
               <ModernButton type="button" variant="secondary" onClick={goBack} fullWidth>
                 ← {t('form.quick.back', 'Wstecz')}

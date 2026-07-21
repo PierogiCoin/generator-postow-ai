@@ -241,9 +241,9 @@ export const GeneratorView: React.FC = () => {
                 return (
                     <section className="space-y-4">
                         <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">{t('sidebar.historySection.title')}</h2>
+                            <h2 className="text-lg font-display font-extrabold text-slate-900 dark:text-white tracking-tight">{t('sidebar.historySection.title')}</h2>
                             {history.length > 0 && (
-                                <button onClick={handleClearHistory} aria-label={t('sidebar.historySection.clear')} className="text-[10px] font-black text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">{t('sidebar.historySection.clear')}</button>
+                                <button onClick={handleClearHistory} aria-label={t('sidebar.historySection.clear')} className="text-[10px] font-semibold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">{t('sidebar.historySection.clear')}</button>
                             )}
                         </div>
                         {history.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.historySection.empty')}</p> : (
@@ -257,7 +257,7 @@ export const GeneratorView: React.FC = () => {
                                             onMouseEnter={(e) => handleMouseEnter(e, item)}
                                             onMouseLeave={handleMouseLeave}
                                             onClick={() => selectInspiration(item)}
-                                            className={`group p-4 rounded-2xl border transition-all cursor-pointer animate-fade-in-up hover:scale-[1.02] active:scale-[0.98] ${isSelected ? 'bg-cyan-500/10 border-cyan-500/40 shadow-lg shadow-cyan-500/5' : 'bg-white/40 dark:bg-slate-950/20 border-slate-200/50 dark:border-white/5 hover:border-cyan-500/35'}`}
+                                            className={`group p-4 rounded-2xl border transition-all cursor-pointer animate-fade-in-up hover:scale-[1.02] active:scale-[0.98] ${isSelected ? 'bg-[var(--hero-accent-soft)] border-[var(--hero-accent)]/40' : 'bg-white/40 dark:bg-slate-950/20 border-slate-200/50 dark:border-white/5 hover:border-[var(--hero-accent)]/40'}`}
                                         >
                                             <div className="flex items-center gap-4">
                                                 <div className="relative">
@@ -267,12 +267,12 @@ export const GeneratorView: React.FC = () => {
                                                             ? <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center"><VideoIcon className="w-6 h-6 text-red-500" /></div>
                                                             : <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200/50 dark:border-white/5"><PostIcon className="w-6 h-6 text-slate-400" /></div>
                                                     }
-                                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center ${isSelected ? 'bg-cyan-500 text-white' : 'bg-slate-500 text-white'}`}>
+                                                    <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-white flex items-center justify-center ${isSelected ? 'bg-[var(--hero-accent)] text-white' : 'bg-slate-500 text-white'}`}>
                                                         <SparklesIcon className="w-2.5 h-2.5" />
                                                     </div>
                                                 </div>
                                                 <div className="min-w-0 flex-grow">
-                                                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-900 dark:text-white'}`} title={item.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}>
+                                                    <div className={`font-bold text-sm truncate ${isSelected ? 'text-[var(--hero-accent)]' : 'text-slate-900 dark:text-white'}`} title={item.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}>
                                                         {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('common.untitled')}
                                                     </div>
                                                     <p className="text-[9px] font-bold uppercase tracking-wider mt-1 text-slate-400">
@@ -290,11 +290,11 @@ export const GeneratorView: React.FC = () => {
             case 'drafts':
                 return (
                     <section className="space-y-4">
-                        <h2 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">{t('sidebar.draftsSection.title')}</h2>
+                        <h2 className="text-lg font-display font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">{t('sidebar.draftsSection.title')}</h2>
                         {drafts.length === 0 ? <p className="text-xs text-slate-500 dark:text-slate-400 italic bg-white/5 p-4 rounded-xl border border-white/5">{t('sidebar.draftsSection.empty')}</p> : (
                             <div className="space-y-3 pr-1">
                                 {drafts.map((draft, index) => (
-                                    <div key={draft.id} style={{ animationDelay: `${index * 50}ms` }} onMouseEnter={(e) => handleMouseEnter(e, draft)} onMouseLeave={handleMouseLeave} className="group p-4 rounded-2xl bg-white/40 dark:bg-slate-950/20 border border-slate-200/50 dark:border-white/5 flex justify-between items-center animate-fade-in-up hover:border-cyan-500/35 transition-all">
+                                    <div key={draft.id} style={{ animationDelay: `${index * 50}ms` }} onMouseEnter={(e) => handleMouseEnter(e, draft)} onMouseLeave={handleMouseLeave} className="group p-4 rounded-2xl bg-white/40 dark:bg-slate-950/20 border border-slate-200/50 dark:border-white/5 flex justify-between items-center animate-fade-in-up hover:border-[var(--hero-accent)]/40 transition-all">
                                         <div className="min-w-0 flex-grow" onClick={() => selectInspiration(draft)} style={{ cursor: 'pointer' }}>
                                             <div className="font-bold text-sm text-slate-900 dark:text-white truncate" title={draft.formData?.topic?.replace(/<[^>]*>?/gm, '') || ''}>
                                                 {draft.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('common.untitled')}
@@ -345,7 +345,7 @@ export const GeneratorView: React.FC = () => {
         <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 min-h-[calc(100vh-140px)] relative bg-transparent">
             <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden z-0">
                 <div className="absolute top-[10%] left-[5%] w-96 h-96 bg-fuchsia-500/[0.03] rounded-full blur-[120px]" />
-                <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-cyan-500/[0.03] rounded-full blur-[120px]" />
+                <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] opacity-0" />
             </div>
 
             <ConfirmDialog {...confirmDialogProps} />
@@ -364,16 +364,16 @@ export const GeneratorView: React.FC = () => {
                 className="fixed inset-y-0 left-0 z-50 w-[min(340px,92vw)] p-3 sm:p-4 lg:p-0 lg:static lg:z-auto lg:w-[300px] xl:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-8 lg:self-start lg:h-[calc(100vh-8rem)]"
                 aria-label={t('sidebar.title', 'Biblioteka')}
             >
-                <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-[1.75rem] overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg lg:shadow-sm">
+                <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg lg:shadow-sm">
                     <div className="p-4 lg:p-5 pb-3 flex-shrink-0 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-                        <h3 className="text-sm font-black text-slate-900 dark:text-white tracking-tight uppercase">
+                        <h3 className="text-sm font-display font-extrabold text-slate-900 dark:text-white tracking-tight">
                             {t('sidebar.title', 'Biblioteka')}
                         </h3>
                         <button
                             type="button"
                             onClick={() => setIsSidebarOpen(false)}
                             aria-label={t('generatorView.closeSidebar', 'Zamknij bibliotekę')}
-                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500"
+                            className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hero-accent)]"
                         >
                             <XMarkIcon className="w-5 h-5" />
                         </button>
@@ -402,8 +402,8 @@ export const GeneratorView: React.FC = () => {
                                     }}
                                     title={tab.label}
                                     aria-label={badge > 0 ? `${tab.label} (${badgeLabel})` : tab.label}
-                                    className={`relative snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${isSelected
-                                        ? 'bg-cyan-50 dark:bg-cyan-950/40 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25'
+                                    className={`relative snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hero-accent)] ${isSelected
+                                        ? 'bg-[var(--hero-accent-soft)] shadow-sm text-[var(--hero-accent)] border border-[var(--hero-accent)]/25'
                                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'}`}
                                 >
                                     <tab.icon className="w-[18px] h-[18px]" />
@@ -411,7 +411,7 @@ export const GeneratorView: React.FC = () => {
                                         {tab.label}
                                     </span>
                                     {badge > 0 && (
-                                        <span className="absolute top-0.5 right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-cyan-600 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+                                        <span className="absolute top-0.5 right-0.5 min-w-[1rem] h-4 px-0.5 rounded-full bg-[var(--hero-accent)] text-white text-[9px] font-bold flex items-center justify-center leading-none">
                                             {badgeLabel}
                                         </span>
                                     )}
@@ -428,9 +428,9 @@ export const GeneratorView: React.FC = () => {
                                             setActiveSidebarTab('stats');
                                         }
                                     }}
-                                    className={`snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+                                    className={`snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--hero-accent)] ${
                                         showMoreTabs || isMoreTabActive
-                                            ? 'bg-cyan-50 dark:bg-cyan-950/40 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25'
+                                            ? 'bg-[var(--hero-accent-soft)] shadow-sm text-[var(--hero-accent)] border border-[var(--hero-accent)]/25'
                                             : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'
                                     }`}
                                 >
@@ -454,7 +454,7 @@ export const GeneratorView: React.FC = () => {
                                             onClick={() => setActiveSidebarTab(tab.id)}
                                             className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-colors ${
                                                 isSelected
-                                                    ? 'bg-cyan-600 text-white'
+                                                    ? 'bg-[var(--hero-accent)] text-white'
                                                     : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                             }`}
                                         >
@@ -489,7 +489,7 @@ export const GeneratorView: React.FC = () => {
                         type="button"
                         onClick={() => setIsSidebarOpen(true)}
                         aria-label={t('generatorView.openSidebar', 'Otwórz bibliotekę')}
-                        className="mb-3 inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 hover:text-cyan-700 dark:hover:text-cyan-300 hover:border-cyan-500/30 transition-colors"
+                        className="mb-3 inline-flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 hover:text-[var(--hero-accent)] hover:border-[var(--hero-accent)]/30 transition-colors"
                     >
                         <SidebarIcon className="w-5 h-5 flex-shrink-0" />
                         <span className="text-sm font-semibold">{t('generatorView.openSidebar', 'Biblioteka')}</span>
@@ -508,7 +508,7 @@ export const GeneratorView: React.FC = () => {
                                 role="tab"
                                 aria-selected={mobilePanel === 'form'}
                                 onClick={() => setMobilePanel('form')}
-                                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${mobilePanel === 'form' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/20' : 'text-slate-500 dark:text-slate-400'}`}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors ${mobilePanel === 'form' ? 'bg-white dark:bg-slate-800 text-[var(--hero-accent)] shadow-sm border border-[var(--hero-accent)]/25' : 'text-slate-500 dark:text-slate-400'}`}
                             >
                                 {t('generatorView.mobileTabForm', 'Formularz')}
                             </button>
@@ -517,7 +517,7 @@ export const GeneratorView: React.FC = () => {
                                 role="tab"
                                 aria-selected={mobilePanel === 'result'}
                                 onClick={() => setMobilePanel('result')}
-                                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${mobilePanel === 'result' ? 'bg-white dark:bg-slate-800 text-cyan-700 dark:text-cyan-300 shadow-sm border border-cyan-500/20' : 'text-slate-500 dark:text-slate-400'}`}
+                                className={`flex-1 py-2.5 px-3 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5 ${mobilePanel === 'result' ? 'bg-white dark:bg-slate-800 text-[var(--hero-accent)] shadow-sm border border-[var(--hero-accent)]/25' : 'text-slate-500 dark:text-slate-400'}`}
                             >
                                 {t('generatorView.mobileTabResult', 'Wynik')}
                                 {result && !isLoading && (
@@ -531,10 +531,13 @@ export const GeneratorView: React.FC = () => {
                     <div className={`w-full ${!isResultVisible ? 'max-w-3xl mx-auto' : ''}`}>
                         {!isResultVisible && (
                             <header className="mb-5 sm:mb-6">
-                                <p className="text-[11px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-400 mb-1">
+                                <p
+                                    className="text-[11px] font-semibold uppercase tracking-[0.18em] mb-1"
+                                    style={{ color: 'var(--hero-accent)' }}
+                                >
                                     {t('generatorView.eyebrow', 'Twórz')}
                                 </p>
-                                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                                <h1 className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                                     {t('generatorView.title', 'Generator treści')}
                                 </h1>
                                 <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400 max-w-xl leading-relaxed">
@@ -560,12 +563,12 @@ export const GeneratorView: React.FC = () => {
                                     />
                                 )}
                                 {inspiration && (
-                                    <div className="flex justify-between items-center gap-3 p-3 sm:p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-xl">
+                                    <div className="flex justify-between items-center gap-3 p-3 sm:p-4 bg-[var(--hero-accent-soft)] border border-[var(--hero-accent)]/25 rounded-xl">
                                         <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="p-1.5 bg-cyan-600 rounded-lg text-white shrink-0">
+                                            <div className="p-1.5 bg-[var(--hero-accent)] rounded-lg text-white shrink-0">
                                                 <ClockIcon className="w-4 h-4" />
                                             </div>
-                                            <p className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-400 truncate">{t('generatorView.viewingHistory')}</p>
+                                            <p className="text-xs font-bold uppercase tracking-wider text-[var(--hero-accent)] truncate">{t('generatorView.viewingHistory')}</p>
                                         </div>
                                         <ModernButton onClick={handleReturnToGenerator} variant="outline" size="sm">
                                             <ArrowUturnLeftIcon className="w-3.5 h-3.5 mr-1.5" /> {t('generatorView.backToGenerator')}
@@ -627,7 +630,7 @@ export const GeneratorView: React.FC = () => {
                             )}
 
                             {result && !isLoading && (
-                                <div className="glass-premium rounded-2xl border border-white/10 shadow-xl p-5 lg:p-6 animate-fade-in-up">
+                                <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 rounded-lg p-5 lg:p-6 animate-fade-in-up">
                                     <Suspense fallback={<SkeletonCard />}>
                                         <MultiPlatformOptimizer
                                         originalText={result.postText}

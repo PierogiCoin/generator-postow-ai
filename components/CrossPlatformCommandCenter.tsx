@@ -177,18 +177,16 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl">
-            <GlobeIcon className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-              {t('crossPlatform.title', 'Centrum multi-platformowe')}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Zarządzaj wszystkimi platformami z jednego miejsca
-            </p>
-          </div>
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--hero-accent)' }}>
+            Omnichannel
+          </p>
+          <h2 className="mt-1 font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            {t('crossPlatform.title', 'Centrum multi-platformowe')}
+          </h2>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Zarządzaj wszystkimi platformami z jednego miejsca
+          </p>
         </div>
       </div>
 
@@ -202,10 +200,10 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium text-sm transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
               activeTab === tab.id
-                ? 'bg-indigo-600 text-white'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                ? 'bg-[var(--hero-accent)] text-white'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
             }`}
           >
             <tab.icon className="w-4 h-4" />
@@ -225,7 +223,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
           <button
             onClick={handleAnalyzeBestPlatform}
             disabled={isAnalyzing || !currentContent.trim()}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 text-white font-medium rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--hero-accent)] hover:brightness-110 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
           >
             {isAnalyzing ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -238,7 +236,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
           {analysis && (
             <div className="space-y-4">
               {/* Top Recommendation */}
-              <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-2xl border-2 border-indigo-200 dark:border-indigo-800">
+              <div className="p-6 bg-[var(--hero-accent-soft)] rounded-lg border border-[var(--hero-accent)]/30">
                 <div className="flex items-center gap-4 mb-4">
                   <div className={`p-3 ${PLATFORM_COLORS[analysis.topChoice]} rounded-xl text-white text-2xl`}>
                     {PLATFORM_ICONS[analysis.topChoice]}
@@ -276,7 +274,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
                       key={rec.platform}
                       className={`p-4 rounded-xl border ${
                         index === 0
-                          ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-300'
+                          ? 'bg-[var(--hero-accent-soft)] border-[var(--hero-accent)]/40'
                           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
                       }`}
                     >
@@ -288,7 +286,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
                               {rec.platform}
                             </span>
                             {index === 0 && (
-                              <span className="px-2 py-0.5 bg-indigo-500 text-white text-xs rounded-full">
+                              <span className="px-2 py-0.5 bg-[var(--hero-accent)] text-white text-xs rounded-md">
                                 TOP
                               </span>
                             )}
@@ -382,7 +380,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
                 <button
                   type="button"
                   onClick={() => void refreshInbox()}
-                  className="mt-3 text-xs font-bold text-indigo-600 hover:underline"
+                  className="mt-3 text-xs font-bold text-[var(--hero-accent)] hover:underline"
                 >
                   Odśwież
                 </button>
@@ -446,7 +444,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
                         <div className="flex gap-2 mt-2">
                           <button
                             onClick={() => handleCopy(message.aiSuggestedReply!, `reply-${message.id}`)}
-                            className="text-xs px-3 py-1 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"
+                            className="text-xs px-3 py-1 bg-[var(--hero-accent)] text-white rounded-lg hover:brightness-110 transition-colors"
                           >
                             {copiedIndex === `reply-${message.id}` ? 'Skopiowano!' : 'Kopiuj'}
                           </button>
@@ -497,7 +495,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
           <button
             onClick={handleBatchAdapt}
             disabled={isAnalyzing || selectedTargetPlatforms.length === 0}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 text-white font-medium rounded-xl transition-all"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[var(--hero-accent)] hover:brightness-110 disabled:opacity-50 text-white font-semibold rounded-lg transition-all"
           >
             {isAnalyzing ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -522,7 +520,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
                     </div>
                     <button
                       onClick={() => handleCopy(adaptation.adaptedContent, `adapt-${platform}`)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-500 transition-colors"
+                      className="p-1.5 text-slate-400 hover:text-[var(--hero-accent)] transition-colors"
                     >
                       {copiedIndex === `adapt-${platform}` ? (
                         <CheckCircleIcon className="w-5 h-5 text-green-500" />
@@ -542,7 +540,7 @@ export const CrossPlatformCommandCenter: React.FC<CrossPlatformCommandCenterProp
                     {adaptation.changes.map((change, i) => (
                       <span
                         key={`change-${i}`}
-                        className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-xs rounded-full"
+                        className="px-2 py-1 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] text-xs rounded-md"
                       >
                         {change.type === 'shortened' ? '✂️ Skrócone' :
                          change.type === 'lengthened' ? '📝 Rozszerzone' :

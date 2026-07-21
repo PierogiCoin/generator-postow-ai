@@ -44,7 +44,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
   );
 
   return (
-    <div className="mb-6 p-4 md:p-5 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 relative z-10">
+    <div className="mb-6 p-4 md:p-5 rounded-lg border border-[var(--hero-accent)]/20 bg-[var(--hero-accent-soft)] relative z-10">
       <button
         type="button"
         onClick={() => setIsExpanded((v) => !v)}
@@ -52,7 +52,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
         aria-expanded={isExpanded}
       >
         <div>
-          <h3 className="text-sm font-black uppercase tracking-tight text-slate-800 dark:text-white">
+          <h3 className="text-sm font-extrabold uppercase tracking-tight text-slate-800 dark:text-white">
             {t('calendar.fill.title', 'Wypełnij kalendarz')}
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -68,7 +68,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
 
       <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 ${isExpanded ? '' : 'hidden sm:grid'}`}>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             {t('calendar.cadence.label', 'Szablon cadence')}
           </label>
           <select
@@ -88,7 +88,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             {t('calendar.fill.weekTheme', 'Temat tygodnia')}
           </label>
           <input
@@ -101,7 +101,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             {t('form.platform.label', 'Platforma')}
           </label>
           <select

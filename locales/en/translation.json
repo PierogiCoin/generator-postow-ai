@@ -731,15 +731,15 @@
       "faq": "FAQ"
     },
     "trust": {
-      "title": "Built for marketers and creators",
+      "title": "One workflow for content",
       "item_generate": "Post generator",
       "item_plan": "Campaign planner",
       "item_analyze": "Content analytics"
     },
     "hero": {
       "brand": "AI Content Pro",
-      "title": "Social posts that sound like your brand",
-      "subtitle": "Generate ready-to-publish content and plan your calendar in one place — no credit card.",
+      "title": "Social posts in your brand’s voice",
+      "subtitle": "Generate, plan, and publish in one studio — no credit card.",
       "cta": "Generate your first post",
       "cta_logged_in": "Go to generator",
       "secondary_cta": "See how it works",
@@ -754,24 +754,24 @@
       "preview_label": "Output",
       "preview_status": "Ready",
       "preview_hook": "Hook",
-      "preview_body": "Your team can generate on-brand posts, plan publishing, and see what works — in one workflow.",
+      "preview_body": "Your team generates on-brand posts, plans publishing, and sees what works — in one place.",
       "preview_cta_line": "CTA: Generate your first post →",
       "preview_tag_ai": "#ContentMarketing",
       "preview_tag_marketing": "#SocialMedia"
     },
     "how_it_works": {
-      "title": "Simple in 3 steps",
-      "subtitle": "From idea to a ready post in under a minute — without switching tools.",
-      "step1_title": "1. Describe the goal",
+      "title": "From brief to post",
+      "subtitle": "Three steps. No tool-switching. No blank page.",
+      "step1_title": "Describe the goal",
       "step1_desc": "Topic, audience, and tone — that’s enough to start.",
-      "step2_title": "2. Pick a style",
-      "step2_desc": "Match the platform and content type to your brand.",
-      "step3_title": "3. Generate and publish",
+      "step2_title": "Match the style",
+      "step2_desc": "Pick the platform and content type for your brand.",
+      "step3_title": "Generate and publish",
       "step3_desc": "Copy, schedule, or refine the draft before you post."
     },
     "features": {
-      "title": "Three modules, one workflow",
-      "subtitle": "Generate, plan, and review content in one place.",
+      "title": "A studio, not a tool stack",
+      "subtitle": "Generate, plan, and review — wired into one working rhythm.",
       "generator_title": "Content generator",
       "generator_desc": "Brand-aligned posts — ready to edit and publish.",
       "generator_mock_label": "Post preview",
@@ -784,7 +784,7 @@
       "analytics_mock_label": "Engagement"
     },
     "use_cases": {
-      "title": "How people use it",
+      "title": "Who it’s for",
       "subtitle": "Concrete scenarios — no fake reviews.",
       "item1_title": "Marketing teams",
       "item1_desc": "Fast post variants under one brand voice.",
@@ -794,8 +794,8 @@
       "item3_desc": "Stay consistent without starting from a blank page."
     },
     "faq": {
-      "title": "Common questions",
-      "subtitle": "Short answers about the generator — or create your first post now.",
+      "title": "Questions",
+      "subtitle": "Short answers — or create your first post now.",
       "q1": "Do I need marketing experience?",
       "a1": "No. The tool guides you from goal and audience to a ready post with CTA and hashtags.",
       "q2": "Can I edit content before publishing?",
@@ -804,8 +804,8 @@
       "a3": "Usually right away: more consistent posting and faster iteration. Analytics then helps with timing."
     },
     "final_cta": {
-      "title": "Generate your first post in minutes",
-      "subtitle": "Create an account and start in the generator — no credit card.",
+      "title": "Your first post in minutes",
+      "subtitle": "Create an account and open the generator — no credit card.",
       "subtitle_logged_in": "Go back to the generator and keep creating.",
       "button": "Generate your first post"
     }

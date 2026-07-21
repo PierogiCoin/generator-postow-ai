@@ -9,21 +9,26 @@
     --text-primary: #0f172a;
     --accent-indigo: #6366f1;
     --accent-violet: #8b5cf6;
-    --hero-navy: #0b1220;
-    --hero-navy-muted: #152036;
-    --hero-accent: #4f6ef7;
-    --hero-accent-soft: rgba(79, 110, 247, 0.14);
+    --hero-navy: #071018;
+    --hero-navy-muted: #0f1c2e;
+    --hero-accent: #1d9bf0;
+    --hero-accent-soft: rgba(29, 155, 240, 0.16);
+    --hero-surface: #eef1f6;
+    --hero-ink: #0a1628;
+    --font-display: 'Syne', 'Outfit', sans-serif;
+    --font-body: 'Outfit', system-ui, sans-serif;
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(255, 255, 255, 0.3);
     --glass-premium-bg: rgba(255, 255, 255, 0.6);
     --glass-premium-border: rgba(15, 23, 42, 0.08);
 
     --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
-    --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+    --shadow-glow: 0 0 20px rgba(29, 155, 240, 0.12);
   }
 
   html.dark {
     --text-primary: #f8fafc;
+    --hero-surface: #060b18;
     --glass-bg: rgba(15, 23, 42, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
     --glass-premium-bg: rgba(15, 23, 42, 0.65);
@@ -32,10 +37,30 @@
   }
 
   body {
-    @apply bg-[#f8fafc] dark:bg-[#060b18] text-slate-800 dark:text-slate-200 transition-colors duration-500;
-    font-family: 'Outfit', 'Inter', sans-serif;
+    @apply bg-[#eef1f6] dark:bg-[#060b18] text-slate-800 dark:text-slate-200 transition-colors duration-500;
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+
+  .home-grid-bg {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .home-hero-wash {
+    background:
+      radial-gradient(ellipse 80% 55% at 70% 20%, rgba(29, 155, 240, 0.22), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 15% 80%, rgba(15, 80, 120, 0.35), transparent 50%),
+      linear-gradient(165deg, #071018 0%, #0a1628 45%, #0d1f33 100%);
   }
 }
 
@@ -123,6 +148,60 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes home-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-preview-rise {
+  from {
+    opacity: 0;
+    transform: translateY(48px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-line-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-home-rise {
+  animation: home-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-home-preview {
+  animation: home-preview-rise 1s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-home-line {
+  transform-origin: left center;
+  animation: home-line-grow 0.9s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-home-rise,
+  .animate-home-preview,
+  .animate-home-line {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
 

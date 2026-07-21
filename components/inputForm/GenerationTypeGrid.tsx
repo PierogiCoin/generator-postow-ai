@@ -42,16 +42,16 @@ export const GenerationTypeGrid: React.FC<GenerationTypeGridProps> = ({
           title={config.description}
           className={`relative flex items-start gap-2.5 px-3 py-2.5 text-left rounded-xl border transition-colors min-h-[52px] overflow-hidden ${
             isSelected
-              ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-800 dark:text-cyan-200 z-[1]'
-              : 'border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-300 hover:border-cyan-500/30'
+              ? 'border-[var(--hero-accent)]/50 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] z-[1]'
+              : 'border-slate-200/70 dark:border-white/10 bg-white dark:bg-slate-950/40 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
           } ${isDisabled ? 'opacity-35 cursor-not-allowed grayscale' : ''}`}
         >
-          <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${isSelected ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-400'}`} />
+          <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${isSelected ? 'text-[var(--hero-accent)]' : 'text-slate-400'}`} />
           <span className="text-[11px] font-bold uppercase tracking-tight leading-snug min-w-0 flex-1 line-clamp-2">
             {config.label}
           </span>
           {isSelected && (
-            <SparklesIcon className="w-3.5 h-3.5 text-cyan-500/80 shrink-0 mt-0.5" aria-hidden />
+            <SparklesIcon className="w-3.5 h-3.5 text-[var(--hero-accent)]/80 shrink-0 mt-0.5" aria-hidden />
           )}
         </button>
       );

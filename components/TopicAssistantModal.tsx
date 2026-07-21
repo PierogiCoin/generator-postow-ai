@@ -56,19 +56,16 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white/80 dark:bg-slate-900/80 border border-white/20 dark:border-slate-700/50 rounded-3xl shadow-2xl p-6 md:p-10 w-full max-w-2xl m-4 transform transition-all glass animate-scale-in overflow-hidden relative"
+        className="bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-lg shadow-xl p-6 md:p-10 w-full max-w-2xl m-4 transform transition-all animate-scale-in overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Background Decorative Blobs */}
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10">
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-500/10 rounded-xl">
-              <SparklesIcon className="w-8 h-8 text-blue-500 animate-pulse" />
-            </div>
-            <span className="gradient-text">{t('topicAssistant.title')}</span>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: 'var(--hero-accent)' }}>
+            Assistant
+          </p>
+          <h2 className="mt-2 font-display text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">
+            {t('topicAssistant.title')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-md text-sm md:text-base">
             {t('topicAssistant.subtitle')}
@@ -80,7 +77,7 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
                 {t('topicAssistant.currentTopic')}
               </label>
               <div
-                className="p-5 bg-white/50 dark:bg-slate-950/50 rounded-2xl text-slate-700 dark:text-slate-300 min-h-[4rem] border border-slate-200/50 dark:border-slate-800 shadow-inner italic leading-relaxed text-sm"
+                className="p-5 bg-white/50 dark:bg-slate-950/50 rounded-lg text-slate-700 dark:text-slate-300 min-h-[4rem] border border-slate-200/50 dark:border-slate-800 shadow-inner italic leading-relaxed text-sm"
               >
                 {currentTopic?.replace(/<[^>]*>?/gm, '') || '...'}
               </div>
@@ -125,7 +122,7 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
                 {isLoading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((n) => (
-                      <div key={n} className="h-14 bg-slate-100 dark:bg-slate-800/50 rounded-2xl shimmer border border-slate-200/50 dark:border-slate-700/30" />
+                      <div key={n} className="h-14 bg-slate-100 dark:bg-slate-800/50 rounded-lg shimmer border border-slate-200/50 dark:border-slate-700/30" />
                     ))}
                   </div>
                 ) : suggestions.length > 0 ? (
@@ -133,7 +130,7 @@ export const TopicAssistantModal: React.FC<TopicAssistantModalProps> = ({
                     {suggestions.map((s, i) => (
                       <div
                         key={`suggestion-${i}`}
-                        className="group flex items-center gap-4 p-4 bg-white/40 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-800 rounded-2xl border border-slate-200/50 dark:border-slate-800/50 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 animate-fade-in-up shadow-sm hover:shadow-md cursor-pointer"
+                        className="group flex items-center gap-4 p-4 bg-white/40 dark:bg-slate-900/40 hover:bg-white dark:hover:bg-slate-800 rounded-lg border border-slate-200/50 dark:border-slate-800/50 hover:border-blue-500/30 dark:hover:border-blue-400/30 transition-all duration-300 animate-fade-in-up shadow-sm hover:shadow-md cursor-pointer"
                         style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'both' }}
                         onClick={() => handleApply(s)}
                       >

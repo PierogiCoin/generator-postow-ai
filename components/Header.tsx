@@ -42,10 +42,10 @@ const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string;
         title={title}
         end={to === '/dashboard'}
         className={({ isActive }) =>
-            `flex items-center gap-2 px-3 lg:px-3.5 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-colors ${
+            `flex items-center gap-2 px-3 lg:px-3.5 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors ${
                 isActive
-                    ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/35'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/5 border border-transparent'
+                    ? 'bg-[var(--hero-accent)] text-white border border-transparent'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 border border-transparent'
             } ${disabled ? 'opacity-35 cursor-not-allowed pointer-events-none' : ''}`
         }
     >
@@ -64,7 +64,7 @@ const BottomNavItem: React.FC<{
         className={({ isActive }) =>
             `flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] transition-colors ${
                 isActive
-                    ? 'text-cyan-600 dark:text-cyan-400'
+                    ? 'text-[var(--hero-accent)]'
                     : 'text-slate-500 dark:text-slate-400'
             }`
         }
@@ -82,7 +82,7 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
     return (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none">
             <nav
-                className="pointer-events-auto grid grid-cols-5 items-end gap-1 w-full max-w-lg mx-auto rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl shadow-lg px-1 py-1.5"
+                className="pointer-events-auto grid grid-cols-5 items-end gap-1 w-full max-w-lg mx-auto rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#071018]/95 backdrop-blur-md px-1 py-1.5"
                 aria-label={t('header.nav.ariaLabel', 'Nawigacja główna')}
             >
                 <BottomNavItem to="/dashboard" icon={LayoutGridIcon} label={t('header.nav.dashboard')} />
@@ -91,8 +91,8 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
                     <button
                         type="button"
                         onClick={onOpenCreateMenu}
-                        className="w-14 h-14 rounded-full text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-slate-950 hover:brightness-110"
-                        style={{ backgroundColor: 'var(--hero-accent)', boxShadow: '0 10px 24px color-mix(in srgb, var(--hero-accent) 35%, transparent)' }}
+                        className="w-14 h-14 rounded-xl text-white flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-[#071018] hover:brightness-110"
+                        style={{ backgroundColor: 'var(--hero-accent)' }}
                         aria-label={t('header.nav.create')}
                     >
                         <SparklesIcon className="w-7 h-7" />
@@ -298,24 +298,24 @@ export const Header: React.FC<HeaderProps> = ({
     ];
 
     const landingNavLinkClass =
-        'px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-xl hover:text-slate-900 dark:hover:text-white hover:bg-white/10 transition-colors';
+        'px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 transition-colors';
 
     const landingNavMobileLinkClass =
-        'px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-200 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left w-full';
+        'px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left w-full';
 
     return (
         <>
-            <header className="glass sticky top-0 z-[50] border-b border-white/10 shadow-[0_4px_24px_rgba(0,0,0,0.1)] backdrop-blur-xl">
-                <div className="max-w-7xl mx-auto px-4 sm:px-8 h-20 flex items-center justify-between">
+            <header className="sticky top-0 z-[50] border-b border-slate-200/70 dark:border-white/10 bg-[var(--hero-surface)]/90 dark:bg-[#060b18]/90 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4 lg:gap-6 min-w-0">
                         <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group flex-shrink-0" aria-label="Strona główna">
                             <div
-                                className="rounded-xl p-2.5 shadow-md group-hover:brightness-110 transition-all duration-300 relative overflow-hidden"
+                                className="rounded-lg p-2 group-hover:brightness-110 transition-all duration-300"
                                 style={{ backgroundColor: 'var(--hero-accent)' }}
                             >
-                                <SparklesIcon className="w-6 h-6 text-white relative z-10" />
+                                <SparklesIcon className="w-5 h-5 text-white" />
                             </div>
-                            <h1 className="hidden sm:block text-2xl lg:text-3xl font-black text-slate-900 dark:text-white tracking-tighter group-hover:opacity-90 transition-opacity duration-300">
+                            <h1 className="hidden sm:block font-display text-xl lg:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity duration-300">
                                 {t('header.title')}
                             </h1>
                         </NavLink>
@@ -339,7 +339,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                     {user && (
                         <nav
-                            className="hidden sm:flex items-center gap-1 p-1.5 rounded-2xl border border-slate-200/70 dark:border-white/10 bg-slate-50/80 dark:bg-slate-900/50 backdrop-blur-md"
+                            className="hidden sm:flex items-center gap-1 p-1 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.03]"
                             aria-label={t('header.nav.ariaLabel', 'Nawigacja główna')}
                         >
                             {primaryNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
@@ -358,10 +358,10 @@ export const Header: React.FC<HeaderProps> = ({
                                     }}
                                     aria-expanded={isMoreMenuOpen}
                                     aria-haspopup="menu"
-                                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-colors border ${
+                                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors border ${
                                         isMoreMenuOpen || moreNavItems.some((i) => location.pathname.startsWith(i.to))
-                                            ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/35'
-                                            : 'text-slate-500 dark:text-slate-400 hover:bg-white/5 border-transparent'
+                                            ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] border-[var(--hero-accent)]/35'
+                                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 border-transparent'
                                     }`}
                                 >
                                     <span className="hidden lg:inline">{t('header.nav.more')}</span>
@@ -371,7 +371,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 {isMoreMenuOpen && (
                                     <div
                                         role="menu"
-                                        className="absolute top-full right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl z-50 p-1.5"
+                                        className="absolute top-full right-0 mt-2 w-56 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a1220] shadow-lg z-50 p-1.5"
                                     >
                                         {moreNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
                                             <NavLink
@@ -381,10 +381,10 @@ export const Header: React.FC<HeaderProps> = ({
                                                 role="menuitem"
                                                 onClick={() => setIsMoreMenuOpen(false)}
                                                 className={({ isActive }) =>
-                                                    `flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                                                    `flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
                                                         isActive
-                                                            ? 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300'
-                                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                            ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
+                                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                                     } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
                                                 }
                                             >
@@ -407,11 +407,8 @@ export const Header: React.FC<HeaderProps> = ({
                                     }}
                                     aria-expanded={isCreateMenuOpen}
                                     aria-haspopup="menu"
-                                    className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold uppercase tracking-wide rounded-xl transition-colors ${
-                                        isCreateMenuOpen
-                                            ? 'bg-cyan-600 text-white'
-                                            : 'bg-cyan-600/90 hover:bg-cyan-500 text-white'
-                                    }`}
+                                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors text-white hover:brightness-110"
+                                    style={{ backgroundColor: 'var(--hero-accent)' }}
                                 >
                                     <SparklesIcon className="w-4 h-4" />
                                     <span className="hidden md:inline">{t('header.nav.create')}</span>
@@ -420,7 +417,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 {isCreateMenuOpen && (
                                     <div
                                         role="menu"
-                                        className="absolute top-full right-0 mt-2 w-60 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 shadow-xl z-50 p-1.5"
+                                        className="absolute top-full right-0 mt-2 w-60 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a1220] shadow-lg z-50 p-1.5"
                                     >
                                         {createNavItems.map(({ id, to, label, icon: Icon, state }) => (
                                             <NavLink
@@ -429,9 +426,9 @@ export const Header: React.FC<HeaderProps> = ({
                                                 state={state}
                                                 role="menuitem"
                                                 onClick={() => setIsCreateMenuOpen(false)}
-                                                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
                                             >
-                                                <span className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">
+                                                <span className="p-1.5 rounded-md bg-slate-100 dark:bg-white/5">
                                                     <Icon className="w-4 h-4" />
                                                 </span>
                                                 {label}
@@ -455,10 +452,10 @@ export const Header: React.FC<HeaderProps> = ({
                                     <button
                                         type="button"
                                         onClick={onUpgradeClick}
-                                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors"
+                                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--hero-accent)]/30 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] hover:brightness-110 transition-colors"
                                         title={t('header.creditsTooltip', 'Saldo kredytów')}
                                     >
-                                        <SparklesIcon className="w-3.5 h-3.5 text-cyan-400" />
+                                        <SparklesIcon className="w-3.5 h-3.5" />
                                         {user.credits.toLocaleString('pl-PL')}
                                     </button>
                                 )}
@@ -469,13 +466,13 @@ export const Header: React.FC<HeaderProps> = ({
                                 <div className="hidden sm:flex items-center gap-2">
                                     <button
                                         onClick={onLoginClick}
-                                        className="px-6 py-2.5 text-sm font-bold text-white rounded-xl border border-white/20 hover:bg-white/10 transition-all active:scale-95"
+                                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-white/15 hover:bg-slate-100/80 dark:hover:bg-white/5 transition-all"
                                     >
                                         {t('header.login')}
                                     </button>
                                     <button
                                         onClick={onSignUpClick}
-                                        className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white rounded-xl hover:brightness-110 transition-all active:scale-95 shadow-md"
+                                        className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg hover:brightness-110 transition-all"
                                         style={{ backgroundColor: 'var(--hero-accent)' }}
                                     >
                                         {t('header.signup')}
@@ -484,7 +481,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <button
                                     type="button"
                                     onClick={onSignUpClick}
-                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-semibold text-white rounded-xl shadow-md active:scale-95 transition-all hover:brightness-110"
+                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white rounded-lg active:scale-95 transition-all hover:brightness-110"
                                     style={{ backgroundColor: 'var(--hero-accent)' }}
                                 >
                                     {t('header.signup')}
@@ -492,7 +489,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => setIsMobileMenuOpen(true)}
-                                    className="sm:hidden p-2.5 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white/10 border border-white/10"
+                                    className="sm:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/10"
                                     aria-label={t('home.nav.openMenu')}
                                 >
                                     <MenuIcon className="w-6 h-6" />
@@ -513,20 +510,20 @@ export const Header: React.FC<HeaderProps> = ({
                     aria-labelledby="mobile-menu-heading"
                 >
                     <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-fade-in" onClick={() => setIsMobileMenuOpen(false)}></div>
-                    <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm bg-white dark:bg-slate-900 shadow-2xl p-8 transition-transform duration-500 ease-out glass border-l border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+                    <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm bg-white dark:bg-[#0a1220] p-8 transition-transform duration-500 ease-out border-l border-slate-200 dark:border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
                         <div>
                             <div className="flex justify-between items-center mb-10">
-                                <h2 id="mobile-menu-heading" className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                                <h2 id="mobile-menu-heading" className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                                     {t('header.nav.menu', 'Menu')}
                                 </h2>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-500 dark:text-slate-400">
+                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 dark:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400">
                                     <XMarkIcon className="w-6 h-6" />
                                 </button>
                             </div>
                             <nav className="flex flex-col gap-2 overflow-y-auto custom-scrollbar">
                                 {user ? (
                                     <>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 mb-1">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mb-1">
                                             {t('header.nav.sectionMain', 'Główne')}
                                         </p>
                                         {mobileDrawerNavItems.slice(0, 4).map(({ id, to, label, icon: Icon, disabled = false }) => (
@@ -536,10 +533,10 @@ export const Header: React.FC<HeaderProps> = ({
                                                 end={to === '/dashboard'}
                                                 onClick={() => setIsMobileMenuOpen(false)}
                                                 className={({ isActive }) =>
-                                                    `flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors ${
+                                                    `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                                                         isActive
-                                                            ? 'bg-cyan-500 text-white'
-                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                            ? 'bg-[var(--hero-accent)] text-white'
+                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                                     } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
                                                 }
                                             >
@@ -547,7 +544,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 {label}
                                             </NavLink>
                                         ))}
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1 mt-4 mb-1">
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mt-4 mb-1">
                                             {t('header.nav.sectionMore', 'Więcej')}
                                         </p>
                                         {mobileDrawerNavItems.slice(4).map(({ id, to, label, icon: Icon, disabled = false }) => (
@@ -556,10 +553,10 @@ export const Header: React.FC<HeaderProps> = ({
                                                 to={to}
                                                 onClick={() => setIsMobileMenuOpen(false)}
                                                 className={({ isActive }) =>
-                                                    `flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-xl transition-colors ${
+                                                    `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                                                         isActive
-                                                            ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300'
-                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                                            ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
+                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
                                                     } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
                                                 }
                                             >

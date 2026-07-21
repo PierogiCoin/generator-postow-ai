@@ -33,10 +33,13 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
   const generationsThisMonth = stats?.totalGenerations ?? 0;
 
   return (
-    <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700/50">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Status subskrypcji</h2>
-        <span className="px-3 py-1 text-xs font-bold text-white bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-md">
+    <div className="p-4 bg-white dark:bg-[#0f1c2e] border border-slate-200 dark:border-white/10">
+      <div className="flex justify-between items-center mb-4 gap-3">
+        <h2 className="font-display text-lg font-extrabold tracking-tight text-slate-800 dark:text-slate-100">Status subskrypcji</h2>
+        <span
+          className="px-3 py-1 text-xs font-semibold text-white rounded-md"
+          style={{ backgroundColor: 'var(--hero-accent)' }}
+        >
           Plan: {planNames[userPlan]}
         </span>
       </div>
@@ -58,14 +61,14 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
               {credits.toLocaleString('pl-PL')} / {planCredits.toLocaleString('pl-PL')}
             </span>
           </div>
-          <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-1.5 overflow-hidden">
+          <div className="w-full bg-slate-200 dark:bg-white/10 rounded-full h-1.5 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
                 credits < planCredits * 0.2
                   ? 'bg-red-500'
                   : credits < planCredits * 0.5
-                    ? 'bg-yellow-500'
-                    : 'bg-blue-500'
+                    ? 'bg-amber-500'
+                    : 'bg-[var(--hero-accent)]'
               }`}
               style={{
                 width: `${planCredits > 0 ? Math.min((credits / planCredits) * 100, 100) : 0}%`,
@@ -93,7 +96,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
       {userPlan !== UserPlan.Enterprise && (
         <button
           onClick={onUpgrade}
-          className="w-full mt-6 flex items-center justify-center gap-2 text-white font-semibold py-2.5 px-4 rounded-xl hover:brightness-110 transition-all shadow-md focus:outline-none focus:ring-4 focus:ring-[var(--hero-accent)]/30"
+          className="w-full mt-6 min-h-[44px] flex items-center justify-center gap-2 text-white font-semibold py-2.5 px-4 rounded-lg hover:brightness-110 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/40 touch-manipulation"
           style={{ backgroundColor: 'var(--hero-accent)' }}
         >
           <SparklesIcon className="w-5 h-5" />

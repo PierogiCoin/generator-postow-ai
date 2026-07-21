@@ -43,6 +43,10 @@ export function setIntelligenceCache(key: string, data: unknown, ttlMs: number):
   store.set(key, { data, expiresAt: Date.now() + ttlMs });
 }
 
+export function deleteIntelligenceCache(key: string): boolean {
+  return store.delete(key);
+}
+
 export const INTELLIGENCE_CACHE_TTL = {
   news: 6 * 60 * 60 * 1000,
   trends: 12 * 60 * 60 * 1000,

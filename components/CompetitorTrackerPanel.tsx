@@ -3,6 +3,7 @@ import { Platform } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import {
   TrackedCompetitor,
+  CompetitorAnalysis,
   fetchTrackedCompetitors,
   addTrackedCompetitor,
   removeTrackedCompetitor,
@@ -15,12 +16,15 @@ import {
   type IntelligenceSource,
 } from '../services/intelligenceService';
 import { BatchCompetitorSummary, type BatchCompetitorResult } from './intelligence/BatchCompetitorSummary';
+import { ConfirmDialog } from './ui/ConfirmDialog';
+import { useConfirm } from '../hooks/useConfirm';
 import { showError, showSuccess, showWarning } from '../utils/errorHandler';
 import { parseUserFacingError } from '../utils/userFacingError';
 import { useAppHandlers } from '../hooks/useAppHandlers';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDataStore } from '../stores/dataStore';
 import { getUserNiche as getUserNicheShared } from '../utils/userNiche';
+import { mapWithConcurrency } from '../utils/mapWithConcurrency';
 import { UsersIcon } from './icons/UsersIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { IdentificationIcon } from './icons/IdentificationIcon';
@@ -28,6 +32,55 @@ import { TrashIcon } from './icons/TrashIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 
 const PLATFORMS = Object.values(Platform);
+/** Limit API `/competitor-batch` — nie wysyłamy więcej w jednym requestcie. */
+const BATCH_HANDLE_LIMIT = 8;
+const DEEP_ANALYZE_CONCURRENCY = 2;
+
+function mostCommon<T extends string>(values: T[], fallback: T): T {
+  if (values.length === 0) return fallback;
+  const counts = new Map<T, number>();
+  for (const v of values) counts.set(v, (counts.get(v) || 0) + 1);
+  let best = values[0];
+  let bestCount = 0;
+  for (const [value, count] of counts) {
+    if (count > bestCount) {
+      best = value;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
+function handlesMatch(a: string, b: string): boolean {
+  return normalizeCompetitorHandle(a).toLowerCase() === normalizeCompetitorHandle(b).toLowerCase();
+}
+
+/** Lekka analiza karty z raportu grupowego — bez N osobnych wywołań deep. */
+function analysisFromBatchSnippet(
+  handle: string,
+  batch: BatchCompetitorResult,
+  sources?: IntelligenceSource[]
+): CompetitorAnalysis {
+  const per = batch.perCompetitor?.find((c) => handlesMatch(c.handle, handle));
+  return {
+    topHashtags: [],
+    hashtagStrategy: '',
+    hashtagPatterns: [],
+    hashtagRecommendations: [],
+    bestPostingTimes: batch.sharedPeakTimes || [],
+    worstPostingTimes: [],
+    timingGaps: batch.timingGaps || [],
+    timingRecommendation: batch.recommendation || '',
+    contentThemes: batch.contentGaps?.slice(0, 5) || [],
+    strengths: [],
+    weaknesses: per?.topWeakness ? [per.topWeakness] : [],
+    opportunities: batch.opportunities || [],
+    contentGaps: batch.contentGaps || [],
+    summary: per?.summary || batch.recommendation || `Analiza grupowa @${normalizeCompetitorHandle(handle)}`,
+    estimated: true,
+    sources,
+  };
+}
 
 const PLATFORM_COLORS: Record<Platform, string> = {
   [Platform.Instagram]: 'from-pink-500 to-purple-600',
@@ -74,23 +127,54 @@ const CompetitorCard: React.FC<{
 }> = ({ competitor, onAnalyze, onRemove, isAnalyzing }) => {
   const [expanded, setExpanded] = useState(false);
   const gradient = PLATFORM_COLORS[competitor.platform] || 'from-slate-500 to-slate-700';
+  const hasAnalysis = Boolean(competitor.analysis);
+  const isEstimated = competitor.analysis?.estimated === true;
+  const analyzeLabel = isAnalyzing
+    ? 'Analizuję...'
+    : hasAnalysis
+      ? 'Odśwież'
+      : 'Analizuj';
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
-      <div className={`bg-gradient-to-r ${gradient} p-4 flex items-center justify-between`}>
-        <div>
-          <p className="text-white font-bold text-lg">@{competitor.handle}</p>
+      <div className={`bg-gradient-to-r ${gradient} p-4 flex items-center justify-between gap-3`}>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-white font-bold text-lg truncate">@{competitor.handle}</p>
+            {hasAnalysis && (
+              <span
+                className={`shrink-0 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide ${
+                  isEstimated
+                    ? 'bg-amber-400/90 text-amber-950'
+                    : 'bg-emerald-400/90 text-emerald-950'
+                }`}
+                title={
+                  isEstimated
+                    ? 'Uproszczona analiza z raportu grupowego — uruchom pełną na karcie lub „Pełna analiza”'
+                    : 'Pełna deep-analiza konta'
+                }
+              >
+                {isEstimated ? 'Szacunkowa' : 'Pełna'}
+              </span>
+            )}
+          </div>
           <p className="text-white/70 text-sm">{competitor.platform} · {competitor.niche}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => onAnalyze(competitor)}
             disabled={isAnalyzing}
-            aria-label={isAnalyzing ? 'Trwa analiza...' : `Analizuj @${competitor.handle}`}
+            aria-label={
+              isAnalyzing
+                ? 'Trwa analiza...'
+                : hasAnalysis
+                  ? `Odśwież analizę @${competitor.handle}`
+                  : `Analizuj @${competitor.handle}`
+            }
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white/20 hover:bg-white/30 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
           >
             <SparklesIcon className="w-4 h-4" />
-            {isAnalyzing ? 'Analizuję...' : 'Analizuj'}
+            {analyzeLabel}
           </button>
           <button
             onClick={() => onRemove(competitor.id)}
@@ -104,6 +188,11 @@ const CompetitorCard: React.FC<{
 
       {competitor.analysis && (
         <div className="p-4 space-y-4">
+          {isEstimated && (
+            <p className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 rounded-lg px-3 py-2">
+              To skrót z raportu grupowego. Kliknij „Odśwież” albo „Pełna analiza”, żeby dostać hashtagi, godziny i mocne/słabe strony.
+            </p>
+          )}
           <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3">
             <p className="text-sm text-indigo-800 dark:text-indigo-200">{competitor.analysis.summary}</p>
           </div>
@@ -220,11 +309,14 @@ export const CompetitorTrackerPanel: React.FC = () => {
   const notificationSystem = useNotifications();
   const appHandlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
   const { activeBrandVoiceId, isLearningStyle } = useDataStore();
+  const { confirm, confirmDialogProps } = useConfirm();
 
   const [competitors, setCompetitors] = useState<TrackedCompetitor[]>([]);
-  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [analyzingIds, setAnalyzingIds] = useState<Set<string>>(() => new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
+  const [isDeepAnalyzing, setIsDeepAnalyzing] = useState(false);
+  const [deepProgress, setDeepProgress] = useState<{ done: number; total: number } | null>(null);
   const [batchResult, setBatchResult] = useState<BatchCompetitorResult | null>(null);
   const [batchSources, setBatchSources] = useState<IntelligenceSource[]>([]);
   const [batchAnalyzedAt, setBatchAnalyzedAt] = useState<string | null>(null);
@@ -295,31 +387,48 @@ export const CompetitorTrackerPanel: React.FC = () => {
 
   const handleRemove = useCallback(async (id: string) => {
     if (!userId) return;
+    const target = competitors.find((c) => c.id === id);
+    const label = target ? `@${target.handle}` : 'tego konkurenta';
+    const ok = await confirm({
+      title: 'Usuń konkurenta',
+      message: `Na pewno usunąć ${label} ze śledzenia? Tej operacji nie można cofnąć.`,
+      confirmLabel: 'Usuń',
+      cancelLabel: 'Anuluj',
+      variant: 'danger',
+    });
+    if (!ok) return;
+
     try {
       await removeTrackedCompetitor(id, userId);
       if (isMountedRef.current) await loadCompetitors();
     } catch (err: unknown) {
       showWarning(err instanceof Error ? err.message : 'Nie udało się usunąć konkurenta.');
     }
-  }, [userId, loadCompetitors]);
+  }, [userId, competitors, confirm, loadCompetitors]);
 
   const handleAnalyze = useCallback(async (competitor: TrackedCompetitor) => {
     if (!userId) {
       showWarning('Zaloguj się, aby uruchomić analizę.');
       return;
     }
-    setAnalyzingId(competitor.id);
+    const forceRefresh = Boolean(competitor.analysis);
+    setAnalyzingIds((prev) => new Set(prev).add(competitor.id));
     try {
       const analysis = await analyzeCompetitor(
         competitor.handle,
         competitor.platform,
         competitor.niche,
-        userId
+        userId,
+        { forceRefresh }
       );
       await updateCompetitorAnalysis(competitor.id, analysis, userId);
       if (isMountedRef.current) {
         await loadCompetitors();
-        showSuccess(`Analiza @${competitor.handle} gotowa!`);
+        showSuccess(
+          forceRefresh
+            ? `Odświeżono pełną analizę @${competitor.handle}`
+            : `Analiza @${competitor.handle} gotowa!`
+        );
       }
     } catch (err: unknown) {
       if (isMountedRef.current) {
@@ -327,7 +436,13 @@ export const CompetitorTrackerPanel: React.FC = () => {
         showError(parsed.message, parsed.title);
       }
     } finally {
-      if (isMountedRef.current) setAnalyzingId(null);
+      if (isMountedRef.current) {
+        setAnalyzingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(competitor.id);
+          return next;
+        });
+      }
     }
   }, [userId, loadCompetitors]);
 
@@ -341,34 +456,51 @@ export const CompetitorTrackerPanel: React.FC = () => {
       return;
     }
 
-    const nicheForBatch = niche.trim() || competitors[0]?.niche || 'marketing';
-    const platformForBatch = competitors[0]?.platform || Platform.Instagram;
-    const handles = competitors.map((c) => c.handle);
+    const batchTargets = competitors.slice(0, BATCH_HANDLE_LIMIT);
+    if (competitors.length > BATCH_HANDLE_LIMIT) {
+      showWarning(
+        `Raport grupowy obejmuje max ${BATCH_HANDLE_LIMIT} kont — użyto pierwszych ${BATCH_HANDLE_LIMIT}.`
+      );
+    }
+
+    const platforms = batchTargets.map((c) => c.platform);
+    const uniquePlatforms = new Set(platforms);
+    const platformForBatch = mostCommon(platforms, Platform.Instagram);
+    const nicheForBatch =
+      niche.trim() || mostCommon(batchTargets.map((c) => c.niche.trim()).filter(Boolean), 'marketing');
+    const handles = batchTargets.map((c) => c.handle);
+    const forceRefresh = Boolean(batchResult);
+
+    if (uniquePlatforms.size > 1) {
+      showWarning(
+        `Mieszane platformy — raport grupowy liczony dla dominanty: ${platformForBatch}. Pełną analizę per platforma: przycisk na karcie.`
+      );
+    }
 
     setIsBatchAnalyzing(true);
     try {
-      const [{ batch, sources, analyzedAt }, ...individualResults] = await Promise.all([
-        analyzeCompetitorBatch(handles, platformForBatch, nicheForBatch, userId),
-        ...competitors.map((c) =>
-          analyzeCompetitor(c.handle, c.platform, c.niche, userId).then((analysis) => ({
-            id: c.id,
-            analysis,
-          }))
-        ),
-      ]);
+      const { batch, sources, analyzedAt } = await analyzeCompetitorBatch(
+        handles,
+        platformForBatch,
+        nicheForBatch,
+        userId,
+        { forceRefresh }
+      );
+      const batchTyped = batch as BatchCompetitorResult;
 
-      for (const result of individualResults) {
-        if (result && 'id' in result && result.analysis) {
-          await updateCompetitorAnalysis(result.id, result.analysis, userId);
-        }
+      for (const comp of batchTargets) {
+        const analysis = analysisFromBatchSnippet(comp.handle, batchTyped, sources);
+        await updateCompetitorAnalysis(comp.id, analysis, userId);
       }
 
       if (isMountedRef.current) {
-        setBatchResult(batch as BatchCompetitorResult);
+        setBatchResult(batchTyped);
         setBatchSources(sources || []);
         setBatchAnalyzedAt(analyzedAt || new Date().toISOString());
         await loadCompetitors();
-        showSuccess(`Przeanalizowano ${competitors.length} konkurentów + raport grupowy.`);
+        showSuccess(
+          `Raport grupowy gotowy (${batchTargets.length} kont). Pełną analizę: „Pełna analiza” lub „Odśwież” na karcie.`
+        );
       }
     } catch (err: unknown) {
       if (isMountedRef.current) {
@@ -378,9 +510,81 @@ export const CompetitorTrackerPanel: React.FC = () => {
     } finally {
       if (isMountedRef.current) setIsBatchAnalyzing(false);
     }
-  }, [userId, competitors, niche, loadCompetitors]);
+  }, [userId, competitors, niche, batchResult, loadCompetitors]);
+
+  const handleDeepAnalyzeAll = useCallback(async () => {
+    if (!userId) {
+      showWarning('Zaloguj się, aby uruchomić analizę.');
+      return;
+    }
+    if (competitors.length === 0) {
+      showWarning('Dodaj przynajmniej jednego konkurenta.');
+      return;
+    }
+
+    const ok = await confirm({
+      title: 'Pełna analiza wszystkich',
+      message: `Uruchomić deep-analizę dla ${competitors.length} kont (kolejka po ${DEEP_ANALYZE_CONCURRENCY})? Zużywa kredyty osobno dla każdego konta. Cache zostanie pominięty przy ponownej analizie.`,
+      confirmLabel: 'Uruchom',
+      cancelLabel: 'Anuluj',
+    });
+    if (!ok) return;
+
+    setIsDeepAnalyzing(true);
+    setDeepProgress({ done: 0, total: competitors.length });
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      await mapWithConcurrency(competitors, DEEP_ANALYZE_CONCURRENCY, async (competitor) => {
+        if (!isMountedRef.current) return;
+        setAnalyzingIds((prev) => new Set(prev).add(competitor.id));
+        try {
+          const analysis = await analyzeCompetitor(
+            competitor.handle,
+            competitor.platform,
+            competitor.niche,
+            userId,
+            { forceRefresh: Boolean(competitor.analysis) }
+          );
+          await updateCompetitorAnalysis(competitor.id, analysis, userId);
+          successCount += 1;
+        } catch {
+          failCount += 1;
+        } finally {
+          if (isMountedRef.current) {
+            setAnalyzingIds((prev) => {
+              const next = new Set(prev);
+              next.delete(competitor.id);
+              return next;
+            });
+            setDeepProgress((prev) =>
+              prev ? { ...prev, done: Math.min(prev.total, prev.done + 1) } : prev
+            );
+          }
+        }
+      });
+
+      if (isMountedRef.current) {
+        await loadCompetitors();
+        if (failCount === 0) {
+          showSuccess(`Pełna analiza gotowa: ${successCount}/${competitors.length}`);
+        } else {
+          showWarning(`Ukończono ${successCount}, błędy: ${failCount}. Sprawdź konta i spróbuj ponownie.`);
+        }
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setIsDeepAnalyzing(false);
+        setDeepProgress(null);
+        setAnalyzingIds(new Set());
+      }
+    }
+  }, [userId, competitors, confirm, loadCompetitors]);
 
   const analyzedCount = competitors.filter((c) => c.analysis).length;
+  const estimatedCount = competitors.filter((c) => c.analysis?.estimated === true).length;
+  const busy = isBatchAnalyzing || isDeepAnalyzing || analyzingIds.size > 0;
 
   const handleApplyToBrandVoice = useCallback(async () => {
     if (analyzedCount === 0) {
@@ -392,49 +596,94 @@ export const CompetitorTrackerPanel: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
+      <ConfirmDialog {...confirmDialogProps} />
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg">
-            <UsersIcon className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Śledzenie Konkurencji</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Analizuj hashtagi, godziny i strategie treści</p>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <p
+            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: 'var(--hero-accent)' }}
+          >
+            Intelligence
+          </p>
+          <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            Śledzenie Konkurencji
+          </h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Analizuj hashtagi, godziny i strategie treści
+          </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex items-center gap-2 flex-wrap sm:justify-end">
           {analyzedCount > 0 && (
             <button
               type="button"
               onClick={() => void handleApplyToBrandVoice()}
-              disabled={isLearningStyle || isBatchAnalyzing}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+              disabled={isLearningStyle || busy}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
             >
               <IdentificationIcon className="w-4 h-4" />
               {isLearningStyle ? 'Aktualizuję Brand Voice…' : 'Zastosuj do Brand Voice'}
             </button>
           )}
           {competitors.length > 0 && (
-            <button
-              type="button"
-              onClick={handleBatchAnalyze}
-              disabled={isBatchAnalyzing || analyzingId !== null}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
-            >
-              <SparklesIcon className="w-4 h-4" />
-              {isBatchAnalyzing ? 'Analizuję wszystkich…' : 'Analizuj wszystkich'}
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => void handleBatchAnalyze()}
+                disabled={busy}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                title="Jeden raport porównawczy grupy (lekkie karty)"
+              >
+                <UsersIcon className="w-4 h-4" />
+                {isBatchAnalyzing
+                  ? 'Raport grupowy…'
+                  : batchResult
+                    ? 'Odśwież raport grupowy'
+                    : 'Raport grupowy'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleDeepAnalyzeAll()}
+                disabled={busy}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                title="Pełna deep-analiza każdego konta (kolejka)"
+              >
+                <SparklesIcon className="w-4 h-4" />
+                {isDeepAnalyzing && deepProgress
+                  ? `Pełna analiza ${deepProgress.done}/${deepProgress.total}`
+                  : estimatedCount > 0
+                    ? `Pełna analiza (${estimatedCount} szac.)`
+                    : 'Pełna analiza'}
+              </button>
+            </>
           )}
           <button
             onClick={() => setShowForm(v => !v)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+            disabled={busy}
+            className="flex items-center gap-2 px-4 py-2 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 text-slate-800 dark:text-slate-100 text-sm font-semibold rounded-lg transition-colors"
           >
             <span className="text-lg leading-none">+</span>
             Dodaj konkurenta
           </button>
         </div>
       </div>
+
+      {isDeepAnalyzing && deepProgress && (
+        <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/80 dark:bg-indigo-950/40 px-4 py-3">
+          <div className="flex items-center justify-between text-sm text-indigo-900 dark:text-indigo-200 mb-2">
+            <span>Pełna analiza w kolejce (max {DEEP_ANALYZE_CONCURRENCY} naraz)</span>
+            <span className="font-semibold">
+              {deepProgress.done}/{deepProgress.total}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-indigo-200/70 dark:bg-indigo-900 overflow-hidden">
+            <div
+              className="h-full bg-indigo-600 transition-all duration-300"
+              style={{ width: `${Math.round((deepProgress.done / Math.max(1, deepProgress.total)) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
 
       {batchResult && (
         <div className="space-y-3">
@@ -522,7 +771,7 @@ export const CompetitorTrackerPanel: React.FC = () => {
               competitor={comp}
               onAnalyze={handleAnalyze}
               onRemove={handleRemove}
-              isAnalyzing={analyzingId === comp.id}
+              isAnalyzing={analyzingIds.has(comp.id)}
             />
           ))}
         </div>
