@@ -10,6 +10,12 @@ export function computeEngagementSummary(p: {
   return { impressions, likes, comments, shares, interactions, engagementRate: er };
 }
 
+function optionalMetric(value: number | undefined | null): number | undefined {
+  if (value === undefined || value === null) return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}
+
 export function mapSocialPost(
   p: {
     id: string;
@@ -28,6 +34,16 @@ export function mapSocialPost(
   platform: string,
   connectionId: string
 ) {
+  // Nie wstawiaj zer dla brakujących pól — LI/TT bez insights nie mają wyglądać na „live”.
+  const metrics = {
+    likes: optionalMetric(p.likes),
+    comments: optionalMetric(p.comments),
+    shares: optionalMetric(p.shares),
+    views: optionalMetric(p.views),
+    reach: optionalMetric(p.reach),
+    impressions: optionalMetric(p.impressions),
+  };
+
   return {
     id: p.id,
     platformPostId: p.id,
@@ -37,13 +53,6 @@ export function mapSocialPost(
     platform,
     connectionId,
     mediaUrl: p.mediaUrl,
-    metrics: {
-      likes: p.likes || 0,
-      comments: p.comments || 0,
-      shares: p.shares || 0,
-      views: p.views || 0,
-      reach: p.reach || 0,
-      impressions: p.impressions || 0,
-    },
+    metrics,
   };
 }

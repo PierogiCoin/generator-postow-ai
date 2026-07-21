@@ -23,6 +23,7 @@ export const PLATFORM_TO_SOCIAL: Partial<Record<Platform, SocialPlatform>> = {
   [Platform.X]: SocialPlatform.Twitter,
   [Platform.LinkedIn]: SocialPlatform.LinkedIn,
   [Platform.TikTok]: SocialPlatform.TikTok,
+  [Platform.YouTube]: SocialPlatform.YouTube,
 };
 
 const SOCIAL_TO_PLATFORM: Partial<Record<SocialPlatform, Platform>> = {
@@ -31,6 +32,7 @@ const SOCIAL_TO_PLATFORM: Partial<Record<SocialPlatform, Platform>> = {
   [SocialPlatform.Twitter]: Platform.X,
   [SocialPlatform.LinkedIn]: Platform.LinkedIn,
   [SocialPlatform.TikTok]: Platform.TikTok,
+  [SocialPlatform.YouTube]: Platform.YouTube,
 };
 
 /** Platformy z bezpośrednią publikacją przez API backendu */
@@ -39,6 +41,9 @@ const PUBLISHABLE_SOCIAL = new Set<SocialPlatform>([
   SocialPlatform.Instagram,
   SocialPlatform.Twitter,
   SocialPlatform.LinkedIn,
+  SocialPlatform.TikTok,
+  SocialPlatform.YouTube,
+  SocialPlatform.Threads,
 ]);
 
 export interface AutoPublishOutcome {

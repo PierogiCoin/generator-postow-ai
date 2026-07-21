@@ -700,7 +700,7 @@
       "analytics": "Analytics & AI strategist",
       "brand": "Brand voice profiles",
       "api": "API access",
-      "api_whitelabel": "API + white-label",
+      "teams": "Teams & invites",
       "unlimited": "Generation limits",
       "support": "Priority support"
     },
@@ -708,9 +708,9 @@
       "free": "Try AI with no card — limits match your account caps.",
       "creator": "Freelancers and creators — calendar, video, and brand voice.",
       "pro": "Best solo pick — analytics, strategist, and 5 brand profiles.",
-      "business": "Marketing teams — API, 6,000 credits, and 20 brand profiles.",
+      "business": "Marketing teams — 6,000 credits, teams, and 20 brand profiles.",
       "agency": "Agencies — 18,000 credits, more video than Business, unlimited campaigns.",
-      "enterprise": "28,000 credits, white-label, and priority support."
+      "enterprise": "28,000 credits, unlimited generation limits, and priority support."
     },
     "pack": {
       "small": "Small",

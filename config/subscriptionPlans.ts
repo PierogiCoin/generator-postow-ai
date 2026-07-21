@@ -185,7 +185,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       SUBSCRIPTION_PRICING.business.priceUsd,
       SUBSCRIPTION_PRICING.business.credits
     ),
-    descriptionPl: 'Zespoły marketingowe — API, 6 000 kredytów i 20 profili marki.',
+    descriptionPl: 'Zespoły marketingowe — 6 000 kredytów, teams i 20 profili marki.',
     stripePriceEnv: 'STRIPE_BUSINESS_PRICE_ID',
     stripePriceEnvYearly: 'STRIPE_BUSINESS_YEARLY_PRICE_ID',
     features: [
@@ -193,7 +193,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(800) },
       { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(200) },
       { id: 'video', labelPl: 'Wideo AI', limit: formatUsageLimit(50) },
-      { id: 'api', labelPl: 'Dostęp API' },
+      { id: 'teams', labelPl: 'Zespoły i zaproszenia' },
       { id: 'brand', labelPl: 'Profile głosu marki', limit: '20' },
     ],
     usageLimits: { text: 800, image: 200, video: 50, campaign: 50 },
@@ -202,7 +202,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       analytics: true,
       strategist: true,
       brandVoices: 20,
-      apiAccess: true,
+      apiAccess: false,
     },
   },
   {
@@ -232,7 +232,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       analytics: true,
       strategist: true,
       brandVoices: -1,
-      apiAccess: true,
+      apiAccess: false,
     },
   },
   {
@@ -245,14 +245,14 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       SUBSCRIPTION_PRICING.enterprise.priceUsd,
       SUBSCRIPTION_PRICING.enterprise.credits
     ),
-    descriptionPl: '28 000 kredytów, white-label i priorytetowy support.',
+    descriptionPl: '28 000 kredytów, ∞ limity generacji i priorytetowy support.',
     stripePriceEnv: 'STRIPE_ENTERPRISE_PRICE_ID',
     stripePriceEnvYearly: 'STRIPE_ENTERPRISE_YEARLY_PRICE_ID',
     features: [
       { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.enterprise.credits) },
       { id: 'text', labelPl: 'Posty tekstowe', limit: '∞' },
       { id: 'unlimited', labelPl: 'Limity generacji', limit: '∞' },
-      { id: 'api_whitelabel', labelPl: 'API + white-label' },
+      { id: 'teams', labelPl: 'Zespoły i zaproszenia' },
       { id: 'support', labelPl: 'Priorytetowy support' },
     ],
     usageLimits: { text: Infinity, image: Infinity, video: Infinity, campaign: Infinity },
@@ -261,7 +261,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       analytics: true,
       strategist: true,
       brandVoices: -1,
-      apiAccess: true,
+      apiAccess: false,
     },
   },
 ];

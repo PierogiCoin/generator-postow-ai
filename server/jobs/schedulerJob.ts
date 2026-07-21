@@ -1,22 +1,26 @@
 import logger from '../logger.js';
-import {
-  LinkedInPublisher,
-  TwitterPublisher,
-  FacebookPublisher,
-  InstagramPublisher,
-} from '../socialPublishing.js';
 import { supabase } from '../lib/clients.js';
 import { fetchTopSlots, nextOccurrenceForSlot, type Slot } from '../lib/schedulingAnalytics.js';
 import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js';
 import {
   isApprovalBlockingPublish,
   normalizeSocialPlatform,
+  type PublishFormat,
 } from '../lib/socialPublishGuards.js';
+import { publishToConnection } from '../lib/publishToConnection.js';
 
 let schedulerBlockedUntil: number | null = null;
 let isRunning = false;
 
-const PUBLISHABLE = new Set(['facebook', 'instagram', 'twitter', 'linkedin']);
+const PUBLISHABLE = new Set([
+  'facebook',
+  'instagram',
+  'twitter',
+  'linkedin',
+  'tiktok',
+  'youtube',
+  'threads',
+]);
 
 async function markFailed(
   postId: string,
@@ -162,13 +166,19 @@ async function processScheduledPosts() {
           continue;
         }
 
-        const { data: connection } = await supabase
+        let connectionQuery = supabase
           .from('social_connections')
           .select('*')
           .eq('user_id', post.user_id)
-          .eq('platform', platform)
-          .eq('is_active', true)
-          .maybeSingle();
+          .eq('is_active', true);
+
+        if (post.connection_id) {
+          connectionQuery = connectionQuery.eq('id', post.connection_id);
+        } else {
+          connectionQuery = connectionQuery.eq('platform', platform);
+        }
+
+        const { data: connection } = await connectionQuery.limit(1).maybeSingle();
 
         if (!connection) {
           await markFailed(post.id, `Brak aktywnego połączenia (${platform})`, 3);
@@ -176,7 +186,14 @@ async function processScheduledPosts() {
         }
 
         const postText = post.result?.postText || post.form_data?.topic || '';
-        const imageUrl = post.result?.imageUrl;
+        const imageUrl = post.result?.imageUrl as string | undefined;
+        const videoUrl = post.result?.videoUrl as string | undefined;
+        const mediaUrls = Array.isArray(post.result?.mediaUrls)
+          ? (post.result.mediaUrls as string[])
+          : imageUrl
+            ? [imageUrl]
+            : [];
+        const publishFormat = (post.form_data?.publishFormat || 'feed') as PublishFormat;
         const caption = formatPublishCaption({
           postText,
           hashtags: post.result?.hashtags,
@@ -185,53 +202,14 @@ async function processScheduledPosts() {
         });
         const linkUrl = normalizeCtaUrl(post.result?.ctaUrl);
 
-        if (platform === 'instagram' && !imageUrl) {
-          await markFailed(post.id, 'Instagram wymaga obrazka do publikacji', 3);
-          continue;
-        }
-
-        let publishResult: { url?: string; id?: string } | undefined;
-
-        if (platform === 'facebook') {
-          const publisher = new FacebookPublisher(connection.access_token);
-          publishResult = await publisher.publishPost(
-            connection.account_id,
-            connection.access_token,
-            caption,
-            imageUrl,
-            linkUrl ?? undefined
-          );
-        } else if (platform === 'instagram') {
-          const publisher = new InstagramPublisher(connection.access_token);
-          publishResult = await publisher.publishPost(connection.account_id, imageUrl!, caption);
-        } else if (platform === 'twitter') {
-          const publisher = new TwitterPublisher(
-            process.env.TWITTER_APP_KEY || '',
-            process.env.TWITTER_APP_SECRET || '',
-            connection.access_token,
-            connection.refresh_token || ''
-          );
-          const mIds: string[] = [];
-          if (imageUrl) mIds.push(await publisher.uploadMedia(imageUrl));
-          publishResult = await publisher.publishTweet(caption, mIds);
-        } else if (platform === 'linkedin') {
-          const publisher = new LinkedInPublisher({
-            clientId: process.env.LINKEDIN_CLIENT_ID || '',
-            clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
-            redirectUri: process.env.LINKEDIN_REDIRECT_URI || '',
-          });
-          publishResult = await publisher.publishPost(
-            connection.access_token,
-            connection.account_id,
-            caption,
-            imageUrl
-          );
-        }
-
-        if (!publishResult) {
-          await markFailed(post.id, `Brak wyniku publikacji dla ${platform}`, 3);
-          continue;
-        }
+        const publishResult = await publishToConnection(connection, {
+          caption,
+          imageUrl: mediaUrls[0] || imageUrl,
+          mediaUrls,
+          videoUrl,
+          linkUrl,
+          publishFormat,
+        });
 
         await supabase
           .from('scheduled_posts')

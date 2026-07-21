@@ -43,5 +43,23 @@ describe('mapSocialPost', () => {
     expect(mapped.connectionId).toBe('conn-99');
     expect(mapped.content).toBe('Hello world');
     expect(mapped.metrics.likes).toBe(3);
+    expect(mapped.metrics.comments).toBe(1);
+    expect(mapped.metrics.reach).toBeUndefined();
+  });
+
+  it('nie wstawia zer dla brakujących metryk (LI/TT)', () => {
+    const mapped = mapSocialPost(
+      {
+        id: 'post-2',
+        content: 'No metrics',
+        publishedAt: '2024-01-01T12:00:00Z',
+      },
+      'tiktok',
+      'conn-1'
+    );
+
+    expect(mapped.metrics.likes).toBeUndefined();
+    expect(mapped.metrics.comments).toBeUndefined();
+    expect(mapped.metrics.impressions).toBeUndefined();
   });
 });

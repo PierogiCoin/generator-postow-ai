@@ -118,13 +118,10 @@ npm run dev
 - impressions, clicks, engagement
 - Per platform tracking
 
-#### 11. **teams** - Teams/Współpraca
-- name, owner_id
-- Team management
-
-#### 12. **team_members** - Członkowie zespołu
-- role (owner/admin/member)
-- permissions
+#### 11–12. **teams** / **team_members** / **team_invites**
+- Schema: [`DATABASE_SCHEMA_TEAMS.sql`](DATABASE_SCHEMA_TEAMS.sql)
+- role: `owner` | `manager` | `member`
+- Zaproszenia e-mail + auto-accept po zalogowaniu (`POST /api/teams/invites/accept`)
 
 #### 13. **api_usage** - Tracking API
 - endpoint, status, response_time

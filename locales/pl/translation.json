@@ -704,7 +704,7 @@
       "analytics": "Analityka i strategista AI",
       "brand": "Profile głosu marki",
       "api": "Dostęp API",
-      "api_whitelabel": "API + white-label",
+      "teams": "Zespoły i zaproszenia",
       "unlimited": "Limity generacji",
       "support": "Priorytetowy support"
     },
@@ -712,9 +712,9 @@
       "free": "Poznaj AI bez karty — limit zgodny z limitem konta.",
       "creator": "Freelancerzy i twórcy — kalendarz, wideo i głos marki.",
       "pro": "Najlepszy wybór solo — analityka, strategista i 5 profili marki.",
-      "business": "Zespoły marketingowe — API, 6 000 kredytów i 20 profili marki.",
+      "business": "Zespoły marketingowe — 6 000 kredytów, teams i 20 profili marki.",
       "agency": "Agencje — 18 000 kredytów, więcej wideo niż Business, ∞ kampanii.",
-      "enterprise": "28 000 kredytów, white-label i priorytetowy support."
+      "enterprise": "28 000 kredytów, ∞ limity generacji i priorytetowy support."
     },
     "pack": {
       "small": "Mały",

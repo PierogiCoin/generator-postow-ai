@@ -43,7 +43,7 @@ const FEATURE_ICONS: Record<string, React.FC<{ className?: string }>> = {
   analytics: CheckCircleIcon,
   brand: CheckCircleIcon,
   api: CheckCircleIcon,
-  api_whitelabel: CheckCircleIcon,
+  teams: CheckCircleIcon,
   unlimited: CheckCircleIcon,
   platforms: CheckCircleIcon,
   support: CheckCircleIcon,

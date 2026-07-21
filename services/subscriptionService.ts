@@ -42,7 +42,7 @@ export const subscribeToPlan = async (userId: string, newPlan: UserPlan): Promis
             name: data.name,
             email: authUser.email || '',
             plan: data.plan,
-            teams: [], // mock for now
+            teams: [], // loaded via AuthContext + /api/teams
             currentTeamId: data.current_team_id
         };
 

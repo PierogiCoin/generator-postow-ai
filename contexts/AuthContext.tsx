@@ -17,11 +17,13 @@ export interface AuthContextType {
   authLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => void;
   updateUserPlan: (newPlan: UserPlan) => void;
   adjustCredits: (delta: number) => void;
   refreshUserCredits: () => Promise<{ credits: number; plan: UserPlan } | null>;
   setCurrentTeamId: (teamId: string | null) => void;
+  refreshTeams: () => Promise<void>;
   authModal: 'login' | 'signup' | null;
   setAuthModal: React.Dispatch<React.SetStateAction<'login' | 'signup' | null>>;
   currentTeamId: string | null;
@@ -127,7 +129,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const combinedUser: User = {
         id: sbUser.id,
         email: sbUser.email || '',
-        name: profileName || sbUser.email?.split('@')[0] || 'User',
+        name: profileName || sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || sbUser.email?.split('@')[0] || 'User',
         plan: resolvedPlan,
         credits:
           typeof profileCredits === 'number' ? profileCredits : planDefaults.credits,
@@ -157,6 +159,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
         supabase.from('profiles').upsert(defaultProfile);
       }
+
+      // 2b. Teams + pending invites (non-blocking)
+      void (async () => {
+        try {
+          const { teamsService } = await import('../services/teamsService');
+          await teamsService.acceptInvites().catch(() => null);
+          const teams = await teamsService.list();
+          setUser((curr) => (curr && curr.id === sbUser.id ? { ...curr, teams } : curr));
+        } catch {
+          // teams table may not exist yet — keep empty array
+        }
+      })();
 
       // 3. Fetch secondary data (non-critical) incrementally with 8 s timeouts
       const fetchTable = async <T = unknown[]>(table: string, orderCol = 'timestamp', ascending = false): Promise<T[]> => {
@@ -316,6 +330,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     analytics.track(AnalyticsEvents.SIGNUP, { email });
   };
 
+  const loginWithGoogle = async () => {
+    if (!supabase) throw new Error('Database unavailable');
+    const redirectTo = `${window.location.origin}/`;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) throw error;
+    analytics.track(AnalyticsEvents.LOGIN, { provider: 'google' });
+  };
+
+  const refreshTeams = useCallback(async () => {
+    if (!user?.id) return;
+    try {
+      const { teamsService } = await import('../services/teamsService');
+      const teams = await teamsService.list();
+      setUser((curr) => (curr ? { ...curr, teams } : null));
+    } catch {
+      // ignore
+    }
+  }, [user?.id]);
+
   const logout = async () => {
     analytics.track(AnalyticsEvents.LOGOUT);
     analytics.reset();
@@ -378,11 +414,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     authLoading: loading,
     login,
     signup,
+    loginWithGoogle,
     logout,
     updateUserPlan,
     adjustCredits,
     refreshUserCredits,
     setCurrentTeamId,
+    refreshTeams,
     authModal,
     setAuthModal,
     currentTeamId: user?.currentTeamId || null

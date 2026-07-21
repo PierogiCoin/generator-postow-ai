@@ -317,7 +317,7 @@ curl -X POST http://localhost:3001/api/social/publish \
 - [x] Publishing endpoints
 
 ### Faza 2: Enhancements (TODO)
-- [ ] Analytics import (likes, comments, shares)
+- [x] Analytics import (likes, comments, shares) — `socialSync` → `social_posts.metrics` + `enrichHistoryWithLiveMetrics` (bez mocków)
 - [ ] Auto-retry failed posts
 - [ ] Bulk publishing
 - [ ] Multi-account per platform

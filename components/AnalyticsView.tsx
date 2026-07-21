@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type { CampaignHistoryItem, AIInsight, OptimalTime, PostPerformanceData } from '../types';
@@ -9,6 +9,7 @@ import { useDataStore } from '../stores/dataStore';
 import { useUIStore } from '../stores/uiStore';
 import { useNotifications } from '../hooks/useNotifications';
 import * as analyticsService from '../services/analyticsService';
+import { aggregateAnalyticsKpis, hasLiveMetrics } from '../services/analyticsService';
 import { socialConnectionsService } from '../services/socialConnectionsService';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { Spinner } from './ui/LoadingStates';
@@ -217,6 +218,7 @@ const getPostMetrics = (post: AnalyticsDisplayPost): PostPerformanceData => {
             likes: m?.likes ?? 0,
             comments: m?.comments ?? 0,
             shares: m?.shares ?? 0,
+            metricsSource: hasLiveMetrics(m) ? 'live' : 'estimated',
         };
     }
     return post.performance ?? emptyMetrics();
@@ -251,6 +253,7 @@ export const AnalyticsView: React.FC = () => {
 
     const [analyzedHistory, setAnalyzedHistory] = useState<CampaignHistoryItem[]>([]);
     const [realHistory, setRealHistory] = useState<SocialPost[]>([]);
+    const [matchedSocialIds, setMatchedSocialIds] = useState<string[]>([]);
     const [strategySuggestions, setStrategySuggestions] = useState<{ date: string; platform: string; topic: string; reason: string }[]>([]);
     const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
     const [insights, setInsights] = useState<AIInsight[]>([]);
@@ -261,6 +264,11 @@ export const AnalyticsView: React.FC = () => {
     const navigate = useNavigate();
 
     const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
+
+    const kpiSummary = useMemo(
+        () => aggregateAnalyticsKpis(analyzedHistory, realHistory, matchedSocialIds),
+        [analyzedHistory, realHistory, matchedSocialIds]
+    );
 
     const handleRunAnalysis = async () => {
         setIsAnalyzing(true);
@@ -277,13 +285,13 @@ export const AnalyticsView: React.FC = () => {
                 }
             }
 
-            // 2. Przygotuj historię aplikacji z symulowanymi danymi (dla spójności widoku)
+            // 2. Wzbogać historię metrykami live z social_posts (bez fałszywych liczb)
             // Filtrowanie Szkiców bez tytułu (bardziej odporne na wielkość liter i spacje)
             const filteredHistory = history.filter(h => {
                 const topic = (h.formData?.topic || "").trim().toLowerCase();
                 return topic !== "" && topic !== "bez tytułu";
             });
-            const { items: historyWithPerformance, liveMatched, estimatedCount } =
+            const { items: historyWithPerformance, liveMatched, estimatedCount, matchedSocialIds: matchedIds } =
               analyticsService.enrichHistoryWithLiveMetrics(filteredHistory, realSocialHistory);
 
             // 3. Uruchom analizę AI przekazując RZECZYWISTE dane z platform jeśli są dostępne
@@ -295,6 +303,7 @@ export const AnalyticsView: React.FC = () => {
 
             setAnalyzedHistory(historyWithPerformance);
             setRealHistory(realSocialHistory);
+            setMatchedSocialIds(matchedIds);
             setInsights(analysisResult.insights);
             setOptimalTimes(analysisResult.optimalTimes);
             setState({ history: historyWithPerformance }); // Update store with performance data
@@ -508,19 +517,37 @@ export const AnalyticsView: React.FC = () => {
                 <div className="lg:col-span-2 p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Wyniki postów</h3>
 
-                    {/* Aggregated Summary */}
-                    <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl flex flex-wrap justify-around gap-4 text-center">
-                        {[
-                            { label: 'Całkowity Zasięg', value: [...analyzedHistory.map(h => h.performance?.reach || 0), ...realHistory.map(r => r.metrics?.reach || r.metrics?.impressions || r.metrics?.views || 0)].reduce((a, b) => a + b, 0) },
-                            { label: 'Polubienia', value: [...analyzedHistory.map(h => h.performance?.likes || 0), ...realHistory.map(r => r.metrics?.likes || 0)].reduce((a, b) => a + b, 0) },
-                            { label: 'Komentarze', value: [...analyzedHistory.map(h => h.performance?.comments || 0), ...realHistory.map(r => r.metrics?.comments || 0)].reduce((a, b) => a + b, 0) },
-                            { label: 'Udostępnienia', value: [...analyzedHistory.map(h => h.performance?.shares || 0), ...realHistory.map(r => r.metrics?.shares || 0)].reduce((a, b) => a + b, 0) },
-                        ].map((stat) => (
-                            <div key={`stat-${stat.label}`}>
-                                <p className="text-2xl font-black text-blue-600 dark:text-blue-400">{formatNumber(stat.value)}</p>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-blue-800/60 dark:text-blue-300/60">{stat.label}</p>
-                            </div>
-                        ))}
+                    {/* Aggregated Summary — tylko Live, bez podwójnego liczenia */}
+                    <div className="mb-6 p-4 bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-500/20 rounded-xl space-y-4">
+                        <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                            <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                Live {kpiSummary.liveCount}
+                            </span>
+                            <span className="px-2 py-1 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                Szacowane {kpiSummary.estimatedCount}
+                            </span>
+                            {kpiSummary.noDataCount > 0 && (
+                                <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                    Brak danych {kpiSummary.noDataCount}
+                                </span>
+                            )}
+                            <span className="text-slate-500 dark:text-slate-400 font-medium normal-case tracking-normal">
+                                Sumy poniżej = tylko Live
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap justify-around gap-4 text-center">
+                            {[
+                                { label: 'Całkowity Zasięg', value: kpiSummary.reach },
+                                { label: 'Polubienia', value: kpiSummary.likes },
+                                { label: 'Komentarze', value: kpiSummary.comments },
+                                { label: 'Udostępnienia', value: kpiSummary.shares },
+                            ].map((stat) => (
+                                <div key={`stat-${stat.label}`}>
+                                    <p className="text-2xl font-black text-cyan-700 dark:text-cyan-300">{formatNumber(stat.value)}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{stat.label}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="space-y-4 max-h-[calc(100vh-20rem)] overflow-y-auto pr-3">
@@ -549,18 +576,33 @@ export const AnalyticsView: React.FC = () => {
                                                 <span className="text-gray-300 dark:text-gray-600">&bull;</span>
                                                 <span>{dateString}</span>
                                                 <span className="text-gray-300 dark:text-gray-600">&bull;</span>
-                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${isLivePost(item) ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
-                                                    {isLivePost(item) ? 'Live' : 'Szkic'}
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${isLivePost(item) ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
+                                                    {isLivePost(item) ? 'Konto' : 'Szkic'}
                                                 </span>
-                                                {!isLivePost(item) && (
-                                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                                    item.performance?.metricsSource === 'live'
-                                                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
-                                                      : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'
-                                                  }`}>
-                                                    {item.performance?.metricsSource === 'live' ? 'Live' : 'Szacowane'}
-                                                  </span>
-                                                )}
+                                                {(() => {
+                                                  const source = isLivePost(item)
+                                                    ? (hasLiveMetrics(item.metrics) ? 'live' : 'nodata')
+                                                    : (item.performance?.metricsSource === 'live' ? 'live' : 'estimated');
+                                                  if (source === 'live') {
+                                                    return (
+                                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                        Live
+                                                      </span>
+                                                    );
+                                                  }
+                                                  if (source === 'nodata') {
+                                                    return (
+                                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                        Brak danych
+                                                      </span>
+                                                    );
+                                                  }
+                                                  return (
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                                      Szacowane
+                                                    </span>
+                                                  );
+                                                })()}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">

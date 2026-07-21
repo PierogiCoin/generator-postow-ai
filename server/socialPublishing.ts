@@ -470,6 +470,22 @@ export class FacebookPublisher {
     };
   }
 
+  async publishVideo(
+    pageId: string,
+    pageAccessToken: string,
+    content: string,
+    videoUrl: string
+  ): Promise<{ id: string; url: string }> {
+    if (!videoUrl) throw new Error('Facebook video wymaga videoUrl');
+    const response = await axios.post(`https://graph.facebook.com/v18.0/${pageId}/videos`, {
+      access_token: pageAccessToken,
+      file_url: videoUrl,
+      description: content,
+    });
+    const id = response.data.id || response.data.post_id;
+    return { id, url: `https://facebook.com/${id}` };
+  }
+
   async getPosts(pageId: string, pageAccessToken: string): Promise<Array<{
     id: string; content: string; url: string; publishedAt: Date; mediaUrl?: string;
     likes?: number; comments?: number; shares?: number; reach?: number; impressions?: number;
@@ -620,47 +636,141 @@ export class InstagramPublisher {
     }
   }
 
+  private async publishContainer(igAccountId: string, creationId: string): Promise<{ id: string; url: string }> {
+    const publishResponse = await axios.post(
+      `https://graph.facebook.com/v18.0/${igAccountId}/media_publish`,
+      { creation_id: creationId, access_token: this.accessToken }
+    );
+    if (publishResponse.data?.error) {
+      throw new Error(`Instagram publish error: ${publishResponse.data.error.message}`);
+    }
+    const mediaId = publishResponse.data.id;
+    return { id: mediaId, url: `https://instagram.com/p/${mediaId}` };
+  }
+
   async publishPost(igAccountId: string, imageUrl: string, caption: string): Promise<{ id: string; url: string }> {
     try {
-      // Step 1: Create media container
       const containerResponse = await axios.post(
         `https://graph.facebook.com/v18.0/${igAccountId}/media`,
-        {
-          image_url: imageUrl,
-          caption,
-          access_token: this.accessToken
-        }
+        { image_url: imageUrl, caption, access_token: this.accessToken }
       );
-
       if (containerResponse.data?.error) {
         throw new Error(`Instagram media container error: ${containerResponse.data.error.message}`);
       }
-
       const containerId = containerResponse.data.id;
       if (!containerId) throw new Error('Instagram: no container ID returned');
-
-      // Step 2: Publish the container
-      const publishResponse = await axios.post(
-        `https://graph.facebook.com/v18.0/${igAccountId}/media_publish`,
-        {
-          creation_id: containerId,
-          access_token: this.accessToken
-        }
-      );
-
-      if (publishResponse.data?.error) {
-        throw new Error(`Instagram publish error: ${publishResponse.data.error.message}`);
-      }
-
-      const mediaId = publishResponse.data.id;
-
-      return {
-        id: mediaId,
-        url: `https://instagram.com/p/${mediaId}`
-      };
+      return this.publishContainer(igAccountId, containerId);
     } catch (error: unknown) {
       throw new Error(`Failed to publish Instagram post: ${error instanceof Error ? error.message : String(error)}`);
     }
+  }
+
+  /** Karuzela IG — min. 2 publiczne image URLs. */
+  async publishCarousel(
+    igAccountId: string,
+    imageUrls: string[],
+    caption: string
+  ): Promise<{ id: string; url: string }> {
+    if (imageUrls.length < 2) throw new Error('Karuzela wymaga co najmniej 2 obrazów');
+    try {
+      const childIds: string[] = [];
+      for (const imageUrl of imageUrls.slice(0, 10)) {
+        const child = await axios.post(`https://graph.facebook.com/v18.0/${igAccountId}/media`, {
+          image_url: imageUrl,
+          is_carousel_item: true,
+          access_token: this.accessToken,
+        });
+        if (!child.data?.id) throw new Error('Instagram carousel: brak child container id');
+        childIds.push(child.data.id);
+      }
+
+      const parent = await axios.post(`https://graph.facebook.com/v18.0/${igAccountId}/media`, {
+        media_type: 'CAROUSEL',
+        children: childIds.join(','),
+        caption,
+        access_token: this.accessToken,
+      });
+      if (!parent.data?.id) throw new Error('Instagram carousel: brak parent container id');
+      return this.publishContainer(igAccountId, parent.data.id);
+    } catch (error: unknown) {
+      throw new Error(`Failed to publish Instagram carousel: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async publishStory(
+    igAccountId: string,
+    media: { imageUrl?: string; videoUrl?: string }
+  ): Promise<{ id: string; url: string }> {
+    try {
+      const body: Record<string, string> = {
+        media_type: 'STORIES',
+        access_token: this.accessToken,
+      };
+      if (media.videoUrl) body.video_url = media.videoUrl;
+      else if (media.imageUrl) body.image_url = media.imageUrl;
+      else throw new Error('Story wymaga imageUrl lub videoUrl');
+
+      const container = await axios.post(
+        `https://graph.facebook.com/v18.0/${igAccountId}/media`,
+        body
+      );
+      if (!container.data?.id) throw new Error('Instagram story: brak container id');
+      const result = await this.publishContainer(igAccountId, container.data.id);
+      return { ...result, url: `https://instagram.com/stories/${result.id}` };
+    } catch (error: unknown) {
+      throw new Error(`Failed to publish Instagram story: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  async publishReel(
+    igAccountId: string,
+    videoUrl: string,
+    caption: string
+  ): Promise<{ id: string; url: string }> {
+    try {
+      const container = await axios.post(`https://graph.facebook.com/v18.0/${igAccountId}/media`, {
+        media_type: 'REELS',
+        video_url: videoUrl,
+        caption,
+        access_token: this.accessToken,
+      });
+      if (!container.data?.id) throw new Error('Instagram reel: brak container id');
+      // Reels often need processing — poll briefly
+      for (let i = 0; i < 8; i++) {
+        const status = await axios.get(`https://graph.facebook.com/v18.0/${container.data.id}`, {
+          params: { fields: 'status_code', access_token: this.accessToken },
+        });
+        const code = status.data?.status_code;
+        if (code === 'FINISHED' || code === 'PUBLISHED') break;
+        if (code === 'ERROR') throw new Error('Instagram reel processing error');
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+      const result = await this.publishContainer(igAccountId, container.data.id);
+      return { ...result, url: `https://instagram.com/reel/${result.id}` };
+    } catch (error: unknown) {
+      throw new Error(`Failed to publish Instagram reel: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /** Wszystkie konta IG Business powiązane ze stronami FB użytkownika. */
+  async findAllInstagramAccounts(): Promise<Array<{ id: string; username: string; pageAccessToken: string }>> {
+    const found: Array<{ id: string; username: string; pageAccessToken: string }> = [];
+    try {
+      const response = await axios.get('https://graph.facebook.com/v18.0/me/accounts', {
+        params: { access_token: this.accessToken, limit: 50 },
+      });
+      for (const page of response.data.data || []) {
+        try {
+          const ig = await this.getInstagramAccount(page.id);
+          if (ig) found.push({ ...ig, pageAccessToken: page.access_token });
+        } catch {
+          // skip pages without IG
+        }
+      }
+    } catch (e) {
+      logger.error('findAllInstagramAccounts error:', e);
+    }
+    return found;
   }
 
   async getPosts(igAccountId: string): Promise<Array<{
@@ -813,6 +923,283 @@ export class TikTokPublisher {
       publishedAt: new Date(video.create_time * 1000)
     }));
   }
+
+  /**
+   * Publikacja wideo (Content Posting API — PULL_FROM_URL).
+   * Wymaga publicznego videoUrl oraz uprawnień TikTok app (direct post / inbox).
+   */
+  async publishVideo(
+    accessToken: string,
+    videoUrl: string,
+    title: string
+  ): Promise<{ id: string; url: string }> {
+    try {
+      const init = await axios.post(
+        'https://open.tiktokapis.com/v2/post/publish/video/init/',
+        {
+          post_info: {
+            title: title.slice(0, 2200),
+            privacy_level: 'PUBLIC_TO_EVERYONE',
+            disable_duet: false,
+            disable_comment: false,
+            disable_stitch: false,
+          },
+          source_info: {
+            source: 'PULL_FROM_URL',
+            video_url: videoUrl,
+          },
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const publishId = init.data?.data?.publish_id;
+      if (!publishId) {
+        // Fallback: inbox upload (creator finalizuje w aplikacji TikTok)
+        const inbox = await axios.post(
+          'https://open.tiktokapis.com/v2/post/publish/inbox/video/init/',
+          {
+            source_info: {
+              source: 'PULL_FROM_URL',
+              video_url: videoUrl,
+            },
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+        const inboxId = inbox.data?.data?.publish_id || 'inbox';
+        return {
+          id: String(inboxId),
+          url: 'https://www.tiktok.com/',
+        };
+      }
+
+      return {
+        id: String(publishId),
+        url: `https://www.tiktok.com/`,
+      };
+    } catch (error: unknown) {
+      const ax = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      const msg =
+        ax.response?.data?.error?.message ||
+        (error instanceof Error ? error.message : String(error));
+      throw new Error(`Failed to publish TikTok video: ${msg}`);
+    }
+  }
+}
+
+// ============================================
+// YOUTUBE DATA API (Shorts)
+// ============================================
+
+export class YouTubePublisher {
+  private config: { clientId: string; clientSecret: string; redirectUri: string };
+
+  constructor(config: { clientId: string; clientSecret: string; redirectUri: string }) {
+    this.config = config;
+  }
+
+  static getAuthUrl(clientId: string, redirectUri: string, state: string): string {
+    const scope = [
+      'https://www.googleapis.com/auth/youtube.upload',
+      'https://www.googleapis.com/auth/youtube.readonly',
+    ].join(' ');
+    return (
+      `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${encodeURIComponent(clientId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&state=${encodeURIComponent(state)}`
+    );
+  }
+
+  async exchangeCodeForToken(code: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn: number;
+  }> {
+    const response = await axios.post(
+      'https://oauth2.googleapis.com/token',
+      new URLSearchParams({
+        code,
+        client_id: this.config.clientId,
+        client_secret: this.config.clientSecret,
+        redirect_uri: this.config.redirectUri,
+        grant_type: 'authorization_code',
+      }).toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    return {
+      accessToken: response.data.access_token,
+      refreshToken: response.data.refresh_token,
+      expiresIn: response.data.expires_in,
+    };
+  }
+
+  async getChannel(accessToken: string): Promise<{ id: string; name: string; avatar?: string }> {
+    const response = await axios.get('https://www.googleapis.com/youtube/v3/channels', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: { part: 'snippet', mine: true },
+    });
+    const ch = response.data?.items?.[0];
+    if (!ch) throw new Error('Nie znaleziono kanału YouTube');
+    return {
+      id: ch.id,
+      name: ch.snippet?.title || 'YouTube',
+      avatar: ch.snippet?.thumbnails?.default?.url,
+    };
+  }
+
+  /**
+   * Upload Short — pobiera videoUrl i wrzuca przez resumable upload.
+   * Tytuł z #Shorts pomaga w klasyfikacji jako Short.
+   */
+  async publishShort(
+    accessToken: string,
+    videoUrl: string,
+    title: string
+  ): Promise<{ id: string; url: string }> {
+    const videoRes = await axios.get(videoUrl, { responseType: 'arraybuffer', timeout: 120000 });
+    const buffer = Buffer.from(videoRes.data);
+    const contentType = videoRes.headers['content-type'] || 'video/mp4';
+
+    const shortTitle = title.includes('#Shorts') ? title.slice(0, 100) : `${title.slice(0, 90)} #Shorts`;
+
+    const init = await axios.post(
+      'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
+      {
+        snippet: {
+          title: shortTitle,
+          description: title.slice(0, 5000),
+          categoryId: '22',
+        },
+        status: {
+          privacyStatus: 'public',
+          selfDeclaredMadeForKids: false,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+          'X-Upload-Content-Length': String(buffer.length),
+          'X-Upload-Content-Type': contentType,
+        },
+      }
+    );
+
+    const uploadUrl = init.headers.location;
+    if (!uploadUrl) throw new Error('YouTube: brak resumable upload URL');
+
+    const uploaded = await axios.put(uploadUrl, buffer, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': contentType,
+        'Content-Length': String(buffer.length),
+      },
+      maxBodyLength: Infinity,
+    });
+
+    const videoId = uploaded.data?.id;
+    if (!videoId) throw new Error('YouTube: brak video id po uploadzie');
+    return { id: videoId, url: `https://www.youtube.com/shorts/${videoId}` };
+  }
+}
+
+// ============================================
+// THREADS API (Meta)
+// ============================================
+
+export class ThreadsPublisher {
+  private config: { appId: string; appSecret: string; redirectUri: string };
+
+  constructor(config: { appId: string; appSecret: string; redirectUri: string }) {
+    this.config = config;
+  }
+
+  static getAuthUrl(appId: string, redirectUri: string, state: string): string {
+    const scope = ['threads_basic', 'threads_content_publish'].join(',');
+    return (
+      `https://threads.net/oauth/authorize` +
+      `?client_id=${encodeURIComponent(appId)}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&response_type=code` +
+      `&state=${encodeURIComponent(state)}`
+    );
+  }
+
+  async exchangeCodeForToken(code: string): Promise<{
+    accessToken: string;
+    userId: string;
+    expiresIn?: number;
+  }> {
+    const response = await axios.post(
+      'https://graph.threads.net/oauth/access_token',
+      new URLSearchParams({
+        client_id: this.config.appId,
+        client_secret: this.config.appSecret,
+        grant_type: 'authorization_code',
+        redirect_uri: this.config.redirectUri,
+        code,
+      }).toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+    return {
+      accessToken: response.data.access_token,
+      userId: String(response.data.user_id),
+      expiresIn: response.data.expires_in,
+    };
+  }
+
+  async getProfile(accessToken: string): Promise<{ id: string; name: string }> {
+    const response = await axios.get('https://graph.threads.net/v1.0/me', {
+      params: { fields: 'id,username', access_token: accessToken },
+    });
+    return {
+      id: response.data.id,
+      name: response.data.username || 'Threads',
+    };
+  }
+
+  async publishPost(
+    accessToken: string,
+    userId: string,
+    text: string,
+    imageUrl?: string
+  ): Promise<{ id: string; url: string }> {
+    const createBody: Record<string, string> = {
+      media_type: imageUrl ? 'IMAGE' : 'TEXT',
+      text,
+      access_token: accessToken,
+    };
+    if (imageUrl) createBody.image_url = imageUrl;
+
+    const creation = await axios.post(
+      `https://graph.threads.net/v1.0/${userId}/threads`,
+      createBody
+    );
+    const creationId = creation.data?.id;
+    if (!creationId) throw new Error('Threads: brak creation id');
+
+    const published = await axios.post(`https://graph.threads.net/v1.0/${userId}/threads_publish`, {
+      creation_id: creationId,
+      access_token: accessToken,
+    });
+    const id = published.data?.id || creationId;
+    return { id, url: `https://www.threads.net/@_/post/${id}` };
+  }
 }
 
 // ============================================
@@ -825,7 +1212,9 @@ export const validatePostContent = (content: string, platform: string): { valid:
     linkedin: 3000,
     facebook: 63206,
     instagram: 2200,
-    tiktok: 2200
+    tiktok: 2200,
+    youtube: 5000,
+    threads: 500,
   };
 
   const limit = limits[platform.toLowerCase()];

@@ -16,6 +16,7 @@ import { createContentFetchRouter } from './routes/contentFetch.js';
 import paymentsRouter, { stripeWebhookHandler } from './routes/payments.js';
 import emailRouter from './routes/email.js';
 import referralRouter from './routes/referral.js';
+import teamsRouter from './routes/teams.js';
 
 const NOT_FOUND_ENDPOINTS = [
   'GET /health',
@@ -87,6 +88,7 @@ export function createApp(): express.Application {
   app.use(createContentFetchRouter());
   app.use('/api/email', emailRouter);
   app.use('/api/referral', referralRouter);
+  app.use('/api/teams', teamsRouter);
 
   app.use(errorHandler);
 

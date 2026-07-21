@@ -3,8 +3,12 @@ export enum SocialPlatform {
   Twitter = 'twitter',
   Instagram = 'instagram',
   Facebook = 'facebook',
-  TikTok = 'tiktok'
+  TikTok = 'tiktok',
+  YouTube = 'youtube',
+  Threads = 'threads',
 }
+
+export type PublishFormat = 'feed' | 'carousel' | 'story' | 'reel';
 
 export interface SocialConnection {
   id: string;

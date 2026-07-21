@@ -5,8 +5,9 @@ import {
   LinkedInPublisher,
   TwitterPublisher,
   FacebookPublisher,
-  InstagramPublisher,
   TikTokPublisher,
+  YouTubePublisher,
+  ThreadsPublisher,
 } from '../socialPublishing.js';
 import { syncUserSocialPosts } from '../socialSync.js';
 import {
@@ -14,7 +15,10 @@ import {
   twitterConfig,
   facebookConfig,
   tiktokConfig,
+  youtubeConfig,
+  threadsConfig,
 } from '../config/social.js';
+import { publishToConnection } from '../lib/publishToConnection.js';
 import { storeTwitterOAuthSecret } from '../lib/twitterOAuthStore.js';
 import { mapSocialPost } from '../lib/socialHelpers.js';
 import {
@@ -85,6 +89,18 @@ export function createSocialRouter(): Router {
           break;
         case 'tiktok':
           authUrl = TikTokPublisher.getAuthUrl(tiktokConfig.clientKey, tiktokConfig.redirectUri, oauthState);
+          break;
+        case 'youtube':
+          if (!youtubeConfig.clientId) {
+            return res.status(503).json({ error: 'YouTube OAuth nie skonfigurowany (YOUTUBE_CLIENT_ID).' });
+          }
+          authUrl = YouTubePublisher.getAuthUrl(youtubeConfig.clientId, youtubeConfig.redirectUri, oauthState);
+          break;
+        case 'threads':
+          if (!threadsConfig.appId) {
+            return res.status(503).json({ error: 'Threads OAuth nie skonfigurowany (THREADS_APP_ID / FACEBOOK_APP_ID).' });
+          }
+          authUrl = ThreadsPublisher.getAuthUrl(threadsConfig.appId, threadsConfig.redirectUri, oauthState);
           break;
         default:
           return res.status(400).json({ error: 'Unsupported platform' });
@@ -412,6 +428,9 @@ export function createSocialRouter(): Router {
       connectionId,
       postText,
       imageUrl,
+      mediaUrls,
+      videoUrl,
+      publishFormat,
       scheduledPostId,
       historyId,
       hashtags,
@@ -426,6 +445,12 @@ export function createSocialRouter(): Router {
       ctaUrl: normalizeCtaUrl(ctaUrl),
     });
     const linkUrl = normalizeCtaUrl(ctaUrl);
+    const resolvedMedia =
+      mediaUrls && mediaUrls.length > 0
+        ? mediaUrls
+        : imageUrl
+          ? [imageUrl]
+          : [];
 
     try {
       if (scheduledPostId) {
@@ -474,53 +499,22 @@ export function createSocialRouter(): Router {
         throw new Error('Nie znaleziono aktywnego połączenia dla tej platformy.');
       }
 
-      let publishResult: { url?: string; id?: string };
+      assertPlatformPublishRules(
+        connection.platform,
+        resolvedMedia[0],
+        videoUrl,
+        publishFormat || 'feed',
+        resolvedMedia
+      );
 
-      switch (connection.platform) {
-        case 'facebook': {
-          const fb = new FacebookPublisher(connection.access_token);
-          publishResult = await fb.publishPost(
-            connection.account_id,
-            connection.access_token,
-            caption,
-            imageUrl,
-            linkUrl ?? undefined
-          );
-          break;
-        }
-        case 'instagram': {
-          const ig = new InstagramPublisher(connection.access_token);
-          assertPlatformPublishRules(connection.platform, imageUrl);
-          publishResult = await ig.publishPost(connection.account_id, imageUrl!, caption);
-          break;
-        }
-        case 'twitter': {
-          const tw = new TwitterPublisher(
-            process.env.TWITTER_APP_KEY || '',
-            process.env.TWITTER_APP_SECRET || '',
-            connection.access_token,
-            connection.refresh_token || ''
-          );
-          const mediaIds: string[] = [];
-          if (imageUrl) {
-            const mediaId = await tw.uploadMedia(imageUrl);
-            mediaIds.push(mediaId);
-          }
-          publishResult = await tw.publishTweet(caption, mediaIds);
-          break;
-        }
-        case 'linkedin': {
-          const li = new LinkedInPublisher({
-            clientId: process.env.LINKEDIN_CLIENT_ID || '',
-            clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
-            redirectUri: process.env.LINKEDIN_REDIRECT_URI || '',
-          });
-          publishResult = await li.publishPost(connection.access_token, connection.account_id, caption, imageUrl);
-          break;
-        }
-        default:
-          throw new Error(`Platforma ${connection.platform} nie jest jeszcze wspierana w bezpośredniej publikacji.`);
-      }
+      const publishResult = await publishToConnection(connection, {
+        caption,
+        imageUrl: resolvedMedia[0],
+        mediaUrls: resolvedMedia,
+        videoUrl,
+        linkUrl,
+        publishFormat: publishFormat || 'feed',
+      });
 
       if (scheduledPostId) {
         await supabase
@@ -536,7 +530,10 @@ export function createSocialRouter(): Router {
         metadata: {
           published_url: publishResult.url,
           platform_id: publishResult.id,
-          imageUrl,
+          imageUrl: resolvedMedia[0],
+          mediaUrls: resolvedMedia,
+          videoUrl,
+          publishFormat,
           is_published: true,
         },
       });

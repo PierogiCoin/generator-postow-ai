@@ -244,7 +244,7 @@ export interface PostPerformanceData {
   likes: number;
   comments: number;
   shares: number;
-  /** Live = z API kont; estimated = symulacja (nie traktować jako fakt). */
+  /** Live = z API kont; estimated = brak live / zera (nie traktować jako fakt). */
   metricsSource?: 'live' | 'estimated';
 }
 
