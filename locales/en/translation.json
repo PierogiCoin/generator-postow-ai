@@ -494,6 +494,7 @@
       "scheduled": "Plan",
       "stats": "Stats",
       "subscription": "Sub",
+      "more": "More",
       "ariaLabel": "Library tabs"
     },
     "historySection": {

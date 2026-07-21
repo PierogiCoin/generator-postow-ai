@@ -83,6 +83,7 @@ export const GeneratorView: React.FC = () => {
     const [prefillData, setPrefillData] = useState<Partial<FormData> | null>(null);
     const [autoGenerateSlot, setAutoGenerateSlot] = useState(false);
     const [activeSidebarTab, setActiveSidebarTab] = useState<SidebarTab>('history');
+    const [showMoreTabs, setShowMoreTabs] = useState(false);
     const [popover, setPopover] = useState<{ item: CampaignHistoryItem | Draft | ScheduledPost, rect: DOMRect } | null>(null);
 
     useEffect(() => {
@@ -123,6 +124,18 @@ export const GeneratorView: React.FC = () => {
             setIsSidebarOpen(false);
         }
     }, [inspiration, isMobile]);
+
+    useEffect(() => {
+        if (!isSidebarOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                setIsSidebarOpen(false);
+            }
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [isSidebarOpen]);
 
     useEffect(() => {
         if (location.state?.prefillData) {
@@ -170,35 +183,49 @@ export const GeneratorView: React.FC = () => {
 
     const isResultVisible = !!result || !!inspiration;
 
-    const sidebarTabs = useMemo(() => [
+    const primarySidebarTabs = useMemo(() => [
         { id: 'history' as const, label: t('sidebar.tabs.history'), icon: ClockIcon, badge: history.length },
         { id: 'drafts' as const, label: t('sidebar.tabs.drafts'), icon: DocumentPlusIcon, badge: drafts.length },
         { id: 'favorites' as const, label: t('sidebar.tabs.favorites'), icon: StarIcon, badge: favorites.length },
         { id: 'scheduled' as const, label: t('sidebar.tabs.scheduled'), icon: CalendarIcon, badge: scheduledPosts.length },
+    ], [t, history.length, drafts.length, favorites.length, scheduledPosts.length]);
+
+    const moreSidebarTabs = useMemo(() => [
         { id: 'stats' as const, label: t('sidebar.tabs.stats'), icon: ChartBarIcon },
         ...(user ? [{ id: 'subscription' as const, label: t('sidebar.tabs.subscription'), icon: CreditCardIcon }] : []),
-    ], [t, user, history.length, drafts.length, favorites.length, scheduledPosts.length]);
+    ], [t, user]);
+
+    const sidebarTabs = useMemo(
+        () => [...primarySidebarTabs, ...moreSidebarTabs],
+        [primarySidebarTabs, moreSidebarTabs]
+    );
+
+    const isMoreTabActive = activeSidebarTab === 'stats' || activeSidebarTab === 'subscription';
 
     const handleTabsKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-        const currentIndex = sidebarTabs.findIndex((tab) => tab.id === activeSidebarTab);
+        const visibleTabs = showMoreTabs || isMoreTabActive
+            ? sidebarTabs
+            : primarySidebarTabs;
+        const currentIndex = visibleTabs.findIndex((tab) => tab.id === activeSidebarTab);
         let nextIndex = currentIndex;
 
         if (e.key === 'ArrowRight') {
             e.preventDefault();
-            nextIndex = (currentIndex + 1) % sidebarTabs.length;
+            nextIndex = (currentIndex + 1) % visibleTabs.length;
         } else if (e.key === 'ArrowLeft') {
             e.preventDefault();
-            nextIndex = (currentIndex - 1 + sidebarTabs.length) % sidebarTabs.length;
+            nextIndex = (currentIndex - 1 + visibleTabs.length) % visibleTabs.length;
         } else {
             return;
         }
 
-        const nextTab = sidebarTabs[nextIndex].id;
+        const nextTab = visibleTabs[nextIndex].id;
         setActiveSidebarTab(nextTab);
+        if (nextTab === 'stats' || nextTab === 'subscription') setShowMoreTabs(true);
 
-        const buttons = e.currentTarget.querySelectorAll('button');
+        const buttons = e.currentTarget.querySelectorAll('button[role="tab"]');
         buttons[nextIndex]?.focus();
-    }, [sidebarTabs, activeSidebarTab, setActiveSidebarTab]);
+    }, [sidebarTabs, primarySidebarTabs, activeSidebarTab, showMoreTabs, isMoreTabActive]);
 
     const showFormColumn = !isResultVisible || !isMobile || mobilePanel === 'form';
     const showResultColumn = isResultVisible && (!isMobile || mobilePanel === 'result');
@@ -352,15 +379,15 @@ export const GeneratorView: React.FC = () => {
                         </button>
                     </div>
 
-                    <div className="px-3 py-3 flex-shrink-0 border-b border-slate-100 dark:border-slate-800">
+                    <div className="px-3 py-3 flex-shrink-0 border-b border-slate-100 dark:border-slate-800 space-y-2">
                         <div
                             className="flex gap-1 overflow-x-auto overscroll-x-contain pb-0.5 custom-scrollbar snap-x snap-mandatory focus:outline-none"
                             role="tablist"
                             aria-label={t('sidebar.tabs.ariaLabel', 'Zakładki biblioteki')}
                             onKeyDown={handleTabsKeyDown}
                         >
-                            {sidebarTabs.map(tab => {
-                                const badge = 'badge' in tab && tab.badge ? tab.badge : 0;
+                            {primarySidebarTabs.map(tab => {
+                                const badge = tab.badge || 0;
                                 const badgeLabel = badge > 99 ? '99+' : String(badge);
                                 const isSelected = activeSidebarTab === tab.id;
                                 return (
@@ -369,7 +396,10 @@ export const GeneratorView: React.FC = () => {
                                     role="tab"
                                     aria-selected={isSelected}
                                     tabIndex={isSelected ? 0 : -1}
-                                    onClick={() => setActiveSidebarTab(tab.id as SidebarTab)}
+                                    onClick={() => {
+                                        setActiveSidebarTab(tab.id);
+                                        setShowMoreTabs(false);
+                                    }}
                                     title={tab.label}
                                     aria-label={badge > 0 ? `${tab.label} (${badgeLabel})` : tab.label}
                                     className={`relative snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${isSelected
@@ -387,7 +417,54 @@ export const GeneratorView: React.FC = () => {
                                     )}
                                 </button>
                             );})}
+                            {moreSidebarTabs.length > 0 && (
+                                <button
+                                    type="button"
+                                    aria-expanded={showMoreTabs || isMoreTabActive}
+                                    aria-label={t('sidebar.tabs.more', 'Więcej')}
+                                    onClick={() => {
+                                        setShowMoreTabs((v) => !v);
+                                        if (!isMoreTabActive && !showMoreTabs) {
+                                            setActiveSidebarTab('stats');
+                                        }
+                                    }}
+                                    className={`snap-start flex flex-col items-center justify-center gap-0.5 min-w-[3.5rem] min-h-[3.25rem] px-2 py-1.5 rounded-xl transition-colors flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 ${
+                                        showMoreTabs || isMoreTabActive
+                                            ? 'bg-cyan-50 dark:bg-cyan-950/40 shadow-sm text-cyan-700 dark:text-cyan-300 border border-cyan-500/25'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent'
+                                    }`}
+                                >
+                                    <ChartBarIcon className="w-[18px] h-[18px]" />
+                                    <span className="text-[9px] font-bold uppercase tracking-wide leading-tight">
+                                        {t('sidebar.tabs.more', 'Więcej')}
+                                    </span>
+                                </button>
+                            )}
                         </div>
+                        {(showMoreTabs || isMoreTabActive) && moreSidebarTabs.length > 0 && (
+                            <div className="flex gap-1.5 flex-wrap" role="group" aria-label={t('sidebar.tabs.more', 'Więcej')}>
+                                {moreSidebarTabs.map((tab) => {
+                                    const isSelected = activeSidebarTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            role="tab"
+                                            aria-selected={isSelected}
+                                            onClick={() => setActiveSidebarTab(tab.id)}
+                                            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition-colors ${
+                                                isSelected
+                                                    ? 'bg-cyan-600 text-white'
+                                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                            }`}
+                                        >
+                                            <tab.icon className="w-3.5 h-3.5" />
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div className="p-5 lg:p-6 pt-3 overflow-y-auto flex-grow custom-scrollbar">
