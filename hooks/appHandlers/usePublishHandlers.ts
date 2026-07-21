@@ -3,6 +3,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { GenerationResult } from '../../types';
 import { NotificationType } from '../../types';
+import type { PublishFormat } from '../../types/socialPublishing';
 import { resolveCtaUrl } from '../../utils/publishCaption';
 import {
     approvalBlockMessage,
@@ -16,11 +17,41 @@ interface PublishHandlerDeps {
     handleApiError: ApiErrorHandler;
 }
 
+function collectMediaUrls(result: GenerationResult): string[] {
+    const urls: string[] = [];
+    if (result.imageUrl) urls.push(result.imageUrl);
+    if (Array.isArray(result.variants)) {
+        for (const v of result.variants) {
+            if (v?.imageUrl && !urls.includes(v.imageUrl)) urls.push(v.imageUrl);
+        }
+    }
+    return urls;
+}
+
+function resolvePublishFormat(
+    platform: string,
+    result: GenerationResult,
+    mediaUrls: string[],
+    explicit?: PublishFormat
+): PublishFormat {
+    if (explicit) return explicit;
+    const p = platform.toLowerCase();
+    if ((p === 'tiktok' || p === 'youtube') && result.videoUrl) return 'reel';
+    if (p === 'instagram' && result.videoUrl && !result.imageUrl) return 'reel';
+    if (p === 'instagram' && mediaUrls.length > 1) return 'carousel';
+    return 'feed';
+}
+
 export const usePublishHandlers = ({ addToast, addNotification, handleApiError }: PublishHandlerDeps) => {
     const { user } = useAuth();
     const uiActions = useUIStore.getState();
 
-    const handlePublishNow = useCallback(async (result: GenerationResult, platform: string, connectionId?: string) => {
+    const handlePublishNow = useCallback(async (
+        result: GenerationResult,
+        platform: string,
+        connectionId?: string,
+        options?: { publishFormat?: PublishFormat }
+    ) => {
         if (!user) return;
 
         if (isApprovalBlockingPublish(result.approvalStatus)) {
@@ -33,7 +64,7 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
             uiActions.setPublishingStatus('publishing');
             addToast('Przygotowywanie do publikacji...', NotificationType.Info);
 
-            await new Promise(resolve => setTimeout(resolve, 800));
+            await new Promise(resolve => setTimeout(resolve, 400));
 
             const { socialConnectionsService } = await import('../../services/socialConnectionsService');
             const connections = await socialConnectionsService.getConnections(user.id);
@@ -54,11 +85,16 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
             const { brandVoiceProfiles, activeBrandVoiceId } = await import('../../stores/dataStore').then(m => m.useDataStore.getState());
             const brandVoice = brandVoiceProfiles.find(p => p.id === activeBrandVoiceId);
             const ctaUrl = resolveCtaUrl(result.ctaUrl, brandVoice?.settings?.websiteUrl);
+            const mediaUrls = collectMediaUrls(result);
+            const publishFormat = resolvePublishFormat(platform, result, mediaUrls, options?.publishFormat);
 
             const publishResult = await callApi('social/publish', {
                 connectionId: connection.id,
                 postText: result.postText,
-                imageUrl: result.imageUrl,
+                imageUrl: mediaUrls[0] || result.imageUrl,
+                mediaUrls,
+                videoUrl: result.videoUrl || undefined,
+                publishFormat,
                 hashtags: result.hashtags,
                 callToAction: result.callToAction,
                 ctaUrl,
@@ -66,7 +102,6 @@ export const usePublishHandlers = ({ addToast, addNotification, handleApiError }
 
             if (publishResult.success) {
                 uiActions.setPublishingStatus('success');
-                // give user 2.5s to see the success state in the modal
                 await new Promise(resolve => setTimeout(resolve, 2500));
                 uiActions.setIsPublishingModalOpen(false);
                 uiActions.setPublishingStatus('idle');
