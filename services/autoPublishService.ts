@@ -13,6 +13,7 @@ import { getPlatformCharacterLimit, optimizeForPlatforms } from './multiPlatform
 import {
   AUTO_PUBLISH_MIN_SCORE,
   passesAutoPublishQualityGate,
+  getEffectiveAutoPublishMin,
   scorePostContent,
 } from './contentScoringService';
 import { isApprovalBlockingPublish } from '../utils/publishApproval';
@@ -104,9 +105,14 @@ export async function enforcePublishQualityGate(
       targetAudience: formData.audience,
     });
     if (!passesAutoPublishQualityGate(qualityScore)) {
+      const min = getEffectiveAutoPublishMin(qualityScore);
       return {
         ok: false,
-        reason: `Ocena ${qualityScore.overall}/100 — wymagane min. ${AUTO_PUBLISH_MIN_SCORE}.`,
+        reason: `Ocena ${qualityScore.overall}/100 — wymagane min. ${min}${
+          qualityScore.calibrationSampleSize
+            ? ` (kalibracja z ${qualityScore.calibrationSampleSize} postów)`
+            : ` (domyślnie ${AUTO_PUBLISH_MIN_SCORE})`
+        }.`,
       };
     }
     return { ok: true, score: qualityScore.overall };

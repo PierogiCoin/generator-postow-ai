@@ -137,12 +137,17 @@ export const generateCalendarSuggestions = async (date: Date | any[], niche?: st
 
 export const generateIntelligentCalendarPlan = async (goal: string, duration: number, startDate: Date, userId: string): Promise<IntelligentCalendarPlanItem[]> => {
     try {
+        const { getCeeEventsInRange, formatCeeEventsForPrompt } = await import('./ceeCalendar');
+        const ceeBlock = formatCeeEventsForPrompt(getCeeEventsInRange(startDate, duration));
+
         return await generateJson<IntelligentCalendarPlanItem[]>({
             model: "gemini-pro-latest",
             contents: `Create an intelligent social media content plan for ${duration} days, starting from ${startDate.toISOString().split('T')[0]}. 
             The goal is: "${goal}". 
             Mix different platforms and formats (post, reel, story). 
-            For each item return: id (unique), date, platform, topic, format (one of ${Object.values(GenerationType).join(', ')}), strategy.`,
+            For each item return: id (unique), date, platform, topic, format (one of ${Object.values(GenerationType).join(', ')}), strategy.
+            ${ceeBlock}
+            When a CEE/PL calendar date falls in the range, include at least one slot that day with a topic aligned to its hints (unless the goal clearly conflicts).`,
         }, userId);
     } catch (e) {
         return [{ id: uuidv4(), date: startDate.toISOString().split('T')[0], platform: Platform.Facebook, topic: goal, format: GenerationType.PostWithImage, strategy: "Basic fallback plan" }];

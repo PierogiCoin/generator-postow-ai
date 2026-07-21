@@ -34,7 +34,10 @@ router.post(
     logger.info(`[Content Scoring] User: ${userId}, Platform: ${platform}`);
 
     // Scoring
-    const score = await scoreContent(content, platform, context);
+    const score = await scoreContent(content, platform, {
+      ...context,
+      userId: userId || undefined,
+    });
 
     logCost(userId, 'content-scoring', 0.001, 'Internal'); // Minimalny koszt
 

@@ -20,6 +20,8 @@ export interface ContentScore {
   };
   suggestions: string[];
   badge: 'red' | 'yellow' | 'green';
+  calibratedMinScore?: number;
+  calibrationSampleSize?: number;
 }
 
 export async function scorePostContent(
@@ -70,5 +72,10 @@ export function buildAutoFixPrompt(score: ContentScore): string {
 export const AUTO_PUBLISH_MIN_SCORE = 70;
 
 export function passesAutoPublishQualityGate(score: ContentScore): boolean {
-  return score.overall >= AUTO_PUBLISH_MIN_SCORE;
+  const min = score.calibratedMinScore ?? AUTO_PUBLISH_MIN_SCORE;
+  return score.overall >= min;
+}
+
+export function getEffectiveAutoPublishMin(score: ContentScore): number {
+  return score.calibratedMinScore ?? AUTO_PUBLISH_MIN_SCORE;
 }

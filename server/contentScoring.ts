@@ -43,10 +43,11 @@ export async function scoreContent(
     hasHashtags?: boolean;
     hasEmojis?: boolean;
     targetAudience?: string;
+    userId?: string;
   }
 ): Promise<ContentScore> {
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
   const prompt = `
 You are a professional social media content analyst. Analyze this content and provide a detailed quality score.
@@ -111,16 +112,37 @@ Return ONLY valid JSON, no markdown.
     const analysis = JSON.parse(jsonText);
 
     // Oblicz overall score (średnia ważona)
-    const overall = Math.round(
+    let overall = Math.round(
       (analysis.engagement.score * 0.4) +
       (analysis.seo.score * 0.3) +
       (analysis.platformFit.score * 0.3)
     );
 
-    // Ustal badge
+    let engagementScore = Number(analysis.engagement.score) || 0;
+    let calibratedMinScore = 70;
+    let calibrationSampleSize = 0;
+
+    if (context?.userId) {
+      try {
+        const { getQualityCalibration, applyCalibrationToScore } = await import(
+          './lib/qualityCalibration.js'
+        );
+        const calibration = await getQualityCalibration(context.userId, platform);
+        const applied = applyCalibrationToScore(overall, engagementScore, calibration);
+        overall = applied.overall;
+        engagementScore = applied.engagementScore;
+        calibratedMinScore = applied.minScore;
+        calibrationSampleSize = calibration.sampleSize;
+        analysis.engagement.score = engagementScore;
+      } catch {
+        /* keep uncalibrated */
+      }
+    }
+
+    // Ustal badge względem skalibrowanego progu
     let badge: 'red' | 'yellow' | 'green';
-    if (overall >= 70) badge = 'green';
-    else if (overall >= 50) badge = 'yellow';
+    if (overall >= calibratedMinScore) badge = 'green';
+    else if (overall >= calibratedMinScore - 20) badge = 'yellow';
     else badge = 'red';
 
     return {
@@ -129,7 +151,9 @@ Return ONLY valid JSON, no markdown.
       seo: analysis.seo,
       platformFit: analysis.platformFit,
       suggestions: analysis.suggestions,
-      badge
+      badge,
+      calibratedMinScore,
+      calibrationSampleSize,
     };
 
   } catch (error) {

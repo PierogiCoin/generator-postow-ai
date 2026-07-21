@@ -26,6 +26,7 @@ import {
   modelsWithFallback,
   sendGenerationError,
 } from './helpers.js';
+import { startGenerationTrace } from '../../lib/langfuse.js';
 
 export function createTextGenerationRouter(): Router {
   const router = Router();
@@ -120,11 +121,25 @@ ${template.includeHashtags ? 'HASHTAGS: [Space-separated hashtags]' : ''}`;
 });
 
 router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
-  try {
-    const { model = 'gemini-flash-latest', contents, config } = req.body || {};
-    const primaryModel = mapModel(model);
-    const candidates = modelsWithFallback(primaryModel);
+  const userId = getAuthUserId(req);
+  const { model = 'gemini-flash-latest', contents, config } = req.body || {};
+  const primaryModel = mapModel(model);
+  const candidates = modelsWithFallback(primaryModel);
+  const inputPreview =
+    typeof contents === 'string'
+      ? contents
+      : JSON.stringify(contents)?.slice(0, 1500);
 
+  const trace = startGenerationTrace({
+    name: 'generate-content',
+    userId,
+    model: primaryModel,
+    inputPreview,
+    tags: ['generate-content', 'text'],
+    metadata: { candidates },
+  });
+
+  try {
     let lastError: unknown;
     for (const modelName of candidates) {
       try {
@@ -132,6 +147,7 @@ router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'),
         if (modelName !== primaryModel) {
           logger.info(`[generate-content] Fallback ${primaryModel} → ${modelName} succeeded`);
         }
+        trace.end({ output: result.text, model: modelName });
         return res.json({
           text: result.text,
           ...(result.candidates ? { candidates: result.candidates } : {}),
@@ -146,8 +162,17 @@ router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'),
       }
     }
 
+    trace.end({
+      level: 'ERROR',
+      statusMessage: geminiErrorMessage(lastError),
+      model: primaryModel,
+    });
     sendGenerationError(res, lastError);
   } catch (error: unknown) {
+    trace.end({
+      level: 'ERROR',
+      statusMessage: error instanceof Error ? error.message : 'unknown',
+    });
     sendGenerationError(res, error);
   }
 });
