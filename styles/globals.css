@@ -102,6 +102,31 @@
 }
 
 /* UI Micro-animations & Transitions */
+.hero-gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-glow-card {
+  position: relative;
+  box-shadow: 0 20px 80px -20px rgba(56, 189, 248, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hero-glow-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(99, 102, 241, 0.2), transparent);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 .animate-dropdown-enter {
   animation: dropdownEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

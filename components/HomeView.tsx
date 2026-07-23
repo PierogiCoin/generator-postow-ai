@@ -34,44 +34,44 @@ const HeroPreview: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) =>
       className={`mt-12 md:mt-16 w-full ${reducedMotion ? '' : 'animate-home-preview'}`}
       aria-hidden="true"
     >
-      <div className={`border-t border-white/10 bg-[#050d16] ${reducedMotion ? '' : 'animate-home-float'}`}>
+      <div className={`rounded-2xl hero-glow-card bg-[#050d16]/90 backdrop-blur-2xl overflow-hidden ${reducedMotion ? '' : 'animate-home-float'}`}>
         <div className="max-w-6xl mx-auto">
           <div className="flex min-h-[360px] flex-col lg:flex-row">
             <div className="w-full lg:w-[40%] p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col gap-5">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-400 mb-2">
                   {t('home.hero.preview_topic_label')}
                 </p>
-                <div className="min-h-[72px] px-3 py-2.5 rounded-md border border-white/10 bg-white/[0.03] text-sm text-slate-200 leading-relaxed">
+                <div className="min-h-[72px] px-3.5 py-3 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-slate-200 leading-relaxed shadow-inner">
                   {t('home.hero.preview_topic')}
                 </div>
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-2">
                   {t('home.hero.preview_platform_label')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <span
-                    className="px-3 py-1.5 rounded-md text-xs font-semibold text-white"
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg shadow-sky-500/20"
                     style={{ backgroundColor: 'var(--hero-accent)' }}
                   >
                     {t('home.hero.preview_platform_ig')}
                   </span>
-                  <span className="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-400 border border-white/10">
+                  <span className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 border border-white/10 bg-white/5">
                     {t('home.hero.preview_platform_li')}
                   </span>
                 </div>
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-2">
                   {t('home.hero.preview_tone_label')}
                 </p>
-                <div className="h-10 px-3 rounded-md border border-white/10 bg-white/[0.03] flex items-center text-sm text-slate-300">
+                <div className="h-10 px-3.5 rounded-xl border border-white/10 bg-white/[0.04] flex items-center text-sm text-slate-300">
                   {t('home.hero.preview_tone')}
                 </div>
               </div>
               <div
-                className="mt-auto h-11 rounded-md text-white font-semibold text-sm flex items-center justify-center gap-2"
+                className="mt-auto h-11 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-500/25 transition-transform hover:scale-[1.02]"
                 style={{ backgroundColor: 'var(--hero-accent)' }}
               >
                 <PencilIcon className="w-4 h-4" />
@@ -79,31 +79,34 @@ const HeroPreview: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) =>
               </div>
             </div>
 
-            <div className="w-full lg:w-[60%] p-6 md:p-8 flex flex-col gap-4" style={{ backgroundColor: 'var(--hero-navy-muted)' }}>
+            <div className="w-full lg:w-[60%] p-6 md:p-8 flex flex-col gap-4 bg-gradient-to-br from-[#0b1728] to-[#050d16]">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-sm font-semibold text-white">{t('home.hero.preview_label')}</span>
-                <span className="text-xs font-semibold tracking-wide" style={{ color: 'var(--hero-accent)' }}>
+                <span className="text-sm font-bold text-white flex items-center gap-2">
+                  <SparklesIcon className="w-4 h-4 text-sky-400" />
+                  {t('home.hero.preview_label')}
+                </span>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400">
                   {t('home.hero.preview_status')}
                 </span>
               </div>
               <div className="space-y-4 flex-1">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500 mb-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sky-400/90 mb-1.5">
                     {t('home.hero.preview_hook')}
                   </p>
-                  <p className="font-display text-lg font-bold text-white leading-snug">
+                  <p className="font-display text-xl font-extrabold text-white leading-snug">
                     {t('home.hero.preview_topic')}
                   </p>
                 </div>
                 <p className="text-sm text-slate-300 leading-relaxed max-w-lg">
                   {t('home.hero.preview_body')}
                 </p>
-                <p className="text-sm font-medium" style={{ color: 'var(--hero-accent)' }}>
+                <p className="text-sm font-semibold text-sky-400">
                   {t('home.hero.preview_cta_line')}
                 </p>
-                <div className="flex gap-3 pt-1 text-xs text-slate-500">
-                  <span>{t('home.hero.preview_tag_ai')}</span>
-                  <span>{t('home.hero.preview_tag_marketing')}</span>
+                <div className="flex gap-2 pt-2 text-xs text-slate-400">
+                  <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10">{t('home.hero.preview_tag_ai')}</span>
+                  <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10">{t('home.hero.preview_tag_marketing')}</span>
                 </div>
               </div>
             </div>
