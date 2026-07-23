@@ -9,7 +9,7 @@ interface PageHeaderProps {
 }
 
 /**
- * Wspólny nagłówek podstron — typografia Syne + akcent Studio Ink.
+ * Wspólny nagłówek podstron — typografia Plus Jakarta Sans + akcent Studio Ink.
  */
 export const PageHeader: React.FC<PageHeaderProps> = ({
   eyebrow,

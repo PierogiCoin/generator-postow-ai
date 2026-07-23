@@ -21,10 +21,22 @@ export const IntelligenceGapStrip: React.FC<IntelligenceGapStripProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="mb-6 p-4 rounded-lg border border-[var(--hero-accent)]/25 bg-[var(--hero-accent-soft)] animate-pulse">
-        <p className="text-sm text-[var(--hero-accent)] font-medium">
-          Analizuję luki godzinowe vs konkurencja…
-        </p>
+      <div className="mb-6 p-4 rounded-lg border border-[var(--hero-accent)]/25 bg-[var(--hero-accent-soft)]">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+          <div className="h-3 w-40 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="px-3 py-2 rounded-lg bg-white/50 dark:bg-[#071018]/40 border border-slate-200/50 dark:border-white/5 animate-pulse"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              <div className="h-4 w-16 rounded bg-slate-200 dark:bg-slate-700" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

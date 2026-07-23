@@ -259,13 +259,22 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
                 isRegeneratingImage={isRegeneratingImage}
                 hookVariations={hookVariations}
                 isSuggestingHooks={isSuggestingHooks}
+                showGenerateImageBanner={
+                  !result.imageUrl &&
+                  !result.videoUrl &&
+                  !!formData &&
+                  (formData.generationType === GenerationType.PostWithImage ||
+                    !!result.imageGenerationFailed)
+                }
                 onEditImage={() => {
                   setActiveTab('media');
                   if (result.imageUrl) {
                     setIsVisualStudioOpen(true);
-                  } else {
-                    void handleOpenCreativeStudio();
                   }
+                }}
+                onGenerateImage={() => {
+                  setActiveTab('media');
+                  void appHandlers.handleRegenerateImage();
                 }}
                 onUpdateResult={handleUpdateResult}
                 onAIAssistantAction={appHandlers.handleAIAssistantAction}
@@ -281,6 +290,12 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
               <ResultMediaPanel
                 result={result}
                 isRegeneratingImage={isRegeneratingImage}
+                canGenerateImage={
+                  !!formData &&
+                  (formData.generationType === GenerationType.PostWithImage ||
+                    formData.generationType === GenerationType.ABTest ||
+                    !!result.imageGenerationFailed)
+                }
                 onRegenerateImage={(prompt) => void appHandlers.handleRegenerateImage(prompt)}
                 onOpenAiStudio={() => setIsVisualStudioOpen(true)}
                 onOpenCreativeStudio={() => void handleOpenCreativeStudio()}
@@ -347,6 +362,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
           initialText={suggestedLayouts[0]?.text || result.postText.substring(0, 30)}
           logoUrl={activeProfile?.settings?.logoUrl}
           mascotUrl={activeProfile?.settings?.mascotUrl}
+          userId={user?.id}
           onExport={(dataUrl) => {
             handleApplyImageEdit(dataUrl);
             notificationSystem.addToast(
@@ -364,6 +380,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
           onClose={() => setIsVisualStudioOpen(false)}
           originalImageUrl={result.imageUrl}
           user={user}
+          onOpenTextStudio={() => {
+            setIsVisualStudioOpen(false);
+            setIsCreativeStudioOpen(true);
+          }}
           onApply={(newImageUrl) => {
             handleApplyImageEdit(newImageUrl);
             setIsVisualStudioOpen(false);

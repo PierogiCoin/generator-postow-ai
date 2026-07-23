@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useGenerationStore } from '../../stores/generationStore';
 import { useDataStore } from '../../stores/dataStore';
 import { useAuth } from '../../contexts/AuthContext';
-import { AIAssistantAction, FormData, GenerationResult } from '../../types';
+import { AIAssistantAction, FormData, GenerationResult, GenerationType, Tone } from '../../types';
 import { NotificationType } from '../../types';
 import * as geminiService from '../../services/geminiService';
 import { regeneratePostImage, regeneratePostImageForPlatform, supportsImageGeneration } from '../../services/imageRegenerationService';
@@ -25,7 +25,8 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
         selectedText: string,
         fullText: string,
         contextFormData: FormData | null,
-        customPrompt?: string
+        customPrompt?: string,
+        options?: { tone?: Tone }
     ) => {
         const { result } = useGenerationStore.getState();
         if (!result || !user) return;
@@ -34,7 +35,7 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
             const { resultText } = await geminiService.performAIAction(
                 action,
                 selectedText,
-                { fullText, formData: contextFormData, tone: contextFormData?.tone, customPrompt },
+                { fullText, formData: contextFormData, tone: contextFormData?.tone, customPrompt, targetTone: options?.tone },
                 user.id
             );
 
@@ -144,8 +145,13 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
 
     const handleRegenerateImage = useCallback(async (customInstruction?: string) => {
         const { result, lastFormData } = useGenerationStore.getState();
-        if (!result || !lastFormData || !user) return;
-        if (!supportsImageGeneration(lastFormData)) {
+        const inspirationForm = useDataStore.getState().inspiration?.formData;
+        const formData = lastFormData || inspirationForm || null;
+        if (!result || !formData || !user) {
+            addToast('Brak danych posta do wygenerowania grafiki.', NotificationType.Error);
+            return;
+        }
+        if (!supportsImageGeneration(formData) && !result.imageGenerationFailed) {
             addToast('Ten typ generacji nie obsługuje grafiki.', NotificationType.Error);
             return;
         }
@@ -154,14 +160,18 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
         try {
             const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore.getState();
             const brandVoice = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId) ?? null;
+            const regenForm: FormData = {
+                ...formData,
+                generationType: GenerationType.PostWithImage,
+            };
 
-            let imageUrl = await regeneratePostImage(result.postText, lastFormData, user.id, {
+            let imageUrl = await regeneratePostImage(result.postText, regenForm, user.id, {
                 brandVoice,
                 customInstruction,
                 variationSeed: Date.now(),
             });
 
-            if (shouldApplyBrandLogo(lastFormData.includeLogo) && brandVoice?.settings) {
+            if (shouldApplyBrandLogo(regenForm.includeLogo) && brandVoice?.settings) {
                 imageUrl = await applyBrandLogoToImage(imageUrl, brandVoice.settings);
             }
 

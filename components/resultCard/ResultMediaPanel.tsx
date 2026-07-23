@@ -13,6 +13,7 @@ import { Spinner } from '../ui/LoadingStates';
 interface ResultMediaPanelProps {
   result: GenerationResult;
   isRegeneratingImage: boolean;
+  canGenerateImage?: boolean;
   onRegenerateImage: (customInstruction?: string) => void;
   onOpenAiStudio: () => void;
   onOpenCreativeStudio: () => void;
@@ -22,6 +23,7 @@ interface ResultMediaPanelProps {
 export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
   result,
   isRegeneratingImage,
+  canGenerateImage = true,
   onRegenerateImage,
   onOpenAiStudio,
   onOpenCreativeStudio,
@@ -29,6 +31,9 @@ export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
 }) => {
   const { t } = useTranslation();
   const [imagePrompt, setImagePrompt] = useState('');
+  const regenerateLabel = result.imageUrl
+    ? t('resultCard.media.regenerate', 'Nowa grafika')
+    : t('resultCard.media.generate', 'Wygeneruj grafikę');
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -49,9 +54,37 @@ export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
           )}
         </div>
       ) : (
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
-          {t('resultCard.media.noImage', 'Brak grafiki w tym wyniku.')}
-        </p>
+        <div className="relative rounded-2xl border border-dashed border-[var(--hero-accent)]/40 bg-[var(--hero-accent-soft)]/15 px-5 py-10 text-center space-y-4">
+          {isRegeneratingImage ? (
+            <div className="flex flex-col items-center gap-3">
+              <Spinner size="lg" />
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-300">
+                {t('resultCard.media.generating', 'Generuję grafikę…')}
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-slate-300">
+                {result.imageGenerationFailed
+                  ? t(
+                      'resultCard.media.failedHint',
+                      'Grafika nie powstała przy generowaniu posta. Tekst jest gotowy — wygeneruj samą grafikę.'
+                    )
+                  : t('resultCard.media.noImage', 'Brak grafiki w tym wyniku.')}
+              </p>
+              {canGenerateImage && (
+                <ModernButton
+                  onClick={() => onRegenerateImage(imagePrompt.trim() || undefined)}
+                  variant="primary"
+                  className="!rounded-lg min-h-[44px] mx-auto"
+                  icon={<RefreshCwIcon className="w-4 h-4" />}
+                >
+                  {regenerateLabel}
+                </ModernButton>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {result.visualStrategyTips && (
@@ -88,31 +121,40 @@ export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
             onClick={() => onRegenerateImage(imagePrompt.trim() || undefined)}
             variant="primary"
             fullWidth
+            className="!rounded-lg min-h-[44px]"
             loading={isRegeneratingImage}
-            disabled={isRegeneratingImage}
+            disabled={isRegeneratingImage || !canGenerateImage}
             icon={<RefreshCwIcon className="w-4 h-4" />}
           >
-            {t('resultCard.media.regenerate', 'Nowa grafika')}
+            {regenerateLabel}
+          </ModernButton>
+          <ModernButton
+            onClick={onOpenCreativeStudio}
+            variant="primary"
+            fullWidth
+            className="!rounded-lg min-h-[44px]"
+            disabled={!result.imageUrl || isRegeneratingImage}
+            icon={<SparklesIcon className="w-4 h-4" />}
+          >
+            {t('resultCard.media.editCaption', 'Edytuj napis')}
           </ModernButton>
           <ModernButton
             onClick={onOpenAiStudio}
             variant="secondary"
             fullWidth
+            className="!rounded-lg min-h-[44px]"
             disabled={!result.imageUrl || isRegeneratingImage}
             icon={<PencilIcon className="w-4 h-4" />}
           >
             {t('resultCard.media.aiEdit', 'Edytuj AI')}
           </ModernButton>
-          <ModernButton
-            onClick={onOpenCreativeStudio}
-            variant="gradient"
-            fullWidth
-            disabled={!result.imageUrl || isRegeneratingImage}
-            icon={<SparklesIcon className="w-4 h-4" />}
-          >
-            {t('resultCard.media.overlay', 'Tekst / logo')}
-          </ModernButton>
         </div>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          {t(
+            'resultCard.media.editCaptionHint',
+            'Przesuń napis w lewo/prawo/górę, ustaw lower-third i zapisz do posta.'
+          )}
+        </p>
 
         {result.imageUrl && onReformatForPlatform && (
           <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-700">

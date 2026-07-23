@@ -132,3 +132,45 @@ export const SectionHeader: React.FC<{ title: string; subtitle: string; id?: str
     </p>
   </div>
 );
+
+// ============================================================
+// SEO meta tags hook
+// ============================================================
+
+interface SEOConfig {
+  title: string;
+  description: string;
+  ogType?: string;
+  ogImage?: string;
+}
+
+export const useSEO = ({ title, description, ogType = 'website', ogImage }: SEOConfig) => {
+  React.useEffect(() => {
+    document.title = title;
+
+    const setMeta = (attr: 'name' | 'property', key: string, content: string) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+
+    setMeta('name', 'description', description);
+    setMeta('property', 'og:title', title);
+    setMeta('property', 'og:description', description);
+    setMeta('property', 'og:type', ogType);
+    if (ogImage) setMeta('property', 'og:image', ogImage);
+    setMeta('name', 'twitter:card', 'summary_large_image');
+    setMeta('name', 'twitter:title', title);
+    setMeta('name', 'twitter:description', description);
+    if (ogImage) setMeta('name', 'twitter:image', ogImage);
+
+    return () => {
+      // Reset to defaults on unmount
+      document.title = 'AI Content Pro';
+    };
+  }, [title, description, ogType, ogImage]);
+};

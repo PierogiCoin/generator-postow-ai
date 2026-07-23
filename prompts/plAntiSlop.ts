@@ -39,3 +39,30 @@ export function buildAntiSlopBlock(extraRules?: string): string {
   if (!extraRules?.trim()) return PL_ANTI_SLOP_SYSTEM;
   return `${PL_ANTI_SLOP_SYSTEM}\n\nADDITIONAL STYLE RULES:\n${extraRules.trim()}`;
 }
+
+/** Case-insensitive scan for banned marketing clichés. */
+export function findBannedPhrases(text: string): string[] {
+  const lower = text.toLowerCase();
+  return PL_BANNED_PHRASES.filter((phrase) => lower.includes(phrase.toLowerCase()));
+}
+
+export function hasBannedPhrases(text: string): boolean {
+  return findBannedPhrases(text).length > 0;
+}
+
+export function buildAntiSlopRewritePrompt(originalText: string, banned: string[]): string {
+  return `Rewrite this social post to remove AI marketing slop while keeping the same meaning, language, and platform intent.
+
+BANNED phrases found (remove or replace with concrete language):
+${banned.map((p) => `- "${p}"`).join('\n')}
+
+RULES:
+${PL_ANTI_SLOP_SYSTEM}
+
+ORIGINAL:
+"""
+${originalText}
+"""
+
+Return ONLY the rewritten post text — no markdown, no commentary.`;
+}

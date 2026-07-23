@@ -164,10 +164,10 @@ export const GeneratorView: React.FC = () => {
 
     const handleClearHistory = useCallback(async () => {
         const confirmed = await confirm({
-            title: 'Wyczyść historię',
-            message: t('sidebar.historySection.clearConfirm', 'Czy na pewno chcesz usunąć całą historię? Tej operacji nie można cofnąć.'),
+            title: t('sidebar.historySection.clearConfirmTitle'),
+            message: t('sidebar.historySection.clearConfirmMessage'),
             variant: 'danger',
-            confirmLabel: 'Usuń historię',
+            confirmLabel: t('sidebar.historySection.clearConfirmAction'),
         });
         if (confirmed) clearHistory();
     }, [confirm, clearHistory, t]);
@@ -656,9 +656,9 @@ export const GeneratorView: React.FC = () => {
                                                 setMultiPlatformOptimizations(optimizations);
                                                 multiPlatformSuccess();
                                                 showSuccess(
-                                                    `Zoptymalizowano dla ${optimizations.length} platform`,
+                                                    t('generatorView.optimizedFor', { count: optimizations.length }),
                                                     optimizations.length < platforms.length
-                                                        ? 'Część platform nie powiodła się — pokazujemy dostępne wyniki.'
+                                                        ? t('generatorView.partialOptimization')
                                                         : undefined
                                                 );
                                                 return optimizations;

@@ -6,6 +6,7 @@ interface CustomPromptFormProps {
   setCustomPrompt: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   isLoading: boolean;
+  placeholder?: string;
 }
 
 export const CustomPromptForm: React.FC<CustomPromptFormProps> = ({
@@ -13,6 +14,7 @@ export const CustomPromptForm: React.FC<CustomPromptFormProps> = ({
   setCustomPrompt,
   onSubmit,
   isLoading,
+  placeholder,
 }) => {
   return (
     <div className="flex items-center gap-2 px-1 pb-1">
@@ -27,7 +29,7 @@ export const CustomPromptForm: React.FC<CustomPromptFormProps> = ({
               onSubmit(e);
             }
           }}
-          placeholder="Zapytaj AI... (np. uczyń to dowcipnym)"
+          placeholder={placeholder ?? 'Zapytaj AI... (np. uczyń to dowcipnym)'}
           disabled={isLoading}
           className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
         />

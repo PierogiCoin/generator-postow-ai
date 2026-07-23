@@ -7,6 +7,7 @@ import {
   geminiErrorStatus,
   geminiErrorMessage,
 } from '../../lib/geminiErrors.js';
+import { enforceAntiSlopTextServer } from '../../lib/antiSlop.js';
 
 export async function runTextGeneration(
   modelName: string,
@@ -49,8 +50,11 @@ export async function runTextGeneration(
   );
 
   const response = await result.response;
+  const rawText = response.text();
+  const cleaned = await enforceAntiSlopTextServer(rawText);
+
   return {
-    text: response.text(),
+    text: cleaned.text,
     candidates: response.candidates,
     usageMetadata: response.usageMetadata,
   };

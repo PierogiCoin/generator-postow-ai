@@ -27,6 +27,8 @@ import {
   sendGenerationError,
 } from './helpers.js';
 import { startGenerationTrace } from '../../lib/langfuse.js';
+import { buildAntiSlopBlock } from '../../../prompts/plAntiSlop.ts';
+import { enforceAntiSlopTextServer } from '../../lib/antiSlop.js';
 
 export function createTextGenerationRouter(): Router {
   const router = Router();
@@ -65,6 +67,8 @@ Requirements:
 - Include ${template.includeHashtags ? `${template.hashtagCount} relevant hashtags` : 'no hashtags'}
 - Keep it concise and impactful
 
+${buildAntiSlopBlock()}
+
 Output format:
 TITLE: [Catchy title]
 DESCRIPTION: [Main content]
@@ -72,7 +76,9 @@ ${template.includeHashtags ? 'HASHTAGS: [Space-separated hashtags]' : ''}`;
 
         const genModel = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
         const result = await genModel.generateContent(prompt);
-        const text = result.response.text();
+        let text = result.response.text();
+        const cleaned = await enforceAntiSlopTextServer(text);
+        text = cleaned.text;
 
         // Parse response
         const titleMatch = text.match(/TITLE:\s*(.+)/);

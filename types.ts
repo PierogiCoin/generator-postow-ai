@@ -145,6 +145,8 @@ export interface FormData {
   videoTranscript?: string;
   keywords?: string;
   aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
+  /** FLUX.2-pro (standard) vs FLUX.2-flex (typography / LinkedIn) */
+  imageQuality?: "standard" | "typography";
   imageForVideo?: { base64: string, mimeType: string };
   repurposeFrom?: string;
   repurposeImageFrom?: string;
@@ -210,6 +212,9 @@ export interface GenerationResult {
   /** Link docelowy CTA (np. strona marki) — używany przy publikacji */
   ctaUrl?: string | null;
   imageUrl: string | null;
+  /** Set when PostWithImage/ABTest ran but image gen failed (text still returned). */
+  imageGenerationFailed?: boolean;
+  imageGenerationError?: string;
   videoUrl?: string | null;
   videoTitle?: string | null;
   videoDescription?: string | null;
@@ -229,6 +234,7 @@ export interface GenerationResult {
     generationMode?: GenerationMode;
     hookType?: string;
     selectedVariant?: string;
+    [key: string]: unknown;
   };
   approvalStatus: PostApprovalStatus;
   comments: Comment[];

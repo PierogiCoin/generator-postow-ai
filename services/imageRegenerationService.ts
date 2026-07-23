@@ -1,8 +1,18 @@
 import type { FormData } from '../types';
 import { GenerationType, Platform, VisualStyle } from '../types';
 import { generateImages } from './mediaService';
-import { buildPlatformImagePrompt, resolveAspectRatioForPlatform, mapAspectRatioToApi, getPlatformVisualSpec } from '../utils/platformVisualSpec';
+import { buildPlatformImagePrompt, resolveAspectRatioForPlatform, getPlatformVisualSpec } from '../utils/platformVisualSpec';
 import type { BrandVoiceProfile } from '../types';
+import { buildVisualBrief, visualBriefToPrompt } from './visualBriefService';
+
+/** Typy generacji, dla których ma sens (re)generacja grafiki. */
+export function supportsImageGeneration(formData: FormData | null | undefined): boolean {
+  if (!formData) return false;
+  return (
+    formData.generationType === GenerationType.PostWithImage ||
+    formData.generationType === GenerationType.ABTest
+  );
+}
 
 export async function regeneratePostImage(
   postText: string,
@@ -15,26 +25,32 @@ export async function regeneratePostImage(
   }
 ): Promise<string> {
   let imageStyle = formData.visualStyle || 'modern';
-  const brandVoice = options?.brandVoice;
+  const brandVoice = options?.brandVoice?.settings;
 
-  if (brandVoice?.settings?.visualStyle) {
-    imageStyle = `${brandVoice.settings.visualStyle}, ${imageStyle}` as VisualStyle;
+  if (brandVoice?.visualStyle) {
+    imageStyle = `${brandVoice.visualStyle}, ${imageStyle}` as VisualStyle;
   }
-  if (brandVoice?.settings?.brandColors?.length) {
-    imageStyle = `${imageStyle}, brand colors: ${brandVoice.settings.brandColors.join(', ')}` as VisualStyle;
+  if (brandVoice?.brandColors?.length) {
+    imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}` as VisualStyle;
   }
 
+  const useMascot = formData.useMascot === true && !!brandVoice?.mascotDescription;
   let mascotPrompt: string | undefined;
-  if (formData.useMascot === true && brandVoice?.settings?.mascotDescription) {
-    mascotPrompt = `FEATURED MASCOT: Include "${brandVoice.settings.mascotName || 'mascot'}". ${brandVoice.settings.mascotDescription}`;
+  if (useMascot && brandVoice?.mascotDescription) {
+    mascotPrompt = `FEATURED MASCOT: Include "${brandVoice.mascotName || 'mascot'}". ${brandVoice.mascotDescription}`;
   }
 
-  let imagePrompt = buildPlatformImagePrompt({
+  const brief = await buildVisualBrief({
     postText,
     platform: formData.platform,
     imageStyle,
-    mascotPrompt,
+    brandColors: brandVoice?.brandColors,
+    mascotDescription: useMascot ? brandVoice?.mascotDescription : undefined,
+    userId,
   });
+
+  let imagePrompt = visualBriefToPrompt(brief);
+  if (mascotPrompt) imagePrompt += ` ${mascotPrompt}`;
 
   if (options?.customInstruction?.trim()) {
     imagePrompt += `\n\nCREATIVE DIRECTION: ${options.customInstruction.trim()}`;
@@ -44,15 +60,42 @@ export async function regeneratePostImage(
     imagePrompt += `\n\nCreate a distinctly different visual variation (seed ${options.variationSeed}).`;
   }
 
-  const aspectRatio = mapAspectRatioToApi(
-    resolveAspectRatioForPlatform(
-      formData.platform,
-      formData.aspectRatio,
-      formData.visualStyle as VisualStyle
-    )
+  if (imagePrompt.length < 60) {
+    imagePrompt = buildPlatformImagePrompt({
+      postText,
+      platform: formData.platform,
+      imageStyle,
+      mascotPrompt,
+    });
+  }
+
+  const aspectRatio = resolveAspectRatioForPlatform(
+    formData.platform,
+    formData.aspectRatio,
+    formData.visualStyle as VisualStyle
   );
 
-  const imageResponse = await generateImages(imagePrompt, { aspectRatio }, userId);
+  const referenceImages: string[] = [];
+  if (useMascot && brandVoice?.mascotUrl) referenceImages.push(brandVoice.mascotUrl);
+  if (formData.includeLogo !== false && brandVoice?.logoUrl) referenceImages.push(brandVoice.logoUrl);
+
+  const imageQuality =
+    formData.imageQuality ||
+    (formData.platform === Platform.LinkedIn || formData.platform === Platform.YouTube
+      ? 'typography'
+      : 'standard');
+
+  const imageResponse = await generateImages(
+    imagePrompt,
+    {
+      aspectRatio,
+      quality: imageQuality,
+      provider: 'auto',
+      referenceImages: referenceImages.length ? referenceImages : undefined,
+    },
+    userId
+  );
+
   const imageUrl =
     imageResponse.publicUrls?.[0] ||
     `data:image/jpeg;base64,${imageResponse.generatedImages?.[0]?.image?.imageBytes ?? ''}`;
@@ -80,21 +123,8 @@ export async function regeneratePostImageForPlatform(
     ...sourceFormData,
     platform: targetPlatform,
     aspectRatio: spec.defaultAspectRatio,
+    generationType: GenerationType.PostWithImage,
   };
-  const instruction =
-    options?.customInstruction ||
-    `Reformat this visual for ${targetPlatform}. Composition: ${spec.composition}. ${spec.summaryPl}`;
-  return regeneratePostImage(postText, formData, userId, {
-    ...options,
-    customInstruction: instruction,
-    variationSeed: Date.now(),
-  });
-}
 
-export function supportsImageGeneration(formData: FormData | null): boolean {
-  if (!formData) return false;
-  return (
-    formData.generationType === GenerationType.PostWithImage ||
-    formData.generationType === GenerationType.ABTest
-  );
+  return regeneratePostImage(postText, formData, userId, options);
 }

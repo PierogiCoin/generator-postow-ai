@@ -15,8 +15,8 @@
     --hero-accent-soft: rgba(29, 155, 240, 0.16);
     --hero-surface: #eef1f6;
     --hero-ink: #0a1628;
-    --font-display: 'Syne', 'Outfit', sans-serif;
-    --font-body: 'Outfit', system-ui, sans-serif;
+    --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(255, 255, 255, 0.3);
     --glass-premium-bg: rgba(255, 255, 255, 0.6);
@@ -190,6 +190,15 @@
   animation: home-preview-rise 1s 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+@keyframes home-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-home-float {
+  animation: home-float 4s ease-in-out infinite;
+}
+
 .animate-home-line {
   transform-origin: left center;
   animation: home-line-grow 0.9s 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -198,6 +207,7 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-home-rise,
   .animate-home-preview,
+  .animate-home-float,
   .animate-home-line {
     animation: none;
     opacity: 1;

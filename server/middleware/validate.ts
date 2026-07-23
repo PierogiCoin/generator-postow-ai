@@ -40,13 +40,18 @@ export const textGenerationSchema = z.object({
 });
 
 export const imageGenerationSchema = z.object({
-  prompt: z.string().min(1).max(4000),
+  prompt: z.string().min(1).max(8000),
+  model: z.string().max(100).optional(),
+  provider: z.enum(['auto', 'together', 'imagen']).optional(),
+  quality: z.enum(['standard', 'typography', 'hd']).optional(),
+  referenceImages: z.array(z.string().min(1).max(2_000_000)).max(8).optional(),
   config: z
     .object({
       numberOfImages: z.number().min(1).max(1).optional(),
       outputMimeType: z.enum(['image/jpeg', 'image/png']).optional(),
-      aspectRatio: z.enum(['1:1', '16:9', '9:16']).optional(),
-      quality: z.enum(['standard', 'hd']).optional(),
+      aspectRatio: z.enum(['1:1', '16:9', '9:16', '4:3', '3:4']).optional(),
+      quality: z.enum(['standard', 'typography', 'hd']).optional(),
+      safetyFilterLevel: z.string().optional(),
     })
     .optional(),
 });
@@ -156,6 +161,16 @@ export const scoreContentSchema = z.object({
       targetAudience: z.string().max(500).optional(),
     })
     .optional(),
+});
+
+export const scoreImageSchema = z.object({
+  platform: z.string().min(1).max(50),
+  briefSummary: z.string().max(4000).optional(),
+  imageUrl: z.string().max(2_000_000).optional(),
+  base64: z.string().max(8_000_000).optional(),
+  mimeType: z.string().max(100).optional(),
+}).refine((d) => Boolean(d.imageUrl || d.base64), {
+  message: 'imageUrl or base64 required',
 });
 
 export const benchmarkContentSchema = z.object({

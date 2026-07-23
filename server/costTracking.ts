@@ -230,8 +230,11 @@ export class CostTracker {
 // Cost estimates (approximate)
 export const COST_ESTIMATES = {
   'gemini-text': 0.0001,        // ~$0.0001 per 1k tokens
-  'dalle-standard': 0.04,        // $0.04 per image
+  'imagen-standard': 0.04,      // Imagen standard estimate per image
+  'dalle-standard': 0.04,        // $0.04 per image (legacy Imagen estimate)
   'dalle-hd': 0.08,              // $0.08 per HD image
+  'flux-standard': 0.03,        // Together FLUX.2-pro approx
+  'flux-typography': 0.04,      // Together FLUX.2-flex approx
   'luma-video': 0.40,            // ~$0.40 per video
   'replicate-video': 0.02,       // ~$0.02 per video
   'veo-video': 0.40,             // Veo 3.1 fast (~$0.40 per 8s clip)

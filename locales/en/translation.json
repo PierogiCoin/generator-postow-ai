@@ -18,7 +18,47 @@
     "untitled": "Untitled"
   },
   "auth": {
-    "loginToContinue": "Sign in to continue to the selected section."
+    "loginToContinue": "Sign in to continue to the selected section.",
+    "loginEyebrow": "Account",
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to continue.",
+    "loginGoogle": "Continue with Google",
+    "loginOrEmail": "or email",
+    "loginEmailLabel": "Email address",
+    "loginPasswordLabel": "Password",
+    "loginEmailPlaceholder": "you@example.com",
+    "loginPasswordPlaceholder": "••••••••",
+    "loginSubmit": "Sign in",
+    "loginLoading": "Signing in...",
+    "loginNoAccount": "Don't have an account?",
+    "loginSignUp": "Sign up",
+    "loginErrorEmailRequired": "Email address is required.",
+    "loginErrorEmailInvalid": "Please enter a valid email address.",
+    "loginErrorPasswordRequired": "Password is required.",
+    "loginErrorGeneric": "Sign in failed. Please check your credentials.",
+    "loginErrorGoogle": "Google sign in failed.",
+    "loginCloseAria": "Close",
+    "signupEyebrow": "Start",
+    "signupTitle": "Create account",
+    "signupSubtitle": "Start generating content in seconds.",
+    "signupGoogle": "Continue with Google",
+    "signupOrEmail": "or email",
+    "signupEmailLabel": "Email address",
+    "signupPasswordLabel": "Password",
+    "signupEmailPlaceholder": "you@example.com",
+    "signupPasswordPlaceholder": "•••••••• (min. 6 characters)",
+    "signupSubmit": "Sign up",
+    "signupLoading": "Creating account...",
+    "signupHasAccount": "Already have an account?",
+    "signupSignIn": "Sign in",
+    "signupTermsRequired": "Please accept the terms and privacy policy to continue.",
+    "signupErrorPasswordLength": "Password must be at least 6 characters.",
+    "signupErrorGeneric": "Sign up failed. Please try again.",
+    "signupErrorGoogle": "Google sign up failed.",
+    "signupCloseAria": "Close",
+    "signupTermsLabel": "I accept the {{terms}} and {{privacy}}.",
+    "signupTermsLink": "Terms",
+    "signupPrivacyLink": "Privacy Policy"
   },
   "aiTools": {
     "categories": {
@@ -99,6 +139,8 @@
     "analyticsTooltip": "Analytics and Optimization",
     "strategistDisabledTooltip": "Upgrade to Pro to unlock the AI Strategist",
     "strategistTooltip": "AI Strategist",
+    "creditsTooltip": "Credits balance",
+    "homeAriaLabel": "Home",
     "login": "Log In",
     "signup": "Sign Up"
   },
@@ -248,6 +290,17 @@
       "label": "AI Model",
       "tooltip": "'Flash' is faster, ideal for simpler tasks. 'Pro' (premium feature) is more advanced and generates more creative, complex content."
     },
+    "advancedOptions": {
+      "title": "Advanced options",
+      "copywritingFramework": {
+        "label": "Copywriting framework",
+        "helper": "Choose a proven structure to boost conversion"
+      },
+      "generationMode": {
+        "label": "Generation mode",
+        "multiVariantHint": "We'll generate 3 variants of the same post with different hooks: Emotional (FOMO), Educational (value), Curiosity (gap). Pick the best one!"
+      }
+    },
     "aspectRatio": {
       "label": "Aspect Ratio",
       "tooltip": "Choose the aspect ratio for the generated image.",
@@ -257,6 +310,12 @@
       "square": "Square",
       "standard": "Standard",
       "photo": "Photo"
+    },
+    "imageQuality": {
+      "label": "Image quality",
+      "tooltip": "FLUX.2 Pro — feed and lifestyle. FLUX.2 Flex — better typography (LinkedIn, YouTube).",
+      "standard": "Standard (FLUX Pro)",
+      "typography": "Typography (FLUX Flex)"
     },
     "platformVisual": {
       "hint": "Platform-specific visual style:"
@@ -290,6 +349,29 @@
     "planActive": "An AI-generated strategic plan is active. These are suggestions you can generate.",
     "clearStrategicPlan": "Clear Strategic Plan",
     "today": "Today",
+    "eyebrow": "Calendar",
+    "viewMonth": "Month",
+    "viewWeek": "Week",
+    "weekDays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    },
+    "todayLabel": "today",
+    "untitled": "Untitled",
+    "scheduledCount": "{{count}} scheduled",
+    "planCount": "{{count}} plan slots",
+    "addContent": "+ Add",
+    "loginRequired": "You must be logged in to use calendar suggestions.",
+    "suggestionError": "Failed to generate calendar suggestions",
+    "fillError": "Fill failed",
+    "defaultNiche": "digital marketing",
+    "copySuffix": "(copy)",
+    "defaultWeekTheme": "Week content",
     "cadence": {
       "label": "Cadence template",
       "starter": "Starter (1 post/day)",
@@ -361,9 +443,16 @@
       "loadingIdeas": "Generating…",
       "ideasCta": "Generate 3 ideas for this day",
       "ideasHint": "AI will match format and platform to your niche",
-      "noIdeas": "No ideas returned — try again"
+      "noIdeas": "No ideas returned — try again",
+      "slotSaved": "Slot updated"
     },
     "slot": {
+      "topicPlaceholder": "Slot topic",
+      "formatVideo": "Video",
+      "formatPostWithImage": "Post + image",
+      "formatCampaign": "Campaign",
+      "formatIdea": "Idea",
+      "formatPost": "Post",
       "generate": "Generate",
       "edit": "Edit",
       "duplicate": "Duplicate",
@@ -425,7 +514,9 @@
     "mobileTabResult": "Result",
     "mobileNav": "Generator navigation",
     "openSidebar": "Library",
-    "closeSidebar": "Close library"
+    "closeSidebar": "Close library",
+    "optimizedFor": "Optimized for {{count}} platforms",
+    "partialOptimization": "Some platforms failed — showing available results."
   },
   "strategyAssistant": {
     "title": "Strategy tip",
@@ -445,7 +536,19 @@
     "Video": "Video with text",
     "Idea": "Brainstorm",
     "Campaign": "AI Campaign",
-    "SeriesFollowUp": "Series Follow-up"
+    "SeriesFollowUp": "Series Follow-up",
+    "ABTest": "A/B Test",
+    "Omnichannel": "Omnichannel",
+    "RepurposeAs": "Repurpose as…",
+    "descriptions": {
+      "PostWithImage": "AI-generated post with image",
+      "Video": "Video 16:9 / 9:16",
+      "Idea": "Creative concepts",
+      "Campaign": "Multi-channel strategy",
+      "ABTest": "Two content variants",
+      "SeriesFollowUp": "Part 2 or deep dive",
+      "Omnichannel": "All channels at once"
+    }
   },
   "repurposeAs": {
     "PostWithImage": "Repurpose as Post",
@@ -453,9 +556,32 @@
     "Idea": "New ideas from this",
     "Campaign": "Create Campaign",
     "ABTest": "A/B Variants",
-    "SeriesFollowUp": "Create Follow-up"
+    "SeriesFollowUp": "Create Follow-up",
+    "Omnichannel": "Expand to all channels",
+    "descriptions": {
+      "PostWithImage": "Adapt as post",
+      "Video": "Adapt as video",
+      "Idea": "Brainstorm from this post",
+      "Campaign": "Full strategy from this post",
+      "ABTest": "Create comparison tests",
+      "SeriesFollowUp": "Generate the next part",
+      "Omnichannel": "Expand to all channels"
+    }
   },
   "enums": {
+    "CopywritingFramework": {
+      "Auto": "Auto (AI chooses)",
+      "PAS": "PAS — Problem Agitation Solution",
+      "AIDA": "AIDA — Attention Interest Desire Action",
+      "Storytelling": "Storytelling",
+      "HookStoryOffer": "Hook → Story → Offer",
+      "BeforeAfterBridge": "Before → After → Bridge",
+      "FeatureBenefit": "Feature → Benefit → Outcome"
+    },
+    "GenerationMode": {
+      "Single": "1 variant",
+      "MultiVariant": "A / B / C"
+    },
     "Tone": {
       "Professional": "Professional",
       "Casual": "Casual",
@@ -500,6 +626,9 @@
     "historySection": {
       "title": "History",
       "clear": "Clear",
+      "clearConfirmTitle": "Clear history",
+      "clearConfirmMessage": "Are you sure you want to delete all history? This action cannot be undone.",
+      "clearConfirmAction": "Delete history",
       "empty": "Your campaigns will appear here.",
       "author": "Author: {{name}}",
       "status": "Status: {{status}}",
@@ -622,6 +751,20 @@
     "improving": "Improving...",
     "generateImprovement": "Generate Improvement",
     "improvePlaceholder": "e.g., 'add more emoji', 'shorten by half'",
+    "aiAssistant": {
+      "actions": {
+        "rewrite": "Rewrite",
+        "summarize": "Summarize",
+        "shorten": "Shorten",
+        "lengthen": "Lengthen",
+        "add-emoji": "Add emoji",
+        "expand_keywords": "Expand keywords",
+        "suggest_hashtags": "Suggest hashtags",
+        "change_tone": "Change tone",
+        "custom": "Custom prompt"
+      },
+      "customPlaceholder": "Ask AI... (e.g., make it witty)"
+    },
     "videoGenerationSteps": {
       "script": "Creating video script...",
       "init": "Initiating video generation...",
@@ -736,6 +879,35 @@
       "item_plan": "Campaign planner",
       "item_analyze": "Content analytics"
     },
+    "stats": {
+      "title": "Built for content velocity",
+      "subtitle": "Numbers from teams already using AI Content Pro.",
+      "stat1_value": "10",
+      "stat1_suffix": "x",
+      "stat1_label": "Faster content creation",
+      "stat2_value": "50",
+      "stat2_suffix": "h+",
+      "stat2_label": "Saved per month",
+      "stat3_value": "5000",
+      "stat3_suffix": "+",
+      "stat3_label": "Posts generated",
+      "stat4_value": "3",
+      "stat4_suffix": "",
+      "stat4_label": "Tools replaced"
+    },
+    "testimonials": {
+      "title": "What users say",
+      "subtitle": "Real feedback from marketers, freelancers, and creators.",
+      "item1_quote": "We cut our content prep time by 70%. The brand voice feature is a game-changer.",
+      "item1_name": "Anna Kowalska",
+      "item1_role": "Marketing Lead",
+      "item2_quote": "Finally, one tool instead of five. The calendar planner alone saves me hours every week.",
+      "item2_name": "Marek Nowak",
+      "item2_role": "Freelance Consultant",
+      "item3_quote": "My posts are consistent for the first time. The AI suggestions actually match my niche.",
+      "item3_name": "Kasia Wójcik",
+      "item3_role": "Content Creator"
+    },
     "hero": {
       "brand": "AI Content Pro",
       "title": "Social posts in your brand’s voice",
@@ -808,6 +980,24 @@
       "subtitle": "Create an account and open the generator — no credit card.",
       "subtitle_logged_in": "Go back to the generator and keep creating.",
       "button": "Generate your first post"
+    },
+    "pricing_preview": {
+      "title": "Simple pricing",
+      "subtitle": "Start free. Upgrade when you need more.",
+      "plan_free_name": "Free",
+      "plan_free_price": "$0",
+      "plan_free_desc": "Try AI with no card",
+      "plan_creator_name": "Creator",
+      "plan_creator_desc": "For freelancers and creators",
+      "plan_pro_name": "Pro",
+      "plan_pro_desc": "Best solo pick — analytics & strategist",
+      "plan_business_name": "Business",
+      "plan_business_desc": "For marketing teams",
+      "per_month": "/mo",
+      "recommended_badge": "Recommended",
+      "see_full_pricing": "See full pricing",
+      "cta_free": "Start free",
+      "cta_choose": "Choose plan"
     }
   },
   "langSwitcher": {

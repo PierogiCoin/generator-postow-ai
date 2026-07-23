@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { BrandMarkIcon } from './icons/BrandMarkIcon';
 import { ThemeToggle } from './ThemeToggle';
 import { PostIcon } from './icons/PostIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
@@ -31,7 +32,7 @@ interface HeaderProps {
     notificationSystem: React.ReactNode;
 }
 
-const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string; disabled?: boolean }> = ({
+const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string; disabled?: boolean }> = React.memo(({
     to,
     children,
     title,
@@ -42,39 +43,39 @@ const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string;
         title={title}
         end={to === '/dashboard'}
         className={({ isActive }) =>
-            `flex items-center gap-2 px-3 lg:px-3.5 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors ${
+            `flex items-center gap-2 px-3 lg:px-3.5 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-all duration-200 ${
                 isActive
-                    ? 'bg-[var(--hero-accent)] text-white border border-transparent'
+                    ? 'bg-[var(--hero-accent)] text-white border border-transparent shadow-sm shadow-[var(--hero-accent)]/30'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 border border-transparent'
             } ${disabled ? 'opacity-35 cursor-not-allowed pointer-events-none' : ''}`
         }
     >
         {children}
     </NavLink>
-);
+));
 
 const BottomNavItem: React.FC<{
     to: string;
     icon: React.ComponentType<{ className?: string }>;
     label: string;
-}> = ({ to, icon: Icon, label }) => (
+}> = React.memo(({ to, icon: Icon, label }) => (
     <NavLink
         to={to}
         end={to === '/dashboard'}
         className={({ isActive }) =>
-            `flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] transition-colors ${
+            `flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] transition-colors duration-200 ${
                 isActive
                     ? 'text-[var(--hero-accent)]'
-                    : 'text-slate-500 dark:text-slate-400'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
             }`
         }
     >
         <Icon className="w-5 h-5" />
         <span className="text-[10px] font-bold tracking-tight">{label}</span>
     </NavLink>
-);
+));
 
-const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () => void }> = ({
+const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () => void }> = React.memo(({
     onOpenCreateMenu,
     onOpenMoreMenu,
 }) => {
@@ -82,8 +83,8 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
     return (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none">
             <nav
-                className="pointer-events-auto grid grid-cols-5 items-end gap-1 w-full max-w-lg mx-auto rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#071018]/95 backdrop-blur-md px-1 py-1.5"
-                aria-label={t('header.nav.ariaLabel', 'Nawigacja główna')}
+                className="pointer-events-auto grid grid-cols-5 items-end gap-1 w-full max-w-lg mx-auto rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#071018]/95 backdrop-blur-md px-1 py-1.5 shadow-lg shadow-slate-900/5"
+                aria-label={t('header.nav.ariaLabel')}
             >
                 <BottomNavItem to="/dashboard" icon={LayoutGridIcon} label={t('header.nav.dashboard')} />
                 <BottomNavItem to="/calendar" icon={CalendarIcon} label={t('header.nav.calendar')} />
@@ -91,7 +92,7 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
                     <button
                         type="button"
                         onClick={onOpenCreateMenu}
-                        className="w-14 h-14 rounded-xl text-white flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-[#071018] hover:brightness-110"
+                        className="w-14 h-14 rounded-xl text-white flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-[#071018] hover:brightness-110 shadow-lg shadow-[var(--hero-accent)]/30"
                         style={{ backgroundColor: 'var(--hero-accent)' }}
                         aria-label={t('header.nav.create')}
                     >
@@ -102,7 +103,7 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
                 <button
                     type="button"
                     onClick={onOpenMoreMenu}
-                    className="flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] text-slate-500 dark:text-slate-400"
+                    className="flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-200"
                 >
                     <MenuIcon className="w-5 h-5" />
                     <span className="text-[10px] font-bold tracking-tight">{t('header.nav.more')}</span>
@@ -110,7 +111,7 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
             </nav>
         </div>
     );
-};
+});
 
 interface CreateNavItem {
   id: string;
@@ -122,7 +123,7 @@ interface CreateNavItem {
   badge?: string;
 }
 
-const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () => void }> = ({ createNavItems, onClose }) => {
+const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () => void }> = React.memo(({ createNavItems, onClose }) => {
     const { t } = useTranslation();
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-[60] sm:hidden animate-fade-in" onClick={onClose}>
@@ -145,8 +146,9 @@ const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () 
                         </NavLink>
                     ))}
                 </div>
-                <button 
-                    onClick={onClose} 
+                <button
+                    type="button"
+                    onClick={onClose}
                     className="w-full mt-6 py-3 text-sm font-bold text-slate-400 hover:text-white bg-gradient-to-r from-white/5 to-transparent rounded-xl transition-all duration-300 hover:bg-white/10 border border-white/5 hover:border-white/10"
                 >
                     {t('common.close')}
@@ -154,7 +156,7 @@ const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () 
             </div>
         </div>
     );
-};
+});
 
 export const Header: React.FC<HeaderProps> = ({
     isCalendarEnabled,
@@ -237,14 +239,13 @@ export const Header: React.FC<HeaderProps> = ({
         }
     }, [isMobileMenuOpen]);
 
-    const createNavItems = [
+    const createNavItems = useMemo(() => [
         { id: 'new-post', to: '/generator', label: t('header.nav.newPost'), icon: PostIcon, state: null, disabled: false },
         { id: 'new-campaign', to: '/generator', label: t('header.nav.newCampaign'), icon: CampaignIcon, state: { prefillData: { generationType: GenerationType.Campaign } }, disabled: false },
         { id: 'new-storyboard', to: '/storyboard', label: t('header.nav.newStoryboard'), icon: FilmIcon, state: null, disabled: false },
-    ];
+    ], [t]);
 
-    /** Główne ścieżki codziennej pracy — widoczne od razu na desktopie */
-    const primaryNavItems = [
+    const primaryNavItems = useMemo(() => [
         { id: 'dashboard', to: '/dashboard', label: t('header.nav.dashboard'), icon: LayoutGridIcon },
         { id: 'generator', to: '/generator', label: t('header.nav.generator'), icon: PostIcon },
         {
@@ -263,10 +264,9 @@ export const Header: React.FC<HeaderProps> = ({
             disabled: !isAnalyticsEnabled,
             title: !isAnalyticsEnabled ? t('header.analyticsDisabledTooltip') : t('header.analyticsTooltip'),
         },
-    ];
+    ], [t, isCalendarEnabled, isAnalyticsEnabled]);
 
-    /** Rzadziej używane — w menu „Więcej” */
-    const moreNavItems = [
+    const moreNavItems = useMemo(() => [
         {
             id: 'strategist',
             to: '/strategist',
@@ -279,23 +279,23 @@ export const Header: React.FC<HeaderProps> = ({
         { id: 'competitors', to: '/competitors', label: t('header.nav.competitors'), icon: UsersIcon },
         { id: 'analyzer', to: '/analyzer', label: t('header.nav.analyzer'), icon: BeakerIcon },
         { id: 'storyboard', to: '/storyboard', label: t('header.nav.storyboard'), icon: FilmIcon },
-    ];
+    ], [t, isStrategistEnabled]);
 
-    const mobileDrawerNavItems = [
+    const mobileDrawerNavItems = useMemo(() => [
         ...primaryNavItems,
         ...moreNavItems,
         { id: 'account', to: '/account', label: t('userMenu.myAccount'), icon: UserIcon },
-    ];
+    ], [primaryNavItems, moreNavItems, t]);
 
-    const landingNavItems: Array<
+    const landingNavItems = useMemo<Array<
         | { id: string; label: string; href: string }
         | { id: string; label: string; onClick: () => void }
-    > = [
+    >>(() => [
         { id: 'how-it-works', href: '#how-it-works', label: t('home.nav.howItWorks') },
         { id: 'features', href: '#features', label: t('home.nav.features') },
         { id: 'pricing', onClick: onUpgradeClick, label: t('home.nav.pricing') },
         { id: 'faq', href: '#faq', label: t('home.nav.faq') },
-    ];
+    ], [t, onUpgradeClick]);
 
     const landingNavLinkClass =
         'px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 transition-colors';
@@ -308,12 +308,12 @@ export const Header: React.FC<HeaderProps> = ({
             <header className="sticky top-0 z-[50] border-b border-slate-200/70 dark:border-white/10 bg-[var(--hero-surface)]/90 dark:bg-[#060b18]/90 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4 lg:gap-6 min-w-0">
-                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group flex-shrink-0" aria-label="Strona główna">
+                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group flex-shrink-0" aria-label={t('header.homeAriaLabel')}>
                             <div
                                 className="rounded-lg p-2 group-hover:brightness-110 transition-all duration-300"
-                                style={{ backgroundColor: 'var(--hero-accent)' }}
+                                style={{ backgroundColor: 'var(--hero-navy)' }}
                             >
-                                <SparklesIcon className="w-5 h-5 text-white" />
+                                <BrandMarkIcon className="w-5 h-5 text-[var(--hero-accent)]" />
                             </div>
                             <h1 className="hidden sm:block font-display text-xl lg:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity duration-300">
                                 {t('header.title')}
@@ -340,7 +340,7 @@ export const Header: React.FC<HeaderProps> = ({
                     {user && (
                         <nav
                             className="hidden sm:flex items-center gap-1 p-1 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.03]"
-                            aria-label={t('header.nav.ariaLabel', 'Nawigacja główna')}
+                            aria-label={t('header.nav.ariaLabel')}
                         >
                             {primaryNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
                                 <NavItem key={id} to={to} title={title || label} disabled={disabled}>
@@ -364,9 +364,9 @@ export const Header: React.FC<HeaderProps> = ({
                                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 border-transparent'
                                     }`}
                                 >
-                                    <span className="hidden lg:inline">{t('header.nav.more')}</span>
+                                        <span className="hidden lg:inline">{t('header.nav.more')}</span>
                                     <MenuIcon className="w-4 h-4 lg:hidden" />
-                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${isMoreMenuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isMoreMenuOpen && (
                                     <div
@@ -412,7 +412,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 >
                                     <SparklesIcon className="w-4 h-4" />
                                     <span className="hidden md:inline">{t('header.nav.create')}</span>
-                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
+                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform duration-200 ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isCreateMenuOpen && (
                                     <div
@@ -453,7 +453,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         type="button"
                                         onClick={onUpgradeClick}
                                         className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-[var(--hero-accent)]/30 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] hover:brightness-110 transition-colors"
-                                        title={t('header.creditsTooltip', 'Saldo kredytów')}
+                                        title={t('header.creditsTooltip')}
                                     >
                                         <SparklesIcon className="w-3.5 h-3.5" />
                                         {user.credits.toLocaleString('pl-PL')}
@@ -465,14 +465,16 @@ export const Header: React.FC<HeaderProps> = ({
                             <>
                                 <div className="hidden sm:flex items-center gap-2">
                                     <button
+                                        type="button"
                                         onClick={onLoginClick}
-                                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-white/15 hover:bg-slate-100/80 dark:hover:bg-white/5 transition-all"
+                                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-white/15 hover:bg-slate-100/80 dark:hover:bg-white/5 transition-all duration-200"
                                     >
                                         {t('header.login')}
                                     </button>
                                     <button
+                                        type="button"
                                         onClick={onSignUpClick}
-                                        className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg hover:brightness-110 transition-all"
+                                        className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg hover:brightness-110 transition-all duration-200"
                                         style={{ backgroundColor: 'var(--hero-accent)' }}
                                     >
                                         {t('header.signup')}
@@ -481,7 +483,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <button
                                     type="button"
                                     onClick={onSignUpClick}
-                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white rounded-lg active:scale-95 transition-all hover:brightness-110"
+                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white rounded-lg active:scale-95 transition-all duration-200 hover:brightness-110"
                                     style={{ backgroundColor: 'var(--hero-accent)' }}
                                 >
                                     {t('header.signup')}
@@ -489,7 +491,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => setIsMobileMenuOpen(true)}
-                                    className="sm:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/10"
+                                    className="sm:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/10 transition-colors duration-200"
                                     aria-label={t('home.nav.openMenu')}
                                 >
                                     <MenuIcon className="w-6 h-6" />
@@ -514,9 +516,9 @@ export const Header: React.FC<HeaderProps> = ({
                         <div>
                             <div className="flex justify-between items-center mb-10">
                                 <h2 id="mobile-menu-heading" className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                                    {t('header.nav.menu', 'Menu')}
+                                    {t('header.nav.menu')}
                                 </h2>
-                                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 dark:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400">
+                                <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 dark:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                                     <XMarkIcon className="w-6 h-6" />
                                 </button>
                             </div>
@@ -524,7 +526,7 @@ export const Header: React.FC<HeaderProps> = ({
                                 {user ? (
                                     <>
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mb-1">
-                                            {t('header.nav.sectionMain', 'Główne')}
+                                            {t('header.nav.sectionMain')}
                                         </p>
                                         {mobileDrawerNavItems.slice(0, 4).map(({ id, to, label, icon: Icon, disabled = false }) => (
                                             <NavLink
@@ -545,7 +547,7 @@ export const Header: React.FC<HeaderProps> = ({
                                             </NavLink>
                                         ))}
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mt-4 mb-1">
-                                            {t('header.nav.sectionMore', 'Więcej')}
+                                            {t('header.nav.sectionMore')}
                                         </p>
                                         {mobileDrawerNavItems.slice(4).map(({ id, to, label, icon: Icon, disabled = false }) => (
                                             <NavLink
@@ -597,12 +599,13 @@ export const Header: React.FC<HeaderProps> = ({
                                                 )}
                                             </nav>
                                         )}
-                                        <button onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                                        <button type="button" onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl transition-colors duration-200 hover:bg-slate-200 dark:hover:bg-slate-700">
                                             {t('header.login')}
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() => { onSignUpClick(); setIsMobileMenuOpen(false); }}
-                                            className="w-full flex items-center justify-center gap-3 py-4 text-base font-semibold text-white rounded-xl shadow-md hover:brightness-110"
+                                            className="w-full flex items-center justify-center gap-3 py-4 text-base font-semibold text-white rounded-xl shadow-md hover:brightness-110 transition-all duration-200"
                                             style={{ backgroundColor: 'var(--hero-accent)' }}
                                         >
                                             {t('header.signup')}

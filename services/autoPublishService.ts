@@ -115,6 +115,45 @@ export async function enforcePublishQualityGate(
         }.`,
       };
     }
+
+    // Visual gate for image posts
+    const needsImage =
+      formData.generationType === GenerationType.PostWithImage ||
+      formData.platform === Platform.Instagram;
+
+    if (needsImage) {
+      if (!result.imageUrl) {
+        return {
+          ok: false,
+          reason: 'Brak grafiki — wymagana do automatycznej publikacji tego typu treści.',
+        };
+      }
+      try {
+        const { scoreGeneratedImage, VISUAL_QA_MIN_SCORE } = await import('./visualQualityService');
+        const visual = await scoreGeneratedImage({
+          imageUrl: result.imageUrl.startsWith('http') ? result.imageUrl : undefined,
+          base64: result.imageUrl.startsWith('data:')
+            ? result.imageUrl.split(',')[1]
+            : undefined,
+          platform: formData.platform,
+          briefSummary: text.slice(0, 400),
+          userId,
+        });
+        if (visual.overall < VISUAL_QA_MIN_SCORE) {
+          return {
+            ok: false,
+            reason: `Grafika ${visual.overall}/100 — wymagane min. ${VISUAL_QA_MIN_SCORE} (thumb-stop / brand / platform).`,
+          };
+        }
+      } catch {
+        // Fail-closed for image-required content when scoring is unavailable
+        return {
+          ok: false,
+          reason: 'Nie udało się ocenić grafiki — publikacja wstrzymana.',
+        };
+      }
+    }
+
     return { ok: true, score: qualityScore.overall };
   } catch {
     return {

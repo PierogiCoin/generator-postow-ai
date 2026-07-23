@@ -5,7 +5,9 @@ import type { AIAssistantAction, FormData, GenerationResult } from '../../types'
 import { PhoneMockup } from '../PhoneMockup';
 import { PostPreview } from '../PostPreview';
 import { RocketLaunchIcon } from '../icons/RocketLaunchIcon';
+import { RefreshCwIcon } from '../icons/RefreshCwIcon';
 import { Spinner } from '../ui/LoadingStates';
+import { ModernButton } from '../ui/ModernButton';
 
 interface ResultContentTabProps {
   result: GenerationResult;
@@ -16,9 +18,11 @@ interface ResultContentTabProps {
   isRegenerating: boolean;
   isAssistantLoading: boolean;
   isRegeneratingImage: boolean;
+  showGenerateImageBanner?: boolean;
   hookVariations: string[];
   isSuggestingHooks: boolean;
   onEditImage: () => void;
+  onGenerateImage?: () => void;
   onUpdateResult: (result: GenerationResult) => void;
   onAIAssistantAction: (
     action: AIAssistantAction,
@@ -40,9 +44,11 @@ export const ResultContentTab: React.FC<ResultContentTabProps> = ({
   isRegenerating,
   isAssistantLoading,
   isRegeneratingImage,
+  showGenerateImageBanner = false,
   hookVariations,
   isSuggestingHooks,
   onEditImage,
+  onGenerateImage,
   onUpdateResult,
   onAIAssistantAction,
   onSuggestHooks,
@@ -53,6 +59,32 @@ export const ResultContentTab: React.FC<ResultContentTabProps> = ({
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {showGenerateImageBanner && onGenerateImage && (
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-[var(--hero-accent)]/35 bg-[var(--hero-accent-soft)]/20">
+          <p className="flex-1 text-sm text-slate-200">
+            {result.imageGenerationFailed
+              ? t(
+                  'resultCard.imageBanner.failed',
+                  'Brak grafiki — tekst jest gotowy. Wygeneruj samą grafikę jednym kliknięciem.'
+                )
+              : t(
+                  'resultCard.imageBanner.missing',
+                  'Ten post nie ma jeszcze grafiki. Możesz wygenerować ją bez ponownego pisania treści.'
+                )}
+          </p>
+          <ModernButton
+            variant="primary"
+            className="!rounded-lg min-h-[44px] shrink-0"
+            loading={isRegeneratingImage}
+            disabled={isRegeneratingImage}
+            icon={<RefreshCwIcon className="w-4 h-4" />}
+            onClick={onGenerateImage}
+          >
+            {t('resultCard.media.generate', 'Wygeneruj grafikę')}
+          </ModernButton>
+        </div>
+      )}
+
       <div className="flex justify-end">
         <button
           type="button"

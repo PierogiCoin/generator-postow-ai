@@ -71,17 +71,20 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             {t('calendar.cadence.label', 'Szablon cadence')}
           </label>
-          <select
-            value={presetId}
-            onChange={(e) => onPresetChange(e.target.value as CadencePresetId)}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-sm font-semibold"
-          >
-            {(Object.keys(CADENCE_PRESETS) as CadencePresetId[]).map((id) => (
-              <option key={id} value={id}>
-                {t(CADENCE_PRESETS[id].labelKey, id)}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={presetId}
+              onChange={(e) => onPresetChange(e.target.value as CadencePresetId)}
+              className="w-full appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 pr-9 text-sm font-semibold"
+            >
+              {(Object.keys(CADENCE_PRESETS) as CadencePresetId[]).map((id) => (
+                <option key={id} value={id}>
+                  {t(CADENCE_PRESETS[id].labelKey, id)}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
           <p className="text-[10px] text-slate-500 leading-snug">
             {t(CADENCE_PRESETS[presetId].descriptionKey, '')}
           </p>
@@ -104,17 +107,20 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             {t('form.platform.label', 'Platforma')}
           </label>
-          <select
-            value={platform}
-            onChange={(e) => onPlatformChange(e.target.value as Platform)}
-            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-sm font-semibold"
-          >
-            {PLATFORMS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={platform}
+              onChange={(e) => onPlatformChange(e.target.value as Platform)}
+              className="w-full appearance-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 pr-9 text-sm font-semibold"
+            >
+              {PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
         </div>
 
         <div className="flex flex-col gap-2 justify-end">

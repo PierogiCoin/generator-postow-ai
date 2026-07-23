@@ -16,17 +16,23 @@ Aplikacja do generowania treści social media (React + Vite + Express + Supabase
 
 ```bash
 npm install
+npm run server:install
 cp .env.example .env.local          # frontend
 cp server/.env.example server/.env  # backend
 ```
 
-Uzupełnij m.in. `VITE_SUPABASE_*`, `GOOGLE_API_KEY`, `SUPABASE_*` (service role tylko w `server/.env`).
+Uzupełnij:
+- frontend: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- backend: `GOOGLE_API_KEY`, `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`
+- opcjonalnie dla obrazów FLUX: `TOGETHER_API_KEY`
+- production / OAuth: `OAUTH_STATE_SECRET`, `PUBLIC_BACKEND_URL`, `ALLOWED_ORIGINS`
 
 ```bash
 # frontend + backend naraz
 npm run dev:full
 
 # albo osobno:
+npm run server:install   # tylko po zmianach w server/package.json lub świeżym clone
 npm run start:server   # :3001
 npm run dev            # :3000 → proxy /api → :3001
 ```

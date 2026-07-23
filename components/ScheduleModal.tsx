@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GenerationResult, FormData, ScheduledPost, Platform, GenerationType } from '../types'; // Użyj importu bez 'type'
+import { GenerationResult, FormData, ScheduledPost, Platform, GenerationType } from '../types';
 import { platformConfig } from '../config/platformConfig';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { ClockIcon } from './icons/ClockIcon';
@@ -26,9 +26,20 @@ const getTodayString = () => {
   const month = (today.getMonth() + 1).toString().padStart(2, '0');
   const day = today.getDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
-}
+};
 
-export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, onConfirm, itemToSchedule }) => {
+const inputClassName =
+  'w-full min-h-[44px] bg-[var(--hero-surface)] dark:bg-[#071018] border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)] focus:border-[var(--hero-accent)] transition touch-manipulation';
+
+const chipBase =
+  'inline-flex items-center gap-2 min-h-[40px] px-3 py-2 rounded-lg text-sm font-medium transition-all touch-manipulation border';
+
+export const ScheduleModal: React.FC<ScheduleModalProps> = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  itemToSchedule,
+}) => {
   const [date, setDate] = useState(getTodayString());
   const [time, setTime] = useState('09:00');
   const [error, setError] = useState('');
@@ -40,16 +51,16 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
   useEffect(() => {
     if (isOpen) {
       if (itemToSchedule) {
-        // If editing an existing scheduled item
         const d = new Date(itemToSchedule.scheduleTimestamp ?? Date.now());
         const dateString = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`;
         const timeString = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
         setDate(dateString);
         setTime(timeString);
-        setSelectedPlatforms(itemToSchedule.formData.campaignPlatforms || [itemToSchedule.formData.platform]);
+        setSelectedPlatforms(
+          itemToSchedule.formData.campaignPlatforms || [itemToSchedule.formData.platform]
+        );
         setSelectedFormats([itemToSchedule.formData.generationType]);
       } else {
-        // Default for new scheduling
         setDate(getTodayString());
         setTime('09:00');
         setSelectedPlatforms([Platform.Facebook]);
@@ -61,14 +72,14 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
   }, [isOpen, itemToSchedule]);
 
   const handlePlatformToggle = (platform: Platform) => {
-    setSelectedPlatforms(prev => 
-      prev.includes(platform) ? prev.filter(p => p !== platform) : [...prev, platform]
+    setSelectedPlatforms((prev) =>
+      prev.includes(platform) ? prev.filter((p) => p !== platform) : [...prev, platform]
     );
   };
 
   const handleFormatToggle = (format: GenerationType) => {
-    setSelectedFormats(prev => 
-      prev.includes(format) ? prev.filter(f => f !== format) : [...prev, format]
+    setSelectedFormats((prev) =>
+      prev.includes(format) ? prev.filter((f) => f !== format) : [...prev, format]
     );
   };
 
@@ -100,71 +111,117 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
 
   const allPlatforms: Platform[] = Object.values(Platform);
   const allFormats: GenerationType[] = [
-    GenerationType.PostWithImage, GenerationType.Video, GenerationType.Idea
+    GenerationType.PostWithImage,
+    GenerationType.Video,
+    GenerationType.Idea,
   ];
+
+  const topicPreview =
+    itemToSchedule?.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu';
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity animate-fade-in"
-      style={{ animationDuration: '0.3s' }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 animate-fade-in"
+      style={{ animationDuration: '0.2s' }}
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="schedule-modal-title"
-        className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-6 w-full max-w-xl m-4 transform transition-all flex flex-col gap-6"
-        onClick={e => e.stopPropagation()}
+        className="w-full max-w-xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center">
-          <h2 id="schedule-modal-title" className="text-2xl font-extrabold text-blue-600 dark:text-blue-300">Zaplanuj publikację</h2>
-          <button type="button" onClick={onClose} aria-label="Zamknij" className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700"><XMarkIcon className="w-5 h-5" /></button>
+        <div
+          className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 sm:pt-6 pb-4 bg-white dark:bg-[#0a1220] border-b border-slate-200 dark:border-white/10"
+          style={{ boxShadow: 'inset 3px 0 0 0 var(--hero-accent)' }}
+        >
+          <div className="min-w-0 pr-2">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+              style={{ color: 'var(--hero-accent)' }}
+            >
+              Kalendarz
+            </p>
+            <h2
+              id="schedule-modal-title"
+              className="mt-1 font-display text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white"
+            >
+              Zaplanuj publikację
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Zamknij"
+            className="shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors touch-manipulation"
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
         </div>
 
-        {itemToSchedule && (
-          <div className="p-4 bg-[var(--hero-accent-soft)] rounded-lg border border-[var(--hero-accent)]/25">
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-2">Planujesz na podstawie:</p>
-            <strong className="text-slate-800 dark:text-white font-semibold text-base">{itemToSchedule.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}</strong>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <span className="px-2 py-0.5 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] text-xs font-medium rounded-full">{itemToSchedule.formData.platform}</span>
-              <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-full">{itemToSchedule.formData.generationType}</span>
+        <div className="px-5 sm:px-6 py-5 space-y-5">
+          {itemToSchedule && (
+            <div className="p-4 border border-slate-200 dark:border-white/10 bg-[var(--hero-surface)] dark:bg-[#071018]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-1.5">
+                Planujesz na podstawie
+              </p>
+              <strong className="block text-slate-900 dark:text-white font-semibold text-sm sm:text-base leading-snug">
+                {topicPreview}
+              </strong>
+              <div className="mt-2.5 flex flex-wrap gap-2">
+                <span className="px-2 py-0.5 bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] text-xs font-medium rounded-md">
+                  {itemToSchedule.formData.platform}
+                </span>
+                <span className="px-2 py-0.5 bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-md">
+                  {itemToSchedule.formData.generationType}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="schedule-date"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                <CalendarIcon className="w-4 h-4 text-[var(--hero-accent)]" />
+                Data publikacji
+              </label>
+              <input
+                type="date"
+                id="schedule-date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                min={getTodayString()}
+                className={inputClassName}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="schedule-time"
+                className="mb-2 flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"
+              >
+                <ClockIcon className="w-4 h-4 text-[var(--hero-accent)]" />
+                Godzina publikacji
+              </label>
+              <input
+                type="time"
+                id="schedule-time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className={inputClassName}
+              />
             </div>
           </div>
-        )}
-
-        <div className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <CalendarIcon className="w-4 h-4" /> Data publikacji
-            </label>
-            <input
-              type="date"
-              id="schedule-date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              min={getTodayString()}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition calendar-picker-indicator"
-              style={{ colorScheme: 'dark' }}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
-              <ClockIcon className="w-4 h-4" /> Godzina publikacji
-            </label>
-            <input
-              type="time"
-              id="schedule-time"
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition calendar-picker-indicator"
-              style={{ colorScheme: 'dark' }}
-            />
-          </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Docelowe Platformy (wiele)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Docelowe platformy
+            </label>
             <div className="flex flex-wrap gap-2">
-              {allPlatforms.map(platform => {
+              {allPlatforms.map((platform) => {
                 const config = platformConfig[platform];
                 const Icon = config.icon;
                 const isSelected = selectedPlatforms.includes(platform);
@@ -173,9 +230,14 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
                     key={platform}
                     type="button"
                     onClick={() => handlePlatformToggle(platform)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected ? config.color.replace('bg-', 'bg-') + ' text-white shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                    className={`${chipBase} ${
+                      isSelected
+                        ? `${config.color} text-white border-transparent`
+                        : 'bg-[var(--hero-surface)] dark:bg-[#071018] border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
+                    }`}
                   >
-                    <Icon className="w-4 h-4" /> {platform}
+                    <Icon className="w-4 h-4" />
+                    {platform}
                   </button>
                 );
               })}
@@ -183,52 +245,69 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({ isOpen, onClose, o
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Formaty treści (wiele)</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Formaty treści
+            </label>
             <div className="flex flex-wrap gap-2">
-              {allFormats.map(format => {
-                const config = platformConfig[format as unknown as Platform] || { icon: CalendarIcon, color: "bg-gray-500", iconColor: "text-gray-500" }; // Fallback
-                const Icon = config.icon;
+              {allFormats.map((format) => {
                 const isSelected = selectedFormats.includes(format);
+                const label =
+                  format === GenerationType.PostWithImage
+                    ? 'Post ze zdjęciem'
+                    : format === GenerationType.Video
+                      ? 'Video'
+                      : 'Pomysł';
                 return (
                   <button
                     key={format}
                     type="button"
                     onClick={() => handleFormatToggle(format)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${isSelected ? 'bg-[var(--hero-accent)] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
+                    className={`${chipBase} ${
+                      isSelected
+                        ? 'bg-[var(--hero-accent)] text-white border-transparent'
+                        : 'bg-[var(--hero-surface)] dark:bg-[#071018] border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
+                    }`}
                   >
-                    <Icon className="w-4 h-4" /> {format === GenerationType.PostWithImage ? 'Post ze zdjęciem' : format === GenerationType.Video ? 'Video' : 'Pomysł'}
+                    {label}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <label className="flex items-start gap-3 p-3 rounded-xl border border-amber-200/60 dark:border-amber-500/20 bg-amber-50/50 dark:bg-amber-900/10 cursor-pointer">
+          <label className="flex items-start gap-3 p-3.5 border border-slate-200 dark:border-white/10 bg-[var(--hero-surface)] dark:bg-[#071018] cursor-pointer">
             <input
               type="checkbox"
               checked={requireApproval}
               onChange={(e) => setRequireApproval(e.target.checked)}
-              className="mt-1 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+              className="mt-1 rounded border-slate-300 text-[var(--hero-accent)] focus:ring-[var(--hero-accent)]"
             />
             <span>
-              <span className="block text-sm font-bold text-slate-800 dark:text-slate-200">Wymagaj akceptacji przed publikacją</span>
-              <span className="block text-xs text-slate-500 mt-0.5">Post trafi do kolejki akceptacji na dashboardzie.</span>
+              <span className="block text-sm font-semibold text-slate-800 dark:text-slate-200">
+                Wymagaj akceptacji przed publikacją
+              </span>
+              <span className="block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Post trafi do kolejki akceptacji na dashboardzie.
+              </span>
             </span>
           </label>
 
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+              {error}
+            </p>
+          )}
         </div>
-        {error && <p className="text-red-500 dark:text-red-400 text-sm mt-4">{error}</p>}
-        <div className="flex justify-end gap-4 mt-6">
-          <ModernButton
-            onClick={onClose}
-            variant="secondary"
-          >
+
+        <div className="sticky bottom-0 px-5 sm:px-6 py-4 bg-white dark:bg-[#0a1220] border-t border-slate-200 dark:border-white/10 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3">
+          <ModernButton onClick={onClose} variant="secondary" className="!rounded-lg min-h-[44px] w-full sm:w-auto">
             Anuluj
           </ModernButton>
           <ModernButton
             onClick={handleSubmit}
             variant="primary"
             icon={<CheckIcon className="w-5 h-5" />}
+            className="!rounded-lg min-h-[44px] w-full sm:w-auto"
           >
             Potwierdź harmonogram
           </ModernButton>

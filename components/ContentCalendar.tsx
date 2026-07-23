@@ -63,7 +63,7 @@ import {
 } from '../utils/calendarDate';
 import { v4 as uuidv4 } from 'uuid';
 
-const WEEK_DAYS = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Ndz'];
+const WEEK_DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
 function formatCellDate(d: Date): string {
   return formatDateYMDLocal(d);
@@ -115,7 +115,7 @@ export const ContentCalendar: React.FC = () => {
   const { addToast } = useNotifications();
   const handlers = useAppHandlers(() => {}, () => {});
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { confirm, confirmDialogProps } = useConfirm();
 
   const savedPrefs = useMemo(() => loadCalendarCadencePrefs(), []);
@@ -146,6 +146,7 @@ export const ContentCalendar: React.FC = () => {
     post: ScheduledPost;
     pos: { top: number; left: number };
   } | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<Date | null>(null);
   const [bulkQueueOpen, setBulkQueueOpen] = useState(false);
   const [bulkRange, setBulkRange] = useState<{ start: Date; end: Date } | null>(null);
 
@@ -179,8 +180,9 @@ export const ContentCalendar: React.FC = () => {
     const end = new Date(weekStartDate);
     end.setDate(weekStartDate.getDate() + 6);
     const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    return `${weekStartDate.toLocaleDateString('pl-PL', opts)} – ${end.toLocaleDateString('pl-PL', opts)}`;
-  }, [weekStartDate]);
+    const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'pl-PL';
+    return `${weekStartDate.toLocaleDateString(locale, opts)} – ${end.toLocaleDateString(locale, opts)}`;
+  }, [weekStartDate, i18n.language]);
 
   const weekBulkRange = useMemo(() => {
     const start = new Date(weekStartDate);
@@ -216,15 +218,18 @@ export const ContentCalendar: React.FC = () => {
       const end = new Date(weekStartDate);
       end.setDate(weekStartDate.getDate() + 6);
       const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-      return `${weekStartDate.toLocaleDateString('pl-PL', opts)} – ${end.toLocaleDateString('pl-PL', { ...opts, year: 'numeric' })}`;
+      const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'pl-PL';
+      return `${weekStartDate.toLocaleDateString(locale, opts)} – ${end.toLocaleDateString(locale, { ...opts, year: 'numeric' })}`;
     }
-    return currentDate.toLocaleString('pl-PL', { month: 'long', year: 'numeric' });
-  }, [calendarView, currentDate, weekStartDate]);
+    const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'pl-PL';
+    return currentDate.toLocaleString(locale, { month: 'long', year: 'numeric' });
+  }, [calendarView, currentDate, weekStartDate, i18n.language]);
 
   const getUserNicheForCalendar = useCallback((): string => {
-    if (!user?.id) return 'marketing cyfrowy';
-    return getUserNicheShared(user.id, weekTheme.trim() || 'marketing cyfrowy');
-  }, [user?.id, weekTheme]);
+    const defaultNiche = t('calendar.defaultNiche');
+    if (!user?.id) return defaultNiche;
+    return getUserNicheShared(user.id, weekTheme.trim() || defaultNiche);
+  }, [user?.id, weekTheme, t]);
 
   const warmGapIntelligence = useCallback(async () => {
     if (!user?.id) return;
@@ -314,7 +319,7 @@ export const ContentCalendar: React.FC = () => {
           .filter(Boolean)
           .join(', ');
         const niche = getUserNicheForCalendar();
-        if (!user) throw new Error('Musisz być zalogowany, aby użyć sugestii kalendarza.');
+        if (!user) throw new Error(t('calendar.loginRequired'));
         const result = await generateCalendarSuggestions(date, niche, historySummary, user.id);
         setSuggestions(result);
         if (result.length === 0) {
@@ -322,7 +327,7 @@ export const ContentCalendar: React.FC = () => {
         }
       } catch (e: unknown) {
         addToast(
-          e instanceof Error ? e.message : 'Błąd generowania sugestii kalendarza',
+          e instanceof Error ? e.message : t('calendar.suggestionError'),
           NotificationType.Error
         );
       } finally {
@@ -460,7 +465,7 @@ export const ContentCalendar: React.FC = () => {
       const copy: IntelligentCalendarPlanItem = {
         ...item,
         id: uuidv4(),
-        topic: `${item.topic} (kopia)`,
+        topic: `${item.topic} ${t('calendar.copySuffix')}`,
         time: item.time
           ? (() => {
               const [h, m] = item.time.split(':').map(Number);
@@ -524,7 +529,7 @@ export const ContentCalendar: React.FC = () => {
         selectedDay,
         presetId,
         intelligentCalendarPlan || [],
-        weekTheme.trim() || 'Treść tygodnia',
+        weekTheme.trim() || t('calendar.defaultWeekTheme'),
         platform,
         niche,
         user.id
@@ -542,7 +547,7 @@ export const ContentCalendar: React.FC = () => {
         NotificationType.Success
       );
     } catch (e: unknown) {
-      addToast(e instanceof Error ? e.message : 'Błąd uzupełniania', NotificationType.Error);
+      addToast(e instanceof Error ? e.message : t('calendar.fillError'), NotificationType.Error);
     } finally {
       setIsFillingDay(false);
     }
@@ -619,13 +624,21 @@ export const ContentCalendar: React.FC = () => {
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, date: Date) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    setDragOverDate(date);
+  };
+
+  const handleDragLeave = (e: React.DragEvent, date: Date) => {
+    if (dragOverDate && dragOverDate.getTime() === date.getTime()) {
+      setDragOverDate(null);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent, targetDate: Date) => {
     e.preventDefault();
+    setDragOverDate(null);
     const postId = e.dataTransfer.getData('postId');
     const planItemId = e.dataTransfer.getData('planItemId');
 
@@ -704,11 +717,14 @@ export const ContentCalendar: React.FC = () => {
         } flex flex-col cursor-pointer transition-all duration-300 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${
           isSelected
             ? 'border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/10 ring-2 ring-cyan-500/30'
-            : today
-              ? 'border-cyan-400/60 bg-cyan-500/5 dark:bg-cyan-500/5 hover:border-cyan-500/50'
-              : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:bg-white dark:hover:bg-slate-900/40 hover:border-cyan-500/35'
+            : dragOverDate && dragOverDate.getTime() === date.getTime()
+              ? 'border-cyan-500 bg-cyan-500/15 dark:bg-cyan-500/15 ring-2 ring-cyan-500/40 scale-[1.02]'
+              : today
+                ? 'border-cyan-400/60 bg-cyan-500/5 dark:bg-cyan-500/5 hover:border-cyan-500/50'
+                : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:bg-white dark:hover:bg-slate-900/40 hover:border-cyan-500/35'
         }`}
-        onDragOver={handleDragOver}
+        onDragOver={(e) => handleDragOver(e, date)}
+        onDragLeave={(e) => handleDragLeave(e, date)}
         onDrop={(e) => handleDrop(e, date)}
       >
         <div className="flex items-center justify-between gap-1">
@@ -718,10 +734,10 @@ export const ContentCalendar: React.FC = () => {
             }`}
           >
             {calendarView === 'week'
-              ? date.toLocaleDateString('pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })
+              ? date.toLocaleDateString(i18n.language?.startsWith('en') ? 'en-GB' : 'pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })
               : day}
             {today && (
-              <span className="ml-1 text-[8px] font-black uppercase text-cyan-500">dziś</span>
+              <span className="ml-1 text-[8px] font-black uppercase text-cyan-500">{t('calendar.todayLabel')}</span>
             )}
           </span>
           {dayAudit.slotsTarget.post + dayAudit.slotsTarget.reel + dayAudit.slotsTarget.story > 0 && (
@@ -765,7 +781,7 @@ export const ContentCalendar: React.FC = () => {
                 <div className="flex items-center gap-1">
                   <Icon className={`w-3 h-3 flex-shrink-0 ${config.iconColor}`} />
                   <p className="text-[9px] font-bold truncate text-slate-800 dark:text-white flex-1">
-                    {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
+                    {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('calendar.untitled')}
                   </p>
                 </div>
               </div>
@@ -814,18 +830,18 @@ export const ContentCalendar: React.FC = () => {
             {postsForDay.length > 0 && (
               <span
                 className="w-1.5 h-1.5 rounded-full bg-emerald-500"
-                title={`${postsForDay.length} zaplanowanych`}
+                title={t('calendar.scheduledCount', { count: postsForDay.length })}
               />
             )}
             {planItemsForDay.length > 0 && (
               <span
                 className="w-1.5 h-1.5 rounded-full bg-cyan-500"
-                title={`${planItemsForDay.length} slotów planu`}
+                title={t('calendar.planCount', { count: planItemsForDay.length })}
               />
             )}
           </div>
           <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 group-hover/day:text-cyan-600 dark:group-hover/day:text-cyan-400 transition-colors">
-            {hasContent ? t('calendar.dayDrawer.open', 'Plan dnia') : '+ AI'}
+            {hasContent ? t('calendar.dayDrawer.open', 'Plan dnia') : t('calendar.addContent')}
           </span>
         </div>
       </div>
@@ -919,7 +935,7 @@ export const ContentCalendar: React.FC = () => {
               }`}
               style={calendarView === 'month' ? { backgroundColor: 'var(--hero-accent)' } : undefined}
             >
-              {t('calendar.viewMonth', 'Miesiąc')}
+              {t('calendar.viewMonth')}
             </button>
             <button
               type="button"
@@ -931,7 +947,7 @@ export const ContentCalendar: React.FC = () => {
               }`}
               style={calendarView === 'week' ? { backgroundColor: 'var(--hero-accent)' } : undefined}
             >
-              {t('calendar.viewWeek', 'Tydzień')}
+              {t('calendar.viewWeek')}
             </button>
           </div>
           {intelligentCalendarPlan && (
@@ -975,18 +991,19 @@ export const ContentCalendar: React.FC = () => {
         <div className={`min-w-0 ${calendarView === 'month' ? 'min-w-[640px] sm:min-w-[720px] lg:min-w-[900px]' : ''}`}>
           {calendarView === 'month' && (
             <div className="grid grid-cols-7 gap-2.5 text-center text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
-              {WEEK_DAYS.map((d) => (
+              {WEEK_DAY_KEYS.map((d) => (
                 <div key={d} className="py-2">
-                  {d}
+                  {t(`calendar.weekDays.${d}`)}
                 </div>
               ))}
             </div>
           )}
           <div
+            key={calendarView}
             className={
               calendarView === 'week'
-                ? 'grid grid-cols-1 sm:grid-cols-7 gap-2.5'
-                : 'grid grid-cols-7 gap-2.5'
+                ? 'grid grid-cols-1 sm:grid-cols-7 gap-2.5 animate-fade-in'
+                : 'grid grid-cols-7 gap-2.5 animate-fade-in'
             }
           >
             {calendarView === 'week' ? renderWeekDays() : renderCalendarDays()}

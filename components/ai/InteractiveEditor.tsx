@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import type { AIAssistantAction, FormData } from '../../types';
+import type { AIAssistantAction, FormData, Tone } from '../../types';
 import { StreamingText } from '../ui/StreamingText';
 import { AIAssistantToolbar } from './AIAssistantToolbar';
 import { sanitizeRichText } from '../../utils/sanitizeHTML';
@@ -21,7 +21,7 @@ import { CodeIcon } from '../icons/CodeIcon';
 interface InteractiveEditorProps {
   value: string;
   onChange: (newValue: string) => void;
-  onAction: (action: AIAssistantAction, selectedText: string, fullText: string, contextFormData: FormData | null) => void;
+  onAction: (action: AIAssistantAction, selectedText: string, fullText: string, contextFormData: FormData | null, customPrompt?: string, options?: { tone?: Tone }) => void;
   isLoading: boolean;
   formData: FormData | null;
   lite?: boolean;
@@ -157,20 +157,36 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
       const rect = range.getBoundingClientRect();
       const editorRect = editorRef.current.getBoundingClientRect();
 
+      const TOOLBAR_HALF_WIDTH = 150;
+      const TOOLBAR_HEIGHT = 48;
+      const VIEWPORT_PADDING = 8;
+
       let top, left;
 
       if (inline) {
-        // For inline elements, position relative to viewport and adjust later
-        top = rect.top - 50;
+        top = rect.top - TOOLBAR_HEIGHT - VIEWPORT_PADDING;
         left = rect.left + rect.width / 2;
       } else {
-        // For block elements, position relative to the editor container
-        top = rect.top - editorRect.top - 50;
+        top = rect.top - editorRect.top - TOOLBAR_HEIGHT - VIEWPORT_PADDING;
         left = rect.left - editorRect.left + rect.width / 2;
       }
 
+      if (inline) {
+        const vw = window.innerWidth;
+        left = Math.max(TOOLBAR_HALF_WIDTH + VIEWPORT_PADDING, Math.min(left, vw - TOOLBAR_HALF_WIDTH - VIEWPORT_PADDING));
+        if (top < VIEWPORT_PADDING) {
+          top = rect.bottom + VIEWPORT_PADDING;
+        }
+      } else {
+        const containerRight = editorRect.right - editorRect.left;
+        left = Math.max(TOOLBAR_HALF_WIDTH + VIEWPORT_PADDING, Math.min(left, containerRight - TOOLBAR_HALF_WIDTH - VIEWPORT_PADDING));
+        if (top < VIEWPORT_PADDING) {
+          top = rect.bottom - editorRect.top + VIEWPORT_PADDING;
+        }
+      }
+
       setToolbarState({
-        top: Math.max(0, top),
+        top,
         left,
         selectedText,
       });
@@ -235,7 +251,7 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     onChange(e.currentTarget.innerHTML);
   };
 
-  const handleAIAction = (action: AIAssistantAction, customPrompt?: string) => {
+  const handleAIAction = (action: AIAssistantAction, customPrompt?: string, options?: { tone?: Tone }) => {
     if (!lastSelection.current) return;
     const { text, range } = lastSelection.current;
 
@@ -243,7 +259,8 @@ export const InteractiveEditor: React.FC<InteractiveEditorProps> = ({
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    onAction(action, text, editorRef.current?.innerHTML || value, formData);
+    onAction(action, text, editorRef.current?.innerHTML || value, formData, customPrompt, options);
+    setToolbarState(null);
   };
 
   const handleFormat = (command: string, value?: string) => {

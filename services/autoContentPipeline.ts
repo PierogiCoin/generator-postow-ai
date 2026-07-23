@@ -1,6 +1,7 @@
 import { callApi } from './apiClient';
 import { FormData, GenerationResult, Platform, ContentType, Tone } from '../types';
 import { STORAGE_KEYS } from '../utils/storageUtils';
+import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
 
 /**
  * Auto Content Pipeline Service
@@ -134,7 +135,7 @@ Make it ready to publish.`;
   const response = await callApi("generate-content", {
     model: "gemini-2.5-flash",
     contents: contentPrompt,
-    systemInstruction: "You are an expert social media copywriter. Create engaging, platform-optimized content that sounds authentic and human.",
+    systemInstruction: `You are an expert social media copywriter. Create engaging, platform-optimized content that sounds authentic and human.\n\n${buildAntiSlopBlock()}`,
   }, userId);
 
   return parseFullContent(response.text || response, dailyPost);

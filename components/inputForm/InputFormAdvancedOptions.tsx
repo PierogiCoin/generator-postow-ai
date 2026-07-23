@@ -26,7 +26,7 @@ export const InputFormAdvancedOptions: React.FC<InputFormAdvancedOptionsProps> =
           <details className="group border-2 border-slate-100 dark:border-slate-800/50 rounded-3xl p-4 sm:p-6 transition-all duration-300">
             <summary className="text-sm sm:text-sm font-black uppercase tracking-tight text-slate-600 dark:text-slate-400 cursor-pointer list-none flex items-center justify-between p-2 -m-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
               <span className="flex items-center gap-2 sm:gap-3">
-                Opcje zaawansowane
+                {t('form.advancedOptions.title')}
                 <SparklesIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
               </span>
               <svg className="w-5 h-5 sm:w-6 sm:h-6 transition-transform group-open:rotate-180 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
@@ -58,7 +58,7 @@ export const InputFormAdvancedOptions: React.FC<InputFormAdvancedOptionsProps> =
                 </div>
                 <div className="space-y-3">
                   <label htmlFor="copywritingFramework" className="block text-xs sm:text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                    Framework copywriterski
+                    {t('form.advancedOptions.copywritingFramework.label')}
                     <span className="px-2 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px] font-bold rounded-full">PRO</span>
                   </label>
                   <select 
@@ -68,16 +68,16 @@ export const InputFormAdvancedOptions: React.FC<InputFormAdvancedOptionsProps> =
                     onChange={onInputChange} 
                     className="w-full bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-4 text-sm font-semibold focus:border-blue-500 transition-all outline-none appearance-none cursor-pointer min-h-[52px] touch-manipulation"
                   >
-                    <option value={CopywritingFramework.Auto}>Auto (AI wybiera)</option>
-                    <option value={CopywritingFramework.PAS}>PAS - Problem Agitation Solution</option>
-                    <option value={CopywritingFramework.AIDA}>AIDA - Attention Interest Desire Action</option>
-                    <option value={CopywritingFramework.Storytelling}>Storytelling</option>
-                    <option value={CopywritingFramework.HookStoryOffer}>Hook → Story → Offer</option>
-                    <option value={CopywritingFramework.BeforeAfterBridge}>Before → After → Bridge</option>
-                    <option value={CopywritingFramework.FeatureBenefit}>Feature → Benefit → Outcome</option>
+                    <option value={CopywritingFramework.Auto}>{t('enums.CopywritingFramework.Auto')}</option>
+                    <option value={CopywritingFramework.PAS}>{t('enums.CopywritingFramework.PAS')}</option>
+                    <option value={CopywritingFramework.AIDA}>{t('enums.CopywritingFramework.AIDA')}</option>
+                    <option value={CopywritingFramework.Storytelling}>{t('enums.CopywritingFramework.Storytelling')}</option>
+                    <option value={CopywritingFramework.HookStoryOffer}>{t('enums.CopywritingFramework.HookStoryOffer')}</option>
+                    <option value={CopywritingFramework.BeforeAfterBridge}>{t('enums.CopywritingFramework.BeforeAfterBridge')}</option>
+                    <option value={CopywritingFramework.FeatureBenefit}>{t('enums.CopywritingFramework.FeatureBenefit')}</option>
                   </select>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Wybierz sprawdzoną strukturę, aby zwiększyć konwersję
+                    {t('form.advancedOptions.copywritingFramework.helper')}
                   </p>
                 </div>
               </div>
@@ -86,7 +86,7 @@ export const InputFormAdvancedOptions: React.FC<InputFormAdvancedOptionsProps> =
               <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Tryb generowania</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.advancedOptions.generationMode.label')}</span>
                   </div>
                   <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
                     <button
@@ -98,7 +98,7 @@ export const InputFormAdvancedOptions: React.FC<InputFormAdvancedOptionsProps> =
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                       }`}
                     >
-                      1 wariant
+                      {t('enums.GenerationMode.Single')}
                     </button>
                     <button
                       type="button"
@@ -109,14 +109,14 @@ export const InputFormAdvancedOptions: React.FC<InputFormAdvancedOptionsProps> =
                           : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:hover:text-slate-200'
                       }`}
                     >
-                      <span>A / B / C</span>
+                      <span>{t('enums.GenerationMode.MultiVariant')}</span>
                       <span className="px-1.5 py-0.5 bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[9px] font-bold rounded">PRO</span>
                     </button>
                   </div>
                 </div>
                 {formData.generationMode === GenerationMode.MultiVariant && (
                   <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                    Wygenerujemy 3 warianty tego samego posta z różnymi hookami: <strong>Emocjonalny</strong> (FOMO), <strong>Edukacyjny</strong> (wartość), <strong>Ciekawość</strong> (gap). Wybierz najlepszy!
+                    {t('form.advancedOptions.generationMode.multiVariantHint')}
                   </p>
                 )}
               </div>

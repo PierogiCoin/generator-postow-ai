@@ -1,5 +1,5 @@
 import React from 'react';
-import type { GenerationResult, FormData, AIAssistantAction } from '../types';
+import type { GenerationResult, FormData, AIAssistantAction, Tone } from '../types';
 import { Platform } from '../types';
 import { UserCircleIcon } from './icons/UserCircleIcon';
 import { EllipsisHorizontalIcon } from './icons/EllipsisHorizontalIcon';
@@ -22,7 +22,7 @@ interface PostPreviewProps {
   onEditImage?: () => void;
   hideText?: boolean;
   onUpdateResult: (result: GenerationResult) => void;
-  onAIAssistantAction: (action: AIAssistantAction, selectedText: string, fullText: string, contextFormData: FormData | null) => void;
+  onAIAssistantAction: (action: AIAssistantAction, selectedText: string, fullText: string, contextFormData: FormData | null, customPrompt?: string, options?: { tone?: Tone }) => void;
   isAssistantLoading: boolean;
   streaming?: boolean;
   lite?: boolean;

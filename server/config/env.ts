@@ -7,6 +7,7 @@ dotenv.config();
 const envSchema = z
   .object({
     GOOGLE_API_KEY: z.string().min(1).optional(),
+    TOGETHER_API_KEY: z.string().min(1).optional(),
     SUPABASE_SERVICE_KEY: z.string().min(1).optional(),
     SUPABASE_URL: z.string().min(1).optional(),
     VITE_SUPABASE_URL: z.string().min(1).optional(),
@@ -19,6 +20,8 @@ const envSchema = z
     EMAIL_FROM: z.string().optional(),
     EMAIL_FROM_NAME: z.string().optional(),
     FRONTEND_URL: z.string().optional(),
+    PUBLIC_BACKEND_URL: z.string().optional(),
+    OAUTH_STATE_SECRET: z.string().optional(),
   })
   .refine((data) => Boolean(data.SUPABASE_URL || data.VITE_SUPABASE_URL), {
     message: 'SUPABASE_URL or VITE_SUPABASE_URL is required',
@@ -26,6 +29,7 @@ const envSchema = z
 
 export type Env = {
   GOOGLE_API_KEY: string;
+  TOGETHER_API_KEY?: string;
   SUPABASE_SERVICE_KEY: string;
   SUPABASE_URL: string;
   PORT: number;
@@ -38,6 +42,8 @@ export type Env = {
   EMAIL_FROM?: string;
   EMAIL_FROM_NAME?: string;
   FRONTEND_URL?: string;
+  PUBLIC_BACKEND_URL?: string;
+  OAUTH_STATE_SECRET?: string;
 };
 
 let cachedEnv: Env | null = null;
@@ -54,7 +60,7 @@ export function loadEnv(): Env {
   const googleApiKey = parsed.data.GOOGLE_API_KEY;
   if (!googleApiKey) {
     logger.error('❌ BŁĄD: Brak GOOGLE_API_KEY w pliku .env!');
-    process.exit(1);
+    throw new Error('Brak GOOGLE_API_KEY w .env');
   }
 
   const supabaseServiceKey = parsed.data.SUPABASE_SERVICE_KEY;

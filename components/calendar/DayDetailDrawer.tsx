@@ -53,12 +53,12 @@ function scoreStyles(score: number): string {
   return 'bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30';
 }
 
-function formatLabel(type: GenerationType): string {
-  if (type === GenerationType.Video) return 'Wideo';
-  if (type === GenerationType.PostWithImage) return 'Post + grafika';
-  if (type === GenerationType.Campaign) return 'Kampania';
-  if (type === GenerationType.Idea) return 'Pomysł';
-  return 'Post';
+function formatLabel(type: GenerationType, t: (key: string) => string): string {
+  if (type === GenerationType.Video) return t('calendar.slot.formatVideo');
+  if (type === GenerationType.PostWithImage) return t('calendar.slot.formatPostWithImage');
+  if (type === GenerationType.Campaign) return t('calendar.slot.formatCampaign');
+  if (type === GenerationType.Idea) return t('calendar.slot.formatIdea');
+  return t('calendar.slot.formatPost');
 }
 
 function AiIdeasSection({
@@ -134,7 +134,7 @@ function AiIdeasSection({
                     {s.platform}
                   </span>
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]">
-                    {formatLabel(s.format)}
+                    {formatLabel(s.format, t)}
                   </span>
                 </div>
                 <p className="text-sm font-bold text-slate-800 dark:text-white">{s.topic}</p>
@@ -302,7 +302,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
                   <div className="flex items-center gap-2">
                     <Icon className={`w-4 h-4 shrink-0 ${config.iconColor}`} />
                     <span className="text-sm font-bold text-slate-800 dark:text-white truncate flex-1">
-                      {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
+                      {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('calendar.untitled')}
                     </span>
                     <span className="text-[10px] font-bold text-slate-400">
                       {new Date(post.scheduleTimestamp).toLocaleTimeString([], {
@@ -461,7 +461,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
         aria-label={t('common.close', 'Zamknij')}
       />
 
-      <div className="relative w-full sm:max-w-md h-[min(92vh,720px)] sm:h-full sm:max-h-none flex flex-col bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 shadow-xl rounded-t-[1.75rem] sm:rounded-none sm:rounded-l-[1.75rem] overflow-hidden">
+      <div className="relative w-full sm:max-w-md h-[min(92vh,720px)] sm:h-full sm:max-h-none flex flex-col bg-white dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 shadow-xl rounded-t-[1.75rem] sm:rounded-none sm:rounded-l-[1.75rem] overflow-hidden animate-slide-in sm:animate-slide-in-right">
         <div className="sm:hidden flex justify-center pt-3 pb-1">
           <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600" />
         </div>
@@ -534,7 +534,7 @@ export const DayDetailDrawer: React.FC<DayDetailDrawerProps> = ({
           {audit.issues.length > 0 && (
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-sm text-red-700 dark:text-red-300 space-y-1">
               {audit.issues.map((issue) => (
-                <p key={issue}>• {issue}</p>
+                <p key={issue}>⚠️ {issue}</p>
               ))}
             </div>
           )}

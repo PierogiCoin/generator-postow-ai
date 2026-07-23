@@ -232,15 +232,52 @@ export function quickValidate(content: string, platform: string): {
 
   // Długość
   if (content.length < 10) errors.push('Content jest za krótki (min. 10 znaków)');
-  if (platform === 'Twitter' && content.length > 280) errors.push('Twitter limit: 280 znaków');
+  if (platform === 'Twitter' || platform === 'X') {
+    if (content.length > 280) errors.push('X/Twitter limit: 280 znaków');
+  }
   if (platform === 'Instagram' && content.length > 2200) errors.push('Instagram limit: 2200 znaków');
 
   // Spam detection
   const exclamationCount = (content.match(/!/g) || []).length;
   if (exclamationCount > 5) errors.push('Zbyt wiele wykrzykników (wygląda jak spam)');
 
-  const capsRatio = (content.match(/[A-Z]/g) || []).length / content.length;
-  if (capsRatio > 0.5) errors.push('Zbyt dużo CAPS LOCKA (wygląda jak krzyk)');
+  const letters = content.replace(/[^a-zA-ZĄĆĘŁŃÓŚŹŻąćęłńóśźż]/g, '');
+  if (letters.length > 0) {
+    const capsRatio = (letters.match(/[A-ZĄĆĘŁŃÓŚŹŻ]/g) || []).length / letters.length;
+    if (capsRatio > 0.45) errors.push('Zbyt dużo CAPS LOCKA (wygląda jak krzyk)');
+  }
+
+  // Hook: first line should not be empty fluff
+  const firstLine = content.split(/\n/)[0]?.trim() ?? '';
+  if (firstLine.length > 0 && firstLine.length < 8) {
+    errors.push('Pierwsza linia (hook) jest zbyt krótka — zacznij od konkretu');
+  }
+  const fluffStarts = [
+    'w dzisiejszym',
+    "in today's",
+    'czy kiedykolwiek',
+    'have you ever',
+    'oto ',
+    'here is ',
+    'here are ',
+  ];
+  const firstLower = firstLine.toLowerCase();
+  if (fluffStarts.some((f) => firstLower.startsWith(f))) {
+    errors.push('Hook zaczyna się od cliché — użyj faktu, liczby lub napięcia');
+  }
+
+  // Soft CTA check for engagement platforms
+  const engagementPlatforms = ['Instagram', 'Facebook', 'LinkedIn', 'TikTok'];
+  if (engagementPlatforms.includes(platform)) {
+    const hasCtaSignal =
+      /[?]/.test(content) ||
+      /\b(kliknij|sprawdź|dołącz|skomentuj|napisz|podziel|zapisz|link|cta|call to action)\b/i.test(
+        content
+      );
+    if (!hasCtaSignal && content.length > 80) {
+      errors.push('Brak CTA lub pytania angażującego — dodaj jedno konkretne wezwanie');
+    }
+  }
 
   return {
     isValid: errors.length === 0,

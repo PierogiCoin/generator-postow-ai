@@ -1,6 +1,6 @@
 import { Modality, GenerateContentResponse } from '@google/genai';
 import { callApi, generateContent } from './apiClient';
-import { mapAspectRatioToApi, type VisualAspectRatio } from '../utils/platformVisualSpec';
+import type { VisualAspectRatio } from '../utils/platformVisualSpec';
 
 export interface VideoOperation {
   done?: boolean;
@@ -13,28 +13,45 @@ export interface VideoOperation {
   };
 }
 
+export type ImageProvider = 'auto' | 'together' | 'imagen';
+export type ImageQuality = 'standard' | 'typography';
+
 /**
  * Media Service
  * Handles image and video generation and analysis
  */
 
-export const generateImages = async (prompt: string, config: {
+export const generateImages = async (
+  prompt: string,
+  config: {
     numberOfImages?: number;
     outputMimeType?: string;
     aspectRatio?: string;
     safetyFilterLevel?: string;
-} = {}, userId?: string) => {
-    const apiRatio = mapAspectRatioToApi(config.aspectRatio as VisualAspectRatio | undefined);
-    return await callApi("generate-images", {
-        model: "imagen-4.0-generate-001",
-        prompt: prompt,
-        config: {
-            numberOfImages: config.numberOfImages || 1,
-            outputMimeType: config.outputMimeType || "image/jpeg",
-            aspectRatio: apiRatio,
-            safetyFilterLevel: config.safetyFilterLevel || "BLOCK_MEDIUM_AND_ABOVE",
-        },
-    }, userId);
+    quality?: ImageQuality;
+    provider?: ImageProvider;
+    referenceImages?: string[];
+  } = {},
+  userId?: string
+) => {
+  // Pass full UI aspect ratio — Together uses real pixels; Imagen maps on server
+  return await callApi(
+    'generate-images',
+    {
+      prompt,
+      provider: config.provider || 'auto',
+      quality: config.quality || 'standard',
+      referenceImages: config.referenceImages?.filter(Boolean).slice(0, 8),
+      config: {
+        numberOfImages: config.numberOfImages || 1,
+        outputMimeType: config.outputMimeType || 'image/jpeg',
+        aspectRatio: (config.aspectRatio as VisualAspectRatio) || '1:1',
+        safetyFilterLevel: config.safetyFilterLevel || 'BLOCK_MEDIUM_AND_ABOVE',
+        quality: config.quality || 'standard',
+      },
+    },
+    userId
+  );
 };
 
 export const generateVideoFromImage = async (prompt: string, image: { base64: string, mimeType: string }, aspectRatio: string, userId: string): Promise<VideoOperation> => {

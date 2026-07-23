@@ -23,8 +23,9 @@ export const CalendarSlotBanner: React.FC<CalendarSlotBannerProps> = ({
   onCancelBatch,
   isGenerating,
 }) => {
-  const { t } = useTranslation();
-  const dateLabel = new Date(`${slot.date}T12:00:00`).toLocaleDateString('pl-PL', {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith('en') ? 'en-GB' : 'pl-PL';
+  const dateLabel = new Date(`${slot.date}T12:00:00`).toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

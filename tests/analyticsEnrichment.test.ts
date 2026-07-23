@@ -8,10 +8,11 @@ import type { CampaignHistoryItem } from '../types';
 import { GenerationType, Platform, Tone, ContentType, VisualStyle, ContentLanguage } from '../types';
 import type { SocialPost } from '../types/socialPublishing';
 
-function makeDraft(partial: Partial<CampaignHistoryItem> & { id: string; topic: string }): CampaignHistoryItem {
+function makeDraft(
+  partial: Partial<Omit<CampaignHistoryItem, 'result'>> & { result?: Partial<CampaignHistoryItem['result']> } & { id: string; topic: string },
+): CampaignHistoryItem {
   return {
-    id: partial.id,
-    userId: 'u1',
+    ...partial,
     timestamp: Date.now(),
     teamId: null,
     formData: {
@@ -45,10 +46,13 @@ function makeDraft(partial: Partial<CampaignHistoryItem> & { id: string; topic: 
       },
       approvalStatus: 'draft',
       comments: [],
-      authorId: 'u1',
+      authorId: partial.authorId ?? 'u1',
       ...(partial.result || {}),
     } as CampaignHistoryItem['result'],
-    ...partial,
+    authorName: partial.authorName ?? 'Test Author',
+    status: partial.status ?? 'draft',
+    comments: partial.comments ?? [],
+    authorId: partial.authorId ?? 'u1',
   };
 }
 
@@ -106,7 +110,7 @@ describe('enrichHistoryWithLiveMetrics', () => {
         topic: 'Launch day',
         result: {
           metadata: { published_url: 'https://facebook.com/123', tone: Tone.Professional, audience: 'x', prompt: 'y' },
-        } as CampaignHistoryItem['result'],
+        },
       }),
     ];
     const social: SocialPost[] = [

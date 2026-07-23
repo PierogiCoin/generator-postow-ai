@@ -18,7 +18,47 @@
     "untitled": "Bez tytułu"
   },
   "auth": {
-    "loginToContinue": "Zaloguj się, aby kontynuować do wybranej sekcji."
+    "loginToContinue": "Zaloguj się, aby kontynuować do wybranej sekcji.",
+    "loginEyebrow": "Konto",
+    "loginTitle": "Witaj ponownie",
+    "loginSubtitle": "Zaloguj się, aby kontynuować.",
+    "loginGoogle": "Kontynuuj z Google",
+    "loginOrEmail": "lub e-mail",
+    "loginEmailLabel": "Adres e-mail",
+    "loginPasswordLabel": "Hasło",
+    "loginEmailPlaceholder": "ty@example.com",
+    "loginPasswordPlaceholder": "••••••••",
+    "loginSubmit": "Zaloguj się",
+    "loginLoading": "Logowanie...",
+    "loginNoAccount": "Nie masz jeszcze konta?",
+    "loginSignUp": "Zarejestruj się",
+    "loginErrorEmailRequired": "Adres e-mail jest wymagany.",
+    "loginErrorEmailInvalid": "Proszę podać prawidłowy adres e-mail.",
+    "loginErrorPasswordRequired": "Hasło jest wymagane.",
+    "loginErrorGeneric": "Nie udało się zalogować. Sprawdź swoje dane.",
+    "loginErrorGoogle": "Nie udało się zalogować przez Google.",
+    "loginCloseAria": "Zamknij",
+    "signupEyebrow": "Start",
+    "signupTitle": "Stwórz konto",
+    "signupSubtitle": "Zacznij generować treści w kilka sekund.",
+    "signupGoogle": "Kontynuuj z Google",
+    "signupOrEmail": "lub e-mail",
+    "signupEmailLabel": "Adres e-mail",
+    "signupPasswordLabel": "Hasło",
+    "signupEmailPlaceholder": "ty@example.com",
+    "signupPasswordPlaceholder": "•••••••• (min. 6 znaków)",
+    "signupSubmit": "Zarejestruj się",
+    "signupLoading": "Tworzenie konta...",
+    "signupHasAccount": "Masz już konto?",
+    "signupSignIn": "Zaloguj się",
+    "signupTermsRequired": "Zaakceptuj regulamin i politykę prywatności, aby kontynuować.",
+    "signupErrorPasswordLength": "Hasło musi mieć co najmniej 6 znaków.",
+    "signupErrorGeneric": "Nie udało się zarejestrować. Spróbuj ponownie.",
+    "signupErrorGoogle": "Nie udało się zarejestrować przez Google.",
+    "signupCloseAria": "Zamknij",
+    "signupTermsLabel": "Akceptuję {{terms}} oraz {{privacy}}.",
+    "signupTermsLink": "regulamin",
+    "signupPrivacyLink": "politykę prywatności"
   },
   "aiTools": {
     "categories": {
@@ -100,6 +140,8 @@
     "analyticsTooltip": "Analityka i optymalizacja",
     "strategistDisabledTooltip": "Ulepsz plan do Pro, aby odblokować Strategistę AI",
     "strategistTooltip": "Strategista AI",
+    "creditsTooltip": "Saldo kredytów",
+    "homeAriaLabel": "Strona główna",
     "login": "Zaloguj się",
     "signup": "Zarejestruj się"
   },
@@ -251,6 +293,17 @@
       "label": "Model AI",
       "tooltip": "'Flash' jest szybszy, idealny do prostszych zadań. 'Pro' (funkcja premium) jest bardziej zaawansowany i generuje bardziej kreatywne, złożone treści."
     },
+    "advancedOptions": {
+      "title": "Opcje zaawansowane",
+      "copywritingFramework": {
+        "label": "Framework copywriterski",
+        "helper": "Wybierz sprawdzoną strukturę, aby zwiększyć konwersję"
+      },
+      "generationMode": {
+        "label": "Tryb generowania",
+        "multiVariantHint": "Wygenerujemy 3 warianty tego samego posta z różnymi hookami: Emocjonalny (FOMO), Edukacyjny (wartość), Ciekawość (gap). Wybierz najlepszy!"
+      }
+    },
     "aspectRatio": {
       "label": "Proporcje obrazu",
       "tooltip": "Wybierz proporcje dla generowanego obrazu.",
@@ -260,6 +313,12 @@
       "square": "Kwadrat",
       "standard": "Standardowy",
       "photo": "Zdjęcie"
+    },
+    "imageQuality": {
+      "label": "Jakość grafiki",
+      "tooltip": "FLUX.2 Pro — feed i lifestyle. FLUX.2 Flex — lepsza typografia (LinkedIn, YouTube).",
+      "standard": "Standard (FLUX Pro)",
+      "typography": "Typography (FLUX Flex)"
     },
     "platformVisual": {
       "hint": "Styl dopasowany do platformy:"
@@ -293,6 +352,29 @@
     "planActive": "Aktywny jest plan strategiczny wygenerowany przez AI. To są sugestie, które możesz wygenerować.",
     "clearStrategicPlan": "Wyczyść Plan Strategiczny",
     "today": "Dziś",
+    "eyebrow": "Kalendarz",
+    "viewMonth": "Miesiąc",
+    "viewWeek": "Tydzień",
+    "weekDays": {
+      "mon": "Pon",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Czw",
+      "fri": "Pt",
+      "sat": "Sob",
+      "sun": "Ndz"
+    },
+    "todayLabel": "dziś",
+    "untitled": "Bez tytułu",
+    "scheduledCount": "{{count}} zaplanowanych",
+    "planCount": "{{count}} slotów planu",
+    "addContent": "+ Zaplanuj",
+    "loginRequired": "Musisz być zalogowany, aby użyć sugestii kalendarza.",
+    "suggestionError": "Błąd generowania sugestii kalendarza",
+    "fillError": "Błąd uzupełniania",
+    "defaultNiche": "marketing cyfrowy",
+    "copySuffix": "(kopia)",
+    "defaultWeekTheme": "Treść tygodnia",
     "cadence": {
       "label": "Szablon cadence",
       "starter": "Starter (1 post/dzień)",
@@ -364,9 +446,16 @@
       "loadingIdeas": "Generuję…",
       "ideasCta": "Wygeneruj 3 pomysły na ten dzień",
       "ideasHint": "AI dopasuje format i platformę do Twojej niszy",
-      "noIdeas": "Brak pomysłów — spróbuj ponownie"
+      "noIdeas": "Brak pomysłów — spróbuj ponownie",
+      "slotSaved": "Slot zaktualizowany"
     },
     "slot": {
+      "topicPlaceholder": "Temat slotu",
+      "formatVideo": "Wideo",
+      "formatPostWithImage": "Post + grafika",
+      "formatCampaign": "Kampania",
+      "formatIdea": "Pomysł",
+      "formatPost": "Post",
       "generate": "Generuj",
       "edit": "Edytuj",
       "duplicate": "Duplikuj",
@@ -428,7 +517,9 @@
     "mobileTabResult": "Wynik",
     "mobileNav": "Nawigacja generatora",
     "openSidebar": "Biblioteka",
-    "closeSidebar": "Zamknij bibliotekę"
+    "closeSidebar": "Zamknij bibliotekę",
+    "optimizedFor": "Zoptymalizowano dla {{count}} platform",
+    "partialOptimization": "Część platform nie powiodła się — pokazujemy dostępne wyniki."
   },
   "strategyAssistant": {
     "title": "Wskazówka strategii",
@@ -449,7 +540,18 @@
     "Idea": "Burza mózgów",
     "Campaign": "Kampania AI",
     "SeriesFollowUp": "Kontynuacja Serii",
-    "RepurposeAs": "Przetwórz jako..."
+    "ABTest": "Test A/B",
+    "Omnichannel": "Omnichannel",
+    "RepurposeAs": "Przetwórz jako...",
+    "descriptions": {
+      "PostWithImage": "Post z grafiką AI",
+      "Video": "Wideo 16:9 / 9:16",
+      "Idea": "Kreatywne koncepty",
+      "Campaign": "Strategia wielokanałowa",
+      "ABTest": "Dwa warianty treści",
+      "SeriesFollowUp": "Część 2 lub pogłębienie",
+      "Omnichannel": "Wszystkie kanały na raz"
+    }
   },
   "repurposeAs": {
     "PostWithImage": "Przetwórz jako Post",
@@ -457,9 +559,32 @@
     "Idea": "Nowe pomysły z tego",
     "Campaign": "Stwórz kampanię",
     "ABTest": "Warianty A/B",
-    "SeriesFollowUp": "Stwórz Kontynuację"
+    "SeriesFollowUp": "Stwórz Kontynuację",
+    "Omnichannel": "Rozszerz na wszystkie kanały",
+    "descriptions": {
+      "PostWithImage": "Adaptacja na post",
+      "Video": "Adaptacja na wideo",
+      "Idea": "Burza mózgów na bazie posta",
+      "Campaign": "Pełna strategia z posta",
+      "ABTest": "Stwórz testy porównawcze",
+      "SeriesFollowUp": "Wygeneruj kolejną część",
+      "Omnichannel": "Rozszerz na wszystkie kanały"
+    }
   },
   "enums": {
+    "CopywritingFramework": {
+      "Auto": "Auto (AI wybiera)",
+      "PAS": "PAS — Problem Agitation Solution",
+      "AIDA": "AIDA — Attention Interest Desire Action",
+      "Storytelling": "Storytelling",
+      "HookStoryOffer": "Hook → Story → Offer",
+      "BeforeAfterBridge": "Before → After → Bridge",
+      "FeatureBenefit": "Feature → Benefit → Outcome"
+    },
+    "GenerationMode": {
+      "Single": "1 wariant",
+      "MultiVariant": "A / B / C"
+    },
     "Tone": {
       "Professional": "Profesjonalny",
       "Casual": "Codzienny",
@@ -504,6 +629,9 @@
     "historySection": {
       "title": "Historia",
       "clear": "Wyczyść",
+      "clearConfirmTitle": "Wyczyść historię",
+      "clearConfirmMessage": "Czy na pewno chcesz usunąć całą historię? Tej operacji nie można cofnąć.",
+      "clearConfirmAction": "Usuń historię",
       "empty": "Twoje kampanie pojawią się tutaj.",
       "author": "Autor: {{name}}",
       "status": "Status: {{status}}",
@@ -626,6 +754,20 @@
     "improving": "Ulepszanie...",
     "generateImprovement": "Generuj ulepszenie",
     "improvePlaceholder": "np. 'dodaj więcej emoji', 'skróć o połowę'",
+    "aiAssistant": {
+      "actions": {
+        "rewrite": "Przeredaguj",
+        "summarize": "Podsumuj",
+        "shorten": "Skróć",
+        "lengthen": "Wydłuż",
+        "add-emoji": "Dodaj emoji",
+        "expand_keywords": "Rozwiń słowa kluczowe",
+        "suggest_hashtags": "Sugeruj hashtagi",
+        "change_tone": "Zmień ton",
+        "custom": "Własna instrukcja"
+      },
+      "customPlaceholder": "Zapytaj AI... (np. uczyń to dowcipnym)"
+    },
     "videoGenerationSteps": {
       "script": "Tworzenie scenariusza wideo...",
       "init": "Inicjowanie generowania wideo...",
@@ -740,6 +882,35 @@
       "item_plan": "Planer kampanii",
       "item_analyze": "Analityka treści"
     },
+    "stats": {
+      "title": "Stworzone dla szybkości contentu",
+      "subtitle": "Liczby od zespołów, które już używają AI Content Pro.",
+      "stat1_value": "10",
+      "stat1_suffix": "x",
+      "stat1_label": "Szybsze tworzenie treści",
+      "stat2_value": "50",
+      "stat2_suffix": "h+",
+      "stat2_label": "Oszczędność miesięcznie",
+      "stat3_value": "5000",
+      "stat3_suffix": "+",
+      "stat3_label": "Wygenerowanych postów",
+      "stat4_value": "3",
+      "stat4_suffix": "",
+      "stat4_label": "Narzędzia zastąpione"
+    },
+    "testimonials": {
+      "title": "Co mówią użytkownicy",
+      "subtitle": "Prawdziwe opinie marketerów, freelancerów i twórców.",
+      "item1_quote": "Skróciliśmy czas przygotowania contentu o 70%. Brand voice to game-changer.",
+      "item1_name": "Anna Kowalska",
+      "item1_role": "Marketing Lead",
+      "item2_quote": "W końcu jedno narzędzie zamiast pięciu. Sam planer kalendarza oszczędza mi godziny co tydzień.",
+      "item2_name": "Marek Nowak",
+      "item2_role": "Freelance Consultant",
+      "item3_quote": "Moje posty są spójne po raz pierwszy. Sugestie AI faktycznie pasują do mojej niszy.",
+      "item3_name": "Kasia Wójcik",
+      "item3_role": "Content Creator"
+    },
     "hero": {
       "brand": "AI Content Pro",
       "title": "Posty social media w tonie Twojej marki",
@@ -812,6 +983,24 @@
       "subtitle": "Załóż konto i wejdź do generatora — bez karty kredytowej.",
       "subtitle_logged_in": "Wróć do generatora i kontynuuj tworzenie treści.",
       "button": "Wygeneruj pierwszy post"
+    },
+    "pricing_preview": {
+      "title": "Proste cennik",
+      "subtitle": "Zacznij za darmo. Ulepsz, gdy potrzebujesz więcej.",
+      "plan_free_name": "Darmowy",
+      "plan_free_price": "$0",
+      "plan_free_desc": "Wypróbuj AI bez karty",
+      "plan_creator_name": "Creator",
+      "plan_creator_desc": "Dla freelancerów i twórców",
+      "plan_pro_name": "Pro",
+      "plan_pro_desc": "Najlepszy wybór solo — analityka i strateg",
+      "plan_business_name": "Business",
+      "plan_business_desc": "Dla zespołów marketingowych",
+      "per_month": "/mies.",
+      "recommended_badge": "Polecany",
+      "see_full_pricing": "Zobacz pełny cennik",
+      "cta_free": "Zacznij za darmo",
+      "cta_choose": "Wybierz plan"
     }
   },
   "langSwitcher": {

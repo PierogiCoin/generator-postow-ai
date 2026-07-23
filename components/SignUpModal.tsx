@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { AuthContext, AuthContextType } from '../contexts/AuthContext';
 
 interface SignUpModalProps {
@@ -18,6 +18,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
   const [termsAccepted, setTermsAccepted] = useState(false);
   
   const auth = useContext(AuthContext) as AuthContextType;
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isOpen) {
@@ -46,16 +47,16 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     switch (name) {
       case 'email':
         if (!value) {
-          fieldError = 'Adres e-mail jest wymagany.';
+          fieldError = t('auth.loginErrorEmailRequired');
         } else if (!/\S+@\S+\.\S+/.test(value)) {
-          fieldError = 'Proszę podać prawidłowy adres e-mail.';
+          fieldError = t('auth.loginErrorEmailInvalid');
         }
         break;
       case 'password':
         if (!value) {
-          fieldError = 'Hasło jest wymagane.';
+          fieldError = t('auth.loginErrorPasswordRequired');
         } else if (value.length < 6) {
-          fieldError = 'Hasło musi mieć co najmniej 6 znaków.';
+          fieldError = t('auth.signupErrorPasswordLength');
         }
         break;
       default:
@@ -88,7 +89,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
 
     if (!isEmailValid || !isPasswordValid) return;
     if (!termsAccepted) {
-      setError('Zaakceptuj regulamin i politykę prywatności, aby kontynuować.');
+      setError(t('auth.signupTermsRequired'));
       return;
     }
 
@@ -97,7 +98,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
       await auth.signup(email, password);
       handleClose();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Nie udało się zarejestrować. Spróbuj ponownie.';
+      const errorMessage = err instanceof Error ? err.message : t('auth.signupErrorGeneric');
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -106,7 +107,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
 
   const handleGoogle = async () => {
     if (!termsAccepted) {
-      setError('Zaakceptuj regulamin i politykę prywatności, aby kontynuować.');
+      setError(t('auth.signupTermsRequired'));
       return;
     }
     setError(null);
@@ -114,7 +115,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
     try {
       await auth.loginWithGoogle();
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Nie udało się zarejestrować przez Google.';
+      const errorMessage = err instanceof Error ? err.message : t('auth.signupErrorGoogle');
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -139,7 +140,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
         <button
           type="button"
           onClick={handleClose}
-          aria-label="Zamknij"
+          aria-label={t('auth.signupCloseAria')}
           className="absolute top-4 right-4 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,13 +148,13 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
           </svg>
         </button>
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-center" style={{ color: 'var(--hero-accent)' }}>
-          Start
+          {t('auth.signupEyebrow')}
         </p>
         <h2 id="signup-modal-title" className="mt-2 font-display text-2xl font-extrabold text-center text-slate-900 dark:text-white tracking-tight">
-          Stwórz konto
+          {t('auth.signupTitle')}
         </h2>
         <p className="text-center text-slate-500 dark:text-slate-400 mt-2 mb-6 text-sm">
-          Zacznij generować treści w kilka sekund.
+          {t('auth.signupSubtitle')}
         </p>
         
         <button
@@ -168,7 +169,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Kontynuuj z Google
+          {t('auth.signupGoogle')}
         </button>
 
         <label className="flex items-start gap-2.5 mb-4 cursor-pointer">
@@ -179,28 +180,23 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
             className="mt-0.5 rounded border-slate-300 text-[var(--hero-accent)] focus:ring-[var(--hero-accent)]"
           />
           <span className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Akceptuję{' '}
-            <Link to="/terms" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: 'var(--hero-accent)' }}>
-              regulamin
-            </Link>{' '}
-            oraz{' '}
-            <Link to="/privacy" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline" style={{ color: 'var(--hero-accent)' }}>
-              politykę prywatności
-            </Link>
-            .
+            {t('auth.signupTermsLabel', {
+              terms: t('auth.signupTermsLink'),
+              privacy: t('auth.signupPrivacyLink')
+            })}
           </span>
         </label>
 
         <div className="relative mb-4">
           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200 dark:border-white/10" /></div>
-          <div className="relative flex justify-center text-xs"><span className="px-2 bg-white dark:bg-[#0a1220] text-slate-400">lub e-mail</span></div>
+          <div className="relative flex justify-center text-xs"><span className="px-2 bg-white dark:bg-[#0a1220] text-slate-400">{t('auth.signupOrEmail')}</span></div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <div className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 p-3 rounded-lg text-sm">{error}</div>}
           
           <div>
-            <label htmlFor="signup-email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Adres e-mail</label>
+            <label htmlFor="signup-email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('auth.signupEmailLabel')}</label>
             <input
               type="email"
               id="signup-email"
@@ -210,7 +206,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               onBlur={handleBlur}
               required
               className={`w-full bg-slate-50 dark:bg-[#071018] border rounded-lg py-3 px-3 focus:ring-2 focus:border-[var(--hero-accent)] transition ${validationErrors.email ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-white/15 focus:ring-[var(--hero-accent)]/40'}`}
-              placeholder="ty@example.com"
+              placeholder={t('auth.signupEmailPlaceholder')}
               aria-invalid={!!validationErrors.email}
               aria-describedby="signup-email-error"
             />
@@ -218,7 +214,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
           </div>
           
           <div>
-            <label htmlFor="signup-password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Hasło</label>
+            <label htmlFor="signup-password" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{t('auth.signupPasswordLabel')}</label>
             <input
               type="password"
               id="signup-password"
@@ -229,7 +225,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               required
               minLength={6}
               className={`w-full bg-slate-50 dark:bg-[#071018] border rounded-lg py-3 px-3 focus:ring-2 focus:border-[var(--hero-accent)] transition ${validationErrors.password ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 dark:border-white/15 focus:ring-[var(--hero-accent)]/40'}`}
-              placeholder="•••••••• (min. 6 znaków)"
+              placeholder={t('auth.signupPasswordPlaceholder')}
               aria-invalid={!!validationErrors.password}
               aria-describedby="signup-password-error"
             />
@@ -248,18 +244,18 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Tworzenie konta...
+                t('auth.signupLoading')
               </>
             ) : (
-              'Zarejestruj się'
+              t('auth.signupSubmit')
             )}
           </button>
         </form>
         
         <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-6">
-          Masz już konto?{' '}
+          {t('auth.signupHasAccount')}{' '}
           <button onClick={onSwitchToLogin} className="font-semibold hover:underline" style={{ color: 'var(--hero-accent)' }}>
-            Zaloguj się
+            {t('auth.signupSignIn')}
           </button>
         </p>
       </div>

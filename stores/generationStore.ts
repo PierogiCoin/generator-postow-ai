@@ -244,7 +244,16 @@ export const useGenerationStore = create<GenerationState>()(
   startImageRegeneration: () => set({ isRegeneratingImage: true }),
   finishImageRegeneration: () => set({ isRegeneratingImage: false }),
   updateResultImage: (imageUrl) => set(state =>
-    state.result ? { result: { ...state.result, imageUrl } } : {}
+    state.result
+      ? {
+          result: {
+            ...state.result,
+            imageUrl,
+            imageGenerationFailed: false,
+            imageGenerationError: undefined,
+          },
+        }
+      : {}
   ),
   updateResultVideo: (videoUrl) => set(state =>
     state.result ? { result: { ...state.result, videoUrl } } : {}

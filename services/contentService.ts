@@ -34,6 +34,13 @@ function attachBrandCtaUrl(
     return fromBrand ? { ctaUrl: fromBrand } : {};
 }
 
+function logNonBlockingError(scope: string, error: unknown, meta?: Record<string, unknown>) {
+    console.warn(`[contentService] ${scope}`, {
+        error: error instanceof Error ? error.message : String(error),
+        ...(meta || {}),
+    });
+}
+
 
 /**
  * Content Service
@@ -193,8 +200,10 @@ YOUTUBE STYLE GUIDELINES:
         if (memory.promptBlock) {
             systemInstruction += `\n\n${memory.promptBlock}`;
         }
-    } catch {
-        /* non-blocking */
+    } catch (error: unknown) {
+        logNonBlockingError('Brand memory context failed — continuing without memory', error, {
+            platform: formData.platform,
+        });
     }
 
     if (insights && insights.length > 0) {
@@ -247,7 +256,10 @@ YOUTUBE STYLE GUIDELINES:
 
             visualVibe = await analyzeImage(base64, mimeType, "Describe the visual style, mood, colors, and overall 'vibe' of this image in 2 sentences. Focus on things that help create similar content.", userId);
             systemInstruction += ` The visual style of the inspiration image is: "${visualVibe}". Ensure the text content complements this visual style and maintains the same professional/artistic mood.`;
-        } catch (e) {
+        } catch (error: unknown) {
+            logNonBlockingError('Repurpose image analysis failed — continuing without visual vibe', error, {
+                platform: formData.platform,
+            });
         }
     }
 
@@ -276,7 +288,11 @@ YOUTUBE STYLE GUIDELINES:
         try {
             const errBody = await streamResponse.json();
             errMsg = errBody.message || errMsg;
-        } catch { /* ignore */ }
+        } catch (error: unknown) {
+            logNonBlockingError('Failed to parse stream error body', error, {
+                status: streamResponse.status,
+            });
+        }
         const err = new Error(errMsg) as Error & { status?: number; code?: string };
         err.status = streamResponse.status;
         if (streamResponse.status === 402) err.code = 'insufficient_credits';
@@ -301,7 +317,8 @@ YOUTUBE STYLE GUIDELINES:
                 let chunk: { text?: string; error?: string; code?: string; event?: string };
                 try {
                     chunk = JSON.parse(message.substring(6));
-                } catch {
+                } catch (error: unknown) {
+                    logNonBlockingError('Invalid SSE chunk JSON skipped', error);
                     continue;
                 }
                 if (chunk.error) {
@@ -327,12 +344,18 @@ YOUTUBE STYLE GUIDELINES:
 }
 
 export const regenerateWithFeedback = async (originalText: string, feedback: string, userId?: string): Promise<string> => {
-    const prompt = `Based on this previous version: "${originalText}", apply this feedback: "${feedback}". Rewrite to be better.`;
+    const prompt = `Based on this previous version: "${originalText}", apply this feedback: "${feedback}". Rewrite to be better.
+
+${buildAntiSlopBlock()}
+
+Return ONLY the rewritten post text.`;
     const response = await generateContent({
         model: "gemini-flash-latest",
         contents: prompt
     }, userId);
-    return response.text ?? '';
+    const { enforceAntiSlopText } = await import('./antiSlopService');
+    const cleaned = await enforceAntiSlopText(response.text ?? '', userId);
+    return cleaned.text;
 }
 
 export const generatePostDetails = async (
@@ -351,7 +374,8 @@ export const generatePostDetails = async (
                 model: "gemini-flash-latest",
                 contents: `For this YouTube script: "${postText.substring(0, 500)}", generate catchy videoTitle, SEO videoDescription, and hashtags [array].`,
             }, userId);
-        } catch (e) {
+        } catch (error: unknown) {
+            logNonBlockingError('YouTube details generation failed — returning minimal hashtags', error);
             return { hashtags: [] };
         }
     }
@@ -369,24 +393,49 @@ export const generatePostDetails = async (
             imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}` as VisualStyle;
         }
 
+        const useMascot =
+            formData.useMascot === true ||
+            (formData.useMascot === 'auto' &&
+                !!brandVoice?.mascotDescription &&
+                postText.toLowerCase().includes((brandVoice.mascotName || 'maskotka').toLowerCase()));
+
         let mascotPrompt: string | undefined;
-        if (formData.useMascot === true && brandVoice?.mascotDescription) {
+        if (useMascot && brandVoice?.mascotDescription) {
             mascotPrompt = `FEATURED MASCOT: You MUST include the brand mascot "${brandVoice.mascotName || 'the mascot'}" in this image. Description: ${brandVoice.mascotDescription}.`;
-        } else if (formData.useMascot === "auto" && brandVoice?.mascotDescription && postText.toLowerCase().includes((brandVoice.mascotName || 'maskotka').toLowerCase())) {
-            mascotPrompt = `FEATURED MASCOT: The user mentioned the mascot. Include it: ${brandVoice.mascotDescription}.`;
         }
 
         const postMortemImageHint = insights?.find((i: AIInsight & { imagePromptSuggestion?: string }) => i.imagePromptSuggestion);
-        const imagePrompt = buildPlatformImagePrompt({
+
+        const { buildVisualBrief, visualBriefToPrompt } = await import('./visualBriefService');
+        const brief = await buildVisualBrief({
             postText,
             platform: formData.platform,
             imageStyle,
+            brandColors: brandVoice?.brandColors,
             visualVibe,
-            mascotPrompt,
-            postMortemHint: postMortemImageHint
-                ? (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion
-                : undefined,
+            mascotDescription: useMascot ? brandVoice?.mascotDescription : undefined,
+            userId,
         });
+
+        let imagePrompt = visualBriefToPrompt(brief);
+        if (mascotPrompt) imagePrompt += ` ${mascotPrompt}`;
+        if (postMortemImageHint) {
+            const hint = (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion;
+            if (hint) imagePrompt += ` PROVEN STYLE: ${hint}`;
+        }
+        // Fallback enrichment from legacy platform builder
+        if (imagePrompt.length < 80) {
+            imagePrompt = buildPlatformImagePrompt({
+                postText,
+                platform: formData.platform,
+                imageStyle,
+                visualVibe,
+                mascotPrompt,
+                postMortemHint: postMortemImageHint
+                    ? (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion
+                    : undefined,
+            });
+        }
 
         const aspectRatio = resolveAspectRatioForPlatform(
             formData.platform,
@@ -394,8 +443,64 @@ export const generatePostDetails = async (
             formData.visualStyle as VisualStyle
         );
 
-        const imageResponse = await generateImages(imagePrompt, { aspectRatio }, userId).catch(() => null);
+        const referenceImages: string[] = [];
+        if (useMascot && brandVoice?.mascotUrl) referenceImages.push(brandVoice.mascotUrl);
+        if (formData.includeLogo !== false && brandVoice?.logoUrl) {
+            // Logo is also canvas-overlaid later; reference helps FLUX brand consistency
+            referenceImages.push(brandVoice.logoUrl);
+        }
+
+        const imageQuality =
+            formData.imageQuality ||
+            (formData.platform === Platform.LinkedIn ? 'typography' : 'standard');
+
+        let imageGenerationError: string | null = null;
+        let imageResponse = await generateImages(
+            imagePrompt,
+            {
+                aspectRatio,
+                quality: imageQuality,
+                provider: 'auto',
+                referenceImages: referenceImages.length ? referenceImages : undefined,
+            },
+            userId
+        ).catch((err: unknown) => {
+            imageGenerationError =
+                err instanceof Error ? err.message : 'Generowanie grafiki nie powiodło się';
+            return null;
+        });
+
+        // Visual QA + one auto-regen
+        if (imageResponse) {
+            try {
+                const { ensureImageQuality } = await import('./visualQualityService');
+                imageResponse = await ensureImageQuality({
+                    imageResponse,
+                    prompt: imagePrompt,
+                    brief,
+                    platform: formData.platform,
+                    aspectRatio,
+                    quality: imageQuality,
+                    referenceImages,
+                    userId,
+                });
+            } catch (error: unknown) {
+                logNonBlockingError('Visual quality check failed — keeping first image', error, {
+                    platform: formData.platform,
+                });
+            }
+        }
+
         if (!imageResponse) {
+            const failMeta: Pick<
+                GenerationResult,
+                'imageUrl' | 'imageGenerationFailed' | 'imageGenerationError'
+            > = {
+                imageUrl: null,
+                imageGenerationFailed: true,
+                imageGenerationError:
+                    imageGenerationError || 'Generowanie grafiki nie powiodło się',
+            };
             try {
                 const details = await generateJson<Record<string, unknown>>({
                     model: "gemini-flash-lite-latest",
@@ -412,9 +517,12 @@ export const generatePostDetails = async (
 
                     CRITICAL: Return ONLY valid JSON.`,
                 }, userId);
-                return { ...details };
-            } catch {
-                return { hashtags: [] };
+                return { ...details, ...failMeta };
+            } catch (error: unknown) {
+                logNonBlockingError('Fallback detail generation failed after image generation error', error, {
+                    platform: formData.platform,
+                });
+                return { hashtags: [], ...failMeta };
             }
         }
 
@@ -438,7 +546,10 @@ export const generatePostDetails = async (
             }, userId);
             return { imageUrl, ...details, ...attachBrandCtaUrl(details, brandVoice) };
 
-        } catch (e) {
+        } catch (error: unknown) {
+            logNonBlockingError('Post details generation failed — returning minimal details', error, {
+                platform: formData.platform,
+            });
             return { imageUrl, hashtags: [], ...attachBrandCtaUrl({}, brandVoice) };
         }
     }
@@ -452,7 +563,10 @@ export const suggestHashtags = async (postText: string, platform: Platform, user
             model: "gemini-flash-latest",
             contents: `Suggest 10 relevant hashtags for this ${platform} post: "${postText.substring(0, 300)}". Return as array of strings.`,
         }, userId);
-    } catch (e) {
+    } catch (error: unknown) {
+        logNonBlockingError('Hashtag suggestion failed — returning empty list', error, {
+            platform,
+        });
         return [];
     }
 };
@@ -496,7 +610,8 @@ export const generateHookVariations = async (postText: string, userId: string): 
             Return ONLY a JSON array of strings.`,
         }, userId);
         return response;
-    } catch (e) {
+    } catch (error: unknown) {
+        logNonBlockingError('Hook variations generation failed — returning empty list', error);
         return [];
     }
 };
@@ -523,7 +638,10 @@ export const generateOmnichannelPosts = async (formData: FormData, brandVoice: B
             }`,
         }, userId);
         return response.posts;
-    } catch (e) {
+    } catch (error: unknown) {
+        logNonBlockingError('Omnichannel generation failed — returning empty list', error, {
+            selectedPlatforms: platforms,
+        });
         return [];
     }
 };

@@ -18,6 +18,7 @@ import {
   brandVoiceExtractUrlSchema,
   brandVoiceLearnSchema,
   scoreContentSchema,
+  scoreImageSchema,
   benchmarkContentSchema,
   applyTemplateSchema,
   templateCategoryParamSchema,
@@ -50,6 +51,17 @@ describe('imageGenerationSchema', () => {
     const result = imageGenerationSchema.safeParse({
       prompt: 'Minimalistyczna filiżanka kawy',
       config: { aspectRatio: '1:1' },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('akceptuje Together quality + referenceImages', () => {
+    const result = imageGenerationSchema.safeParse({
+      prompt: 'Brand lifestyle shot',
+      provider: 'together',
+      quality: 'typography',
+      referenceImages: ['https://example.com/mascot.png'],
+      config: { aspectRatio: '4:3', quality: 'typography' },
     });
     expect(result.success).toBe(true);
   });
@@ -196,6 +208,27 @@ describe('scoreContentSchema / benchmarkContentSchema', () => {
         .success
     ).toBe(true);
     expect(scoreContentSchema.safeParse({ content: 'x' }).success).toBe(false);
+  });
+
+  describe('scoreImageSchema', () => {
+    it('wymaga imageUrl albo base64', () => {
+      expect(
+        scoreImageSchema.safeParse({
+          platform: 'Instagram',
+          briefSummary: 'hero shot',
+        }).success
+      ).toBe(false);
+    });
+
+    it('akceptuje payload z base64', () => {
+      expect(
+        scoreImageSchema.safeParse({
+          platform: 'Instagram',
+          base64: 'ZmFrZV9pbWFnZQ==',
+          mimeType: 'image/jpeg',
+        }).success
+      ).toBe(true);
+    });
   });
 
   it('benchmark wymaga niche', () => {

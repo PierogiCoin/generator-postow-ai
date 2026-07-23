@@ -157,26 +157,26 @@ export const InputForm: React.FC<InputFormProps> = ({
     [GenerationType.PostWithImage]: {
       label: t('generationTypes.PostWithImage'),
       icon: PhotoIcon,
-      description: 'Post z grafiką AI',
+      description: t('generationTypes.descriptions.PostWithImage'),
     },
     [GenerationType.Video]: {
       label: t('generationTypes.Video'),
       icon: VideoCameraIcon,
-      description: 'Wideo 16:9 / 9:16',
+      description: t('generationTypes.descriptions.Video'),
     },
-    [GenerationType.Idea]: { label: t('generationTypes.Idea'), icon: BulbIcon, description: 'Kreatywne koncepty' },
+    [GenerationType.Idea]: { label: t('generationTypes.Idea'), icon: BulbIcon, description: t('generationTypes.descriptions.Idea') },
     [GenerationType.Campaign]: {
       label: t('generationTypes.Campaign'),
       icon: CampaignIcon,
-      description: 'Strategia wielokanałowa',
+      description: t('generationTypes.descriptions.Campaign'),
     },
-    [GenerationType.ABTest]: { label: t('generationTypes.ABTest'), icon: BeakerIcon, description: 'Dwa warianty treści' },
+    [GenerationType.ABTest]: { label: t('generationTypes.ABTest'), icon: BeakerIcon, description: t('generationTypes.descriptions.ABTest') },
     [GenerationType.SeriesFollowUp]: {
       label: t('generationTypes.SeriesFollowUp'),
       icon: CollectionIcon,
-      description: 'Część 2 lub pogłębienie',
+      description: t('generationTypes.descriptions.SeriesFollowUp'),
     },
-    [GenerationType.Omnichannel]: { label: 'Omnichannel', icon: GlobeIcon, description: 'Wszystkie kanały na raz' },
+    [GenerationType.Omnichannel]: { label: t('generationTypes.Omnichannel'), icon: GlobeIcon, description: t('generationTypes.descriptions.Omnichannel') },
   };
 
   const repurposeAsConfig: Record<
@@ -186,22 +186,22 @@ export const InputForm: React.FC<InputFormProps> = ({
     [GenerationType.PostWithImage]: {
       label: t('repurposeAs.PostWithImage'),
       icon: PhotoIcon,
-      description: 'Adaptacja na post',
+      description: t('repurposeAs.descriptions.PostWithImage'),
     },
-    [GenerationType.Video]: { label: t('repurposeAs.Video'), icon: VideoCameraIcon, description: 'Adaptacja na wideo' },
-    [GenerationType.Idea]: { label: t('repurposeAs.Idea'), icon: BulbIcon, description: 'Burza mózgów na bazie posta' },
+    [GenerationType.Video]: { label: t('repurposeAs.Video'), icon: VideoCameraIcon, description: t('repurposeAs.descriptions.Video') },
+    [GenerationType.Idea]: { label: t('repurposeAs.Idea'), icon: BulbIcon, description: t('repurposeAs.descriptions.Idea') },
     [GenerationType.Campaign]: {
       label: t('repurposeAs.Campaign'),
       icon: CampaignIcon,
-      description: 'Pełna strategia z posta',
+      description: t('repurposeAs.descriptions.Campaign'),
     },
-    [GenerationType.ABTest]: { label: t('repurposeAs.ABTest'), icon: BeakerIcon, description: 'Stwórz testy porównawcze' },
+    [GenerationType.ABTest]: { label: t('repurposeAs.ABTest'), icon: BeakerIcon, description: t('repurposeAs.descriptions.ABTest') },
     [GenerationType.SeriesFollowUp]: {
       label: t('repurposeAs.SeriesFollowUp'),
       icon: CollectionIcon,
-      description: 'Wygeneruj kolejną część',
+      description: t('repurposeAs.descriptions.SeriesFollowUp'),
     },
-    [GenerationType.Omnichannel]: { label: 'Omnichannel', icon: GlobeIcon, description: 'Rozszerz na wszystkie kanały' },
+    [GenerationType.Omnichannel]: { label: t('repurposeAs.Omnichannel'), icon: GlobeIcon, description: t('repurposeAs.descriptions.Omnichannel') },
   };
 
   const autoPublishSection = showAutoPublishOption ? (

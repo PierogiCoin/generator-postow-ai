@@ -21,13 +21,13 @@ import { clearOnboardingPendingFirstGenerate } from '../../utils/onboarding';
 import { applyBrandLogoToImage, shouldApplyBrandLogo } from '../../utils/brandImagePipeline';
 import { persistImageUrl } from '../../utils/persistImageUrl';
 import { normalizeCtaUrl } from '../../utils/publishCaption';
-import { canAutoPublish, autoPublishToConnectedAccounts } from '../../services/autoPublishService';
 import {
     ensureCalendarSlotQuality,
     formatSlotQualityMessage,
 } from '../../services/calendarSlotQualityService';
 import { fulfillCalendarSlot, parseSlotScheduleTimestamp, buildCalendarSlotContext, buildPrefillFromCalendarSlot } from '../../services/calendarSlotService';
 import type { ApiErrorHandler, ToastFn } from './types';
+import { runAutoPublishIfEnabled } from './autoPublishFlow';
 
 interface GenerationHandlerDeps {
     addToast: ToastFn;
@@ -61,55 +61,14 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
         if (user?.id) clearOnboardingPendingFirstGenerate(user.id);
     };
 
-    const runAutoPublishIfEnabled = async (finalResult: GenerationResult, formData: FormData) => {
-        if (!user?.id || !canAutoPublish(finalResult, formData)) return;
-
-        genActions.setProgress('Sprawdzanie bramy jakości przed publikacją…');
-        try {
-            const { enforcePublishQualityGate } = await import('../../services/autoPublishService');
-            const gate = await enforcePublishQualityGate(finalResult, formData, user.id);
-            if (!gate.ok) {
-                showWarning('Auto-publikacja wstrzymana', gate.reason);
-                return;
-            }
-        } catch {
-            showWarning(
-                'Auto-publikacja wstrzymana',
-                'Nie udało się ocenić treści — opublikuj ręcznie po sprawdzeniu jakości.'
-            );
-            return;
-        }
-
-        genActions.setProgress('Publikowanie na połączonych kontach…');
-        try {
-            const summary = await autoPublishToConnectedAccounts(finalResult, formData, user.id, {
-                skipQualityGate: true,
-            });
-
-            if (summary.published.length > 0) {
-                const names = summary.published.map((p) => p.platform).join(', ');
-                showSuccess(
-                    `Opublikowano na ${summary.published.length} kontach`,
-                    names
-                );
-            }
-
-            if (summary.skipped.length > 0 && summary.published.length === 0) {
-                showWarning(
-                    'Brak publikacji',
-                    summary.skipped.map((s) => `${s.platform}: ${s.reason}`).join(' · ')
-                );
-            }
-
-            if (summary.failed.length > 0) {
-                showWarning(
-                    summary.published.length > 0 ? 'Część publikacji nie powiodła się' : 'Automatyczna publikacja nie powiodła się',
-                    summary.failed.map((f) => `${f.platform}: ${f.error}`).join(' · ')
-                );
-            }
-        } catch (error) {
-            handleApiError(error, 'errors.unknownError');
-        }
+    const runAutoPublish = async (finalResult: GenerationResult, formData: FormData) => {
+        await runAutoPublishIfEnabled({
+            userId: user?.id,
+            finalResult,
+            formData,
+            setProgress: genActions.setProgress,
+            handleApiError,
+        });
     };
 
     const finishCalendarBatchIfDone = () => {
@@ -197,7 +156,10 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 })}`
             );
             await continueCalendarBatch();
-        } catch {
+        } catch (error: unknown) {
+            console.warn('[useGenerationHandlers] calendar slot fulfillment failed', {
+                error: error instanceof Error ? error.message : String(error),
+            });
             showWarning(
                 'Treść wygenerowana',
                 'Nie udało się automatycznie dodać do kalendarza — zaplanuj ręcznie z wyniku.'
@@ -348,7 +310,7 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 markOnboardingFirstPostDone();
                 addToast('Omnichannel wygenerowany pomyślnie!', NotificationType.Success);
                 await fulfillPendingCalendarSlot(omnichannelResult, formData);
-                await runAutoPublishIfEnabled(omnichannelResult, formData);
+                await runAutoPublish(omnichannelResult, formData);
                 return;
             }
 
@@ -508,8 +470,25 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 }
             }
 
-            const streamedText = useGenerationStore.getState().result?.postText || '';
+            const streamedTextRaw = useGenerationStore.getState().result?.postText || '';
             genActions.setProgress(t('progress.analyzing_content'));
+
+            let streamedText = streamedTextRaw;
+            if (!isQuotaDepleted() && streamedTextRaw.trim().length > 0) {
+                try {
+                    const { enforceAntiSlopText } = await import('../../services/antiSlopService');
+                    const cleaned = await enforceAntiSlopText(streamedTextRaw, user.id);
+                    if (cleaned.rewritten) {
+                        streamedText = cleaned.text;
+                        genActions.updateResultText(cleaned.text);
+                    }
+                } catch (error: unknown) {
+                    console.warn('[useGenerationHandlers] anti-slop post processing failed, keeping streamed text', {
+                        error: error instanceof Error ? error.message : String(error),
+                    });
+                }
+            }
+
             genActions.startAnalyses();
 
             let details: Partial<GenerationResult> = {};
@@ -543,8 +522,14 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
                 genActions.setProgress('Nakładanie logo marki...');
                 try {
                     details.imageUrl = await applyBrandLogoToImage(details.imageUrl, activeBrandVoice.settings);
-                } catch {
-                    // Użyj oryginalnego obrazu przy błędzie brandingu
+                } catch (error: unknown) {
+                    console.warn('[useGenerationHandlers] logo overlay failed, using original image', {
+                        error: error instanceof Error ? error.message : String(error),
+                    });
+                    showWarning(
+                        'Nie udało się nałożyć logo',
+                        'Użyto oryginalnej grafiki bez brandingu logo.'
+                    );
                 }
             }
 
@@ -573,9 +558,16 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             genActions.generationSuccess(finalResult);
             markOnboardingFirstPostDone();
 
+            if (details.imageGenerationFailed && !isQuotaDepleted()) {
+                addToast(
+                    'Grafika nie powstała. Tekst jest gotowy — kliknij «Wygeneruj grafikę» na wyniku.',
+                    NotificationType.Error
+                );
+            }
+
             showSuccess('Treść wygenerowana pomyślnie!', 'Możesz ją teraz edytować lub zapisać');
             await fulfillPendingCalendarSlot(finalResult, formData);
-            await runAutoPublishIfEnabled(finalResult, formData);
+            await runAutoPublish(finalResult, formData);
         } catch (error) {
             const errorPayload = handleApiError(error, 'errors.generation_failed');
             genActions.generationFailure(errorPayload);
