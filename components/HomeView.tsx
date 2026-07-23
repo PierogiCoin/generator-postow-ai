@@ -413,6 +413,91 @@ const UseCasesSection = () => {
   );
 };
 
+const AllFeaturesGrid = () => {
+  const { t } = useTranslation();
+
+  const featureItems = [
+    { title: t('home.features_ecosystem.brand_voice_title'), desc: t('home.features_ecosystem.brand_voice_desc'), icon: SparklesIcon, gradient: 'from-amber-500 to-orange-500' },
+    { title: t('home.features_ecosystem.tech_radar_title'), desc: t('home.features_ecosystem.tech_radar_desc'), icon: TargetIcon, gradient: 'from-sky-500 to-blue-600' },
+    { title: t('home.features_ecosystem.omnichannel_title'), desc: t('home.features_ecosystem.omnichannel_desc'), icon: CampaignIcon, gradient: 'from-purple-500 to-indigo-600' },
+    { title: t('home.features_ecosystem.video_title'), desc: t('home.features_ecosystem.video_desc'), icon: PencilIcon, gradient: 'from-pink-500 to-rose-600' },
+    { title: t('home.features_ecosystem.repurpose_title'), desc: t('home.features_ecosystem.repurpose_desc'), icon: SendIcon, gradient: 'from-emerald-500 to-teal-600' },
+    { title: t('home.features_ecosystem.safety_title'), desc: t('home.features_ecosystem.safety_desc'), icon: TargetIcon, gradient: 'from-red-500 to-orange-600' },
+    { title: t('home.features_ecosystem.publishing_title'), desc: t('home.features_ecosystem.publishing_desc'), icon: SendIcon, gradient: 'from-indigo-500 to-cyan-500' },
+    { title: t('home.features_ecosystem.analytics_title'), desc: t('home.features_ecosystem.analytics_desc'), icon: ChartPieIcon, gradient: 'from-blue-500 to-violet-600' },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 border-t border-slate-200/70 dark:border-white/5">
+      <SectionHeader
+        title={t('home.features_ecosystem.title')}
+        subtitle={t('home.features_ecosystem.subtitle')}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {featureItems.map((item, idx) => {
+          const Icon = item.icon;
+          return (
+            <div
+              key={idx}
+              className="p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0b1728]/80 backdrop-blur-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 group"
+            >
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.gradient} flex items-center justify-center text-white mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
+                <Icon className="w-6 h-6" />
+              </div>
+              <h3 className="font-display text-lg font-bold text-slate-900 dark:text-white mb-2 leading-snug">
+                {item.title}
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                {item.desc}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+const ComparisonSection = () => {
+  const { t } = useTranslation();
+
+  return (
+    <section className="py-20 md:py-28 border-t border-slate-200/70 dark:border-white/5 bg-slate-900/40 rounded-3xl p-8 md:p-12 my-12">
+      <SectionHeader
+        title={t('home.comparison.title')}
+        subtitle={t('home.comparison.subtitle')}
+      />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="p-8 rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-red-950/20 space-y-4">
+          <h3 className="font-display text-xl font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
+            {t('home.comparison.before_title')}
+          </h3>
+          <ul className="space-y-3 text-sm text-slate-700 dark:text-slate-300">
+            <li className="flex items-start gap-2">❌ <span>{t('home.comparison.before_item1')}</span></li>
+            <li className="flex items-start gap-2">❌ <span>{t('home.comparison.before_item2')}</span></li>
+            <li className="flex items-start gap-2">❌ <span>{t('home.comparison.before_item3')}</span></li>
+            <li className="flex items-start gap-2">❌ <span>{t('home.comparison.before_item4')}</span></li>
+          </ul>
+        </div>
+
+        <div className="p-8 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/20 space-y-4 shadow-xl shadow-emerald-500/5">
+          <h3 className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            {t('home.comparison.after_title')}
+          </h3>
+          <ul className="space-y-3 text-sm text-slate-700 dark:text-slate-300 font-medium">
+            <li className="flex items-start gap-2">✅ <span>{t('home.comparison.after_item1')}</span></li>
+            <li className="flex items-start gap-2">✅ <span>{t('home.comparison.after_item2')}</span></li>
+            <li className="flex items-start gap-2">✅ <span>{t('home.comparison.after_item3')}</span></li>
+            <li className="flex items-start gap-2">✅ <span>{t('home.comparison.after_item4')}</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const StatsSection: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) => {
   const { t } = useTranslation();
   const { ref, isInView } = useInViewOnce<HTMLDivElement>({ rootMargin: '80px 0px' });
@@ -792,6 +877,14 @@ export const HomeView: React.FC<HomeViewProps> = () => {
 
         <Reveal reducedMotion={reducedMotion}>
           <FeaturesSection />
+        </Reveal>
+
+        <Reveal reducedMotion={reducedMotion}>
+          <AllFeaturesGrid />
+        </Reveal>
+
+        <Reveal reducedMotion={reducedMotion}>
+          <ComparisonSection />
         </Reveal>
 
         <Reveal reducedMotion={reducedMotion}>
