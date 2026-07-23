@@ -712,16 +712,16 @@ export const ContentCalendar: React.FC = () => {
             openDay(date);
           }
         }}
-        className={`group/day relative border rounded-2xl p-2 ${
+        className={`group/day relative border rounded-2xl p-2.5 ${
           tall ? 'min-h-[160px] sm:min-h-[200px]' : 'min-h-[120px] sm:min-h-[145px]'
         } flex flex-col cursor-pointer transition-all duration-300 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${
           isSelected
-            ? 'border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/10 ring-2 ring-cyan-500/30'
+            ? 'border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/10 ring-2 ring-cyan-500/30 shadow-lg shadow-cyan-500/10'
             : dragOverDate && dragOverDate.getTime() === date.getTime()
-              ? 'border-cyan-500 bg-cyan-500/15 dark:bg-cyan-500/15 ring-2 ring-cyan-500/40 scale-[1.02]'
+              ? 'border-cyan-500 bg-cyan-500/20 dark:bg-cyan-500/20 ring-2 ring-cyan-500/50 scale-[1.02] shadow-xl shadow-cyan-500/20'
               : today
-                ? 'border-cyan-400/60 bg-cyan-500/5 dark:bg-cyan-500/5 hover:border-cyan-500/50'
-                : 'border-slate-200/50 dark:border-white/5 bg-white/40 dark:bg-slate-950/20 hover:bg-white dark:hover:bg-slate-900/40 hover:border-cyan-500/35'
+                ? 'border-cyan-400/80 bg-gradient-to-br from-cyan-500/10 to-transparent dark:from-cyan-500/15 dark:to-transparent hover:border-cyan-500 shadow-md shadow-cyan-500/5'
+                : 'border-slate-200/70 dark:border-white/10 bg-white/60 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-900/60 hover:border-cyan-500/40 hover:shadow-md'
         }`}
         onDragOver={(e) => handleDragOver(e, date)}
         onDragLeave={(e) => handleDragLeave(e, date)}
