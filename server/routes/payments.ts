@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import {
   createCheckoutSession,
   createTrialCheckoutSession,
@@ -8,6 +9,11 @@ import {
   getUsageStats,
   PRICING,
 } from '../stripe.js';
+
+const subscriptionCheckoutSchema = z.object({
+  plan: z.enum(['creator', 'pro', 'agency', 'business', 'enterprise']),
+  interval: z.enum(['month', 'year']).optional().default('month'),
+});
 import { requireSupabaseAuth, SupabaseAuthRequest } from '../middleware/supabaseAuth.js';
 import { supabase } from '../supabase.js';
 import logger from '../logger.js';
@@ -43,19 +49,13 @@ router.post(
   requireSupabaseAuth,
   async (req: SupabaseAuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { plan, interval = 'month' } = req.body as {
-        plan?: string;
-        interval?: 'month' | 'year';
-      };
+      const parseResult = subscriptionCheckoutSchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ error: 'Nieprawidłowe parametry planu lub okresu rozliczeniowego' });
+      }
+
+      const { plan, interval } = parseResult.data;
       const userId = req.user!.id;
-
-      if (!plan || !isPaidPlan(plan)) {
-        return res.status(400).json({ error: 'Nieprawidłowy plan subskrypcji' });
-      }
-
-      if (interval !== 'month' && interval !== 'year') {
-        return res.status(400).json({ error: 'Nieprawidłowy okres rozliczenia' });
-      }
 
       const planConfig = PRICING.subscriptions[plan];
       const priceId =

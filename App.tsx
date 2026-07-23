@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Outlet, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -19,28 +19,11 @@ import {
   type OnboardingData,
 } from './utils/onboarding';
 
-// Lazy — modale i ciężkie panele ładowane na demand
-const ScheduleModal = lazy(() => import('./components/ScheduleModal'));
-const PricingModal = lazy(() => import('./components/PricingModal'));
-const LoginModal = lazy(() => import('./components/LoginModal'));
-const SignUpModal = lazy(() => import('./components/SignUpModal'));
-const RepurposeModal = lazy(() => import('./components/RepurposeModal'));
-const PublishingProgressModal = lazy(() => import('./components/PublishingProgressModal'));
-const SocialConnectionsModal = lazy(() => import('./components/SocialConnectionsModal'));
-const OnboardingWizard = lazy(() => import('./components/OnboardingWizard'));
-const VeoKeyModal = lazy(() => import('./components/VeoKeyModal'));
-const Chatbot = lazy(() => import('./components/Chatbot'));
-const ExitIntentPopup = lazy(() => import('./components/ExitIntentPopup'));
-const CookieConsent = lazy(() => import('./components/CookieConsent'));
-const KeyboardShortcutsModal = lazy(() => import('./components/KeyboardShortcutsModal'));
-const BrandVoiceManagerModal = lazy(() => import('./components/BrandVoiceManagerModal'));
-const AnalysisModal = lazy(() => import('./components/AnalysisModal'));
-const VideoStoryModal = lazy(() => import('./components/VideoStoryModal'));
-const SocialHistoryModal = lazy(() => import('./components/SocialHistoryModal'));
-const CommandPalette = lazy(() => import('./components/CommandPalette'));
+// Modale przeniesione do kontenera GlobalModals
+import { GlobalModals } from './components/GlobalModals';
 
 // Error Boundaries
-import { SectionErrorBoundary, ModalErrorBoundary } from './components/ErrorBoundary';
+import { SectionErrorBoundary } from './components/ErrorBoundary';
 
 // Importy z kontekstów i hooków
 import { useAuth } from './contexts/AuthContext';
@@ -51,7 +34,6 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 // Importy store'ów Zustand
 import { useUIStore } from './stores/uiStore';
 import { useGenerationStore } from './stores/generationStore';
-import { useDataStore } from './stores/dataStore';
 import { NotificationType, UserPlan } from './types';
 import type { VideoStoryStyle, VideoStoryProvider } from './components/VideoStoryModal';
 import { parseUserFacingError } from './utils/userFacingError';
@@ -63,16 +45,6 @@ import {
 import { getPlanByUserPlan } from './config/subscriptionPlans';
 import { useCreditGuard } from './components/UpgradePrompt';
 import { analytics, AnalyticsEvents } from './services/analytics';
-
-// Loading fallback dla lazy-loaded modali
-const ModalLoadingFallback: React.FC = () => (
-  <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-[100]">
-    <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-2xl flex items-center gap-3">
-      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Ładowanie...</span>
-    </div>
-  </div>
-);
 
 // 1. Ochrona Ścieżek
 export const ProtectedRoute = () => {
@@ -126,35 +98,18 @@ export const App: React.FC = () => {
       ? redirectAfterLogin
       : null;
 
-  // Zustand Stores - Selectors first for stability
+  // Zustand Stores - Selectors
   const {
-    isPricingModalOpen,
-    authModal,
-    isBrandVoiceManagerOpen,
-    isAnalysisModalOpen,
-    isVeoKeyModalNeeded,
-    isCommandPaletteOpen,
-    isVideoStoryModalOpen,
     isSocialConnectionsModalOpen,
-    isPublishingModalOpen,
-    publishingPlatform,
     videoStoryPost,
     setAuthModal,
     setIsPricingModalOpen,
-    setIsBrandVoiceManagerOpen,
-    setIsVeoKeyModalNeeded,
-    setIsCommandPaletteOpen,
-    setIsSocialConnectionsModalOpen,
-    setIsPublishingModalOpen
   } = useUIStore();
-
-  const { isRepurposeModalOpen, repurposedContent, isRepurposing, repurposeError, lastFormData, isGeneratingVideoStory, videoStoryProgress } = useGenerationStore();
-  const { brandVoiceProfiles, activeBrandVoiceId, isLearningStyle, itemToSchedule } = useDataStore();
 
   // Notification System
   const notificationSystem = useNotifications();
 
-  // Smart upgrade prompts — automatyczne powiadomienia o niskich kredytach
+  // Smart upgrade prompts
   const creditGuard = useCreditGuard();
 
   // Business Logic Handlers
@@ -168,7 +123,7 @@ export const App: React.FC = () => {
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Po udanym logowaniu wróć na chronioną ścieżkę (np. /dashboard)
+  // Po udanym logowaniu wróć na chronioną ścieżkę
   useEffect(() => {
     if (!user || !safeRedirect) return;
     navigate(safeRedirect, { replace: true });
@@ -257,7 +212,7 @@ export const App: React.FC = () => {
     });
   }, [user, showOnboarding, setIsPricingModalOpen, notificationSystem]);
 
-  // Powrót ze Stripe Checkout — odśwież plan i kredyty (webhook może przyjść z opóźnieniem)
+  // Powrót ze Stripe Checkout — odśwież plan i kredyty
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('checkout') !== 'success') return;
@@ -336,7 +291,6 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
 
   const handleGenerateVideoStory = async (
     style: VideoStoryStyle,
@@ -453,249 +407,60 @@ export const App: React.FC = () => {
     setIsSocialHistoryOpen(true);
   };
 
-  // --- WIDOK GŁÓWNY ---
-
   return (
     <div className="min-h-screen flex flex-col">
       <ConfirmDialog {...confirmDialogProps} />
       <AppVersionBanner />
       {creditGuard.prompt}
-      {showOnboarding && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <OnboardingWizard onComplete={handleOnboardingComplete} />
-        </Suspense>
-      )}
+
       <Header
         onUpgradeClick={() => setIsPricingModalOpen(true)}
         onLoginClick={() => setAuthModal('login')}
         onSignUpClick={() => setAuthModal('signup')}
         isCalendarEnabled={true}
-        notificationSystem={<NotificationSystem
-          notifications={notificationSystem.notifications}
-          toasts={notificationSystem.toasts}
-          unreadCount={notificationSystem.unreadCount}
-          onMarkAsRead={notificationSystem.markAsRead}
-          onMarkAllAsRead={notificationSystem.markAllAsRead}
-          onClear={notificationSystem.clearNotifications}
-          onRemoveToast={notificationSystem.removeToast}
-        />}
+        notificationSystem={
+          <NotificationSystem
+            notifications={notificationSystem.notifications}
+            toasts={notificationSystem.toasts}
+            unreadCount={notificationSystem.unreadCount}
+            onMarkAsRead={notificationSystem.markAsRead}
+            onMarkAllAsRead={notificationSystem.markAllAsRead}
+            onClear={notificationSystem.clearNotifications}
+            onRemoveToast={notificationSystem.removeToast}
+          />
+        }
       />
 
-      <main className={`flex-grow mx-auto w-full ${isHomePage ? 'max-w-none p-0 overflow-x-hidden' : 'max-w-7xl p-4 lg:p-8 pt-20 pb-20 sm:pb-4'}`}>
-        {/* Outlet renders HomeView, DashboardView, GeneratorView, etc. */}
+      <main
+        className={`flex-grow mx-auto w-full ${
+          isHomePage ? 'max-w-none p-0 overflow-x-hidden' : 'max-w-7xl p-4 lg:p-8 pt-20 pb-20 sm:pb-4'
+        }`}
+      >
         <SectionErrorBoundary sectionName="Main Content">
           <Outlet />
         </SectionErrorBoundary>
       </main>
 
-      {isHomePage && (
-        <Suspense fallback={null}>
-          <ExitIntentPopup />
-        </Suspense>
-      )}
-
-      <Suspense fallback={null}>
-        <CookieConsent />
-      </Suspense>
-
-      <Suspense fallback={null}>
-        {isCommandPaletteOpen && <CommandPalette onClose={() => setIsCommandPaletteOpen(false)} />}
-      </Suspense>
-
-      {isVeoKeyModalNeeded && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <ModalErrorBoundary modalName="Veo Key">
-            <VeoKeyModal
-              onClose={() => setIsVeoKeyModalNeeded(false)}
-              onRetry={() => {
-                if (lastFormData) {
-                  handlers.handleGenerate(lastFormData);
-                }
-              }}
-            />
-          </ModalErrorBoundary>
-        </Suspense>
-      )}
-
-      {/* Modals — lazy, montowane tylko gdy otwarte */}
-      {isPublishingModalOpen && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <PublishingProgressModal
-            isOpen={isPublishingModalOpen}
-            onClose={() => setIsPublishingModalOpen(false)}
-            platform={publishingPlatform}
-          />
-        </Suspense>
-      )}
-
-      {isPricingModalOpen && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <ModalErrorBoundary modalName="Pricing">
-            <PricingModal
-              isOpen={isPricingModalOpen}
-              onClose={() => setIsPricingModalOpen(false)}
-              onSubscriptionSuccess={handlers.handleClearStats}
-              onSignUpRequest={() => {
-                setIsPricingModalOpen(false);
-                setAuthModal('signup');
-              }}
-            />
-          </ModalErrorBoundary>
-        </Suspense>
-      )}
-
-      {authModal === 'login' && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <LoginModal
-            isOpen={true}
-            onClose={() => setAuthModal(null)}
-            onSwitchToSignUp={() => setAuthModal('signup')}
-            subtitle={
-              safeRedirect
-                ? t('auth.loginToContinue', 'Zaloguj się, aby kontynuować do wybranej sekcji.')
-                : undefined
-            }
-          />
-        </Suspense>
-      )}
-      {authModal === 'signup' && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <SignUpModal isOpen={true} onClose={() => setAuthModal(null)} onSwitchToLogin={() => setAuthModal('login')} />
-        </Suspense>
-      )}
-
-      {!!itemToSchedule && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <ScheduleModal
-            isOpen={!!itemToSchedule}
-            onClose={handlers.handleCloseScheduleModal}
-            onConfirm={handlers.handleConfirmSchedule}
-            itemToSchedule={itemToSchedule}
-          />
-        </Suspense>
-      )}
-
-      {isRepurposeModalOpen && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <RepurposeModal
-            isOpen={isRepurposeModalOpen}
-            onClose={handlers.handleCloseRepurposeModal}
-            repurposedContent={repurposedContent}
-            isRepurposing={isRepurposing}
-            error={repurposeError}
-            originalPost={useGenerationStore.getState().result}
-            onUse={(content) => {
-              const currentResult = useGenerationStore.getState().result;
-              if (currentResult) {
-                const newText = typeof content === 'string'
-                  ? content
-                  : `${content.title}\n\n${content.text}${content.visualIdea ? `\n\n[Pomysł na wizualizację: ${content.visualIdea}]` : ''}`;
-                const updatedResult = { ...currentResult, postText: newText };
-                handlers.handleSetResult(updatedResult);
-              }
-              handlers.handleCloseRepurposeModal();
-            }}
-          />
-        </Suspense>
-      )}
-
-      <Suspense fallback={<ModalLoadingFallback />}>
-        {isBrandVoiceManagerOpen && (
-          <ModalErrorBoundary modalName="Brand Voice Manager">
-            <BrandVoiceManagerModal
-              isOpen={isBrandVoiceManagerOpen}
-              onClose={() => setIsBrandVoiceManagerOpen(false)}
-              profiles={brandVoiceProfiles}
-              onSave={handlers.handleSaveBrandVoiceProfile}
-              onDelete={handlers.handleDeleteBrandVoiceProfile}
-              onSetActive={handlers.handleSetActiveBrandVoice}
-              activeId={activeBrandVoiceId}
-              onLearnFromFavorites={handlers.handleLearnFromFavorites}
-              onLearnFromHistory={handlers.handleLearnFromHistory}
-              onLearnFromCompetitors={handlers.handleLearnFromCompetitors}
-              onExtractFromUrl={handlers.handleExtractFromUrl}
-              isLearningStyle={isLearningStyle}
-            />
-          </ModalErrorBoundary>
-        )}
-      </Suspense>
-      <Suspense fallback={<ModalLoadingFallback />}>
-        {isAnalysisModalOpen && (
-          <ModalErrorBoundary modalName="Analysis">
-            <AnalysisModal
-              isOpen={isAnalysisModalOpen}
-              onClose={handlers.handleCloseAnalysisModal}
-              itemToAnalyze={handlers.itemToAnalyze}
-              onAnalyze={handlers.handleRunHistoryAnalysis}
-              result={handlers.analysisResult}
-              isLoading={handlers.isPerformingAnalysis}
-              error={handlers.analysisError}
-            />
-          </ModalErrorBoundary>
-        )}
-      </Suspense>
-      <Suspense fallback={<ModalLoadingFallback />}>
-        {isVideoStoryModalOpen && (
-          <ModalErrorBoundary modalName="Video Story">
-            <VideoStoryModal
-              isOpen={isVideoStoryModalOpen}
-              onClose={handlers.handleCloseVideoStoryModal}
-              onApplyToPost={handleApplyVideoToPost}
-              post={videoStoryPost}
-              onGenerate={handleGenerateVideoStory}
-              isGenerating={isGeneratingVideoStory}
-              progressStatus={videoStoryProgress}
-              generatedVideo={generatedVideo}
-            />
-          </ModalErrorBoundary>
-        )}
-      </Suspense>
-
-      {isSocialConnectionsModalOpen && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <ModalErrorBoundary modalName="Social Connections">
-            <SocialConnectionsModal
-              isOpen={isSocialConnectionsModalOpen}
-              onClose={() => setIsSocialConnectionsModalOpen(false)}
-              connections={socialConnections}
-              onConnect={handleConnectSocial}
-              onDisconnect={handleDisconnectSocial}
-              onRefresh={loadSocialConnections}
-              onViewHistory={handleViewSocialHistory}
-            />
-          </ModalErrorBoundary>
-        </Suspense>
-      )}
-
-      <SectionErrorBoundary sectionName="Chatbot">
-        {!isHomePage && (
-          <Suspense fallback={null}>
-            <Chatbot />
-          </Suspense>
-        )}
-      </SectionErrorBoundary>
-
-      <Suspense fallback={<ModalLoadingFallback />}>
-        {user && isSocialHistoryOpen && (
-          <ModalErrorBoundary modalName="Social History">
-            <SocialHistoryModal
-              isOpen={isSocialHistoryOpen}
-              onClose={() => setIsSocialHistoryOpen(false)}
-              connection={connectionForHistory}
-              userId={user.id}
-            />
-          </ModalErrorBoundary>
-        )}
-      </Suspense>
-
-      {isKeyboardShortcutsOpen && (
-        <Suspense fallback={<ModalLoadingFallback />}>
-          <KeyboardShortcutsModal
-            isOpen={isKeyboardShortcutsOpen}
-            onClose={() => setIsKeyboardShortcutsOpen(false)}
-          />
-        </Suspense>
-      )}
+      <GlobalModals
+        isHomePage={isHomePage}
+        showOnboarding={showOnboarding}
+        safeRedirect={safeRedirect}
+        handlers={handlers}
+        handleOnboardingComplete={handleOnboardingComplete}
+        generatedVideo={generatedVideo}
+        handleGenerateVideoStory={handleGenerateVideoStory}
+        handleApplyVideoToPost={handleApplyVideoToPost}
+        socialConnections={socialConnections}
+        handleConnectSocial={handleConnectSocial}
+        handleDisconnectSocial={handleDisconnectSocial}
+        loadSocialConnections={loadSocialConnections}
+        handleViewSocialHistory={handleViewSocialHistory}
+        isSocialHistoryOpen={isSocialHistoryOpen}
+        setIsSocialHistoryOpen={setIsSocialHistoryOpen}
+        connectionForHistory={connectionForHistory}
+        isKeyboardShortcutsOpen={isKeyboardShortcutsOpen}
+        setIsKeyboardShortcutsOpen={setIsKeyboardShortcutsOpen}
+      />
     </div>
   );
 };

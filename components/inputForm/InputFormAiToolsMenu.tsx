@@ -52,7 +52,7 @@ export const InputFormAiToolsMenu: React.FC<InputFormAiToolsMenuProps> = ({
 
       {open && (
         <div
-          className="absolute right-0 z-50 mt-2 w-80 max-h-[min(480px,75vh)] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl py-2"
+          className="absolute right-0 z-50 mt-2 w-80 max-h-[min(480px,75vh)] overflow-y-auto rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl py-2 animate-dropdown-enter transition-all origin-top-right"
           role="menu"
         >
           {panels.map((category, catIdx) => (
