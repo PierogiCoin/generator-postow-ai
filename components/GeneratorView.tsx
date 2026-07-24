@@ -364,9 +364,10 @@ export const GeneratorView: React.FC = () => {
                 className="fixed inset-y-0 left-0 z-50 w-[min(340px,92vw)] p-3 sm:p-4 lg:p-0 lg:static lg:z-auto lg:w-[300px] xl:w-[340px] lg:flex-shrink-0 lg:sticky lg:top-8 lg:self-start lg:h-[calc(100vh-8rem)]"
                 aria-label={t('sidebar.title', 'Biblioteka')}
             >
-                <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-lg lg:shadow-sm">
-                    <div className="p-4 lg:p-5 pb-3 flex-shrink-0 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
-                        <h3 className="text-sm font-display font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <div className="h-full flex flex-col bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-xl lg:shadow-md">
+                    <div className="p-4 lg:p-5 pb-3 flex-shrink-0 flex items-center justify-between border-b border-slate-100 dark:border-slate-800/80">
+                        <h3 className="text-sm font-display font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
+                            <SparklesIcon className="w-4 h-4 text-indigo-500" />
                             {t('sidebar.title', 'Biblioteka')}
                         </h3>
                         <button
