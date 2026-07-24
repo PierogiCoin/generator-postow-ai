@@ -5,7 +5,7 @@
 
 import React from 'react';
 
-export type HomeAnchor = 'how-it-works' | 'features' | 'use-cases' | 'faq';
+export type HomeAnchor = 'problem' | 'solution' | 'methods' | 'branze' | 'how-it-works' | 'features' | 'use-cases' | 'faq';
 
 // ============================================================
 // Hooks
