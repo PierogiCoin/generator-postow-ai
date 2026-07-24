@@ -39,6 +39,13 @@ import {
 import { persistIndustryNiche } from '../utils/nicheContext';
 import type { IndustrySubNicheDef } from '../shared/industryPacks';
 import { setUserNiche } from '../utils/userNiche';
+import {
+  formatIndustriesLabel,
+  getUserIndustryIds,
+  toggleUserIndustry,
+  addUserIndustry,
+} from '../utils/userIndustries';
+import type { IndustryPackId } from '../utils/industryPacks';
 import type { StrategicIdea, Platform as PlatformType } from '../types';
 import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
@@ -82,6 +89,67 @@ const StatCard: React.FC<{
     </div>
 );
 
+const UserIndustriesManager: React.FC<{ userId: string; onChange: () => void }> = ({ userId, onChange }) => {
+    const packs = getAllIndustryPacks();
+    const [selected, setSelected] = useState<IndustryPackId[]>(() => getUserIndustryIds(userId));
+    const [busy, setBusy] = useState(false);
+
+    useEffect(() => {
+        setSelected(getUserIndustryIds(userId));
+    }, [userId]);
+
+    const handleToggle = async (id: IndustryPackId) => {
+        setBusy(true);
+        try {
+            const next = await toggleUserIndustry(id, { userId, syncRemote: true });
+            setSelected(next);
+            onChange();
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const label = formatIndustriesLabel(selected);
+
+    return (
+        <section className="space-y-3" aria-label="Twoje branże">
+            <div>
+                <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    Twoje branże
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {label
+                        ? <>Aktywne: <span className="font-semibold" style={{ color: 'var(--hero-accent)' }}>{label}</span>. Kliknij, żeby dodać lub usunąć.</>
+                        : 'Zaznacz jedną lub kilka branż — treści i pomysły dopasują się do konta.'}
+                </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {packs.map((pack) => {
+                    const active = selected.includes(pack.id);
+                    return (
+                        <button
+                            key={pack.id}
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void handleToggle(pack.id)}
+                            aria-pressed={active}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50 ${
+                                active
+                                    ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
+                                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
+                            }`}
+                        >
+                            <span aria-hidden>{pack.icon}</span>
+                            {pack.name}
+                            {active ? <span aria-hidden>✓</span> : <Plus className="w-3 h-3 opacity-60" aria-hidden />}
+                        </button>
+                    );
+                })}
+            </div>
+        </section>
+    );
+};
+
 const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> = ({ niche, userId }) => {
     const navigate = useNavigate();
     const matched = matchIndustryPack(niche);
@@ -108,6 +176,9 @@ const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> =
 
     const openPack = (pack: IndustryPack, topic?: string) => {
         const audience = persistIndustryNiche(pack, userId, niche);
+        if (userId) {
+            void addUserIndustry(pack.id, { userId, syncRemote: true });
+        }
         navigate('/generator', {
             state: {
                 prefillData: industryPackToFormPrefill(pack, topic, audience),
@@ -498,6 +569,7 @@ export const DashboardView: React.FC = () => {
     const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
 
     const [streak, setStreak] = React.useState(() => getStreakData());
+    const [nicheTick, setNicheTick] = useState(0);
 
     useEffect(() => {
         if (user) {
@@ -536,6 +608,7 @@ export const DashboardView: React.FC = () => {
     const oneWeekFromNow = Date.now() + 7 * 24 * 60 * 60 * 1000;
     const scheduledThisWeek = scheduledPosts.filter(p => p.scheduleTimestamp <= oneWeekFromNow).length;
     const bvNiche = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId)?.settings?.niche?.trim();
+    void nicheTick; // re-read niche after industry toggle
     const niche = bvNiche || getUserNiche(user.id);
     const nichePack = matchIndustryPack(niche);
     const quickPlaceholder = nichePack?.topicIdeas[0]
@@ -632,6 +705,7 @@ export const DashboardView: React.FC = () => {
 
             <QuickCommandBar />
 
+            <UserIndustriesManager userId={user.id} onChange={() => setNicheTick((n) => n + 1)} />
             <IndustryPackSection niche={niche} userId={user.id} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                 <StatCard

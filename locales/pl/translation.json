@@ -934,15 +934,34 @@
       "preview_tag_ai": "#ContentMarketing",
       "preview_tag_marketing": "#SocialMedia"
     },
+    "funnel": {
+      "steps_aria": "Kroki lejka",
+      "step1": "1. Branża",
+      "step2": "2. Konto",
+      "step3": "3. Pierwszy post",
+      "title": "Wybierz branżę — resztę dopasujemy",
+      "subtitle": "Zaznacz jedną lub kilka. Od razu przypiszemy je do konta i podpowiemy tematy, ton oraz platformę.",
+      "pick_label": "Wybierz branże",
+      "multi_hint": "Możesz zaznaczyć kilka — np. lokal + e-commerce.",
+      "selected_prefix": "Wybrane:",
+      "cta": "Zapisz branże i załóż konto",
+      "cta_logged_in": "Zapisz na koncie i przejdź dalej",
+      "secondary_cta": "Najpierw zobacz jak działa",
+      "saving": "Zapisuję…",
+      "proof_idle": "Zaznacz branżę, żeby zobaczyć spersonalizowaną ścieżkę.",
+      "proof": "Bez karty. Branże zapiszą się na koncie — później dodasz kolejne w panelu.",
+      "proof_logged_in": "Zapisujemy wybór na Twoim koncie. W dashboardzie zawsze dodasz kolejną branżę.",
+      "later_hint": "Zmienisz lub dodasz branże w każdej chwili."
+    },
     "how_it_works": {
-      "title": "Od briefu do posta",
-      "subtitle": "Trzy kroki. Bez przełączania narzędzi i bez pustej kartki.",
-      "step1_title": "Opisz cel",
-      "step1_desc": "Temat, odbiorcy i ton — tyle wystarczy, żeby zacząć.",
+      "title": "Od branży do posta",
+      "subtitle": "Krótki lejek: branża → konto → gotowy content pod Twój rynek.",
+      "step1_title": "Wybierz branżę",
+      "step1_desc": "Jedna lub kilka — przypisujemy je do konta i budujemy kontekst marki.",
       "step2_title": "Dopasuj styl",
-      "step2_desc": "Wybierz platformę i typ treści pod swój brand.",
+      "step2_desc": "Platforma, ton i pomysły pod Twoją niszę — bez pustej kartki.",
       "step3_title": "Generuj i publikuj",
-      "step3_desc": "Skopiuj, zaplanuj albo dopracuj propozycję przed publikacją."
+      "step3_desc": "Skopiuj, zaplanuj albo dopracuj. Kolejne branże dodasz później."
     },
     "features": {
       "title": "Studio zamiast stosu narzędzi",

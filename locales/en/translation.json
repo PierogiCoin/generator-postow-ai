@@ -931,15 +931,34 @@
       "preview_tag_ai": "#ContentMarketing",
       "preview_tag_marketing": "#SocialMedia"
     },
+    "funnel": {
+      "steps_aria": "Funnel steps",
+      "step1": "1. Industry",
+      "step2": "2. Account",
+      "step3": "3. First post",
+      "title": "Pick your industries — we’ll tailor the rest",
+      "subtitle": "Select one or more. We’ll attach them to your account and suggest topics, tone, and platforms.",
+      "pick_label": "Choose industries",
+      "multi_hint": "You can select several — e.g. cafe + e-commerce.",
+      "selected_prefix": "Selected:",
+      "cta": "Save industries & create account",
+      "cta_logged_in": "Save to account & continue",
+      "secondary_cta": "See how it works first",
+      "saving": "Saving…",
+      "proof_idle": "Select an industry to unlock your personalized path.",
+      "proof": "No card required. Industries save to your account — add more anytime in the dashboard.",
+      "proof_logged_in": "We’ll save your picks to your account. You can add another industry anytime.",
+      "later_hint": "Change or add industries whenever you want."
+    },
     "how_it_works": {
-      "title": "From brief to post",
-      "subtitle": "Three steps. No tool-switching. No blank page.",
-      "step1_title": "Describe the goal",
-      "step1_desc": "Topic, audience, and tone — that’s enough to start.",
+      "title": "From industry to post",
+      "subtitle": "A short funnel: industry → account → content for your market.",
+      "step1_title": "Choose industries",
+      "step1_desc": "One or many — we attach them to your account and build brand context.",
       "step2_title": "Match the style",
-      "step2_desc": "Pick the platform and content type for your brand.",
+      "step2_desc": "Platform, tone, and ideas for your niche — no blank page.",
       "step3_title": "Generate and publish",
-      "step3_desc": "Copy, schedule, or refine the draft before you post."
+      "step3_desc": "Copy, schedule, or refine. Add more industries later."
     },
     "features": {
       "title": "A studio, not a tool stack",

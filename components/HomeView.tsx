@@ -20,164 +20,13 @@ import {
   Reveal,
   SectionHeader,
 } from './homeViewUtils';
+import { IndustryFunnelHero } from './IndustryFunnelHero';
+import type { IndustryPackId } from '../utils/industryPacks';
 
 interface HomeViewProps {}
 
 const primaryCtaClass =
   'rounded-lg px-8 py-3.5 !bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white font-semibold shadow-none focus:!ring-[var(--hero-accent)]';
-
-const HeroPreview: React.FC<{ reducedMotion: boolean }> = ({ reducedMotion }) => {
-  const { t } = useTranslation();
-
-  return (
-    <div
-      className={`mt-12 md:mt-16 w-full ${reducedMotion ? '' : 'animate-home-preview'}`}
-      aria-hidden="true"
-    >
-      <div className={`rounded-2xl hero-glow-card bg-[#050d16]/90 backdrop-blur-2xl overflow-hidden ${reducedMotion ? '' : 'animate-home-float'}`}>
-        <div className="max-w-6xl mx-auto">
-          <div className="flex min-h-[360px] flex-col lg:flex-row">
-            <div className="w-full lg:w-[40%] p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-white/10 flex flex-col gap-5">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-400 mb-2">
-                  {t('home.hero.preview_topic_label')}
-                </p>
-                <div className="min-h-[72px] px-3.5 py-3 rounded-xl border border-white/10 bg-white/[0.04] text-sm text-slate-200 leading-relaxed shadow-inner">
-                  {t('home.hero.preview_topic')}
-                </div>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-2">
-                  {t('home.hero.preview_platform_label')}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg shadow-sky-500/20"
-                    style={{ backgroundColor: 'var(--hero-accent)' }}
-                  >
-                    {t('home.hero.preview_platform_ig')}
-                  </span>
-                  <span className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 border border-white/10 bg-white/5">
-                    {t('home.hero.preview_platform_li')}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-2">
-                  {t('home.hero.preview_tone_label')}
-                </p>
-                <div className="h-10 px-3.5 rounded-xl border border-white/10 bg-white/[0.04] flex items-center text-sm text-slate-300">
-                  {t('home.hero.preview_tone')}
-                </div>
-              </div>
-              <div
-                className="mt-auto h-11 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-500/25 transition-transform hover:scale-[1.02]"
-                style={{ backgroundColor: 'var(--hero-accent)' }}
-              >
-                <PencilIcon className="w-4 h-4" />
-                {t('home.hero.preview_generate')}
-              </div>
-            </div>
-
-            <div className="w-full lg:w-[60%] p-6 md:p-8 flex flex-col gap-4 bg-gradient-to-br from-[#0b1728] to-[#050d16]">
-              <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                <span className="text-sm font-bold text-white flex items-center gap-2">
-                  <SparklesIcon className="w-4 h-4 text-sky-400" />
-                  {t('home.hero.preview_label')}
-                </span>
-                <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-400">
-                  {t('home.hero.preview_status')}
-                </span>
-              </div>
-              <div className="space-y-4 flex-1">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-sky-400/90 mb-1.5">
-                    {t('home.hero.preview_hook')}
-                  </p>
-                  <p className="font-display text-xl font-extrabold text-white leading-snug">
-                    {t('home.hero.preview_topic')}
-                  </p>
-                </div>
-                <p className="text-sm text-slate-300 leading-relaxed max-w-lg">
-                  {t('home.hero.preview_body')}
-                </p>
-                <p className="text-sm font-semibold text-sky-400">
-                  {t('home.hero.preview_cta_line')}
-                </p>
-                <div className="flex gap-2 pt-2 text-xs text-slate-400">
-                  <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10">{t('home.hero.preview_tag_ai')}</span>
-                  <span className="px-2.5 py-1 rounded-md bg-white/5 border border-white/10">{t('home.hero.preview_tag_marketing')}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const HeroSection: React.FC<{ onNavigateToApp: () => void; reducedMotion: boolean; isLoggedIn: boolean }> = ({
-  onNavigateToApp,
-  reducedMotion,
-  isLoggedIn,
-}) => {
-  const { t } = useTranslation();
-
-  return (
-    <section className="relative w-full home-hero-wash text-white overflow-hidden">
-      <div className="absolute inset-0 home-grid-bg opacity-60 pointer-events-none" aria-hidden="true" />
-      <div
-        className="absolute inset-x-0 bottom-0 h-40 pointer-events-none"
-        style={{ background: 'linear-gradient(to top, #050d16, transparent)' }}
-        aria-hidden="true"
-      />
-
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-28 md:pt-32 pb-0 text-center">
-        <p
-          className={`font-display text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight text-white ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '0ms' }}
-        >
-          {t('home.hero.brand')}
-        </p>
-        <div
-          className={`mx-auto mt-5 h-px w-24 ${reducedMotion ? 'bg-[var(--hero-accent)]' : 'animate-home-line bg-[var(--hero-accent)]'}`}
-          aria-hidden="true"
-        />
-        <h1
-          className={`mt-6 text-xl sm:text-2xl md:text-3xl font-medium text-slate-200 tracking-tight leading-snug max-w-2xl mx-auto ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '120ms' }}
-        >
-          {t('home.hero.title')}
-        </h1>
-        <p
-          className={`mt-4 max-w-lg mx-auto text-base md:text-lg text-slate-400 leading-relaxed ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '220ms' }}
-        >
-          {t('home.hero.subtitle')}
-        </p>
-        <div
-          className={`mt-9 flex flex-col sm:flex-row justify-center items-center gap-3 ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '320ms' }}
-        >
-          <ModernButton variant="primary" size="lg" onClick={onNavigateToApp} className={primaryCtaClass}>
-            {t(isLoggedIn ? 'home.hero.cta_logged_in' : 'home.hero.cta')}
-          </ModernButton>
-          <ModernButton
-            variant="outline"
-            size="lg"
-            onClick={() => scrollToAnchor('how-it-works', reducedMotion)}
-            className="rounded-lg px-8 py-3.5 border-white/20 text-slate-200 bg-transparent hover:bg-white/5 hover:border-white/35 transition-colors duration-300"
-          >
-            {t('home.hero.secondary_cta')}
-          </ModernButton>
-        </div>
-
-        <HeroPreview reducedMotion={reducedMotion} />
-      </div>
-    </section>
-  );
-};
 
 const TrustBar: React.FC = () => {
   const { t } = useTranslation();
@@ -830,13 +679,21 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   const { t } = useTranslation();
 
   useSEO({
-    title: `${t('home.hero.brand')} — ${t('home.hero.title')}`,
-    description: t('home.hero.subtitle'),
+    title: `${t('home.hero.brand')} — ${t('home.funnel.title')}`,
+    description: t('home.funnel.subtitle'),
   });
 
   const handleNavigateToApp = () => {
     if (user) {
-      navigate('/generator');
+      navigate('/dashboard');
+    } else {
+      setAuthModal('signup');
+    }
+  };
+
+  const handleFunnelContinue = (_selectedIds: IndustryPackId[]) => {
+    if (user) {
+      navigate('/dashboard');
     } else {
       setAuthModal('signup');
     }
@@ -865,7 +722,13 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     <div className="relative pb-0 -mt-0">
       <ScrollProgressBar />
       <MobileLandingNav onPricingClick={handlePricingClick} />
-      <HeroSection onNavigateToApp={handleNavigateToApp} reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} />
+      <IndustryFunnelHero
+        reducedMotion={reducedMotion}
+        isLoggedIn={isLoggedIn}
+        userId={user?.id}
+        onContinue={handleFunnelContinue}
+        onSkipToHowItWorks={() => scrollToAnchor('how-it-works', reducedMotion)}
+      />
       <Reveal reducedMotion={reducedMotion}>
         <TrustBar />
       </Reveal>
