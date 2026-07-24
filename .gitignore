@@ -42,3 +42,5 @@ AGENTS.md
 # Google Cloud Service Account credentials
 gen-lang-client-*.json
 server/gen-lang-client-*.json
+
+.local-backup/
