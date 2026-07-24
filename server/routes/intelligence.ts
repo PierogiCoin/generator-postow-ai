@@ -428,9 +428,10 @@ JSON:
         let aiRecommendation = '';
         let sources: { title: string; url: string }[] = [];
 
-        if (competitorHandles.length > 0) {
-          const handles = (competitorHandles as string[]).map(normalizeHandle);
-          const prompt = `Competitive timing analyst. Użyj Google Search.
+        try {
+          if (competitorHandles.length > 0) {
+            const handles = (competitorHandles as string[]).map(normalizeHandle);
+            const prompt = `Competitive timing analyst. Użyj Google Search.
 
 DATA: ${todayPl()}
 KONKURENCI: ${handles.map((h) => `@${h}`).join(', ')}
@@ -454,48 +455,48 @@ JSON:
   ]
 }`;
 
-          const grounded = await runGroundedJsonGeneration<{
-            hourlyActivity?: HourlyDensity[];
-            timingGaps?: string[];
-            recommendation?: string;
-            weeklyPlan?: { weekday: number; hour: number; score: number; reason: string }[];
-          }>(prompt, {
-            systemInstruction: 'Ekspert harmonogramów social. Konkretne godziny. JSON only.',
-          });
+            const grounded = await runGroundedJsonGeneration<{
+              hourlyActivity?: HourlyDensity[];
+              timingGaps?: string[];
+              recommendation?: string;
+              weeklyPlan?: { weekday: number; hour: number; score: number; reason: string }[];
+            }>(prompt, {
+              systemInstruction: 'Ekspert harmonogramów social. Konkretne godziny. JSON only.',
+            });
 
-          competitorHourly = Array.isArray(grounded.data.hourlyActivity)
-            ? grounded.data.hourlyActivity
-            : [];
-          aiGaps = grounded.data.timingGaps || [];
-          aiRecommendation = grounded.data.recommendation || '';
-          sources = grounded.sources;
+            competitorHourly = Array.isArray(grounded.data.hourlyActivity)
+              ? grounded.data.hourlyActivity
+              : [];
+            aiGaps = grounded.data.timingGaps || [];
+            aiRecommendation = grounded.data.recommendation || '';
+            sources = grounded.sources;
 
-          // Parse text gaps into hourly cells if missing
-          for (const gap of aiGaps) {
-            const parsed = parseWeekdayHourLabel(gap);
-            if (parsed && !competitorHourly.some((c) => c.weekday === parsed.weekday && c.hour === parsed.hour)) {
-              competitorHourly.push({
-                weekday: parsed.weekday,
-                hour: parsed.hour,
-                density: 2,
-              });
-            }
-          }
-
-          if (Array.isArray(grounded.data.weeklyPlan)) {
-            for (const plan of grounded.data.weeklyPlan) {
-              if (typeof plan.weekday === 'number' && typeof plan.hour === 'number') {
+            // Parse text gaps into hourly cells if missing
+            for (const gap of aiGaps) {
+              const parsed = parseWeekdayHourLabel(gap);
+              if (parsed && !competitorHourly.some((c) => c.weekday === parsed.weekday && c.hour === parsed.hour)) {
                 competitorHourly.push({
-                  weekday: plan.weekday,
-                  hour: plan.hour,
-                  density: Math.max(1, 10 - (plan.score || 7)),
+                  weekday: parsed.weekday,
+                  hour: parsed.hour,
+                  density: 2,
                 });
               }
             }
-          }
-        } else {
-          // Bez konkurentów — ogólna analiza platformy z grounding
-          const prompt = `Social timing expert. Użyj Google Search.
+
+            if (Array.isArray(grounded.data.weeklyPlan)) {
+              for (const plan of grounded.data.weeklyPlan) {
+                if (typeof plan.weekday === 'number' && typeof plan.hour === 'number') {
+                  competitorHourly.push({
+                    weekday: plan.weekday,
+                    hour: plan.hour,
+                    density: Math.max(1, 10 - (plan.score || 7)),
+                  });
+                }
+              }
+            }
+          } else {
+            // Bez konkurentów — ogólna analiza platformy z grounding
+            const prompt = `Social timing expert. Użyj Google Search.
 
 NISZA: ${niche}, PLATFORMA: ${platform}, DATA: ${todayPl()}
 
@@ -506,16 +507,21 @@ JSON:
   "recommendation": "strategia"
 }`;
 
-          const grounded = await runGroundedJsonGeneration<{
-            hourlyActivity?: HourlyDensity[];
-            timingGaps?: string[];
-            recommendation?: string;
-          }>(prompt);
+            const grounded = await runGroundedJsonGeneration<{
+              hourlyActivity?: HourlyDensity[];
+              timingGaps?: string[];
+              recommendation?: string;
+            }>(prompt);
 
-          competitorHourly = grounded.data.hourlyActivity || [];
-          aiGaps = grounded.data.timingGaps || [];
-          aiRecommendation = grounded.data.recommendation || '';
-          sources = grounded.sources;
+            competitorHourly = grounded.data.hourlyActivity || [];
+            aiGaps = grounded.data.timingGaps || [];
+            aiRecommendation = grounded.data.recommendation || '';
+            sources = grounded.sources;
+          }
+        } catch (aiErr) {
+          logger.warn('[intelligence/schedule-gaps] AI grounded generation failed, using fallback metrics', aiErr);
+          aiRecommendation = `Zalecana publikacja w godzinach optymalnych dla platformy ${platform} (ok. 8:00 - 10:00 oraz 18:00 - 20:00).`;
+          aiGaps = ['Wt 09:30', 'Czw 18:30'];
         }
 
         const gapSlots = computeGapSlots(competitorHourly, userHeatmap, 14);

@@ -32,7 +32,7 @@ export const textGenerationSchema = z.object({
       topP: z.number().min(0).max(1).optional(),
       topK: z.number().min(0).max(100).optional(),
       stopSequences: z.array(z.string()).optional(),
-      systemInstruction: z.string().max(10000).optional(),
+      systemInstruction: z.string().max(50000).optional(),
       responseMimeType: z.string().optional(),
       tools: z.array(z.record(z.string(), z.unknown())).optional(),
     })

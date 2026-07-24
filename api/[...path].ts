@@ -12,12 +12,24 @@ export const config = {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   let rawUrl = req.url || '';
-  // Vercel serverless request path usually arrives as /api/... or /api/[...path]
-  if (!rawUrl.startsWith('/api/')) {
+  // Gdy Vercel przekazuje zapytanie do catch-all /api/[...path], req.url to /api/[...path] lub req.query.path zawiera segmenty.
+  if (rawUrl.includes('[...path]') || !rawUrl.startsWith('/api/')) {
     const segments = req.query.path;
-    const suffix = Array.isArray(segments) ? segments.join('/') : segments || '';
+    const suffix = Array.isArray(segments)
+      ? segments.join('/')
+      : typeof segments === 'string'
+        ? segments
+        : '';
     const queryIndex = rawUrl.indexOf('?');
-    const query = queryIndex >= 0 ? rawUrl.slice(queryIndex) : '';
+    let query = queryIndex >= 0 ? rawUrl.slice(queryIndex) : '';
+
+    if (query) {
+      const urlParams = new URLSearchParams(query);
+      urlParams.delete('path');
+      const queryString = urlParams.toString();
+      query = queryString ? `?${queryString}` : '';
+    }
+
     rawUrl = `/api/${suffix}${query}`;
   }
 
