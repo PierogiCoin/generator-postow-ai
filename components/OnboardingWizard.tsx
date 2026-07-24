@@ -10,6 +10,7 @@ import {
   isOnboardingDone,
 } from '../utils/onboarding';
 import { matchIndustryPack } from '../utils/industryPacks';
+import { setUserNiche } from '../utils/userNiche';
 
 export type { OnboardingData };
 export { isOnboardingDone };
@@ -24,9 +25,9 @@ const PLATFORM_OPTIONS = [
 ];
 
 const NICHE_SUGGESTIONS = [
-  'Gastronomia / lokal', 'Fryzjer / beauty', 'B2B SaaS', 'E-commerce / sklep online',
-  'Fitness & zdrowie', 'Moda & lifestyle', 'Biznes & marketing', 'Podróże',
-  'Technologia', 'Edukacja', 'Muzyka', 'Finanse osobiste',
+  'Gastronomia / lokal', 'Kawiarnia', 'Restauracja', 'Food truck', 'Piekarnia',
+  'Fryzjer / beauty', 'B2B SaaS', 'E-commerce / sklep online',
+  'Fitness & zdrowie', 'Moda & lifestyle', 'Edukacja & kursy', 'Finanse osobiste',
 ];
 
 const TONE_OPTIONS = [
@@ -91,10 +92,9 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     } finally {
       markOnboardingDone(userId ?? undefined);
       const suffix = userId ? `_${userId}` : '';
-      localStorage.setItem(`userNiche${suffix}`, niche);
+      setUserNiche(niche, userId);
       localStorage.setItem(`userPlatform${suffix}`, platform);
       localStorage.setItem(`userTone${suffix}`, tone);
-      localStorage.setItem('userNiche', niche);
       localStorage.setItem('userPlatform', platform);
       localStorage.setItem('userTone', tone);
       setSaving(false);

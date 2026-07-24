@@ -25,6 +25,9 @@ import { PhotoIcon } from './icons/PhotoIcon';
 import { computeBrandVoiceCompleteness } from '../utils/brandVoiceLearn';
 import { UsersIcon } from './icons/UsersIcon';
 import { useEscapeClose } from '../hooks/useEscapeClose';
+import { getAllIndustryPacks, matchIndustryPack } from '../utils/industryPacks';
+import { setUserNiche, getUserNiche } from '../utils/userNiche';
+import { BrandMemoryIngestPanel } from './BrandMemoryIngestPanel';
 
 interface BrandVoiceManagerModalProps {
     isOpen: boolean;
@@ -51,6 +54,7 @@ const emptyProfile: BrandVoiceProfile = {
         description: '',
         keywords: '',
         avoid: '',
+        niche: '',
         archetype: ToneArchetype.Expert,
         examplesToFollow: [],
         examplesToAvoid: [],
@@ -111,6 +115,10 @@ const ProfileForm: React.FC<{
 
     useEffect(() => {
         const initialSettings = { ...emptyProfile.settings, ...profile?.settings };
+        const niche =
+            initialSettings.niche?.trim() ||
+            getUserNiche(profile?.userId || undefined) ||
+            '';
         setFormData({
             id: profile?.id || `bv-${Date.now()}`,
             name: profile?.name || '',
@@ -121,12 +129,15 @@ const ProfileForm: React.FC<{
                 description: initialSettings.description ?? '',
                 keywords: initialSettings.keywords ?? '',
                 avoid: initialSettings.avoid ?? '',
+                niche,
                 examplesToFollow: initialSettings.examplesToFollow || [],
                 examplesToAvoid: initialSettings.examplesToAvoid || [],
             },
             teamId: profile?.teamId !== undefined ? profile.teamId : null
         });
     }, [profile]);
+
+    const matchedNichePack = matchIndustryPack(formData.settings.niche || '');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -200,6 +211,9 @@ const ProfileForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (formData.settings.niche?.trim()) {
+            setUserNiche(formData.settings.niche, formData.userId || undefined);
+        }
         onSave(formData);
     };
 
@@ -213,7 +227,18 @@ const ProfileForm: React.FC<{
                 </h3>
                 <div className="flex gap-2">
                     <ModernButton onClick={onCancel} variant="ghost" size="sm">Anuluj</ModernButton>
-                    <ModernButton onClick={() => onSave(formData)} variant="primary" size="sm">Zapisz Profil</ModernButton>
+                    <ModernButton
+                        onClick={() => {
+                            if (formData.settings.niche?.trim()) {
+                                setUserNiche(formData.settings.niche, formData.userId || undefined);
+                            }
+                            onSave(formData);
+                        }}
+                        variant="primary"
+                        size="sm"
+                    >
+                        Zapisz Profil
+                    </ModernButton>
                 </div>
             </div>
 
@@ -273,6 +298,53 @@ const ProfileForm: React.FC<{
                             onChange={handleChange}
                             placeholder="np. jakość, lokalnie, tradycja, rodzinna atmosfera"
                         />
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Branża / nisza</label>
+                            <input
+                                name="niche"
+                                value={formData.settings.niche || ''}
+                                onChange={handleChange}
+                                list="brand-voice-niche-suggestions"
+                                className="w-full bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-lg p-3 text-sm focus:border-[var(--hero-accent)] transition-all outline-none"
+                                placeholder="np. kawiarnia, fryzjer, B2B SaaS..."
+                            />
+                            <datalist id="brand-voice-niche-suggestions">
+                                {getAllIndustryPacks().map((p) => (
+                                    <option key={p.id} value={p.name} />
+                                ))}
+                                <option value="Kawiarnia" />
+                                <option value="Restauracja" />
+                                <option value="Food truck" />
+                                <option value="Piekarnia" />
+                            </datalist>
+                            <div className="flex flex-wrap gap-1.5">
+                                {getAllIndustryPacks().slice(0, 8).map((p) => (
+                                    <button
+                                        key={p.id}
+                                        type="button"
+                                        onClick={() =>
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                settings: { ...prev.settings, niche: p.name },
+                                            }))
+                                        }
+                                        className={`px-2 py-1 text-[10px] font-bold rounded-md border ${
+                                            formData.settings.niche === p.name
+                                                ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
+                                                : 'border-slate-200 dark:border-slate-700 text-slate-500'
+                                        }`}
+                                    >
+                                        {p.icon} {p.name}
+                                    </button>
+                                ))}
+                            </div>
+                            {matchedNichePack && (
+                                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                    Pack: {matchedNichePack.name}
+                                    {matchedNichePack.subNicheLabel ? ` · ${matchedNichePack.subNicheLabel}` : ''}
+                                </p>
+                            )}
+                        </div>
                         <ModernInput
                             label="Unikaj (słowa i tematy)"
                             name="avoid"
@@ -495,6 +567,13 @@ const ProfileForm: React.FC<{
                             </ul>
                         </div>
                     )}
+
+                    <BrandMemoryIngestPanel
+                        userId={formData.userId || user?.id}
+                        defaultTitle={formData.settings.brandName || formData.name}
+                        websiteUrl={formData.settings.websiteUrl}
+                    />
+
                     {formData.settings.competitorIntel && (
                         <div className="p-4 bg-[var(--hero-accent-soft)] rounded-lg border border-[var(--hero-accent)]/20 space-y-3">
                             <p className="text-[10px] font-extrabold text-[var(--hero-accent)] uppercase tracking-widest flex items-center gap-2">

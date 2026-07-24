@@ -1,6 +1,12 @@
 // 🎨 CONTENT TEMPLATES & PRESETS
 // Szablony dla szybkiego tworzenia contentu
 
+import {
+  INDUSTRY_PACK_DEFS,
+  resolveIndustryPackForNiche,
+  type IndustryPackDef,
+} from '../shared/industryPacks.js';
+
 export interface ContentTemplate {
   id: string;
   name: string;
@@ -181,138 +187,31 @@ export const CONTENT_TEMPLATES: ContentTemplate[] = [
     icon: '💡',
     category: 'educational'
   },
-
-  // 🇵🇱 BRANŻE PL — starter packs
-  {
-    id: 'pl-fryzjer',
-    name: 'Fryzjer / beauty',
-    description: 'Promocje, metamorfozy, tipy pielęgnacyjne — Instagram + Stories',
-    platform: 'Instagram',
-    tone: 'Casual',
-    style: 'Aesthetic',
-    aspectRatio: '4:5',
-    includeMusic: true,
-    includeHashtags: true,
-    hashtagCount: 12,
-    videoLength: 'short',
-    icon: '💇',
-    category: 'industry',
-    topicHint: 'Salon fryzjerski: pokaż metamorfozę / promocję sezonową / tip pielęgnacyjny dla klientek w PL',
-    nicheKeywords: [
-      'fryzjer', 'beauty', 'uroda', 'salon', 'paznokcie', 'manicure', 'barber',
-      'kosmetycz', 'włos', 'makeup', 'makijaż', 'spa', 'pielęgnac',
-    ],
-    topicIdeas: [
-      'Metamorfoza klientki — przed/po i krótka historia zmiany',
-      'Promocja sezonowa — co obejmuje i do kiedy',
-      'Tip pielęgnacyjny: 3 kroki do zdrowych włosów w domu',
-      'Trend fryzjerski miesiąca — dla kogo pasuje',
-      'Behind the scenes salonu — przygotowanie stanowiska',
-      'Poznaj stylistkę / barbera z zespołu',
-      'FAQ: jak często strzyc / farbować',
-      'Oferta dla panów / barber — klasyczny look',
-      'Zaproszenie na konsultację kolorystyczną',
-      'Hiring: szukamy stylisty — warunki i jak się zgłosić',
-    ],
-  },
-  {
-    id: 'pl-lokal',
-    name: 'Lokal / gastronomia',
-    description: 'Menu dnia, atmosfera, wydarzenia — Facebook + Instagram',
-    platform: 'Facebook',
-    tone: 'Friendly',
-    style: 'Warm',
-    aspectRatio: '1:1',
-    includeMusic: false,
-    includeHashtags: true,
-    hashtagCount: 8,
-    videoLength: 'short',
-    icon: '🍽️',
-    category: 'industry',
-    topicHint: 'Lokal gastronomiczny w Polsce: menu dnia, nowość w karcie lub zaproszenie na event',
-    nicheKeywords: [
-      'gastro', 'gastronom', 'restaurac', 'jedzenie', 'gotowanie', 'kawiarn', 'kawiarni',
-      'food', 'bar', 'bistro', 'catering', 'kuchni', 'piekarn', 'cukierni', 'food truck',
-      'lokal', 'menu', 'chef', 'cafe', 'coffee',
-    ],
-    topicIdeas: [
-      'Menu dnia — 3 dania, cena i zaproszenie na lunch',
-      'Nowość w karcie: opisz smak, składniki i dla kogo jest idealna',
-      'Behind the scenes kuchni — przygotowanie dania dnia',
-      'Happy hour / event w lokalu — data, godzina, co na gości czeka',
-      'Rezerwacje na weekend — zachęć do stolika i krótkie CTA',
-      'Sezonowy produkt lub lokalny składnik w daniu tygodnia',
-      'Recenzja gościa / social proof — cytat i odpowiedź lokalu',
-      'Poznaj zespół — krótki portret kucharza lub baristy',
-      'Atmosfera lokalu — story z wnętrza i zaproszenie wpadnij',
-      'Hiring: szukamy do zespołu — rola, vibe, jak aplikować',
-    ],
-  },
-  {
-    id: 'pl-b2b-saas',
-    name: 'B2B SaaS',
-    description: 'Thought leadership, case study, CTA demo — LinkedIn',
-    platform: 'LinkedIn',
-    tone: 'Professional',
-    style: 'Authoritative',
-    aspectRatio: '1:1',
-    includeMusic: false,
-    includeHashtags: true,
-    hashtagCount: 5,
-    videoLength: 'medium',
-    icon: '🚀',
-    category: 'industry',
-    topicHint: 'Polski SaaS B2B: insight rynkowy, mini case study lub zaproszenie na demo z konkretną korzyścią',
-    nicheKeywords: [
-      'saas', 'b2b', 'software', 'startup', 'technolog', 'it ', ' oprogramowan',
-      'produkt cyfrowy', 'platforma', 'crm', 'automatyzac', 'devops', 'cloud',
-    ],
-    topicIdeas: [
-      'Insight rynkowy: 1 teza + konkretna obserwacja z PL/CEE',
-      'Mini case study: problem klienta → rozwiązanie → wynik liczbowy',
-      '3 błędy, które spowalniają wdrożenie (i jak ich uniknąć)',
-      'Zaproszenie na demo — konkretna korzyść w 15 minut',
-      'Feature spotlight: co nowego i dla kogo',
-      'Lekcja z supportu: pytanie, które słyszymy co tydzień',
-      'Porównanie „zanim / potem” u klienta',
-      'Checklist: czy Twój zespół jest gotowy na X',
-      'Hiring: szukamy do product / sales / CS',
-      'Podsumowanie miesiąca: metryka, którą warto śledzić',
-    ],
-  },
-  {
-    id: 'pl-ecom',
-    name: 'E-commerce',
-    description: 'Produkt, benefit, social proof — Instagram / TikTok',
-    platform: 'Instagram',
-    tone: 'Persuasive',
-    style: 'Bold',
-    aspectRatio: '9:16',
-    includeMusic: true,
-    includeHashtags: true,
-    hashtagCount: 10,
-    videoLength: 'short',
-    icon: '🛒',
-    category: 'industry',
-    topicHint: 'Sklep online PL: wyróżnij produkt, 3 benefity i CTA z linkiem do oferty',
-    nicheKeywords: [
-      'e-commer', 'ecommerce', 'ecom', 'sklep', 'online', 'sprzedaż', 'produkt',
-      'dropship', 'marketplace', 'fashion shop', 'buty', 'odzież', 'sklep internet',
-    ],
-    topicIdeas: [
-      'Produkt dnia: 3 benefity + CTA do oferty',
-      'Unboxing / first look — co klient dostaje w paczce',
-      'Social proof: opinia klienta i odpowiedź marki',
-      'Porównanie wariantów — który wybrać i dlaczego',
-      'Promocja limited — deadline i kod',
-      'Behind the scenes pakowania / produkcji',
-      'FAQ zakupowe: wysyłka, zwroty, rozmiary',
-      'Stylizacja / use case — produkt w codziennym użyciu',
-      'Bestsellery tygodnia — top 3 z krótkim uzasadnieniem',
-      'Story z dostawy — od zamówienia do drzwi',
-    ],
-  },
 ];
+
+function industryDefToTemplate(def: IndustryPackDef): ContentTemplate {
+  return {
+    id: def.id,
+    name: def.name,
+    description: def.description,
+    platform: def.platform,
+    tone: def.tone,
+    style: def.style,
+    aspectRatio: def.aspectRatio,
+    includeMusic: def.includeMusic,
+    includeHashtags: def.includeHashtags,
+    hashtagCount: def.hashtagCount,
+    videoLength: def.videoLength,
+    icon: def.icon,
+    category: 'industry',
+    topicHint: def.topicHint,
+    topicIdeas: def.topicIdeas,
+    nicheKeywords: def.nicheKeywords,
+  };
+}
+
+// 🇵🇱 BRANŻE PL — z shared/industryPacks (jedno źródło prawdy)
+CONTENT_TEMPLATES.push(...INDUSTRY_PACK_DEFS.map(industryDefToTemplate));
 
 // Helper functions
 export function getTemplateById(id: string): ContentTemplate | undefined {
@@ -327,35 +226,11 @@ export function getTemplatesByPlatform(platform: string): ContentTemplate[] {
   return CONTENT_TEMPLATES.filter(t => t.platform === platform);
 }
 
-function normalizeNiche(niche: string): string {
-  return niche
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .trim();
-}
-
-/** Dopasuj industry pack do free-text niszy. */
+/** Dopasuj industry pack do free-text niszy (z podbranżą gastro). */
 export function matchIndustryPack(niche: string): ContentTemplate | null {
-  const n = normalizeNiche(niche);
-  if (!n || n === 'marketing') return null;
-
-  const industry = getTemplatesByCategory('industry');
-  let best: { template: ContentTemplate; score: number } | null = null;
-
-  for (const template of industry) {
-    const keywords = template.nicheKeywords ?? [];
-    let score = 0;
-    for (const kw of keywords) {
-      const k = normalizeNiche(kw);
-      if (!k) continue;
-      if (n.includes(k) || k.includes(n)) score += k.length;
-    }
-    if (score > 0 && (!best || score > best.score)) {
-      best = { template, score };
-    }
-  }
-  return best?.template ?? null;
+  const { pack } = resolveIndustryPackForNiche(niche);
+  if (!pack) return null;
+  return industryDefToTemplate(pack);
 }
 
 export function applyTemplate(template: ContentTemplate, userInput: Partial<ContentTemplate>): ContentTemplate {

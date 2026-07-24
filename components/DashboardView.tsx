@@ -32,8 +32,11 @@ import {
   matchIndustryPack,
   getAllIndustryPacks,
   industryPackToFormPrefill,
+  getGastroSubNiches,
+  applySubNicheToPack,
   type IndustryPack,
 } from '../utils/industryPacks';
+import type { IndustrySubNicheDef } from '../shared/industryPacks';
 import type { StrategicIdea, Platform as PlatformType } from '../types';
 import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
@@ -81,10 +84,35 @@ const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
     const matched = matchIndustryPack(niche);
     const packs = matched ? [matched, ...getAllIndustryPacks().filter((p) => p.id !== matched.id)] : getAllIndustryPacks();
     const primary = packs[0];
-    const topicIdeas = (matched ?? primary).topicIdeas.slice(0, 8);
+    const [activeSub, setActiveSub] = useState<IndustrySubNicheDef | null>(null);
+    const gastroSubs = primary.id === 'pl-lokal' || matched?.id === 'pl-lokal' ? getGastroSubNiches() : [];
+
+    useEffect(() => {
+        if (matched?.subNicheId) {
+            const sub = getGastroSubNiches().find((s) => s.id === matched.subNicheId) ?? null;
+            setActiveSub(sub);
+        } else {
+            setActiveSub(null);
+        }
+    }, [matched?.subNicheId, matched?.id]);
+
+    const activePack: IndustryPack =
+        activeSub && (matched?.id === 'pl-lokal' || primary.id === 'pl-lokal')
+            ? applySubNicheToPack(matched?.id === 'pl-lokal' ? matched : primary, activeSub)
+            : matched ?? primary;
+
+    const topicIdeas = activePack.topicIdeas.slice(0, 8);
 
     const openPack = (pack: IndustryPack, topic?: string) => {
-        navigate('/generator', { state: { prefillData: industryPackToFormPrefill(pack, topic) } });
+        navigate('/generator', {
+            state: {
+                prefillData: industryPackToFormPrefill(
+                    pack,
+                    topic,
+                    pack.subNicheLabel ? `${pack.name} — ${pack.subNicheLabel}` : undefined
+                ),
+            },
+        });
     };
 
     return (
@@ -96,14 +124,14 @@ const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {matched
-                            ? <>Gotowe formaty i pomysły dla: <span className="font-semibold" style={{ color: 'var(--hero-accent)' }}>{matched.name}</span></>
+                            ? <>Gotowe formaty i pomysły dla: <span className="font-semibold" style={{ color: 'var(--hero-accent)' }}>{matched.subNicheLabel ? `${matched.name} · ${matched.subNicheLabel}` : matched.name}</span></>
                             : 'Wybierz starter pack branżowy — temat, platforma i ton wypełnią się same.'}
                     </p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {packs.slice(0, 4).map((pack) => {
+                {packs.slice(0, 8).map((pack) => {
                     const isPrimary = matched?.id === pack.id;
                     return (
                         <button
@@ -129,16 +157,44 @@ const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
                 })}
             </div>
 
+            {gastroSubs.length > 0 && (
+                <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                        Typ lokalu
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {gastroSubs.map((sub) => {
+                            const selected = activeSub?.id === sub.id;
+                            return (
+                                <button
+                                    key={sub.id}
+                                    type="button"
+                                    onClick={() => setActiveSub(selected ? null : sub)}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                                        selected
+                                            ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
+                                            : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
+                                    }`}
+                                >
+                                    <span aria-hidden>{sub.icon}</span>
+                                    {sub.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
             <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
-                    Szybkie pomysły
+                    Szybkie pomysły{activeSub ? ` · ${activeSub.label}` : ''}
                 </p>
                 <div className="flex flex-wrap gap-2">
                     {topicIdeas.map((idea) => (
                         <button
                             key={idea}
                             type="button"
-                            onClick={() => openPack(matched ?? primary, idea)}
+                            onClick={() => openPack(activePack, idea)}
                             className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[var(--hero-accent)]/45 hover:text-[var(--hero-accent)] transition-colors"
                         >
                             {idea.length > 56 ? `${idea.slice(0, 54)}…` : idea}

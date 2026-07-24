@@ -21,6 +21,8 @@ import { normalizeCtaUrl } from '../utils/publishCaption';
 import { buildCompetitorPromptBlock } from '../utils/competitorBrandVoice';
 import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
 import { retrieveBrandMemoryContext } from './brandMemoryService';
+import { getUserNiche } from '../utils/userNiche';
+import { matchIndustryPack } from '../utils/industryPacks';
 
 function attachBrandCtaUrl(
     details: Record<string, unknown>,
@@ -57,10 +59,19 @@ export async function* generateSocialMediaContentStream(
     let visualVibe: string | undefined;
     const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-2.5-flash";
 
+    const nicheResolved =
+        (brandVoice?.niche && brandVoice.niche.trim()) ||
+        (formData.audience && formData.audience.trim()) ||
+        getUserNiche(userId) ||
+        '';
+    const industryPack = nicheResolved ? matchIndustryPack(nicheResolved) : null;
+
     const contents = `Generate an engaging ${formData.platform} post. 
 TOPIC: ${formData.topic || 'General engaging content'}
 TONE: ${formData.tone}
 AUDIENCE: ${formData.audience || 'General public'}
+NISZA: ${nicheResolved || 'nieokreślona'}
+${industryPack ? `INDUSTRY_PACK: ${industryPack.name}${industryPack.subNicheLabel ? ` / ${industryPack.subNicheLabel}` : ''}` : ''}
 
 CRITICAL: Do not ask for more information. Do not respond conversationally. Provide ONLY the post content.`;
 
@@ -68,6 +79,17 @@ CRITICAL: Do not ask for more information. Do not respond conversationally. Prov
     let systemInstruction = `You are an elite social media growth expert. Your task is to generate high-converting, creative, and human-like social media content.
 CURRENT DATE: ${currentDateStr} (Ensure any temporal references, years, or dates in the post align with this date. Never reference outdated years like 2024 or 2025 unless explicitly asked to describe past events).
 ${buildAntiSlopBlock()}`;
+
+    if (nicheResolved) {
+        systemInstruction += `\n\nNISZA / BRANŻA: ${nicheResolved}.`;
+        if (industryPack) {
+            systemInstruction += ` Dopasowany pack: ${industryPack.name}${industryPack.subNicheLabel ? ` (${industryPack.subNicheLabel})` : ''}.`;
+            systemInstruction += ` Pisz konkretnie jak dla tej branży w Polsce — unikać generycznych frazesów marketingowych; używać realnych scenariuszy (np. menu dnia, metamorfoza, case study, produkt).`;
+            if (industryPack.topicHint) {
+                systemInstruction += ` Kontekst packa: ${industryPack.topicHint}.`;
+            }
+        }
+    }
 
     const platformInstructions: Record<string, string> = {
         [Platform.Facebook]: `

@@ -22,9 +22,12 @@ import { getUserNiche } from '../../utils/userNiche';
 import {
   matchIndustryPack,
   getAllIndustryPacks,
+  getGastroSubNiches,
+  applySubNicheToPack,
   type IndustryPack,
 } from '../../utils/industryPacks';
 import { useAuth } from '../../contexts/AuthContext';
+import type { IndustrySubNicheDef } from '../../shared/industryPacks';
 
 export interface InputFormQuickFlowProps {
   formData: FormData;
@@ -68,18 +71,29 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   const { t } = useTranslation();
   const { user } = useAuth();
   const [step, setStep] = useState(1);
+  const [activeSub, setActiveSub] = useState<IndustrySubNicheDef | null>(null);
 
   const niche = formData.audience?.trim() || getUserNiche(user?.id);
   const matchedPack = matchIndustryPack(niche);
-  const ideaPack: IndustryPack = matchedPack ?? getAllIndustryPacks()[0];
+  const basePack: IndustryPack = matchedPack ?? getAllIndustryPacks()[0];
+  const gastroSubs = basePack.id === 'pl-lokal' ? getGastroSubNiches() : [];
+
+  React.useEffect(() => {
+    if (matchedPack?.subNicheId) {
+      setActiveSub(gastroSubs.find((s) => s.id === matchedPack.subNicheId) ?? null);
+    }
+  }, [matchedPack?.subNicheId, matchedPack?.id]);
+
+  const ideaPack: IndustryPack =
+    activeSub && basePack.id === 'pl-lokal'
+      ? applySubNicheToPack(basePack, activeSub)
+      : basePack;
   const topicIdeas = ideaPack.topicIdeas.slice(0, 8);
 
   const applyIndustryIdea = (idea: string) => {
     onTopicChange(`<p>${idea}</p>`);
-    if (matchedPack) {
-      onPlatformChange(matchedPack.platform);
-      onToneChange(matchedPack.tone);
-    }
+    onPlatformChange(ideaPack.platform);
+    onToneChange(ideaPack.tone);
   };
 
   const STEPS = [
@@ -188,9 +202,35 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
               {matchedPack
-                ? t('form.quick.industryIdeas', 'Pomysły dla {{pack}}', { pack: matchedPack.name })
+                ? t('form.quick.industryIdeas', 'Pomysły dla {{pack}}', {
+                    pack: ideaPack.subNicheLabel
+                      ? `${matchedPack.name} · ${ideaPack.subNicheLabel}`
+                      : matchedPack.name,
+                  })
                 : t('form.quick.pickIndustryIdea', 'Gotowe pomysły branżowe')}
             </p>
+            {gastroSubs.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {gastroSubs.map((sub) => {
+                  const selected = activeSub?.id === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setActiveSub(selected ? null : sub)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md border ${
+                        selected
+                          ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
+                          : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      <span aria-hidden>{sub.icon}</span>
+                      {sub.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               {topicIdeas.map((idea) => (
                 <button
