@@ -399,6 +399,9 @@ export interface BrandVoiceSettings {
   visualStyle?: string;
   successPatterns?: string[];
 
+  /** Branża / nisza — napędza packi, chipy i NISZA w promptcie */
+  niche?: string;
+
   // Branding Assets
   logoUrl?: string;
   logoPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';

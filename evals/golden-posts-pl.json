@@ -5,8 +5,14 @@
     "platform": "Instagram",
     "topic": "darmowa dostawa weekend",
     "postText": "Piątek 18:00. Koszyk pełny, a kurier jeszcze nie wie.\n\nDo niedzieli 23:59 — darmowa dostawa od 99 zł.\nKod: WEEKEND.\n\nKtóry produkt wrzucasz pierwszy?",
-    "mustHave": ["hook", "cta"],
-    "mustNotContain": ["W dzisiejszym dynamicznym świecie", "Klucz do sukcesu"]
+    "mustHave": [
+      "hook",
+      "cta"
+    ],
+    "mustNotContain": [
+      "W dzisiejszym dynamicznym świecie",
+      "Klucz do sukcesu"
+    ]
   },
   {
     "id": "pl-ecom-02",
@@ -14,8 +20,14 @@
     "platform": "Facebook",
     "topic": "zwroty 30 dni",
     "postText": "Kupujesz online i boisz się, że rozmiar nie trafi?\n\nMamy 30 dni na zwrot — bez pytań, bez druku etykiety w domu (wysyłamy link).\n\nNapisz w komentarzu: jaki rozmiar bierzesz najczęściej?",
-    "mustHave": ["hook", "question"],
-    "mustNotContain": ["Nie szukaj dalej", "Unlock your potential"]
+    "mustHave": [
+      "hook",
+      "question"
+    ],
+    "mustNotContain": [
+      "Nie szukaj dalej",
+      "Unlock your potential"
+    ]
   },
   {
     "id": "pl-ecom-03",
@@ -23,8 +35,13 @@
     "platform": "TikTok",
     "topic": "unboxing nowej kolekcji",
     "postText": "[Overlay: 3 rzeczy, których nie zobaczysz na zdjęciach]\n\n1) Szew — wzmocniony jak w outdoorze\n2) Kolor — w słońcu wygląda inaczej niż w sklepie\n3) Waga — lżejsza niż myślisz\n\nZapisz, jak wybierasz kurtkę na jesień.",
-    "mustHave": ["hook"],
-    "mustNotContain": ["Have you ever wondered", "Czy kiedykolwiek zastanawiałeś się"]
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Have you ever wondered",
+      "Czy kiedykolwiek zastanawiałeś się"
+    ]
   },
   {
     "id": "pl-lokal-01",
@@ -32,8 +49,14 @@
     "platform": "Facebook",
     "topic": "obiad dnia",
     "postText": "Dziś w garnku: schabowy jak u babci + surówka z kiszonej kapusty.\n\nObiad dnia 32 zł — do wyczerpania (zwykle do 14:30).\nul. Długa 12, Kraków.\n\nRezerwacja stolika w DM albo telefon.",
-    "mustHave": ["specific", "cta"],
-    "mustNotContain": ["Warto pamiętać", "Rewolucja"]
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Warto pamiętać",
+      "Rewolucja"
+    ]
   },
   {
     "id": "pl-lokal-02",
@@ -41,8 +64,13 @@
     "platform": "Instagram",
     "topic": "otwarcie po remoncie",
     "postText": "Po 3 tygodniach kurzu wracamy.\n\nNowe lampy, stary przepis na kajzerkę.\nJutro od 7:00 — kawa za 1 zł przy pierwszym zakupie.\n\nTaguj kogoś z okolicy albo napisz DM — damy znać o kolejce.",
-    "mustHave": ["hook", "cta"],
-    "mustNotContain": ["In today's digital world"]
+    "mustHave": [
+      "hook",
+      "cta"
+    ],
+    "mustNotContain": [
+      "In today's digital world"
+    ]
   },
   {
     "id": "pl-fryzjer-01",
@@ -50,8 +78,14 @@
     "platform": "Instagram",
     "topic": "koloryzacja jesień",
     "postText": "Jesień ≠ tylko rudy.\n\nTen balayage zrobiliśmy na włosach po ciąży — bez rozjaśniania od nasady.\nCzas: 2,5 h. Efekt: 4 miesiące bez odrostu „paska”.\n\nWolne terminy: czwartek / sobota. Link w bio.",
-    "mustHave": ["specific", "cta"],
-    "mustNotContain": ["Odkryj magię", "Game-changer"]
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Odkryj magię",
+      "Game-changer"
+    ]
   },
   {
     "id": "pl-fryzjer-02",
@@ -59,8 +93,13 @@
     "platform": "Facebook",
     "topic": "strzyżenie męskie",
     "postText": "Fade, który nie wygląda jak z tutoriala z 2019.\n\nStrzyżenie + broda: 90 zł / 40 min.\nZapisy: poniedziałek–sobota, ostatni slot 19:00.\n\nNapisz „TERMIN” — odezwiemy się z wolnymi godzinami.",
-    "mustHave": ["cta", "specific"],
-    "mustNotContain": ["Podnieś swój biznes na wyższy poziom"]
+    "mustHave": [
+      "cta",
+      "specific"
+    ],
+    "mustNotContain": [
+      "Podnieś swój biznes na wyższy poziom"
+    ]
   },
   {
     "id": "pl-b2b-01",
@@ -68,8 +107,15 @@
     "platform": "LinkedIn",
     "topic": "oszczędność czasu w raporcie",
     "postText": "Zespół sprzedaży tracił 6h tygodniowo na kopiowanie leadów do Excela.\n\nPo wdrożeniu automatu: 40 minut. Te same dane, zero ręcznego CSV.\n\nPytanie do founderów: która czynność w Waszym CRM nadal jest „ctrl+c / ctrl+v”?",
-    "mustHave": ["hook", "number", "question"],
-    "mustNotContain": ["Klucz do sukcesu", "Take your business to the next level"]
+    "mustHave": [
+      "hook",
+      "number",
+      "question"
+    ],
+    "mustNotContain": [
+      "Klucz do sukcesu",
+      "Take your business to the next level"
+    ]
   },
   {
     "id": "pl-b2b-02",
@@ -77,8 +123,13 @@
     "platform": "LinkedIn",
     "topic": "onboarding klientów",
     "postText": "Onboarding, który kończy się w tygodniu 1 — nie w miesiącu 3.\n\nChecklist, którą dajemy nowym klientom (PDF, 1 strona):\n• dzień 1: integracja\n• dzień 3: pierwszy raport\n• dzień 7: review z CS\n\nChcesz checklistę? Napisz „ONBOARDING”.",
-    "mustHave": ["cta", "list"],
-    "mustNotContain": ["W dzisiejszym szybko zmieniającym się świecie"]
+    "mustHave": [
+      "cta",
+      "list"
+    ],
+    "mustNotContain": [
+      "W dzisiejszym szybko zmieniającym się świecie"
+    ]
   },
   {
     "id": "pl-b2b-03",
@@ -86,8 +137,12 @@
     "platform": "X",
     "topic": "pricing transparency",
     "postText": "Ukryte opłaty w SaaS to tax na zaufanie.\n\nNasz cennik: 1 plan, 1 cena, zero „enterprise mystery”.\nJeśli potrzebujesz custom SLA — mówimy to wprost na callu.",
-    "mustHave": ["hook"],
-    "mustNotContain": ["Look no further"]
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Look no further"
+    ]
   },
   {
     "id": "pl-ig-01",
@@ -95,8 +150,14 @@
     "platform": "Instagram",
     "topic": "UGC recenzja",
     "postText": "„Myślałam, że to marketing. Potem przymierzyłam.” — Ania, Wrocław\n\nZdjęcie od klientki (za zgodą).\nRozmiar M, kolor olive.\n\nTwój turn: oznacz nas w stories, odpiszemy kod −10%.",
-    "mustHave": ["social-proof", "cta"],
-    "mustNotContain": ["Here is", "Oto lista"]
+    "mustHave": [
+      "social-proof",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Here is",
+      "Oto lista"
+    ]
   },
   {
     "id": "pl-fb-01",
@@ -104,8 +165,12 @@
     "platform": "Facebook",
     "topic": "godziny świąteczne",
     "postText": "Wigilia: zamykamy o 14:00.\n26–27.12: nieczynne.\n28.12: wracamy normalnie 8–18.\n\nZamówienia świąteczne odbierzecie do 23.12 do 16:00.\nPytania? Komentarz albo telefon.",
-    "mustHave": ["specific"],
-    "mustNotContain": ["In today's fast-paced"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "In today's fast-paced"
+    ]
   },
   {
     "id": "pl-li-01",
@@ -113,8 +178,13 @@
     "platform": "LinkedIn",
     "topic": "błąd procesu",
     "postText": "Najdroższy błąd w naszym Q1: demo bez case’a z branży klienta.\n\nWin rate spadł o 18 pp w 2 tygodnie.\nNaprawa: 1 slide z metryką + 1 cytat klienta przed pricingiem.\n\nCo u Was zabija konwersję na demie?",
-    "mustHave": ["number", "question"],
-    "mustNotContain": ["It is important to remember"]
+    "mustHave": [
+      "number",
+      "question"
+    ],
+    "mustNotContain": [
+      "It is important to remember"
+    ]
   },
   {
     "id": "pl-tt-01",
@@ -122,8 +192,12 @@
     "platform": "TikTok",
     "topic": "przed po",
     "postText": "[Overlay: zanim powiesz „nie da się”]\n\nKlientka: 2 lata box dye.\nMy: 1 tonowanie, zero bleach od nasady.\n\nCzas: 90 min.\nZapisz, jak planujesz odrost.",
-    "mustHave": ["hook"],
-    "mustNotContain": ["Revolutionize your"]
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Revolutionize your"
+    ]
   },
   {
     "id": "pl-yt-01",
@@ -131,8 +205,12 @@
     "platform": "YouTube",
     "topic": "opis shorta o CRM",
     "postText": "Jak zabić 6h tygodniowo w CRM (bez nowego narzędzia)\n\nW shortcie: 3 kliknięcia, które większość zespołów omija.\nPełny tutorial: link w komentarzu.\nSubskrybuj, jeśli robisz sprzedaż B2B w PL.",
-    "mustHave": ["cta"],
-    "mustNotContain": ["Unlock your potential"]
+    "mustHave": [
+      "cta"
+    ],
+    "mustNotContain": [
+      "Unlock your potential"
+    ]
   },
   {
     "id": "pl-x-01",
@@ -140,8 +218,12 @@
     "platform": "X",
     "topic": "stock alert",
     "postText": "Restock: oliwkowy hoodie — 40 szt.\nPoprzednio zniknął w 11 godzin.\nLink w bio. Bez waitlisty.",
-    "mustHave": ["specific"],
-    "mustNotContain": ["Warto pamiętać"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "Warto pamiętać"
+    ]
   },
   {
     "id": "pl-ecom-04",
@@ -149,8 +231,13 @@
     "platform": "Instagram",
     "topic": "rozmiarówka",
     "postText": "Tabela rozmiarów, której nikt nie czyta — skrócona:\n\nS: 160–168\nM: 168–176\nL: 176–184\n\nNadal niepewność? Napisz wzrost + wagę w DM, podpowiemy w 5 min.",
-    "mustHave": ["cta", "list"],
-    "mustNotContain": ["Nie szukaj dalej"]
+    "mustHave": [
+      "cta",
+      "list"
+    ],
+    "mustNotContain": [
+      "Nie szukaj dalej"
+    ]
   },
   {
     "id": "pl-lokal-03",
@@ -158,8 +245,12 @@
     "platform": "Instagram",
     "topic": "kawa specialty",
     "postText": "Dziś w ekspresie: Ethiopia Guji, jasne palenie.\nNuty: bergamotka, herbata.\n\nPour-over 18 zł / espresso 12 zł.\nZostaw ❤️ jeśli wolisz light roast.",
-    "mustHave": ["specific"],
-    "mustNotContain": ["Odkryj magię"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "Odkryj magię"
+    ]
   },
   {
     "id": "pl-b2b-04",
@@ -167,8 +258,12 @@
     "platform": "LinkedIn",
     "topic": "bezpieczeństwo danych",
     "postText": "Klient zapytał: „Gdzie leżą nasze dane?”\n\nOdpowiedź w 1 zdaniu: EU region, szyfrowanie at rest, dostęp tylko przez SSO.\n\nJeśli Wasz vendor odpowiada „to zależy” — pytajcie dalej.",
-    "mustHave": ["hook"],
-    "mustNotContain": ["Game-changer"]
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Game-changer"
+    ]
   },
   {
     "id": "pl-fryzjer-03",
@@ -176,8 +271,13 @@
     "platform": "Facebook",
     "topic": "pielęgnacja po koloryzacji",
     "postText": "Po koloryzacji nie myj głowy szamponem „do włosów farbowanych” z dyskontu przez 72h.\n\nDlaczego: otwarta łuska + twarda woda = szybki blask out.\nDajemy zestaw travel w cenie zabiegu powyżej 250 zł.\nMasz pytania o pielęgnację? Pisacie w komentarzach.",
-    "mustHave": ["specific", "question"],
-    "mustNotContain": ["W dzisiejszym dynamicznym świecie"]
+    "mustHave": [
+      "specific",
+      "question"
+    ],
+    "mustNotContain": [
+      "W dzisiejszym dynamicznym świecie"
+    ]
   },
   {
     "id": "pl-ecom-05",
@@ -185,8 +285,13 @@
     "platform": "Facebook",
     "topic": "porównanie produktów",
     "postText": "Model A vs B — bez marketingowego bełkotu:\n\nA: lżejszy, na miasto\nB: wodoodporny, na wypad\n\nOba w promocji −15% do niedzieli.\nKtóry wybierasz? A czy B?",
-    "mustHave": ["question", "list"],
-    "mustNotContain": ["Klucz do sukcesu"]
+    "mustHave": [
+      "question",
+      "list"
+    ],
+    "mustNotContain": [
+      "Klucz do sukcesu"
+    ]
   },
   {
     "id": "pl-ig-02",
@@ -194,8 +299,12 @@
     "platform": "Instagram",
     "topic": "zespół",
     "postText": "Poznajcie Kasię — od 4 lat pamięta Wasze regularne zamówienia lepiej niż algorytm.\n\nPiątek: jej shift 12–20.\nPrzyjdźcie powiedzieć cześć (i wziąć latte).",
-    "mustHave": ["specific"],
-    "mustNotContain": ["Have you ever wondered"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "Have you ever wondered"
+    ]
   },
   {
     "id": "pl-li-02",
@@ -203,8 +312,13 @@
     "platform": "LinkedIn",
     "topic": "metryki north star",
     "postText": "Przestaliśmy optymalizować „MAU”.\n\nNorth star: tygodniowi aktywni użytkownicy, którzy eksportują raport.\nBo kliknięcie ≠ wartość.\n\nJaka metryka u Was udaje sukces, a nie jest sukcesem?",
-    "mustHave": ["question", "hook"],
-    "mustNotContain": ["Take your business to the next level"]
+    "mustHave": [
+      "question",
+      "hook"
+    ],
+    "mustNotContain": [
+      "Take your business to the next level"
+    ]
   },
   {
     "id": "pl-tt-02",
@@ -212,8 +326,13 @@
     "platform": "TikTok",
     "topic": "packing order",
     "postText": "[Overlay: jak pakujemy zamówienie w 47 sekund]\n\nPapier → produkt → wkładka z QR do zwrotu → taśma.\nZero styropianu.\n\nKomentarz „PACK” = dostaniesz kod na darmowy sticker pack.",
-    "mustHave": ["cta", "hook"],
-    "mustNotContain": ["Look no further"]
+    "mustHave": [
+      "cta",
+      "hook"
+    ],
+    "mustNotContain": [
+      "Look no further"
+    ]
   },
   {
     "id": "pl-x-02",
@@ -221,8 +340,12 @@
     "platform": "X",
     "topic": "changelog",
     "postText": "Ship: filtry zapisane per workspace.\nFix: timeout na eksporcie CSV >50k wierszy.\nNext: role „viewer” bez edycji.",
-    "mustHave": ["list"],
-    "mustNotContain": ["Warto pamiętać"]
+    "mustHave": [
+      "list"
+    ],
+    "mustNotContain": [
+      "Warto pamiętać"
+    ]
   },
   {
     "id": "pl-fb-02",
@@ -230,8 +353,13 @@
     "platform": "Facebook",
     "topic": "promocja midweek",
     "postText": "Wtorek i środa: strzyżenie damskie −20 zł.\nBez kombinowania z kodami — zniżka w cenie przy zapisie.\n\nWolne: jutro 11:00 i 15:30.\nDzwońcie lub piszcie na Messenger.",
-    "mustHave": ["specific", "cta"],
-    "mustNotContain": ["Odkryj magię"]
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Odkryj magię"
+    ]
   },
   {
     "id": "pl-ig-03",
@@ -239,8 +367,13 @@
     "platform": "Instagram",
     "topic": "behind the scenes",
     "postText": "3:40 w nocy. Kontrola jakości przed dropem.\n\nOdrzuciliśmy 12 sztuk — krzywy nadruk.\nWolimy mniej sztuk niż reklamacje.\n\nDrop jutro 10:00. Przypomnienie w stories.",
-    "mustHave": ["hook", "specific"],
-    "mustNotContain": ["In today's digital world"]
+    "mustHave": [
+      "hook",
+      "specific"
+    ],
+    "mustNotContain": [
+      "In today's digital world"
+    ]
   },
   {
     "id": "pl-lokal-04",
@@ -248,8 +381,13 @@
     "platform": "Facebook",
     "topic": "rekrutacja kelner",
     "postText": "Szukamy osoby na salę (weekend + 1 dzień w tygodniu).\n\nWymagania: punktualność, uśmiech, niekoniecznie doświadczenie.\nStawka: 28 zł/h + tipy.\nCV na: praca@lokal.pl albo DM.",
-    "mustHave": ["cta", "specific"],
-    "mustNotContain": ["Podnieś swój biznes na wyższy poziom"]
+    "mustHave": [
+      "cta",
+      "specific"
+    ],
+    "mustNotContain": [
+      "Podnieś swój biznes na wyższy poziom"
+    ]
   },
   {
     "id": "pl-b2b-05",
@@ -257,8 +395,13 @@
     "platform": "LinkedIn",
     "topic": "case study skrót",
     "postText": "Case: firma z 40 handlowcami.\nProblem: 3 narzędzia, 0 jednego źródła prawdy.\nPo 6 tygodniach: 1 dashboard, −22% czasu na reporting.\n\nPełny case (PDF, 4 strony) — komentarz „CASE”.",
-    "mustHave": ["number", "cta"],
-    "mustNotContain": ["Klucz do sukcesu"]
+    "mustHave": [
+      "number",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Klucz do sukcesu"
+    ]
   },
   {
     "id": "pl-ecom-06",
@@ -266,8 +409,12 @@
     "platform": "Instagram",
     "topic": "sustainability",
     "postText": "Nie jesteśmy „eco” na Instagramie.\n\nMamy: opakowania z recyklingu, zwroty bez folii bąbelkowej, 1 drzewo / 100 zamówień (raport Q — link w bio).\nPytania o łańcuch dostaw mile widziane.",
-    "mustHave": ["specific"],
-    "mustNotContain": ["Revolutionize your"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "Revolutionize your"
+    ]
   },
   {
     "id": "pl-fryzjer-04",
@@ -275,8 +422,13 @@
     "platform": "Instagram",
     "topic": "konsultacja online",
     "postText": "Nie wiesz, czy blond na Twoich włosach ma sens?\n\n15-min konsultacja video: 0 zł przy rezerwacji zabiegu, 49 zł bez.\nWyślij 2 zdjęcia (przód + tył) przed call’em.\nSloty: link w bio → „Konsultacja”.",
-    "mustHave": ["cta", "question"],
-    "mustNotContain": ["Have you ever wondered"]
+    "mustHave": [
+      "cta",
+      "question"
+    ],
+    "mustNotContain": [
+      "Have you ever wondered"
+    ]
   },
   {
     "id": "pl-tt-03",
@@ -284,8 +436,12 @@
     "platform": "TikTok",
     "topic": "kolejka w sobotę",
     "postText": "[Overlay: hack na sobotni brunch bez kolejki]\n\nZamów takeaway do 10:45 — odbiór boksem przy wejściu.\nSala nadal pełna. Ty z kawą w parku.\n\nZapisz na weekend.",
-    "mustHave": ["hook"],
-    "mustNotContain": ["Nie szukaj dalej"]
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Nie szukaj dalej"
+    ]
   },
   {
     "id": "pl-x-03",
@@ -293,8 +449,12 @@
     "platform": "X",
     "topic": "alert pogodowy",
     "postText": "Ulewa w centrum — ogródek zamknięty do 18.\nŚrodek lokalu: miejsca wolne.\nZupa dnia: krem z dyni.",
-    "mustHave": ["specific"],
-    "mustNotContain": ["W dzisiejszym dynamicznym świecie"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "W dzisiejszym dynamicznym świecie"
+    ]
   },
   {
     "id": "pl-yt-02",
@@ -302,8 +462,13 @@
     "platform": "YouTube",
     "topic": "opis unboxingu",
     "postText": "Unboxing Jesień ’26 — co jest w paczce i co odrzuciliśmy w QC\n\n0:00 intro\n0:22 hoodie\n1:10 wady partii testowej\n2:05 jak prać\n\nKod na −10%: YT10 (do piątku).",
-    "mustHave": ["cta", "list"],
-    "mustNotContain": ["Unlock your potential"]
+    "mustHave": [
+      "cta",
+      "list"
+    ],
+    "mustNotContain": [
+      "Unlock your potential"
+    ]
   },
   {
     "id": "pl-li-03",
@@ -311,8 +476,13 @@
     "platform": "LinkedIn",
     "topic": "hiring",
     "postText": "Szukamy Product Engineera (PL / remote-first UE).\n\nStack: TypeScript, Postgres, kolejki.\nNie: „ninja”, nie: 12-hour hustle.\nTak: ownership feature’a od briefu do metryki.\n\nJD: link w komentarzu. Referral: 8k PLN.",
-    "mustHave": ["list", "cta"],
-    "mustNotContain": ["Game-changer"]
+    "mustHave": [
+      "list",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Game-changer"
+    ]
   },
   {
     "id": "pl-fb-03",
@@ -320,8 +490,13 @@
     "platform": "Facebook",
     "topic": "FAQ wysyłka",
     "postText": "Najczęstsze pytania z DM — raz na tapecie:\n\n• Wysyłka: 24h robocze\n• InPost / DPD\n• Zwrot: 30 dni, etykieta w mailu\n\nCzego jeszcze nie ma w FAQ? Piszcie — dopiszemy.",
-    "mustHave": ["list", "question"],
-    "mustNotContain": ["It is important to remember"]
+    "mustHave": [
+      "list",
+      "question"
+    ],
+    "mustNotContain": [
+      "It is important to remember"
+    ]
   },
   {
     "id": "pl-ig-04",
@@ -329,8 +504,13 @@
     "platform": "Instagram",
     "topic": "produkt retail",
     "postText": "Ten olejek sprzedajemy nie dlatego, że ładnie pachnie.\n\nDlatego, że po 2 tygodniach widać mniej łamania na końcach (feedback 40+ klientek).\nCena: 89 zł. Tylko u nas po zabiegu −15%.",
-    "mustHave": ["social-proof", "specific"],
-    "mustNotContain": ["Odkryj magię"]
+    "mustHave": [
+      "social-proof",
+      "specific"
+    ],
+    "mustNotContain": [
+      "Odkryj magię"
+    ]
   },
   {
     "id": "pl-b2b-06",
@@ -338,8 +518,13 @@
     "platform": "LinkedIn",
     "topic": "integracja",
     "postText": "Nowa integracja: Slack → alert gdy deal >50k zmieni stage.\n\nSetup: 4 minuty, zero Zapiera.\nDla kogo: zespoły, które giną w mailach.\n\nDemo 15 min — „SLACK” w komentarzu.",
-    "mustHave": ["cta", "specific"],
-    "mustNotContain": ["Take your business to the next level"]
+    "mustHave": [
+      "cta",
+      "specific"
+    ],
+    "mustNotContain": [
+      "Take your business to the next level"
+    ]
   },
   {
     "id": "pl-lokal-05",
@@ -347,8 +532,13 @@
     "platform": "Instagram",
     "topic": "menu sezonowe",
     "postText": "Sezon: botwinka wraca na menu.\n\nChłodnik + młode ziemniaki — 29 zł.\nTylko dopóki jest botwina z dostawy (zwykle do środy).\n\nRezerwacje: link w bio.",
-    "mustHave": ["specific", "cta"],
-    "mustNotContain": ["Warto pamiętać"]
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Warto pamiętać"
+    ]
   },
   {
     "id": "pl-ecom-07",
@@ -356,8 +546,12 @@
     "platform": "TikTok",
     "topic": "fit check",
     "postText": "[Overlay: 1 bluza, 3 sylwetki]\n\nPetite / average / tall — ten sam rozmiar M.\nWniosek: bierz zgodnie z tabelą, nie z ego.\n\nLink + tabela: w bio.",
-    "mustHave": ["hook"],
-    "mustNotContain": ["Look no further"]
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Look no further"
+    ]
   },
   {
     "id": "pl-x-04",
@@ -365,7 +559,167 @@
     "platform": "X",
     "topic": "incident",
     "postText": "Incident 12:10–12:28 UTC: opóźnienia API EU.\nPrzyczyna: spike na eksporcie.\nStatus: mitigated. Postmortem jutro.",
-    "mustHave": ["specific"],
-    "mustNotContain": ["In today's fast-paced"]
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "In today's fast-paced"
+    ]
+  },
+  {
+    "id": "pl-fitness-01",
+    "industry": "fitness",
+    "platform": "Instagram",
+    "topic": "mini trening 5 minut",
+    "postText": "Masz 5 minut między Zoomami?\n\n3 ćwiczenia:\n1) przysiad do krzesła ×10\n2) pompka na kolanach ×8\n3) deska 30 s\n\nZrób to teraz — napisz w komentarzu „done”.",
+    "mustHave": [
+      "hook",
+      "cta"
+    ],
+    "mustNotContain": [
+      "W dzisiejszym dynamicznym świecie",
+      "Unlock your potential"
+    ]
+  },
+  {
+    "id": "pl-fitness-02",
+    "industry": "fitness",
+    "platform": "TikTok",
+    "topic": "mit vs fakt dieta",
+    "postText": "[Overlay: MIT vs FAKT]\n\nMIT: „po 18 nie jedz”.\nFAKT: liczy się bilans dnia, nie zegar.\n\nZapisz, jak ktoś Ci to znowu powie.",
+    "mustHave": [
+      "hook"
+    ],
+    "mustNotContain": [
+      "Have you ever wondered"
+    ]
+  },
+  {
+    "id": "pl-moda-01",
+    "industry": "moda",
+    "platform": "Instagram",
+    "topic": "1 rzecz 3 stylingi",
+    "postText": "Jedna marynarka. Trzy okazje.\n\n1) Biuro — z jeansami i białym tee\n2) Wieczór — sukienka + botki\n3) Weekend — oversize + sneakersy\n\nKtóry look bierzesz? Link w bio.",
+    "mustHave": [
+      "hook",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Look no further",
+      "Klucz do sukcesu"
+    ]
+  },
+  {
+    "id": "pl-moda-02",
+    "industry": "moda",
+    "platform": "TikTok",
+    "topic": "drop preview",
+    "postText": "[Overlay: DROP PIĄTEK 18:00]\n\n3 kolory. Limit 80 szt.\nKto pierwszy w koszyku — ten ma rozmiar.\n\nPowiadomienie włącz w bio.",
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "In today's fast-paced"
+    ]
+  },
+  {
+    "id": "pl-edukacja-01",
+    "industry": "edukacja",
+    "platform": "LinkedIn",
+    "topic": "lekcja 60 sekund",
+    "postText": "Jeden błąd w briefie kosztuje tydzień sprintu.\n\nZasada 60 sekund:\nnapisz „sukces wygląda jak…” zanim napiszesz „zrób X”.\n\nU Ciebie brief zaczyna się od celu czy od listy tasków?",
+    "mustHave": [
+      "hook",
+      "question"
+    ],
+    "mustNotContain": [
+      "Warto pamiętać",
+      "synergy"
+    ]
+  },
+  {
+    "id": "pl-edukacja-02",
+    "industry": "edukacja",
+    "platform": "Instagram",
+    "topic": "webinar zapis",
+    "postText": "Live w czwartek 19:00 — „Jak budować nawyk nauki w 15 min/dzień”.\n\nDostaniesz checklistę PDF.\nZapis: link w bio (miejsca: 120).",
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Rewolucja"
+    ]
+  },
+  {
+    "id": "pl-finanse-01",
+    "industry": "finanse",
+    "platform": "Instagram",
+    "topic": "mit vs fakt oszczędzanie",
+    "postText": "MIT: „najpierw zarób więcej, potem odkładaj”.\nFAKT: nawyk 10% działa też przy 3500 zł na rękę.\n\nPolicz dziś: ile to u Ciebie w złotówkach?",
+    "mustHave": [
+      "hook",
+      "question"
+    ],
+    "mustNotContain": [
+      "Unlock your potential",
+      "W dzisiejszym dynamicznym świecie"
+    ]
+  },
+  {
+    "id": "pl-finanse-02",
+    "industry": "finanse",
+    "platform": "LinkedIn",
+    "topic": "checklist kredyt",
+    "postText": "Przed kredytem hipotecznym sprawdź 3 rzeczy:\n1) RRSO, nie samą ratę\n2) koszty około (wycena, ubezpieczenie)\n3) bufor 6 miesięcy kosztów życia\n\nKtóry punkt najczęściej omijacie?",
+    "mustHave": [
+      "specific",
+      "question"
+    ],
+    "mustNotContain": [
+      "game-changer"
+    ]
+  },
+  {
+    "id": "pl-gastro-kawiarnia-01",
+    "industry": "lokal",
+    "platform": "Instagram",
+    "topic": "kawa tygodnia",
+    "postText": "Kawa tygodnia: Etiopia Guji (filter).\nNuty: jagoda, herbata, cytrus.\n\nW filiżance od dziś do niedzieli.\nul. Kwiatowa 7 — zapraszamy na slow morning.",
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "Warto pamiętać",
+      "Rewolucja"
+    ]
+  },
+  {
+    "id": "pl-gastro-foodtruck-01",
+    "industry": "lokal",
+    "platform": "Facebook",
+    "topic": "gdzie stoimy dziś",
+    "postText": "Dziś (pt) stoimy przy Placu Wolności, 12:00–20:00.\nHit: wrap z pulled pork + colesław.\n\nKolejka zwykle 10–15 min — warto.",
+    "mustHave": [
+      "specific",
+      "cta"
+    ],
+    "mustNotContain": [
+      "Have you ever wondered"
+    ]
+  },
+  {
+    "id": "pl-gastro-piekarnia-01",
+    "industry": "lokal",
+    "platform": "Instagram",
+    "topic": "swieze wypieki",
+    "postText": "Z pieca o 7:00: bagietka, drożdżówka z makiem, croissant maślany.\n\nDo 10:00 zwykle schodzi croisant.\nAdres: Piekarska 3.",
+    "mustHave": [
+      "specific"
+    ],
+    "mustNotContain": [
+      "Unlock your potential"
+    ]
   }
 ]

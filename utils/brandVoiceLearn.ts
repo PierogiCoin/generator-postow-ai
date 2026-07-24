@@ -110,6 +110,7 @@ export function computeBrandVoiceCompleteness(settings: BrandVoiceSettings): {
   const checks: { label: string; ok: boolean }[] = [
     { label: 'Nazwa marki', ok: Boolean(settings.brandName?.trim()) },
     { label: 'Opis marki', ok: Boolean(settings.description?.trim()) },
+    { label: 'Branża / nisza', ok: Boolean(settings.niche?.trim()) },
     { label: 'Słowa kluczowe', ok: Boolean(settings.keywords?.trim()) },
     { label: 'URL strony', ok: Boolean(settings.websiteUrl?.trim()) },
     { label: 'Styl wizualny', ok: Boolean(settings.visualStyle?.trim()) },

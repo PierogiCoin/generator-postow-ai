@@ -25,6 +25,8 @@ import { getPlatformVisualSpec, isAspectRatioAllowedForPlatform } from '../utils
 import { mergeCalendarPlans } from '../services/calendarCadenceService';
 import { buildTechNewsCalendarItems } from '../services/techRadarCalendar';
 import type { TechNewsItem } from '../services/techRadarService';
+import { resolveNicheContext } from '../utils/nicheContext';
+import { setUserNiche } from '../utils/userNiche';
 
 export interface UseInputFormControllerOptions {
   prefillData: Partial<FormData> | null;
@@ -115,6 +117,28 @@ export function useInputFormController({
       }
     }
   }, [user?.id]);
+
+  // Hydrate audience from Brand Voice niche / userNiche once profiles load
+  useEffect(() => {
+    const nicheCtx = resolveNicheContext({
+      userId: user?.id,
+      brandVoice: activeBrandVoice?.settings || null,
+      audience: null,
+    });
+    if (!nicheCtx.niche) return;
+    setFormData((prev) => {
+      if (prev.audience?.trim()) return prev;
+      return { ...prev, audience: nicheCtx.niche };
+    });
+  }, [user?.id, activeBrandVoiceId, activeBrandVoice?.settings?.niche]);
+
+  // Keep audience in sync when active Brand Voice niche changes
+  useEffect(() => {
+    const bvNiche = activeBrandVoice?.settings?.niche?.trim();
+    if (!bvNiche) return;
+    setUserNiche(bvNiche, user?.id);
+    setFormData((prev) => (prev.audience === bvNiche ? prev : { ...prev, audience: bvNiche }));
+  }, [activeBrandVoice?.settings?.niche, activeBrandVoiceId, user?.id]);
 
   const handleRestoreDraft = () => {
     if (storedDraft) {
@@ -216,6 +240,12 @@ export function useInputFormController({
     }
   };
 
+  const handleAudienceChange = (value: string) => {
+    const trimmed = value.trim();
+    setFormData((prev) => ({ ...prev, audience: trimmed }));
+    if (trimmed) setUserNiche(trimmed, user?.id);
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const key = `generator_post_draft_${user?.id || 'guest'}`;
@@ -291,6 +321,12 @@ export function useInputFormController({
     } else {
       setFormData(DEFAULT_FORM_DATA);
     }
+    setIsTemplateBrowserOpen(false);
+  };
+
+  const handleSelectIndustryPrefill = (prefill: Partial<FormData>) => {
+    setSelectedTemplate('');
+    setFormData((prev) => normalizeFormData({ ...prev, ...prefill }));
     setIsTemplateBrowserOpen(false);
   };
 
@@ -470,9 +506,11 @@ export function useInputFormController({
     handleSubmit,
     handleInputChange,
     handleRichTextChange,
+    handleAudienceChange,
     handlePlatformChange,
     handleGenerationTypeChange,
     handleSelectTemplate,
+    handleSelectIndustryPrefill,
     handleSaveTemplate,
     handleEditTemplate,
     handleDeleteTemplate,

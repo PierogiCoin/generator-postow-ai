@@ -1,4 +1,4 @@
-import React, { lazy } from 'react';
+import React, { lazy, useMemo } from 'react';
 import type { FormData, CustomTemplate } from '../../types';
 import { ContentType } from '../../types';
 import { SaveTemplateModal } from '../SaveTemplateModal';
@@ -8,6 +8,8 @@ import { ReverseImageModal } from '../ReverseImageModal';
 import { SectionErrorBoundary } from '../ErrorBoundary';
 import { FeaturePanelModal } from '../ui/FeaturePanelModal';
 import { stripTopicHtml } from '../../utils/inputFormMode';
+import { resolveNicheContext } from '../../utils/nicheContext';
+import { useDataStore } from '../../stores/dataStore';
 
 const TrendAnalysisPanel = lazy(() => import('../TrendAnalysisPanel').then((m) => ({ default: m.TrendAnalysisPanel })));
 const TechRadarPanel = lazy(() => import('./TechRadarPanel').then((m) => ({ default: m.TechRadarPanel })));
@@ -24,6 +26,7 @@ export interface InputFormModalsProps {
   brandVoiceDescription: string;
   templates: CustomTemplate[];
   currentTeamId: string | null;
+  userId?: string | null;
   templateToEdit: CustomTemplate | null;
   isSaveModalOpen: boolean;
   isTemplateBrowserOpen: boolean;
@@ -53,6 +56,7 @@ export interface InputFormModalsProps {
   onCloseOmni: () => void;
   onSaveTemplate: (name: string) => void;
   onSelectTemplate: (templateId: string) => void;
+  onSelectIndustryPrefill?: (prefill: Partial<FormData>) => void;
   onEditTemplate: (template: CustomTemplate) => void;
   onDeleteTemplate: (id: string) => void;
   onApplySuggestion: (suggestion: string) => void;
@@ -67,6 +71,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   brandVoiceDescription,
   templates,
   currentTeamId,
+  userId,
   templateToEdit,
   isSaveModalOpen,
   isTemplateBrowserOpen,
@@ -96,6 +101,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onCloseOmni,
   onSaveTemplate,
   onSelectTemplate,
+  onSelectIndustryPrefill,
   onEditTemplate,
   onDeleteTemplate,
   onApplySuggestion,
@@ -103,7 +109,20 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onTrendSelect,
   onScheduleSelect,
   onAddTechNewsToCalendar,
-}) => (
+}) => {
+  const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore();
+  const activeBv = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId);
+  const resolvedNiche = useMemo(() => {
+    const ctx = resolveNicheContext({
+      userId,
+      brandVoice: activeBv?.settings || null,
+      audience: formData.audience,
+    });
+    const fromTopic = stripTopicHtml(formData.topic).trim();
+    return ctx.niche || fromTopic || 'Social Media Marketing';
+  }, [userId, activeBv?.settings, formData.audience, formData.topic]);
+
+  return (
   <>
     <SaveTemplateModal
       isOpen={isSaveModalOpen}
@@ -116,9 +135,11 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
       onClose={onCloseTemplateBrowser}
       templates={templates}
       onSelect={onSelectTemplate}
+      onSelectIndustryPrefill={onSelectIndustryPrefill}
       onEdit={onEditTemplate}
       onDelete={onDeleteTemplate}
       currentTeamId={currentTeamId}
+      userId={userId}
     />
     <TopicAssistantModal
       isOpen={isAssistantModalOpen}
@@ -142,12 +163,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
           maxWidthClass="max-w-3xl"
         >
           <TechRadarPanel
-            niche={
-              formData.audience ||
-              localStorage.getItem('userNiche') ||
-              stripTopicHtml(formData.topic) ||
-              'technologia i innowacje'
-            }
+            niche={resolvedNiche}
             platform={formData.platform}
             onSelectTopic={(topic) => {
               onTrendSelect(topic);
@@ -171,7 +187,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
           padded={false}
         >
           <TrendAnalysisPanel
-            niche={formData.audience || formData.topic || 'Social Media Marketing'}
+            niche={resolvedNiche}
             platform={formData.platform}
             onSelectTrend={(trend) => {
               onTrendSelect(trend.topic);
@@ -193,7 +209,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
           sectionName="Schedule Optimizer"
         >
           <ScheduleOptimizer
-            niche={formData.audience || formData.topic || 'Social Media Marketing'}
+            niche={resolvedNiche}
             platform={formData.platform}
             contentType={formData.contentType}
             onSelectTime={() => onScheduleSelect()}
@@ -205,7 +221,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
       <SectionErrorBoundary sectionName="AI Workflow">
         <FeaturePanelModal open={isAIWorkflowOpen} onClose={onCloseAIWorkflow} sectionName="AI Workflow">
           <AIWorkflowPanel
-            niche={formData.audience || formData.topic || 'Social Media Marketing'}
+            niche={resolvedNiche}
             platform={formData.platform}
             contentType={formData.contentType}
             tone={formData.tone}
@@ -277,4 +293,5 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
       </SectionErrorBoundary>
     )}
   </>
-);
+  );
+};

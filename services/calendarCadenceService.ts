@@ -7,6 +7,22 @@ import {
   ScheduledPost,
 } from '../types';
 import { formatDateYMDLocal } from '../utils/calendarDate';
+import { resolveIndustryPackForNiche } from '../shared/industryPacks';
+
+/** Blok NISZA + INDUSTRY_PACK do promptów cadence. */
+export function formatCalendarNicheBlock(niche: string): string {
+  const trimmed = niche.trim() || 'marketing';
+  const { pack, subNiche } = resolveIndustryPackForNiche(trimmed);
+  let block = `NISZA: ${trimmed}`;
+  if (pack) {
+    block += `\nINDUSTRY_PACK: ${pack.name}${subNiche ? ` / ${subNiche.label}` : ''}`;
+    if (pack.topicHint) block += `\nKONTEKST PACKA: ${pack.topicHint}`;
+    if (pack.topicIdeas?.length) {
+      block += `\nPRZYKŁADOWE TEMATY BRANŻOWE: ${pack.topicIdeas.slice(0, 4).join(' | ')}`;
+    }
+  }
+  return block;
+}
 
 export type CadencePresetId = 'starter' | 'growth' | 'aggressive';
 
@@ -181,7 +197,7 @@ export async function generateCadenceWeekPlan(
         model: 'gemini-2.5-flash',
         contents: `Stwórz plan treści na tydzień dla social media.
 
-NISZA: ${niche}
+${formatCalendarNicheBlock(niche)}
 PLATFORM: ${platform}
 TEMAT TYGODNIA: ${weekTheme}
 SZABLON CADENCE: ${preset.id}
@@ -195,7 +211,7 @@ Dla KAŻDEGO slotu zwróć obiekt JSON z polami:
 - time (HH:mm)
 - slotType ("post" | "reel" | "story")
 - contentIntent (educational | entertaining | inspirational | promotional | community | behind-the-scenes)
-- topic (konkretny, kreatywny temat po polsku, max 80 znaków)
+- topic (konkretny, kreatywny temat po polsku, max 80 znaków — dopasowany do niszy/packa)
 - strategy (1 zdanie: dlaczego ten slot o tej porze)
 
 Reguły:
@@ -203,7 +219,7 @@ Reguły:
 - Rotuj intencje w tygodniu (nie 3x promotional tego samego dnia)
 - Tylko tablica JSON, bez markdown.`,
         systemInstruction:
-          'Jesteś strategiem social media. Zwracaj wyłącznie poprawną tablicę JSON.',
+          'Jesteś strategiem social media. Zwracaj wyłącznie poprawną tablicę JSON. Tematy muszą brzmieć jak z danej branży (NISZA / INDUSTRY_PACK), nie generycznie.',
       },
       userId
     );
@@ -409,9 +425,11 @@ export async function generateMissingDaySlots(
       {
         model: 'gemini-2.5-flash',
         contents: `Wygeneruj ${missing.length} pomysły na treści social media na dzień ${dateStr}.
-NISZA: ${niche}, PLATFORM: ${platform}, TEMAT: ${weekTheme}
+${formatCalendarNicheBlock(niche)}
+PLATFORM: ${platform}
+TEMAT: ${weekTheme}
 Sloty:\n${missing.map((m, i) => `${i + 1}. ${m.time} ${m.slotType} (${m.contentIntent}): ${m.label}`).join('\n')}
-Zwróć tablicę JSON z polami: date, time, slotType, contentIntent, topic, strategy.`,
+Zwróć tablicę JSON z polami: date, time, slotType, contentIntent, topic, strategy. Tematy konkretne dla branży z NISZA/INDUSTRY_PACK.`,
       },
       userId
     );

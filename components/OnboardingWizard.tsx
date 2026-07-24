@@ -9,6 +9,15 @@ import {
   type OnboardingData,
   isOnboardingDone,
 } from '../utils/onboarding';
+import { matchIndustryPack, getIndustryPackById } from '../utils/industryPacks';
+import { setUserNiche } from '../utils/userNiche';
+import {
+  formatIndustriesLabel,
+  getPendingIndustryIds,
+  getUserIndustryIds,
+  setUserIndustryIds,
+} from '../utils/userIndustries';
+import type { IndustryPackId } from '../utils/industryPacks';
 
 export type { OnboardingData };
 export { isOnboardingDone };
@@ -23,9 +32,9 @@ const PLATFORM_OPTIONS = [
 ];
 
 const NICHE_SUGGESTIONS = [
-  'Fitness & zdrowie', 'Moda & lifestyle', 'Jedzenie & gotowanie',
-  'Biznes & marketing', 'Podróże', 'Technologia', 'Edukacja',
-  'Beauty & uroda', 'Muzyka', 'Sport', 'Motoryzacja', 'Finanse osobiste',
+  'Gastronomia / lokal', 'Kawiarnia', 'Restauracja', 'Food truck', 'Piekarnia',
+  'Fryzjer / beauty', 'B2B SaaS', 'E-commerce / sklep online',
+  'Fitness & zdrowie', 'Moda & lifestyle', 'Edukacja & kursy', 'Finanse osobiste',
 ];
 
 const TONE_OPTIONS = [
@@ -35,6 +44,14 @@ const TONE_OPTIONS = [
   { value: 'humorous', label: 'Humorystyczny', desc: 'Zabawny, lekki, angażujący' },
 ];
 
+function toneValueFromPackTone(tone: string): string {
+  const t = tone.toLowerCase();
+  if (t === 'professional' || t === 'formal') return 'professional';
+  if (t === 'inspirational' || t === 'enthusiastic') return 'inspirational';
+  if (t === 'persuasive') return 'casual';
+  return 'casual';
+}
+
 interface OnboardingWizardProps {
   onComplete: (data: OnboardingData) => void;
 }
@@ -42,6 +59,7 @@ interface OnboardingWizardProps {
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }) => {
   const [step, setStep] = useState(0);
   const [niche, setNiche] = useState('');
+  const [industryIds, setIndustryIds] = useState<IndustryPackId[]>([]);
   const [platform, setPlatform] = useState<Platform>(Platform.Instagram);
   const [tone, setTone] = useState('casual');
   const [brandKeywords, setBrandKeywords] = useState('');
@@ -50,6 +68,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
   const steps = ['Twoja nisza', 'Platforma', 'Styl', 'Pierwszy post'];
 
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const pending = getPendingIndustryIds();
+    const saved = getUserIndustryIds();
+    const ids = pending.length > 0 ? pending : saved;
+    if (ids.length === 0) return;
+    setIndustryIds(ids);
+    const label = formatIndustriesLabel(ids);
+    if (label) setNiche(label);
+    const primary = getIndustryPackById(ids[0]);
+    if (primary) {
+      setPlatform(primary.platform);
+      setTone(toneValueFromPackTone(primary.tone));
+    }
+  }, []);
 
   useEffect(() => {
     if (step === 3 && niche.trim().length >= 2 && !firstPostTopic.trim()) {
@@ -69,35 +102,43 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         userId = user.id;
+        const nicheToSave =
+          industryIds.length > 0 ? formatIndustriesLabel(industryIds) || niche : niche;
         await supabase.from('profiles').update({
-          niche,
+          niche: nicheToSave,
           primary_platform: platform,
           brand_tone: tone,
           brand_keywords: brandKeywords.trim() || null,
           onboarding_done: true,
         }).eq('id', user.id);
+        if (industryIds.length > 0) {
+          await setUserIndustryIds(industryIds, { userId, syncRemote: false });
+        }
       }
     } catch {
       // save failed — continue anyway, data is in localStorage
     } finally {
       markOnboardingDone(userId ?? undefined);
       const suffix = userId ? `_${userId}` : '';
-      localStorage.setItem(`userNiche${suffix}`, niche);
+      if (industryIds.length > 0) {
+        void setUserIndustryIds(industryIds, { userId, syncRemote: Boolean(userId) });
+      } else {
+        setUserNiche(niche, userId);
+      }
       localStorage.setItem(`userPlatform${suffix}`, platform);
       localStorage.setItem(`userTone${suffix}`, tone);
-      localStorage.setItem('userNiche', niche);
       localStorage.setItem('userPlatform', platform);
       localStorage.setItem('userTone', tone);
       setSaving(false);
       onComplete({
-        niche,
+        niche: industryIds.length > 0 ? formatIndustriesLabel(industryIds) || niche : niche,
         platform,
         tone,
         brandVoice,
         firstPostTopic: topic,
       });
     }
-  }, [niche, platform, tone, brandKeywords, firstPostTopic, onComplete]);
+  }, [niche, industryIds, platform, tone, brandKeywords, firstPostTopic, onComplete]);
 
   const canProceed = [
     niche.trim().length >= 2,
@@ -108,6 +149,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
   const platformLabel = PLATFORM_OPTIONS.find((p) => p.value === platform)?.label ?? platform;
   const toneLabel = TONE_OPTIONS.find((t) => t.value === tone)?.label ?? tone;
+  const matchedPack = matchIndustryPack(niche);
 
   return (
     <div className="fixed inset-0 home-hero-wash flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -169,14 +211,41 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
           {step === 0 && (
             <div className="space-y-5 animate-fade-in">
               <div>
-                <h2 className="font-display text-xl font-bold text-white mb-1 tracking-tight">Jaka jest Twoja nisza?</h2>
-                <p className="text-slate-400 text-sm">AI będzie generować treści dopasowane do Twojej branży.</p>
+                <h2 className="font-display text-xl font-bold text-white mb-1 tracking-tight">
+                  {industryIds.length > 0 ? 'Potwierdź branże' : 'Jaka jest Twoja nisza?'}
+                </h2>
+                <p className="text-slate-400 text-sm">
+                  {industryIds.length > 0
+                    ? 'Wybrane na stronie startowej — możesz dopisać własną niszę lub zmienić listę później w panelu.'
+                    : 'AI będzie generować treści dopasowane do Twojej branży. Możesz zaznaczyć kilka.'}
+                </p>
               </div>
+              {industryIds.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {industryIds.map((id) => {
+                    const pack = getIndustryPackById(id);
+                    if (!pack) return null;
+                    return (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white border border-[var(--hero-accent)]/40"
+                        style={{ backgroundColor: 'var(--hero-accent-soft)' }}
+                      >
+                        <span aria-hidden>{pack.icon}</span>
+                        {pack.name}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
               <input
                 type="text"
                 value={niche}
-                onChange={e => setNiche(e.target.value)}
-                placeholder="np. fitness, moda, gotowanie..."
+                onChange={e => {
+                  setNiche(e.target.value);
+                  setFirstPostTopic('');
+                }}
+                placeholder="np. gastronomia, fryzjer, SaaS..."
                 className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/50"
                 autoFocus
               />
@@ -187,18 +256,38 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <button
                       key={s}
                       type="button"
-                      onClick={() => setNiche(s)}
+                      onClick={() => {
+                        setNiche(s);
+                        setFirstPostTopic('');
+                        const pack = matchIndustryPack(s);
+                        if (pack) {
+                          setIndustryIds((prev) =>
+                            prev.includes(pack.id) ? prev : [...prev, pack.id]
+                          );
+                          setPlatform(pack.platform);
+                          setTone(toneValueFromPackTone(pack.tone));
+                        }
+                      }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        niche === s
+                        niche === s || industryIds.some((id) => getIndustryPackById(id)?.name === s)
                           ? 'text-white'
                           : 'bg-white/5 text-slate-300 hover:bg-white/10 border border-white/10'
                       }`}
-                      style={niche === s ? { backgroundColor: 'var(--hero-accent)' } : undefined}
+                      style={
+                        niche === s || industryIds.some((id) => matchIndustryPack(s)?.id === id)
+                          ? { backgroundColor: 'var(--hero-accent)' }
+                          : undefined
+                      }
                     >
                       {s}
                     </button>
                   ))}
                 </div>
+                {matchedPack && (
+                  <p className="mt-3 text-xs text-emerald-400/90">
+                    Dopasowano pack: {matchedPack.name} — platforma i ton ustawią się automatycznie.
+                  </p>
+                )}
               </div>
             </div>
           )}

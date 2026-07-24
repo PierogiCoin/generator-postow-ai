@@ -147,6 +147,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         credits: combinedUser.credits,
       });
 
+      // 1b. Hydrate multi-branże z pending landingu / profiles.niche
+      void (async () => {
+        try {
+          const { hydrateIndustriesOnAuth } = await import('../utils/userIndustries');
+          const profileNiche =
+            typeof profileData?.niche === 'string' ? (profileData.niche as string) : null;
+          await hydrateIndustriesOnAuth(sbUser.id, profileNiche);
+        } catch {
+          // industries optional
+        }
+      })();
+
       // 2. Auto-create profile in background if missing
       if (!profileData) {
         const defaultProfile = {

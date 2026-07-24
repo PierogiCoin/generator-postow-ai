@@ -34,3 +34,15 @@ export function setUserNiche(niche: string, userId?: string | null): void {
     // ignore
   }
 }
+
+/** Preferuj niszę z Brand Voice, potem localStorage. */
+export function resolveUserNiche(
+  userId?: string | null,
+  brandVoiceNiche?: string | null
+): string {
+  if (brandVoiceNiche?.trim()) {
+    setUserNiche(brandVoiceNiche, userId);
+    return brandVoiceNiche.trim();
+  }
+  return getUserNiche(userId);
+}

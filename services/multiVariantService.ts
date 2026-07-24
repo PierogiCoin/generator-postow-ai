@@ -8,6 +8,11 @@ import {
     CopywritingFramework
 } from '../types';
 import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
+import {
+    formatNicheSystemInstruction,
+    formatNicheUserPromptLines,
+    resolveNicheContext,
+} from '../utils/nicheContext';
 /**
  * Multi-Variant Generation Service
  * Generates 3 variants (A/B/C) of a post with different hooks and approaches
@@ -48,10 +53,17 @@ async function generateSingleVariant({
         curiosity: 'Focus on curiosity gap: open loop, cliffhanger, mystery, "what happens next", unexpected twist. Make reader need to know more.'
     };
 
+    const nicheCtx = resolveNicheContext({
+        userId,
+        brandVoice,
+        audience: formData.audience,
+    });
+
     const contents = `Generate variant ${variant} of a ${formData.platform} post.
 TOPIC: ${formData.topic || 'General engaging content'}
 TONE: ${formData.tone}
-AUDIENCE: ${formData.audience || 'General public'}
+AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
+${formatNicheUserPromptLines(nicheCtx)}
 
 HOOK TYPE FOR THIS VARIANT: ${hookType.toUpperCase()}
 ${hookDescriptions[hookType]}
@@ -73,6 +85,8 @@ RULES:
 NEVER ask for more information. Generate the best possible content for this specific hook type.
 
 ${buildAntiSlopBlock()}`;
+
+    systemInstruction += formatNicheSystemInstruction(nicheCtx);
 
     // Add copywriting framework if selected
     const framework = formData.copywritingFramework;

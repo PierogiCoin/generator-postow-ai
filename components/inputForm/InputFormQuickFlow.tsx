@@ -18,6 +18,17 @@ import type { AiToolPanelCategory } from './aiToolPanels';
 import { stripTopicHtml } from '../../utils/inputFormMode';
 import type { DuplicateCheckResult } from '../../services/contentDuplicateService';
 import { formatTimeAgo } from '../../services/contentDuplicateService';
+import { getUserNiche } from '../../utils/userNiche';
+import {
+  matchIndustryPack,
+  getAllIndustryPacks,
+  getGastroSubNiches,
+  applySubNicheToPack,
+  type IndustryPack,
+} from '../../utils/industryPacks';
+import { persistIndustryNiche } from '../../utils/nicheContext';
+import { useAuth } from '../../contexts/AuthContext';
+import type { IndustrySubNicheDef } from '../../shared/industryPacks';
 
 export interface InputFormQuickFlowProps {
   formData: FormData;
@@ -25,6 +36,7 @@ export interface InputFormQuickFlowProps {
   onPlatformChange: (platform: Platform) => void;
   onToneChange: (tone: FormData['tone']) => void;
   onContentLanguageChange: (lang: FormData['contentLanguage']) => void;
+  onAudienceChange?: (audience: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onSaveDraft: () => void;
   onOpenAssistant: () => void;
@@ -45,6 +57,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   onPlatformChange,
   onToneChange,
   onContentLanguageChange,
+  onAudienceChange,
   onSubmit,
   onSaveDraft,
   onOpenAssistant,
@@ -59,7 +72,38 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   autoPublishSection,
 }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
+  const [activeSub, setActiveSub] = useState<IndustrySubNicheDef | null>(null);
+
+  const niche = formData.audience?.trim() || getUserNiche(user?.id);
+  const matchedPack = matchIndustryPack(niche);
+  const basePack: IndustryPack = matchedPack ?? getAllIndustryPacks()[0];
+  const gastroSubs = basePack.id === 'pl-lokal' ? getGastroSubNiches() : [];
+
+  React.useEffect(() => {
+    if (matchedPack?.subNicheId) {
+      setActiveSub(getGastroSubNiches().find((s) => s.id === matchedPack.subNicheId) ?? null);
+    }
+  }, [matchedPack?.subNicheId, matchedPack?.id]);
+
+  const ideaPack: IndustryPack =
+    activeSub && basePack.id === 'pl-lokal'
+      ? applySubNicheToPack(basePack, activeSub)
+      : basePack;
+  const topicIdeas = ideaPack.topicIdeas.slice(0, 8);
+
+  const applyPackContext = (pack: IndustryPack) => {
+    const label = persistIndustryNiche(pack, user?.id, formData.audience);
+    onAudienceChange?.(label);
+    onPlatformChange(pack.platform);
+    onToneChange(pack.tone);
+  };
+
+  const applyIndustryIdea = (idea: string) => {
+    onTopicChange(`<p>${idea}</p>`);
+    applyPackContext(ideaPack);
+  };
 
   const STEPS = [
     { id: 1, label: t('form.quick.stepTopic', 'Temat') },
@@ -162,6 +206,77 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
               className="w-full text-sm min-h-[140px]"
               lite
             />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              {matchedPack
+                ? t('form.quick.industryIdeas', 'Pomysły dla {{pack}}', {
+                    pack: ideaPack.subNicheLabel
+                      ? `${matchedPack.name} · ${ideaPack.subNicheLabel}`
+                      : matchedPack.name,
+                  })
+                : t('form.quick.pickIndustryIdea', 'Gotowe pomysły branżowe')}
+            </p>
+            {gastroSubs.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {gastroSubs.map((sub) => {
+                  const selected = activeSub?.id === sub.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => {
+                        const next = selected ? null : sub;
+                        setActiveSub(next);
+                        const pack = next
+                          ? applySubNicheToPack(basePack, next)
+                          : basePack;
+                        applyPackContext(pack);
+                      }}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md border ${
+                        selected
+                          ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
+                          : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300'
+                      }`}
+                    >
+                      <span aria-hidden>{sub.icon}</span>
+                      {sub.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {topicIdeas.map((idea) => (
+                <button
+                  key={idea}
+                  type="button"
+                  onClick={() => applyIndustryIdea(idea)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[var(--hero-accent)]/45 hover:text-[var(--hero-accent)] transition-colors text-left"
+                >
+                  {idea.length > 52 ? `${idea.slice(0, 50)}…` : idea}
+                </button>
+              ))}
+            </div>
+            {!matchedPack && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {getAllIndustryPacks().map((pack) => (
+                  <button
+                    key={pack.id}
+                    type="button"
+                    onClick={() => {
+                      onTopicChange(`<p>${pack.topicIdeas[0]}</p>`);
+                      applyPackContext(pack);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40"
+                  >
+                    <span aria-hidden>{pack.icon}</span>
+                    {pack.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {duplicateCheck?.mostSimilar && (

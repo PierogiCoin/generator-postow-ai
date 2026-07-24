@@ -1,5 +1,10 @@
 import { Platform, Tone, GenerationType, type FormData } from '../types';
 import { STORAGE_KEYS } from './storageUtils';
+import {
+  matchIndustryPack,
+  industryPackToFormPrefill,
+  buildIndustryFirstPostTopic,
+} from './industryPacks';
 
 const LEGACY_KEY = STORAGE_KEYS.ONBOARDING;
 const GUIDE_KEY_PREFIX = 'onboarding_guide_active_';
@@ -15,6 +20,8 @@ export interface OnboardingData {
 const PENDING_FIRST_GEN_PREFIX = 'onboarding_pending_first_gen_';
 
 export function buildFirstPostTopic(niche: string, platform: Platform): string {
+  const fromPack = buildIndustryFirstPostTopic(niche, platform);
+  if (fromPack) return fromPack;
   const trimmed = niche.trim();
   return `<p>Pierwszy post w niszy <strong>${trimmed}</strong>: przedstaw się, powiedz czego obserwujący mogą się spodziewać i zachęć do śledzenia na ${platform}.</p>`;
 }
@@ -65,7 +72,23 @@ export function clearOnboardingPendingFirstGenerate(userId: string): void {
 }
 
 export function mapOnboardingToFormData(data: OnboardingData): Partial<FormData> {
+  const pack = matchIndustryPack(data.niche);
   const topic = data.firstPostTopic?.trim() || buildFirstPostTopic(data.niche, data.platform);
+
+  if (pack) {
+    const packPrefill = industryPackToFormPrefill(pack, topic.replace(/<[^>]*>?/gm, '').trim() || pack.topicIdeas[0]);
+    return {
+      ...packPrefill,
+      // Prefer user's explicit platform/tone from onboarding when set
+      platform: data.platform || pack.platform,
+      tone: TONE_MAP[data.tone] ?? pack.tone,
+      audience: data.niche,
+      keywords: data.brandVoice,
+      topic,
+      generationType: GenerationType.PostWithImage,
+    };
+  }
+
   return {
     topic,
     platform: data.platform,

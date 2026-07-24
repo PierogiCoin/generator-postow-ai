@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { Trend, AppError } from '../types';
 import { discoverTrends } from '../services/geminiService';
 import { SparklesIcon } from './icons/SparklesIcon';
@@ -10,6 +10,10 @@ import { QuoteIcon } from './icons/QuoteIcon';
 import { HashIcon } from './icons/HashIcon';
 import { useAuth } from '../contexts/AuthContext';
 import { PageHeader } from './ui/PageHeader';
+import { getUserNiche, setUserNiche } from '../utils/userNiche';
+import { matchIndustryPack, industryPackToFormPrefill } from '../utils/industryPacks';
+import { persistIndustryNiche } from '../utils/nicheContext';
+import { useDataStore } from '../stores/dataStore';
 
 interface TrendsViewProps {}
 
@@ -78,7 +82,7 @@ const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, 
         {trend.questions?.map((q) => (
           <li key={`question-${q.slice(0, 20)}`} className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300 bg-slate-50/80 dark:bg-white/[0.02] p-2.5 rounded-xl border border-slate-200/50 dark:border-white/5">
             <span className="mt-0.5 text-sky-400 font-bold shrink-0">?</span>
-            <span className="font-medium text-xs leading-relaxed">{q}</span>
+            <span>{q}</span>
           </li>
         )) || <li className="text-sm text-slate-500">Brak dostępnych pytań</li>}
       </ul>
@@ -86,17 +90,13 @@ const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, 
 
     <div>
       <h4 className="font-bold text-xs uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 flex items-center gap-2 mb-2.5">
-        <QuoteIcon className="w-3.5 h-3.5 text-purple-400" />
-        Kluczowe cytaty / Statystyki
+        <QuoteIcon className="w-3.5 h-3.5 text-violet-400" />
+        Cytaty / kąty
       </h4>
-      <div className="space-y-2 text-sm">
+      <div className="space-y-2">
         {trend.quotes?.map((q) => (
-          <div
-            key={`quote-${q.slice(0, 20)}`}
-            className="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03]"
-          >
-            <QuoteIcon className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-grow">
+          <div key={`quote-${q.slice(0, 20)}`} className="flex items-start justify-between gap-2 bg-slate-50/80 dark:bg-white/[0.02] p-2.5 rounded-xl border border-slate-200/50 dark:border-white/5">
+            <div className="min-w-0">
               <p className="italic text-xs font-medium text-slate-700 dark:text-slate-300">"{q}"</p>
             </div>
             <CopyButton textToCopy={q} />
@@ -120,16 +120,41 @@ const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, 
 export const TrendsView: React.FC<TrendsViewProps> = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore();
+  const activeBv = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId);
 
-  const [niche, setNiche] = useState('');
+  const initialNiche =
+    (location.state as { prefillNiche?: string } | null)?.prefillNiche?.trim() ||
+    activeBv?.settings?.niche?.trim() ||
+    getUserNiche(user?.id);
+
+  const [niche, setNiche] = useState(initialNiche === 'marketing' ? '' : initialNiche);
   const [trends, setTrends] = useState<Trend[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AppError | null>(null);
 
+  useEffect(() => {
+    const fromNav = (location.state as { prefillNiche?: string } | null)?.prefillNiche?.trim();
+    if (fromNav) setNiche(fromNav);
+  }, [location.state]);
+
   const onGenerateFromTrend = (topic: string, hashtags: string[]) => {
     const hashtagsText = hashtags.join(' ');
     const fullTopic = `${topic}\n\nSugerowane hashtagi: ${hashtagsText}`;
-    navigate('/generator', { state: { prefillData: { topic: fullTopic } } });
+    const nicheValue = niche.trim();
+    if (nicheValue) setUserNiche(nicheValue, user?.id);
+    const pack = matchIndustryPack(nicheValue);
+    if (pack) {
+      const audience = persistIndustryNiche(pack, user?.id, nicheValue);
+      navigate('/generator', {
+        state: { prefillData: industryPackToFormPrefill(pack, fullTopic, audience) },
+      });
+      return;
+    }
+    navigate('/generator', {
+      state: { prefillData: { topic: fullTopic, audience: nicheValue || undefined } },
+    });
   };
 
   const handleDiscover = async () => {
@@ -138,7 +163,7 @@ export const TrendsView: React.FC<TrendsViewProps> = () => {
     setError(null);
     setTrends([]);
     try {
-      if (!user) throw new Error('Musisz być zalogowany, aby wyszukiwać trendy.');
+      setUserNiche(niche.trim(), user.id);
       const result = await discoverTrends(niche, user.id);
       setTrends(result);
     } catch (e: unknown) {
@@ -202,20 +227,20 @@ export const TrendsView: React.FC<TrendsViewProps> = () => {
             )}
           </button>
         </div>
-        {error && <p className="text-red-500 text-sm mt-3">{error.message}</p>}
       </div>
 
-      <div className="space-y-6">
-        {!isLoading && trends.length === 0 && !error && (
-          <div className="text-center py-12 px-4 text-slate-500 border border-dashed border-slate-200 dark:border-white/10">
-            <p className="text-sm">Wyniki pojawią się tutaj.</p>
-          </div>
-        )}
-        {trends.map((trend, index) => (
+      {error && (
+        <div className="p-4 border border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400 text-sm rounded-lg">
+          {error.message}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-6">
+        {trends.map((trend) => (
           <TrendCard
-            key={trend.id || `trend-${index}-${trend.topic?.slice(0, 20) || 'unknown'}`}
+            key={trend.topic}
             trend={trend}
-            onGenerate={() => onGenerateFromTrend(trend.topic, trend.hashtags)}
+            onGenerate={() => onGenerateFromTrend(trend.topic, trend.hashtags || [])}
           />
         ))}
       </div>
