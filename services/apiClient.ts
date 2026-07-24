@@ -100,7 +100,7 @@ export async function getApiAuthHeaders(userId?: string): Promise<Record<string,
 /**
  * Funkcja pomocnicza do wywołań API Proxy
  */
-export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}) => {
+export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}, retries = 2) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -125,6 +125,10 @@ export const callApi = async (endpoint: string, payload: Record<string, unknown>
         });
     } catch (err) {
         clearTimeout(timeout);
+        if (retries > 0 && !(err instanceof Error && err.name === 'AbortError')) {
+            await new Promise(res => setTimeout(res, 1000 * (3 - retries)));
+            return callApi(endpoint, payload, userId, headers, retries - 1);
+        }
         if (err instanceof Error && err.name === 'AbortError') {
             throw new Error('Przekroczono czas oczekiwania na odpowiedź AI (30s). Spróbuj ponownie.');
         }

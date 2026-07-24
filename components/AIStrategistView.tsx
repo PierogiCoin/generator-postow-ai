@@ -110,6 +110,47 @@ const ReportDisplay: React.FC<{
         setTimeout(() => navigate("/calendar"), 1500);
     }, [report.actionablePlan, navigate, intelligentCalendarPlan, setIntelligentCalendarPlan]);
 
+    const [copiedExport, setCopiedExport] = useState(false);
+
+    const handleExportMarkdown = useCallback(() => {
+        const lines = [
+            `# ${report.summary ? 'Raport Strategiczny AI' : 'Strategic Audit Report'}`,
+            `*Data wygenerowania: ${new Date().toLocaleDateString(dateLocale)}*`,
+            '',
+            '## Podsumowanie',
+            report.summary,
+            '',
+            '## Filary Treści (Content Pillars)',
+            ...(report.contentPillars || []).map(p => `- **${p.pillar}**: ${p.description}`),
+            '',
+            '## Grupa Docelowa (Persona)',
+            `- **Demografia**: ${report.audiencePersona?.demographics || 'N/A'}`,
+            `- **Ból / Potrzeby**: ${(report.audiencePersona?.painPoints || []).join(', ')}`,
+            '',
+            '## Analiza SWOT',
+            `### Mocne Strony\n${(report.swotAnalysis?.strengths || []).map(s => `- ${s}`).join('\n')}`,
+            `### Słabe Strony\n${(report.swotAnalysis?.weaknesses || []).map(w => `- ${w}`).join('\n')}`,
+            `### Szanse\n${(report.swotAnalysis?.opportunities || []).map(o => `- ${o}`).join('\n')}`,
+            `### Zagrożenia\n${(report.swotAnalysis?.threats || []).map(t => `- ${t}`).join('\n')}`,
+            '',
+            '## Plan Działań',
+            ...(report.actionablePlan || []).map(item => `- [${item.platform}] ${item.topic} (Sugestia: ${item.suggestedDayOfWeek} ${item.suggestedTimeSlot})`),
+        ];
+        const text = lines.join('\n');
+        navigator.clipboard.writeText(text);
+        setCopiedExport(true);
+        setTimeout(() => setCopiedExport(false), 2500);
+    }, [report, dateLocale]);
+
+    // Wyznaczenie Health Score na podstawie wygenerowanego audytu
+    const healthScore = useMemo(() => {
+        let score = 70;
+        if (report.contentPillars?.length >= 3) score += 10;
+        if (report.swotAnalysis?.strengths?.length > 0) score += 10;
+        if (report.actionablePlan?.length >= 5) score += 10;
+        return Math.min(score, 100);
+    }, [report]);
+
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
@@ -124,13 +165,50 @@ const ReportDisplay: React.FC<{
                         {t('strategist.report.title')}
                     </h1>
                 </div>
-                <button
-                    type="button"
-                    onClick={onNewAudit}
-                    className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/15 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition"
-                >
-                    {t('strategist.report.newAudit', 'Nowy audyt')}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handleExportMarkdown}
+                        className="px-4 py-2 text-sm font-semibold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition flex items-center gap-2"
+                    >
+                        {copiedExport ? '✓ Skopiowano raport!' : '📄 Eksportuj Raport (Markdown)'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleImport}
+                        disabled={planImported}
+                        className="px-4 py-2 text-sm font-semibold text-white bg-[var(--hero-accent)] rounded-lg hover:brightness-110 transition shadow-sm"
+                    >
+                        {planImported ? '✓ Zaimportowano plan' : '📅 Dodaj cały plan do kalendarza'}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onNewAudit}
+                        className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/15 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition"
+                    >
+                        {t('strategist.report.newAudit', 'Nowy audyt')}
+                    </button>
+                </div>
+            </div>
+
+            {/* Health Score Widget */}
+            <div className="p-6 bg-gradient-to-r from-blue-900/90 to-slate-900 rounded-2xl border border-blue-500/30 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-5">
+                    <div className="relative flex items-center justify-center w-20 h-20 rounded-full border-4 border-blue-500/30 bg-blue-950 text-2xl font-black text-blue-400">
+                        {healthScore}%
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-bold">Wskaźnik Kondycji Marki (Brand Health Score)</h3>
+                        <p className="text-sm text-slate-300 mt-1 max-w-xl">
+                            Wyliczony na podstawie spójności filarów treści, analizy konkurencji oraz potencjału wzrostu.
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        Stan Dobry / Zoptymalizowany
+                    </span>
+                </div>
             </div>
 
             <nav

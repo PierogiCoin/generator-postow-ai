@@ -72,6 +72,7 @@ export default defineConfig(({ mode }) => {
       build: {
           outDir: 'dist',
           assetsDir: 'assets',
+          chunkSizeWarningLimit: 600,
           rollupOptions: {
             output: {
               manualChunks(id) {
@@ -97,6 +98,9 @@ export default defineConfig(({ mode }) => {
                 }
                 if (id.includes('node_modules/html-to-image')) {
                   return 'html-to-image';
+                }
+                if (id.includes('node_modules/i18next') || id.includes('node_modules/react-i18next')) {
+                  return 'i18n-vendor';
                 }
               },
             },

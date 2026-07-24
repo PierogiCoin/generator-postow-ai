@@ -60,6 +60,10 @@ const NOT_FOUND_ENDPOINTS = [
   'GET /api/email/preferences',
   'GET /api/referral',
   'POST /api/referral/apply',
+  'GET /api/teams',
+  'POST /api/teams',
+  'POST /api/teams/invite',
+  'POST /api/teams/invites/accept',
 ];
 
 export function createApp(): express.Application {
@@ -77,6 +81,15 @@ export function createApp(): express.Application {
 
   app.use(express.json({ limit: '50mb' }));
   app.use(generalLimiter);
+
+  app.get('/', (req, res) => {
+    res.json({
+      status: 'ok',
+      service: 'Generator Postów AI Backend API',
+      version: '1.0.0',
+      health: '/health',
+    });
+  });
 
   app.use(createHealthRouter());
   app.use('/api/payments', paymentsRouter);

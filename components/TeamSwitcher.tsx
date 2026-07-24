@@ -90,18 +90,18 @@ export const TeamSwitcher: React.FC<TeamSwitcherProps> = ({ user, onSwitchTeam }
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
+    <div ref={dropdownRef} className="relative shrink-0">
       <button
         onClick={() => setIsOpen(p => !p)}
-        className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors max-w-[140px] md:max-w-[160px] lg:max-w-[180px]"
         aria-haspopup="true"
         aria-expanded={isOpen}
       >
-        <div className="flex items-center justify-center w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded">
-            {currentTeam ? <UsersIcon className="w-4 h-4 text-gray-600 dark:text-gray-300"/> : <UserCircleIcon className="w-4 h-4 text-gray-600 dark:text-gray-300"/>}
+        <div className="flex items-center justify-center w-5 h-5 bg-slate-200 dark:bg-white/10 rounded shrink-0">
+            {currentTeam ? <UsersIcon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300"/> : <UserCircleIcon className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300"/>}
         </div>
-        <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[90px] xl:max-w-[120px]">{currentWorkspaceName}</span>
-        <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate shrink min-w-0">{currentWorkspaceName}</span>
+        <ChevronDownIcon className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (

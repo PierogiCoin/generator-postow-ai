@@ -839,9 +839,17 @@ export const ContentCalendar: React.FC = () => {
                 title={t('calendar.planCount', { count: planItemsForDay.length })}
               />
             )}
+            {!hasContent && (
+              <span
+                className="text-[8px] font-bold text-amber-500/90 dark:text-amber-400/90"
+                title="Brak zaplanowanych treści dla tego dnia"
+              >
+                ⚠️ Pusty
+              </span>
+            )}
           </div>
           <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 group-hover/day:text-cyan-600 dark:group-hover/day:text-cyan-400 transition-colors">
-            {hasContent ? t('calendar.dayDrawer.open', 'Plan dnia') : t('calendar.addContent')}
+            {hasContent ? t('calendar.dayDrawer.open', 'Plan dnia') : '+ Dodaj AI'}
           </span>
         </div>
       </div>

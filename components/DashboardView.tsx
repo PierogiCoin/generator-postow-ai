@@ -379,54 +379,73 @@ export const DashboardView: React.FC = () => {
     return (
         <div className="space-y-8 animate-fade-in pb-16">
             <TrialBanner />
-            <header className="relative py-10 md:py-12 px-6 md:px-10 border border-slate-200/80 dark:border-white/10 bg-[#071018] text-white overflow-hidden">
-                <div className="absolute inset-0 home-grid-bg opacity-40 pointer-events-none" aria-hidden="true" />
+            <TrialBanner />
+            {/* Redesigned Hero Header with Central AI Generator Entry */}
+            <header className="relative py-10 md:py-14 px-6 md:px-12 rounded-[2rem] border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-[#071018] via-[#0a1628] to-[#0d1f33] text-white shadow-2xl overflow-hidden">
+                <div className="absolute inset-0 home-grid-bg opacity-30 pointer-events-none" aria-hidden="true" />
                 <div
-                    className="absolute inset-0 pointer-events-none opacity-70"
+                    className="absolute inset-0 pointer-events-none opacity-60"
                     style={{
                         background:
-                            'radial-gradient(ellipse 70% 80% at 85% 20%, rgba(29, 155, 240, 0.18), transparent 55%)',
+                            'radial-gradient(ellipse 80% 80% at 85% 20%, rgba(29, 155, 240, 0.22), transparent 60%)',
                     }}
                     aria-hidden="true"
                 />
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-8">
-                    <div className="space-y-4 max-w-2xl">
-                        <div className="flex items-center gap-3 flex-wrap text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                            <span className="inline-flex items-center gap-1.5">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <div className="relative z-10 space-y-8 max-w-4xl mx-auto text-center md:text-left">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                                 {t('dashboard.systemOnline')}
                             </span>
                             {streak.currentStreak > 0 && (
-                                <span className="text-amber-300/90" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
+                                <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
                                     {t('dashboard.streakDays', { count: streak.currentStreak })}
                                 </span>
                             )}
                         </div>
-                        <h1 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
-                            {t('dashboard.welcome')},{' '}
-                            <span style={{ color: 'var(--hero-accent)' }}>{user.name.split(' ')[0]}</span>
+                    </div>
+
+                    <div>
+                        <h1 className="font-display text-3xl md:text-5xl font-black tracking-tight leading-tight">
+                            Witaj ponownie,{' '}
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-400">
+                                {user.name.split(' ')[0]}
+                            </span>!
                         </h1>
-                        <p className="text-base text-slate-400 leading-relaxed">
-                            {t('dashboard.subtitle', { count: stats?.totalGenerations || 0 })}
+                        <p className="text-base text-slate-300 mt-2 max-w-2xl leading-relaxed">
+                            O czym ma być Twój dzisiejszy viralowy post? Wpisz temat poniżej i pozwól AI wykonać pracę.
                         </p>
-                        <div className="flex flex-wrap gap-3 pt-1">
-                            <button
-                                onClick={() => navigate('/generator')}
-                                className="px-6 py-3 text-white font-semibold text-sm rounded-lg hover:brightness-110 transition-all flex items-center gap-2"
-                                style={{ backgroundColor: 'var(--hero-accent)' }}
-                            >
-                                <Plus className="w-4 h-4" />
-                                {t('dashboard.newProject')}
-                            </button>
-                            <button
-                                onClick={() => setIsCommandPaletteOpen(true)}
-                                className="px-6 py-3 border border-white/20 text-slate-200 font-semibold text-sm rounded-lg hover:bg-white/5 transition-colors flex items-center gap-2"
-                            >
-                                <Zap className="w-4 h-4" style={{ color: 'var(--hero-accent)' }} />
-                                {t('dashboard.quickActions')}
-                            </button>
+                    </div>
+
+                    {/* Central Quick Prompt Input Bar */}
+                    <div className="p-2.5 rounded-2xl bg-white/10 dark:bg-slate-900/80 border border-white/20 backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row items-center gap-2">
+                        <div className="flex-1 flex items-center gap-3 px-4 w-full">
+                            <SparklesIcon className="w-5 h-5 text-sky-400 shrink-0" />
+                            <input
+                                type="text"
+                                placeholder="Np. 3 wskazówki na zwiększenie sprzedaży w restauracji..."
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                                        navigate('/generator', { state: { prefillData: { topic: e.currentTarget.value.trim() } } });
+                                    }
+                                }}
+                                className="w-full bg-transparent text-white placeholder-slate-400 text-sm font-medium focus:outline-none py-2.5"
+                            />
                         </div>
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                const input = e.currentTarget.previousElementSibling?.querySelector('input');
+                                const val = input?.value?.trim();
+                                navigate('/generator', { state: { prefillData: { topic: val || '' } } });
+                            }}
+                            className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-white bg-[var(--hero-accent)] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-sky-500/25 shrink-0 flex items-center justify-center gap-2"
+                        >
+                            <Send className="w-4 h-4" />
+                            Generuj Post
+                        </button>
                     </div>
                 </div>
             </header>

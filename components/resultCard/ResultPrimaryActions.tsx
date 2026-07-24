@@ -32,17 +32,32 @@ export const ResultPrimaryActions: React.FC<ResultPrimaryActionsProps> = ({
   const appHandlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
   const { favorites } = useDataStore();
   const isFavorite = favorites.some((fav) => fav.result.id === result.id);
+  const [copiedNoHash, setCopiedNoHash] = React.useState(false);
+
+  const handleCopyTextOnly = () => {
+    navigator.clipboard.writeText(result.postText);
+    setCopiedNoHash(true);
+    setTimeout(() => setCopiedNoHash(false), 2000);
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-2 pb-5 mb-5 border-b border-slate-200 dark:border-slate-800">
       <ModernButton
         onClick={onCopy}
-        variant="secondary"
+        variant="primary"
         size="sm"
         icon={isCopied ? <CheckIcon className="w-4 h-4" /> : <ClipboardIcon className="w-4 h-4" />}
       >
-        {isCopied ? t('resultCard.actions.copied', 'Skopiowano!') : t('resultCard.actions.copy', 'Kopiuj')}
+        {isCopied ? '✓ Skopiowano całość!' : 'Kopiuj z hashtagami'}
       </ModernButton>
+
+      <button
+        type="button"
+        onClick={handleCopyTextOnly}
+        className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-400 transition"
+      >
+        {copiedNoHash ? '✓ Skopiowano sam tekst' : 'Tylko treść'}
+      </button>
 
       <ModernButton
         onClick={() => appHandlers.handleAddToFavorites(result, formData)}

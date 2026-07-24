@@ -142,9 +142,11 @@ interface SEOConfig {
   description: string;
   ogType?: string;
   ogImage?: string;
+  canonicalUrl?: string;
+  jsonLd?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
-export const useSEO = ({ title, description, ogType = 'website', ogImage }: SEOConfig) => {
+export const useSEO = ({ title, description, ogType = 'website', ogImage, canonicalUrl, jsonLd }: SEOConfig) => {
   React.useEffect(() => {
     document.title = title;
 
@@ -168,9 +170,29 @@ export const useSEO = ({ title, description, ogType = 'website', ogImage }: SEOC
     setMeta('name', 'twitter:description', description);
     if (ogImage) setMeta('name', 'twitter:image', ogImage);
 
+    if (canonicalUrl) {
+      let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!link) {
+        link = document.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        document.head.appendChild(link);
+      }
+      link.setAttribute('href', canonicalUrl);
+    }
+
+    let jsonLdScript: HTMLScriptElement | null = null;
+    if (jsonLd) {
+      jsonLdScript = document.createElement('script');
+      jsonLdScript.type = 'application/ld+json';
+      jsonLdScript.text = JSON.stringify(jsonLd);
+      document.head.appendChild(jsonLdScript);
+    }
+
     return () => {
-      // Reset to defaults on unmount
-      document.title = 'AI Content Pro';
+      document.title = 'Generator Postów AI — Twórz viralowe posty social media z AI';
+      if (jsonLdScript && jsonLdScript.parentNode) {
+        jsonLdScript.parentNode.removeChild(jsonLdScript);
+      }
     };
-  }, [title, description, ogType, ogImage]);
+  }, [title, description, ogType, ogImage, canonicalUrl, jsonLd]);
 };

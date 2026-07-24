@@ -708,49 +708,66 @@ export const CompetitorTrackerPanel: React.FC = () => {
       {showForm && (
         <form
           onSubmit={handleAdd}
-          className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-4 shadow-sm"
+          className="bg-white/90 dark:bg-[#0a1220]/90 backdrop-blur-xl border border-slate-200/90 dark:border-white/10 rounded-3xl p-6 space-y-5 shadow-xl animate-scale-in"
         >
-          <h3 className="font-semibold text-slate-800 dark:text-white">Nowy konkurent</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input
-              type="text"
-              value={handle}
-              onChange={e => setHandle(e.target.value)}
-              placeholder="@handle lub nazwa"
-              autoFocus
-              className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <select
-              value={platform}
-              onChange={e => setPlatform(e.target.value as Platform)}
-              className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              {PLATFORMS.map(p => (
-                <option key={p} value={p}>{p}</option>
-              ))}
-            </select>
-            <input
-              type="text"
-              value={niche}
-              onChange={e => setNiche(e.target.value)}
-              placeholder="Nisza (np. fitness, moda)"
-              className="px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-white/10 pb-3">
+            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <UsersIcon className="w-5 h-5 text-[var(--hero-accent)]" />
+              Dodaj nowego konkurenta do śledzenia
+            </h3>
+            <span className="text-xs text-slate-400">Podaj nick i niszę rynkową</span>
           </div>
-          <div className="flex gap-2 justify-end">
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Profil / Handle</label>
+              <input
+                type="text"
+                value={handle}
+                onChange={e => setHandle(e.target.value)}
+                placeholder="@nick lub link do profilu"
+                autoFocus
+                className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)] text-slate-900 dark:text-white transition"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Platforma</label>
+              <select
+                value={platform}
+                onChange={e => setPlatform(e.target.value as Platform)}
+                className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)] text-slate-900 dark:text-white transition"
+              >
+                {PLATFORMS.map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Nisza rynkowa</label>
+              <input
+                type="text"
+                value={niche}
+                onChange={e => setNiche(e.target.value)}
+                placeholder="np. E-commerce, Fitness, AI"
+                className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)] text-slate-900 dark:text-white transition"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 justify-end pt-2">
             <button
               type="button"
               onClick={() => setShowForm(false)}
-              className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+              className="px-5 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-xl transition"
             >
               Anuluj
             </button>
             <button
               type="submit"
               disabled={isAdding}
-              className="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors"
+              className="px-6 py-2.5 text-xs bg-[var(--hero-accent)] hover:brightness-110 disabled:opacity-60 text-white font-bold rounded-xl transition shadow-lg shadow-sky-500/20"
             >
-              {isAdding ? 'Dodawanie...' : 'Dodaj'}
+              {isAdding ? 'Dodawanie...' : 'Zapisz i Analizuj'}
             </button>
           </div>
         </form>

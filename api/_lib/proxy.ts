@@ -100,7 +100,8 @@ export async function proxyToBackend(
 
   res.status(response.status);
   response.headers.forEach((value, key) => {
-    if (!HOP_BY_HOP.has(key.toLowerCase())) {
+    const lowerKey = key.toLowerCase();
+    if (!HOP_BY_HOP.has(lowerKey) && lowerKey !== 'content-encoding' && lowerKey !== 'content-length') {
       res.setHeader(key, value);
     }
   });

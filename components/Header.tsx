@@ -75,9 +75,16 @@ const BottomNavItem: React.FC<{
     </NavLink>
 ));
 
-const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () => void }> = React.memo(({
+const BottomNavBar: React.FC<{
+    onOpenCreateMenu: () => void;
+    onOpenMoreMenu: () => void;
+    isCreateMenuOpen?: boolean;
+    isMoreMenuOpen?: boolean;
+}> = React.memo(({
     onOpenCreateMenu,
     onOpenMoreMenu,
+    isCreateMenuOpen = false,
+    isMoreMenuOpen = false,
 }) => {
     const { t } = useTranslation();
     return (
@@ -92,6 +99,8 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
                     <button
                         type="button"
                         onClick={onOpenCreateMenu}
+                        aria-haspopup="dialog"
+                        aria-expanded={isCreateMenuOpen}
                         className="w-14 h-14 rounded-xl text-white flex items-center justify-center active:scale-95 transition-transform border-4 border-white dark:border-[#071018] hover:brightness-110 shadow-lg shadow-[var(--hero-accent)]/30"
                         style={{ backgroundColor: 'var(--hero-accent)' }}
                         aria-label={t('header.nav.create')}
@@ -103,6 +112,8 @@ const BottomNavBar: React.FC<{ onOpenCreateMenu: () => void; onOpenMoreMenu: () 
                 <button
                     type="button"
                     onClick={onOpenMoreMenu}
+                    aria-haspopup="dialog"
+                    aria-expanded={isMoreMenuOpen}
                     className="flex flex-col items-center justify-center gap-0.5 w-full h-full min-h-[44px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors duration-200"
                 >
                     <MenuIcon className="w-5 h-5" />
@@ -307,19 +318,19 @@ export const Header: React.FC<HeaderProps> = ({
         <>
             <header className="sticky top-0 z-[50] border-b border-slate-200/70 dark:border-white/10 bg-[var(--hero-surface)]/90 dark:bg-[#060b18]/90 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-4 lg:gap-6 min-w-0">
-                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group shrink-0" aria-label={t('header.homeAriaLabel')}>
+                    <div className="flex items-center gap-3 lg:gap-5 shrink-0">
+                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-2 group shrink-0" aria-label={t('header.homeAriaLabel')}>
                             <div
                                 className="rounded-lg p-2 group-hover:brightness-110 transition-all duration-300 shrink-0"
                                 style={{ backgroundColor: 'var(--hero-navy)' }}
                             >
                                 <BrandMarkIcon className="w-5 h-5 text-[var(--hero-accent)]" />
                             </div>
-                            <h1 className="hidden md:block font-display text-lg lg:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity duration-300 whitespace-nowrap">
+                            <h1 className="hidden md:block font-display text-base lg:text-lg font-extrabold text-slate-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity duration-300 whitespace-nowrap">
                                 {t('header.title')}
                             </h1>
                         </NavLink>
-                        {user && <div className="min-w-0 hidden sm:block"><TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} /></div>}
+                        {user && <div className="shrink-0 hidden sm:block"><TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} /></div>}
                         {!user && isLandingPage && (
                             <nav className="hidden md:flex items-center gap-1 ml-2" aria-label={t('home.nav.ariaLabel')}>
                                 {landingNavItems.map((item) =>
@@ -371,27 +382,77 @@ export const Header: React.FC<HeaderProps> = ({
                                 {isMoreMenuOpen && (
                                     <div
                                         role="menu"
-                                        className="absolute top-full right-0 mt-2 w-56 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a1220] shadow-lg z-50 p-1.5"
+                                        className="absolute top-full right-0 mt-3 w-[560px] rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#071018]/95 backdrop-blur-2xl shadow-2xl z-50 p-5 animate-scale-in"
                                     >
-                                        {moreNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
-                                            <NavLink
-                                                key={id}
-                                                to={to}
-                                                title={title}
-                                                role="menuitem"
-                                                onClick={() => setIsMoreMenuOpen(false)}
-                                                className={({ isActive }) =>
-                                                    `flex items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg transition-colors ${
-                                                        isActive
-                                                            ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
-                                                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
-                                                    } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
-                                                }
-                                            >
-                                                <Icon className="w-4 h-4 shrink-0" />
-                                                {label}
-                                            </NavLink>
-                                        ))}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {/* Column 1: Strategia & Analiza */}
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block px-2">
+                                                    Strategia & Analiza
+                                                </span>
+                                                {[
+                                                    { id: 'strategist', to: '/strategist', label: t('header.nav.strategist'), desc: 'Audyt marki i planowanie', icon: BrainCircuitIcon, disabled: !isStrategistEnabled },
+                                                    { id: 'analytics', to: '/analytics', label: t('header.nav.analytics'), desc: 'Statystyki i efektywność', icon: ChartPieIcon, disabled: !isAnalyticsEnabled },
+                                                    { id: 'competitors', to: '/competitors', label: t('header.nav.competitors'), desc: 'Monitoring konkurencji', icon: UsersIcon },
+                                                ].map(({ id, to, label, desc, icon: Icon, disabled }) => (
+                                                    <NavLink
+                                                        key={id}
+                                                        to={to}
+                                                        role="menuitem"
+                                                        onClick={() => setIsMoreMenuOpen(false)}
+                                                        className={({ isActive }) =>
+                                                            `flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                                                                isActive
+                                                                    ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] font-bold'
+                                                                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                            } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                        }
+                                                    >
+                                                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-[var(--hero-accent)] shrink-0">
+                                                            <Icon className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-bold leading-none">{label}</div>
+                                                            <div className="text-[11px] text-slate-400 mt-1 font-normal">{desc}</div>
+                                                        </div>
+                                                    </NavLink>
+                                                ))}
+                                            </div>
+
+                                            {/* Column 2: Narzędzia & Odkrycia */}
+                                            <div className="space-y-2">
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block px-2">
+                                                    Narzędzia & Odkrycia
+                                                </span>
+                                                {[
+                                                    { id: 'trends', to: '/trends', label: t('header.nav.trends'), desc: 'Najnowsze rynkowe trendy', icon: TrendingUpIcon },
+                                                    { id: 'analyzer', to: '/analyzer', label: t('header.nav.analyzer'), desc: 'Analizator postów i tekstu', icon: BeakerIcon },
+                                                    { id: 'storyboard', to: '/storyboard', label: t('header.nav.storyboard'), desc: 'Generator scenariuszy wideo', icon: FilmIcon },
+                                                ].map(({ id, to, label, desc, icon: Icon }) => (
+                                                    <NavLink
+                                                        key={id}
+                                                        to={to}
+                                                        role="menuitem"
+                                                        onClick={() => setIsMoreMenuOpen(false)}
+                                                        className={({ isActive }) =>
+                                                            `flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                                                                isActive
+                                                                    ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] font-bold'
+                                                                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                            }`
+                                                        }
+                                                    >
+                                                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-[var(--hero-accent)] shrink-0">
+                                                            <Icon className="w-4 h-4" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-bold leading-none">{label}</div>
+                                                            <div className="text-[11px] text-slate-400 mt-1 font-normal">{desc}</div>
+                                                        </div>
+                                                    </NavLink>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>

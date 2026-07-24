@@ -86,7 +86,8 @@ export const generateVideoStory = async (
     volume: number;
     fadeIn: boolean;
     fadeOut: boolean;
-  }
+  },
+  signal?: AbortSignal
 ): Promise<VideoStoryResponse> => {
   const aspectRatio = getVideoStoryAspectRatio(style);
   const startedAt = Date.now();
@@ -114,6 +115,10 @@ export const generateVideoStory = async (
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), VIDEO_STORY_TIMEOUT_MS);
+  if (signal) {
+    if (signal.aborted) controller.abort();
+    else signal.addEventListener('abort', () => controller.abort(), { once: true });
+  }
 
   try {
     const authHeaders = await getApiAuthHeaders(userId);

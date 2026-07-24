@@ -22,11 +22,11 @@ export const ModernCard: React.FC<ModernCardProps> = ({
   const baseClasses = 'rounded-2xl border transition-all duration-300';
   
   const glassClasses = glass
-    ? 'glass shadow-lg'
-    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 shadow-md';
+    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-slate-200/80 dark:border-white/10 shadow-lg shadow-slate-900/5'
+    : 'bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 shadow-md shadow-slate-900/5';
   
   const hoverClasses = hover
-    ? 'card-hover cursor-pointer'
+    ? 'hover:-translate-y-1 hover:shadow-xl hover:border-sky-500/40 dark:hover:border-sky-400/40 cursor-pointer active:scale-[0.99]'
     : 'hover:shadow-lg';
   
   const paddingClasses = {

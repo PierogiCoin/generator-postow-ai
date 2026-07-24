@@ -148,10 +148,10 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
   const selectedOption = styleOptions.find(opt => opt.id === selectedStyle);
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-3 sm:p-6 animate-fade-in">
+      <div className="bg-white dark:bg-[#0a1220] rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-slate-200/80 dark:border-white/10">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
               <Video className="w-6 h-6 text-white" />
@@ -173,7 +173,7 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 custom-scrollbar">
           <div className="grid md:grid-cols-2 gap-6">
             {/* Left: Style Selection */}
             <div>
@@ -363,7 +363,7 @@ export const VideoStoryModal: React.FC<VideoStoryModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 backdrop-blur-md shrink-0">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Sparkles className="w-4 h-4" />
             <span>{t('videoStory.poweredBy', 'Powered by Google Veo & Luma AI')}</span>

@@ -12,6 +12,7 @@ import { SaveIcon } from '../icons/SaveIcon';
 import { CheckIcon } from '../icons/CheckIcon';
 import { ModernButton } from '../ui/ModernButton';
 import { Tooltip } from '../Tooltip';
+import { PresetSelector, type PromptPreset } from './PresetSelector';
 import { InputFormAiToolsMenu } from './InputFormAiToolsMenu';
 import type { AiToolPanelCategory } from './aiToolPanels';
 import { stripTopicHtml } from '../../utils/inputFormMode';
@@ -184,9 +185,19 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
         </div>
       )}
 
-      {/* Step 2: Platform + tone */}
+      {/* Step 2: Platform & Tone */}
       {step === 2 && (
-        <div className="space-y-8 animate-fade-in">
+        <div className="space-y-6 animate-fade-in">
+          <PresetSelector
+            currentPlatform={formData.platform}
+            currentTone={formData.tone}
+            currentLanguage={formData.contentLanguage}
+            onApplyPreset={(preset) => {
+              onPlatformChange(preset.platform);
+              onToneChange(preset.tone);
+              onContentLanguageChange(preset.contentLanguage);
+            }}
+          />
           <fieldset className="space-y-3">
             <legend className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
               {t('form.platform.label', 'Platforma')}

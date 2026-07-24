@@ -11,11 +11,15 @@ export const config = {
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const segments = req.query.path;
-  const suffix = Array.isArray(segments) ? segments.join('/') : segments || '';
-  const queryIndex = (req.url || '').indexOf('?');
-  const query = queryIndex >= 0 ? req.url!.slice(queryIndex) : '';
-  const apiPath = `/api/${suffix}${query}`;
+  let rawUrl = req.url || '';
+  // Vercel serverless request path usually arrives as /api/... or /api/[...path]
+  if (!rawUrl.startsWith('/api/')) {
+    const segments = req.query.path;
+    const suffix = Array.isArray(segments) ? segments.join('/') : segments || '';
+    const queryIndex = rawUrl.indexOf('?');
+    const query = queryIndex >= 0 ? rawUrl.slice(queryIndex) : '';
+    rawUrl = `/api/${suffix}${query}`;
+  }
 
-  await proxyToBackend(req, res, apiPath);
+  await proxyToBackend(req, res, rawUrl);
 }

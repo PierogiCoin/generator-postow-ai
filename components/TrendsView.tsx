@@ -41,22 +41,27 @@ const CopyButton: React.FC<{ textToCopy: string }> = ({ textToCopy }) => {
 };
 
 const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, onGenerate }) => (
-  <div className="border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 p-6 space-y-5 animate-fade-in">
+  <div className="rounded-3xl border border-slate-200/90 dark:border-white/10 bg-white/80 dark:bg-[#0a1220]/80 backdrop-blur-xl p-6 sm:p-7 space-y-6 shadow-xl shadow-slate-900/5 hover:-translate-y-1 hover:shadow-2xl hover:border-sky-500/30 transition-all duration-300 animate-fade-in group">
     <div>
-      <h3 className="font-display text-xl font-bold text-slate-900 dark:text-white tracking-tight">{trend.topic}</h3>
-      <p className="mt-2 text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{trend.summary}</p>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-display text-xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug group-hover:text-sky-500 transition-colors">{trend.topic}</h3>
+        <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shrink-0">
+          🔥 Wirusowy Trend
+        </span>
+      </div>
+      <p className="mt-2.5 text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{trend.summary}</p>
     </div>
 
     <div>
-      <h4 className="font-semibold text-xs uppercase tracking-[0.14em] text-slate-500 flex items-center gap-2 mb-2">
-        <HashIcon className="w-4 h-4" />
+      <h4 className="font-bold text-xs uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 flex items-center gap-2 mb-2.5">
+        <HashIcon className="w-3.5 h-3.5 text-sky-400" />
         Wschodzące hashtagi
       </h4>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {trend.hashtags?.map((tag) => (
           <span
             key={tag}
-            className="px-2.5 py-1 text-xs font-medium border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300"
+            className="px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:border-sky-400/50 transition cursor-default"
           >
             {`#${tag}`}
           </span>
@@ -65,36 +70,34 @@ const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, 
     </div>
 
     <div>
-      <h4 className="font-semibold text-xs uppercase tracking-[0.14em] text-slate-500 flex items-center gap-2 mb-2">
-        <LightbulbIcon className="w-4 h-4" />
+      <h4 className="font-bold text-xs uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 flex items-center gap-2 mb-2.5">
+        <LightbulbIcon className="w-3.5 h-3.5 text-amber-400" />
         Pytania od publiczności
       </h4>
       <ul className="space-y-2 text-sm">
         {trend.questions?.map((q) => (
-          <li key={`question-${q.slice(0, 20)}`} className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
-            <span className="mt-1" style={{ color: 'var(--hero-accent)' }}>
-              •
-            </span>
-            <span>{q}</span>
+          <li key={`question-${q.slice(0, 20)}`} className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300 bg-slate-50/80 dark:bg-white/[0.02] p-2.5 rounded-xl border border-slate-200/50 dark:border-white/5">
+            <span className="mt-0.5 text-sky-400 font-bold shrink-0">?</span>
+            <span className="font-medium text-xs leading-relaxed">{q}</span>
           </li>
         )) || <li className="text-sm text-slate-500">Brak dostępnych pytań</li>}
       </ul>
     </div>
 
     <div>
-      <h4 className="font-semibold text-xs uppercase tracking-[0.14em] text-slate-500 flex items-center gap-2 mb-2">
-        <QuoteIcon className="w-4 h-4" />
+      <h4 className="font-bold text-xs uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500 flex items-center gap-2 mb-2.5">
+        <QuoteIcon className="w-3.5 h-3.5 text-purple-400" />
         Kluczowe cytaty / Statystyki
       </h4>
       <div className="space-y-2 text-sm">
         {trend.quotes?.map((q) => (
           <div
             key={`quote-${q.slice(0, 20)}`}
-            className="flex items-start gap-3 p-3 border border-slate-200/70 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.03]"
+            className="flex items-start gap-3 p-3 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50/60 dark:bg-white/[0.03]"
           >
-            <QuoteIcon className="w-6 h-6 text-slate-300 dark:text-slate-600 flex-shrink-0" />
+            <QuoteIcon className="w-5 h-5 text-purple-400 flex-shrink-0 mt-0.5" />
             <div className="flex-grow">
-              <p className="italic text-slate-700 dark:text-slate-300">"{q}"</p>
+              <p className="italic text-xs font-medium text-slate-700 dark:text-slate-300">"{q}"</p>
             </div>
             <CopyButton textToCopy={q} />
           </div>
@@ -102,14 +105,13 @@ const TrendCard: React.FC<{ trend: Trend; onGenerate: () => void }> = ({ trend, 
       </div>
     </div>
 
-    <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+    <div className="pt-4 border-t border-slate-200/80 dark:border-white/10 flex items-center gap-3">
       <button
         onClick={onGenerate}
-        className="w-full flex items-center justify-center gap-2 text-white font-semibold py-2.5 px-4 rounded-lg hover:brightness-110 transition-all"
-        style={{ backgroundColor: 'var(--hero-accent)' }}
+        className="w-full flex items-center justify-center gap-2 text-white font-bold py-3 px-5 rounded-xl bg-[var(--hero-accent)] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-sky-500/20 text-sm"
       >
-        <PostIcon className="w-5 h-5" />
-        Wygeneruj post na ten temat
+        <PostIcon className="w-4 h-4" />
+        Stwórz Post z tego Trendu
       </button>
     </div>
   </div>

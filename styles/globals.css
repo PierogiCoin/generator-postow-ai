@@ -13,31 +13,32 @@
     --hero-navy-muted: #0f1c2e;
     --hero-accent: #1d9bf0;
     --hero-accent-soft: rgba(29, 155, 240, 0.16);
-    --hero-surface: #eef1f6;
+    --hero-surface: #f1f5f9;
     --hero-ink: #0a1628;
     --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
     --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --glass-premium-bg: rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.4);
+    --glass-premium-bg: rgba(255, 255, 255, 0.85);
     --glass-premium-border: rgba(15, 23, 42, 0.08);
 
-    --shadow-premium: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
-    --shadow-glow: 0 0 20px rgba(29, 155, 240, 0.12);
+    --shadow-premium: 0 12px 40px -10px rgba(0, 0, 0, 0.06);
+    --shadow-glow: 0 0 25px rgba(29, 155, 240, 0.15);
+    --radius-card: 1.25rem;
   }
 
   html.dark {
     --text-primary: #f8fafc;
     --hero-surface: #060b18;
-    --glass-bg: rgba(15, 23, 42, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-premium-bg: rgba(15, 23, 42, 0.65);
-    --glass-premium-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(15, 23, 42, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --glass-premium-bg: rgba(15, 23, 42, 0.8);
+    --glass-premium-border: rgba(255, 255, 255, 0.1);
     --shadow-premium: 0 20px 50px -12px rgba(0, 0, 0, 0.5);
   }
 
   body {
-    @apply bg-[#eef1f6] dark:bg-[#060b18] text-slate-800 dark:text-slate-200 transition-colors duration-500;
+    @apply bg-slate-100 dark:bg-[#060b18] text-slate-800 dark:text-slate-200 transition-colors duration-300;
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.01em;
