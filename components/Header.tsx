@@ -398,7 +398,7 @@ export const Header: React.FC<HeaderProps> = ({
 
                             <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-0.5" aria-hidden />
 
-                            <div className="relative" ref={createMenuRef}>
+                            <div className="relative shrink-0" ref={createMenuRef}>
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -407,12 +407,12 @@ export const Header: React.FC<HeaderProps> = ({
                                     }}
                                     aria-expanded={isCreateMenuOpen}
                                     aria-haspopup="menu"
-                                    className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors text-white hover:brightness-110"
+                                    className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors text-white hover:brightness-110 shadow-sm shrink-0 whitespace-nowrap"
                                     style={{ backgroundColor: 'var(--hero-accent)' }}
                                 >
-                                    <SparklesIcon className="w-4 h-4" />
-                                    <span className="hidden md:inline">{t('header.nav.create')}</span>
-                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform duration-200 ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
+                                    <SparklesIcon className="w-4 h-4 shrink-0" />
+                                    <span>{t('header.nav.create')}</span>
+                                    <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isCreateMenuOpen && (
                                     <div
