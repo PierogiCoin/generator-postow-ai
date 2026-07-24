@@ -51,6 +51,7 @@ import { ApprovalQueuePanel } from './ApprovalQueuePanel';
 import { EngagementInboxPanel } from './EngagementInboxPanel';
 import { RssToPostPanel } from './RssToPostPanel';
 import { ProductToPostPanel } from './ProductToPostPanel';
+import { BrandMemoryQuickCard } from './BrandMemoryQuickCard';
 import { loadAutoPublishPrefs } from '../utils/autoPublishPrefs';
 
 // Zustand stores
@@ -660,6 +661,7 @@ export const DashboardView: React.FC = () => {
                     <EngagementInboxPanel />
                     <RssToPostPanel />
                     <ProductToPostPanel />
+                    <BrandMemoryQuickCard />
                     <StrategyAssistant />
                 </div>
                 <div className="lg:col-span-1 space-y-8">

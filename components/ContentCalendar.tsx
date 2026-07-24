@@ -227,7 +227,12 @@ export const ContentCalendar: React.FC = () => {
 
   const getUserNicheForCalendar = useCallback((): string => {
     const defaultNiche = t('calendar.defaultNiche');
-    if (!user?.id) return defaultNiche;
+    if (!user?.id) return weekTheme.trim() || defaultNiche;
+    const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore.getState();
+    const bvNiche = brandVoiceProfiles
+      .find((p) => p.id === activeBrandVoiceId)
+      ?.settings?.niche?.trim();
+    if (bvNiche) return bvNiche;
     return getUserNicheShared(user.id, weekTheme.trim() || defaultNiche);
   }, [user?.id, weekTheme, t]);
 

@@ -556,6 +556,21 @@ export const InputForm: React.FC<InputFormProps> = ({
             />
           )}
 
+          <div className="rounded-lg border border-dashed border-slate-200 dark:border-white/10 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Pamięć marki</p>
+              <p className="text-xs text-slate-500 mt-1">Dodaj menu, opis oferty lub FAQ — AI użyje tego przy generacji.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsBrandVoiceManagerOpen(true)}
+              className="shrink-0 px-4 py-2 text-xs font-bold rounded-lg text-white"
+              style={{ backgroundColor: 'var(--hero-accent)' }}
+            >
+              Dodaj do pamięci
+            </button>
+          </div>
+
           {autoPublishSection && (
             <div className="rounded-lg border border-slate-200/70 dark:border-white/10 bg-slate-50/30 dark:bg-slate-950/20 p-4 sm:p-5">
               {autoPublishSection}
