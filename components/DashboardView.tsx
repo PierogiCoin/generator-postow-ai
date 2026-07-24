@@ -28,6 +28,12 @@ import { useAppHandlers } from '../hooks/useAppHandlers';
 // Services & Types
 import { getStrategicContentIdeas } from '../services/geminiService';
 import { getUserNiche } from '../utils/userNiche';
+import {
+  matchIndustryPack,
+  getAllIndustryPacks,
+  industryPackToFormPrefill,
+  type IndustryPack,
+} from '../utils/industryPacks';
 import type { StrategicIdea, Platform as PlatformType } from '../types';
 import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
@@ -70,6 +76,80 @@ const StatCard: React.FC<{
     </div>
 );
 
+const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
+    const navigate = useNavigate();
+    const matched = matchIndustryPack(niche);
+    const packs = matched ? [matched, ...getAllIndustryPacks().filter((p) => p.id !== matched.id)] : getAllIndustryPacks();
+    const primary = packs[0];
+    const topicIdeas = (matched ?? primary).topicIdeas.slice(0, 8);
+
+    const openPack = (pack: IndustryPack, topic?: string) => {
+        navigate('/generator', { state: { prefillData: industryPackToFormPrefill(pack, topic) } });
+    };
+
+    return (
+        <section className="space-y-4" aria-label="Dla Twojej branży">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                        Dla Twojej branży
+                    </h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {matched
+                            ? <>Gotowe formaty i pomysły dla: <span className="font-semibold" style={{ color: 'var(--hero-accent)' }}>{matched.name}</span></>
+                            : 'Wybierz starter pack branżowy — temat, platforma i ton wypełnią się same.'}
+                    </p>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {packs.slice(0, 4).map((pack) => {
+                    const isPrimary = matched?.id === pack.id;
+                    return (
+                        <button
+                            key={pack.id}
+                            type="button"
+                            onClick={() => openPack(pack)}
+                            className={`text-left p-4 border transition-colors rounded-xl ${
+                                isPrimary
+                                    ? 'border-[var(--hero-accent)]/50 bg-[var(--hero-accent-soft)]'
+                                    : 'border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 hover:border-[var(--hero-accent)]/40'
+                            }`}
+                        >
+                            <span className="text-2xl" aria-hidden>{pack.icon}</span>
+                            <h3 className="mt-2 text-sm font-bold text-slate-900 dark:text-white">{pack.name}</h3>
+                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                                {pack.description}
+                            </p>
+                            <span className="mt-3 inline-block text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--hero-accent)' }}>
+                                Użyj packa →
+                            </span>
+                        </button>
+                    );
+                })}
+            </div>
+
+            <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                    Szybkie pomysły
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    {topicIdeas.map((idea) => (
+                        <button
+                            key={idea}
+                            type="button"
+                            onClick={() => openPack(matched ?? primary, idea)}
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[var(--hero-accent)]/45 hover:text-[var(--hero-accent)] transition-colors"
+                        >
+                            {idea.length > 56 ? `${idea.slice(0, 54)}…` : idea}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        </section>
+    );
+};
+
 const StrategyAssistant: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -98,7 +178,14 @@ const StrategyAssistant: React.FC = () => {
     }, [niche, user, retryTrigger]);
 
     const onGenerateFromIdea = (topic: string) => {
-        navigate('/generator', { state: { prefillData: { topic } } });
+        const pack = matchIndustryPack(niche);
+        navigate('/generator', {
+            state: {
+                prefillData: pack
+                    ? industryPackToFormPrefill(pack, topic)
+                    : { topic },
+            },
+        });
     };
 
     const IdeaTypeIcon: React.FC<{ type: StrategicIdea['type'] }> = ({ type }) => {
@@ -375,6 +462,10 @@ export const DashboardView: React.FC = () => {
 
     const oneWeekFromNow = Date.now() + 7 * 24 * 60 * 60 * 1000;
     const scheduledThisWeek = scheduledPosts.filter(p => p.scheduleTimestamp <= oneWeekFromNow).length;
+    const niche = getUserNiche(user.id);
+    const nichePack = matchIndustryPack(niche);
+    const quickPlaceholder = nichePack?.topicIdeas[0]
+        ?? 'Np. 3 wskazówki na zwiększenie sprzedaży w restauracji...';
 
     return (
         <div className="space-y-8 animate-fade-in pb-16">
@@ -415,7 +506,9 @@ export const DashboardView: React.FC = () => {
                             </span>!
                         </h1>
                         <p className="text-base text-slate-300 mt-2 max-w-2xl leading-relaxed">
-                            O czym ma być Twój dzisiejszy viralowy post? Wpisz temat poniżej i pozwól AI wykonać pracę.
+                            {nichePack
+                                ? `Szybka ścieżka dla ${nichePack.name}: wybierz pomysł poniżej albo wpisz własny temat.`
+                                : 'O czym ma być Twój dzisiejszy viralowy post? Wpisz temat poniżej i pozwól AI wykonać pracę.'}
                         </p>
                     </div>
 
@@ -425,10 +518,17 @@ export const DashboardView: React.FC = () => {
                             <SparklesIcon className="w-5 h-5 text-sky-400 shrink-0" />
                             <input
                                 type="text"
-                                placeholder="Np. 3 wskazówki na zwiększenie sprzedaży w restauracji..."
+                                placeholder={quickPlaceholder}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter' && e.currentTarget.value.trim()) {
-                                        navigate('/generator', { state: { prefillData: { topic: e.currentTarget.value.trim() } } });
+                                        const topic = e.currentTarget.value.trim();
+                                        navigate('/generator', {
+                                            state: {
+                                                prefillData: nichePack
+                                                    ? industryPackToFormPrefill(nichePack, topic)
+                                                    : { topic },
+                                            },
+                                        });
                                     }
                                 }}
                                 className="w-full bg-transparent text-white placeholder-slate-400 text-sm font-medium focus:outline-none py-2.5"
@@ -439,7 +539,13 @@ export const DashboardView: React.FC = () => {
                             onClick={(e) => {
                                 const input = e.currentTarget.previousElementSibling?.querySelector('input');
                                 const val = input?.value?.trim();
-                                navigate('/generator', { state: { prefillData: { topic: val || '' } } });
+                                navigate('/generator', {
+                                    state: {
+                                        prefillData: nichePack
+                                            ? industryPackToFormPrefill(nichePack, val || nichePack.topicIdeas[0])
+                                            : { topic: val || '' },
+                                    },
+                                });
                             }}
                             className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-white bg-[var(--hero-accent)] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-sky-500/25 shrink-0 flex items-center justify-center gap-2"
                         >
@@ -452,6 +558,7 @@ export const DashboardView: React.FC = () => {
 
             <QuickCommandBar />
 
+            <IndustryPackSection niche={niche} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                 <StatCard
                     icon={RocketLaunchIcon}

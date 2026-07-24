@@ -18,6 +18,13 @@ import type { AiToolPanelCategory } from './aiToolPanels';
 import { stripTopicHtml } from '../../utils/inputFormMode';
 import type { DuplicateCheckResult } from '../../services/contentDuplicateService';
 import { formatTimeAgo } from '../../services/contentDuplicateService';
+import { getUserNiche } from '../../utils/userNiche';
+import {
+  matchIndustryPack,
+  getAllIndustryPacks,
+  type IndustryPack,
+} from '../../utils/industryPacks';
+import { useAuth } from '../../contexts/AuthContext';
 
 export interface InputFormQuickFlowProps {
   formData: FormData;
@@ -59,7 +66,21 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   autoPublishSection,
 }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
+
+  const niche = formData.audience?.trim() || getUserNiche(user?.id);
+  const matchedPack = matchIndustryPack(niche);
+  const ideaPack: IndustryPack = matchedPack ?? getAllIndustryPacks()[0];
+  const topicIdeas = ideaPack.topicIdeas.slice(0, 8);
+
+  const applyIndustryIdea = (idea: string) => {
+    onTopicChange(`<p>${idea}</p>`);
+    if (matchedPack) {
+      onPlatformChange(matchedPack.platform);
+      onToneChange(matchedPack.tone);
+    }
+  };
 
   const STEPS = [
     { id: 1, label: t('form.quick.stepTopic', 'Temat') },
@@ -162,6 +183,45 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
               className="w-full text-sm min-h-[140px]"
               lite
             />
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              {matchedPack
+                ? t('form.quick.industryIdeas', 'Pomysły dla {{pack}}', { pack: matchedPack.name })
+                : t('form.quick.pickIndustryIdea', 'Gotowe pomysły branżowe')}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {topicIdeas.map((idea) => (
+                <button
+                  key={idea}
+                  type="button"
+                  onClick={() => applyIndustryIdea(idea)}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[var(--hero-accent)]/45 hover:text-[var(--hero-accent)] transition-colors text-left"
+                >
+                  {idea.length > 52 ? `${idea.slice(0, 50)}…` : idea}
+                </button>
+              ))}
+            </div>
+            {!matchedPack && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {getAllIndustryPacks().map((pack) => (
+                  <button
+                    key={pack.id}
+                    type="button"
+                    onClick={() => {
+                      onTopicChange(`<p>${pack.topicIdeas[0]}</p>`);
+                      onPlatformChange(pack.platform);
+                      onToneChange(pack.tone);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40"
+                  >
+                    <span aria-hidden>{pack.icon}</span>
+                    {pack.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {duplicateCheck?.mostSimilar && (

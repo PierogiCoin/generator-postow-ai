@@ -100,6 +100,7 @@ export const InputForm: React.FC<InputFormProps> = ({
     handlePlatformChange,
     handleGenerationTypeChange,
     handleSelectTemplate,
+    handleSelectIndustryPrefill,
     handleSaveTemplate,
     handleEditTemplate,
     handleDeleteTemplate,
@@ -606,6 +607,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         brandVoiceDescription={brandVoiceDescription}
         templates={templates}
         currentTeamId={currentTeamId}
+        userId={user?.id}
         templateToEdit={templateToEdit}
         isSaveModalOpen={isSaveModalOpen}
         isTemplateBrowserOpen={isTemplateBrowserOpen}
@@ -635,6 +637,7 @@ export const InputForm: React.FC<InputFormProps> = ({
         onCloseOmni={() => setIsOmniOpen(false)}
         onSaveTemplate={handleSaveTemplate}
         onSelectTemplate={handleSelectTemplate}
+        onSelectIndustryPrefill={handleSelectIndustryPrefill}
         onEditTemplate={handleEditTemplate}
         onDeleteTemplate={handleDeleteTemplate}
         onApplySuggestion={handleApplySuggestion}

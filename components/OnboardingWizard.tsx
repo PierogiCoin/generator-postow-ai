@@ -9,6 +9,7 @@ import {
   type OnboardingData,
   isOnboardingDone,
 } from '../utils/onboarding';
+import { matchIndustryPack } from '../utils/industryPacks';
 
 export type { OnboardingData };
 export { isOnboardingDone };
@@ -23,9 +24,9 @@ const PLATFORM_OPTIONS = [
 ];
 
 const NICHE_SUGGESTIONS = [
-  'Fitness & zdrowie', 'Moda & lifestyle', 'Jedzenie & gotowanie',
-  'Biznes & marketing', 'Podróże', 'Technologia', 'Edukacja',
-  'Beauty & uroda', 'Muzyka', 'Sport', 'Motoryzacja', 'Finanse osobiste',
+  'Gastronomia / lokal', 'Fryzjer / beauty', 'B2B SaaS', 'E-commerce / sklep online',
+  'Fitness & zdrowie', 'Moda & lifestyle', 'Biznes & marketing', 'Podróże',
+  'Technologia', 'Edukacja', 'Muzyka', 'Finanse osobiste',
 ];
 
 const TONE_OPTIONS = [
@@ -34,6 +35,14 @@ const TONE_OPTIONS = [
   { value: 'inspirational', label: 'Inspirujący', desc: 'Motywujący, energetyczny, emocjonalny' },
   { value: 'humorous', label: 'Humorystyczny', desc: 'Zabawny, lekki, angażujący' },
 ];
+
+function toneValueFromPackTone(tone: string): string {
+  const t = tone.toLowerCase();
+  if (t === 'professional' || t === 'formal') return 'professional';
+  if (t === 'inspirational' || t === 'enthusiastic') return 'inspirational';
+  if (t === 'persuasive') return 'casual';
+  return 'casual';
+}
 
 interface OnboardingWizardProps {
   onComplete: (data: OnboardingData) => void;
@@ -108,6 +117,7 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
 
   const platformLabel = PLATFORM_OPTIONS.find((p) => p.value === platform)?.label ?? platform;
   const toneLabel = TONE_OPTIONS.find((t) => t.value === tone)?.label ?? tone;
+  const matchedPack = matchIndustryPack(niche);
 
   return (
     <div className="fixed inset-0 home-hero-wash flex items-center justify-center z-50 p-4 overflow-y-auto">
@@ -175,8 +185,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
               <input
                 type="text"
                 value={niche}
-                onChange={e => setNiche(e.target.value)}
-                placeholder="np. fitness, moda, gotowanie..."
+                onChange={e => {
+                  setNiche(e.target.value);
+                  setFirstPostTopic('');
+                }}
+                placeholder="np. gastronomia, fryzjer, SaaS..."
                 className="w-full px-4 py-3 bg-white/5 border border-white/15 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/50"
                 autoFocus
               />
@@ -187,7 +200,15 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     <button
                       key={s}
                       type="button"
-                      onClick={() => setNiche(s)}
+                      onClick={() => {
+                        setNiche(s);
+                        setFirstPostTopic('');
+                        const pack = matchIndustryPack(s);
+                        if (pack) {
+                          setPlatform(pack.platform);
+                          setTone(toneValueFromPackTone(pack.tone));
+                        }
+                      }}
                       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                         niche === s
                           ? 'text-white'
@@ -199,6 +220,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
                     </button>
                   ))}
                 </div>
+                {matchedPack && (
+                  <p className="mt-3 text-xs text-emerald-400/90">
+                    Dopasowano pack: {matchedPack.name} — platforma i ton ustawią się automatycznie.
+                  </p>
+                )}
               </div>
             </div>
           )}

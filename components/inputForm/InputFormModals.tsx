@@ -24,6 +24,7 @@ export interface InputFormModalsProps {
   brandVoiceDescription: string;
   templates: CustomTemplate[];
   currentTeamId: string | null;
+  userId?: string | null;
   templateToEdit: CustomTemplate | null;
   isSaveModalOpen: boolean;
   isTemplateBrowserOpen: boolean;
@@ -53,6 +54,7 @@ export interface InputFormModalsProps {
   onCloseOmni: () => void;
   onSaveTemplate: (name: string) => void;
   onSelectTemplate: (templateId: string) => void;
+  onSelectIndustryPrefill?: (prefill: Partial<FormData>) => void;
   onEditTemplate: (template: CustomTemplate) => void;
   onDeleteTemplate: (id: string) => void;
   onApplySuggestion: (suggestion: string) => void;
@@ -67,6 +69,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   brandVoiceDescription,
   templates,
   currentTeamId,
+  userId,
   templateToEdit,
   isSaveModalOpen,
   isTemplateBrowserOpen,
@@ -96,6 +99,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onCloseOmni,
   onSaveTemplate,
   onSelectTemplate,
+  onSelectIndustryPrefill,
   onEditTemplate,
   onDeleteTemplate,
   onApplySuggestion,
@@ -116,9 +120,11 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
       onClose={onCloseTemplateBrowser}
       templates={templates}
       onSelect={onSelectTemplate}
+      onSelectIndustryPrefill={onSelectIndustryPrefill}
       onEdit={onEditTemplate}
       onDelete={onDeleteTemplate}
       currentTeamId={currentTeamId}
+      userId={userId}
     />
     <TopicAssistantModal
       isOpen={isAssistantModalOpen}

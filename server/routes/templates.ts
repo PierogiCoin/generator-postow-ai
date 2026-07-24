@@ -6,6 +6,7 @@ import {
   getTemplatesByCategory,
   getTemplatesByPlatform,
   applyTemplate,
+  matchIndustryPack,
 } from '../contentTemplates.js';
 import {
   validateRequest,
@@ -25,6 +26,22 @@ export function createTemplatesRouter(): Router {
     } catch (error: unknown) {
       logger.error('Error fetching templates:', error);
       res.status(500).json({ message: 'Failed to fetch templates' });
+    }
+  });
+
+  router.get('/for-niche', (req, res) => {
+    try {
+      const niche = typeof req.query.niche === 'string' ? req.query.niche : '';
+      const matched = matchIndustryPack(niche);
+      const industry = getTemplatesByCategory('industry');
+      res.json({
+        matched,
+        templates: industry,
+        niche: niche.trim() || null,
+      });
+    } catch (error: unknown) {
+      logger.error('Error matching niche templates:', error);
+      res.status(500).json({ message: 'Failed to match niche templates' });
     }
   });
 

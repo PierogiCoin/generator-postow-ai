@@ -17,6 +17,10 @@ export interface ContentTemplate {
   category: 'social' | 'professional' | 'marketing' | 'educational' | 'industry';
   /** Prefill topic / niche hint for PL industry packs */
   topicHint?: string;
+  /** Curated topic chips for industry packs */
+  topicIdeas?: string[];
+  /** Keywords used by matchIndustryPack / for-niche */
+  nicheKeywords?: string[];
 }
 
 export const CONTENT_TEMPLATES: ContentTemplate[] = [
@@ -194,6 +198,22 @@ export const CONTENT_TEMPLATES: ContentTemplate[] = [
     icon: '💇',
     category: 'industry',
     topicHint: 'Salon fryzjerski: pokaż metamorfozę / promocję sezonową / tip pielęgnacyjny dla klientek w PL',
+    nicheKeywords: [
+      'fryzjer', 'beauty', 'uroda', 'salon', 'paznokcie', 'manicure', 'barber',
+      'kosmetycz', 'włos', 'makeup', 'makijaż', 'spa', 'pielęgnac',
+    ],
+    topicIdeas: [
+      'Metamorfoza klientki — przed/po i krótka historia zmiany',
+      'Promocja sezonowa — co obejmuje i do kiedy',
+      'Tip pielęgnacyjny: 3 kroki do zdrowych włosów w domu',
+      'Trend fryzjerski miesiąca — dla kogo pasuje',
+      'Behind the scenes salonu — przygotowanie stanowiska',
+      'Poznaj stylistkę / barbera z zespołu',
+      'FAQ: jak często strzyc / farbować',
+      'Oferta dla panów / barber — klasyczny look',
+      'Zaproszenie na konsultację kolorystyczną',
+      'Hiring: szukamy stylisty — warunki i jak się zgłosić',
+    ],
   },
   {
     id: 'pl-lokal',
@@ -210,6 +230,23 @@ export const CONTENT_TEMPLATES: ContentTemplate[] = [
     icon: '🍽️',
     category: 'industry',
     topicHint: 'Lokal gastronomiczny w Polsce: menu dnia, nowość w karcie lub zaproszenie na event',
+    nicheKeywords: [
+      'gastro', 'gastronom', 'restaurac', 'jedzenie', 'gotowanie', 'kawiarn', 'kawiarni',
+      'food', 'bar', 'bistro', 'catering', 'kuchni', 'piekarn', 'cukierni', 'food truck',
+      'lokal', 'menu', 'chef', 'cafe', 'coffee',
+    ],
+    topicIdeas: [
+      'Menu dnia — 3 dania, cena i zaproszenie na lunch',
+      'Nowość w karcie: opisz smak, składniki i dla kogo jest idealna',
+      'Behind the scenes kuchni — przygotowanie dania dnia',
+      'Happy hour / event w lokalu — data, godzina, co na gości czeka',
+      'Rezerwacje na weekend — zachęć do stolika i krótkie CTA',
+      'Sezonowy produkt lub lokalny składnik w daniu tygodnia',
+      'Recenzja gościa / social proof — cytat i odpowiedź lokalu',
+      'Poznaj zespół — krótki portret kucharza lub baristy',
+      'Atmosfera lokalu — story z wnętrza i zaproszenie wpadnij',
+      'Hiring: szukamy do zespołu — rola, vibe, jak aplikować',
+    ],
   },
   {
     id: 'pl-b2b-saas',
@@ -226,6 +263,22 @@ export const CONTENT_TEMPLATES: ContentTemplate[] = [
     icon: '🚀',
     category: 'industry',
     topicHint: 'Polski SaaS B2B: insight rynkowy, mini case study lub zaproszenie na demo z konkretną korzyścią',
+    nicheKeywords: [
+      'saas', 'b2b', 'software', 'startup', 'technolog', 'it ', ' oprogramowan',
+      'produkt cyfrowy', 'platforma', 'crm', 'automatyzac', 'devops', 'cloud',
+    ],
+    topicIdeas: [
+      'Insight rynkowy: 1 teza + konkretna obserwacja z PL/CEE',
+      'Mini case study: problem klienta → rozwiązanie → wynik liczbowy',
+      '3 błędy, które spowalniają wdrożenie (i jak ich uniknąć)',
+      'Zaproszenie na demo — konkretna korzyść w 15 minut',
+      'Feature spotlight: co nowego i dla kogo',
+      'Lekcja z supportu: pytanie, które słyszymy co tydzień',
+      'Porównanie „zanim / potem” u klienta',
+      'Checklist: czy Twój zespół jest gotowy na X',
+      'Hiring: szukamy do product / sales / CS',
+      'Podsumowanie miesiąca: metryka, którą warto śledzić',
+    ],
   },
   {
     id: 'pl-ecom',
@@ -242,6 +295,22 @@ export const CONTENT_TEMPLATES: ContentTemplate[] = [
     icon: '🛒',
     category: 'industry',
     topicHint: 'Sklep online PL: wyróżnij produkt, 3 benefity i CTA z linkiem do oferty',
+    nicheKeywords: [
+      'e-commer', 'ecommerce', 'ecom', 'sklep', 'online', 'sprzedaż', 'produkt',
+      'dropship', 'marketplace', 'fashion shop', 'buty', 'odzież', 'sklep internet',
+    ],
+    topicIdeas: [
+      'Produkt dnia: 3 benefity + CTA do oferty',
+      'Unboxing / first look — co klient dostaje w paczce',
+      'Social proof: opinia klienta i odpowiedź marki',
+      'Porównanie wariantów — który wybrać i dlaczego',
+      'Promocja limited — deadline i kod',
+      'Behind the scenes pakowania / produkcji',
+      'FAQ zakupowe: wysyłka, zwroty, rozmiary',
+      'Stylizacja / use case — produkt w codziennym użyciu',
+      'Bestsellery tygodnia — top 3 z krótkim uzasadnieniem',
+      'Story z dostawy — od zamówienia do drzwi',
+    ],
   },
 ];
 
@@ -256,6 +325,37 @@ export function getTemplatesByCategory(category: string): ContentTemplate[] {
 
 export function getTemplatesByPlatform(platform: string): ContentTemplate[] {
   return CONTENT_TEMPLATES.filter(t => t.platform === platform);
+}
+
+function normalizeNiche(niche: string): string {
+  return niche
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .trim();
+}
+
+/** Dopasuj industry pack do free-text niszy. */
+export function matchIndustryPack(niche: string): ContentTemplate | null {
+  const n = normalizeNiche(niche);
+  if (!n || n === 'marketing') return null;
+
+  const industry = getTemplatesByCategory('industry');
+  let best: { template: ContentTemplate; score: number } | null = null;
+
+  for (const template of industry) {
+    const keywords = template.nicheKeywords ?? [];
+    let score = 0;
+    for (const kw of keywords) {
+      const k = normalizeNiche(kw);
+      if (!k) continue;
+      if (n.includes(k) || k.includes(n)) score += k.length;
+    }
+    if (score > 0 && (!best || score > best.score)) {
+      best = { template, score };
+    }
+  }
+  return best?.template ?? null;
 }
 
 export function applyTemplate(template: ContentTemplate, userInput: Partial<ContentTemplate>): ContentTemplate {

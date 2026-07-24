@@ -294,6 +294,12 @@ export function useInputFormController({
     setIsTemplateBrowserOpen(false);
   };
 
+  const handleSelectIndustryPrefill = (prefill: Partial<FormData>) => {
+    setSelectedTemplate('');
+    setFormData((prev) => normalizeFormData({ ...prev, ...prefill }));
+    setIsTemplateBrowserOpen(false);
+  };
+
   const handleSaveTemplate = async (name: string) => {
     if (!user) return;
     const templateData = templateToEdit
@@ -473,6 +479,7 @@ export function useInputFormController({
     handlePlatformChange,
     handleGenerationTypeChange,
     handleSelectTemplate,
+    handleSelectIndustryPrefill,
     handleSaveTemplate,
     handleEditTemplate,
     handleDeleteTemplate,
