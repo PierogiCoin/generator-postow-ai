@@ -308,14 +308,14 @@ export const Header: React.FC<HeaderProps> = ({
             <header className="sticky top-0 z-[50] border-b border-slate-200/70 dark:border-white/10 bg-[var(--hero-surface)]/90 dark:bg-[#060b18]/90 backdrop-blur-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-4 lg:gap-6 min-w-0">
-                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-3 group flex-shrink-0" aria-label={t('header.homeAriaLabel')}>
+                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group shrink-0" aria-label={t('header.homeAriaLabel')}>
                             <div
-                                className="rounded-lg p-2 group-hover:brightness-110 transition-all duration-300"
+                                className="rounded-lg p-2 group-hover:brightness-110 transition-all duration-300 shrink-0"
                                 style={{ backgroundColor: 'var(--hero-navy)' }}
                             >
                                 <BrandMarkIcon className="w-5 h-5 text-[var(--hero-accent)]" />
                             </div>
-                            <h1 className="hidden sm:block font-display text-xl lg:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity duration-300">
+                            <h1 className="hidden md:block font-display text-lg lg:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight group-hover:opacity-90 transition-opacity duration-300 whitespace-nowrap">
                                 {t('header.title')}
                             </h1>
                         </NavLink>

@@ -100,7 +100,7 @@ export const TeamSwitcher: React.FC<TeamSwitcherProps> = ({ user, onSwitchTeam }
         <div className="flex items-center justify-center w-6 h-6 bg-gray-200 dark:bg-gray-700 rounded">
             {currentTeam ? <UsersIcon className="w-4 h-4 text-gray-600 dark:text-gray-300"/> : <UserCircleIcon className="w-4 h-4 text-gray-600 dark:text-gray-300"/>}
         </div>
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[140px]">{currentWorkspaceName}</span>
+        <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[90px] xl:max-w-[120px]">{currentWorkspaceName}</span>
         <ChevronDownIcon className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
