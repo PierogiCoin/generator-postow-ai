@@ -1,8 +1,8 @@
 import { supabase } from './clients.js';
 import logger from '../logger.js';
-import { tokenizeSimilarity } from '../../utils/textSimilarity.js';
+import { tokenizeSimilarity } from '../utils/textSimilarity.ts';
 
-export { tokenizeSimilarity } from '../../utils/textSimilarity.js';
+export { tokenizeSimilarity } from '../utils/textSimilarity.ts';
 
 export interface BrandMemoryChunk {
   id: string;

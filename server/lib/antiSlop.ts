@@ -3,7 +3,7 @@ import {
   findBannedPhrases,
   buildAntiSlopRewritePrompt,
   buildAntiSlopBlock,
-} from '../../prompts/plAntiSlop.ts';
+} from '../prompts/plAntiSlop.ts';
 import logger from '../logger.js';
 
 export { buildAntiSlopBlock, findBannedPhrases };

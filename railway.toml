@@ -2,7 +2,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-watchPatterns = ["Dockerfile", "server/**", "config/**", "types.ts", "railway.toml"]
+watchPatterns = ["Dockerfile", "server/**", "config/**", "prompts/**", "utils/**", "types.ts", "railway.toml"]
 
 [deploy]
 healthcheckPath = "/health"

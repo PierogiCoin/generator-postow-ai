@@ -27,7 +27,7 @@ import {
   sendGenerationError,
 } from './helpers.js';
 import { startGenerationTrace } from '../../lib/langfuse.js';
-import { buildAntiSlopBlock } from '../../../prompts/plAntiSlop.ts';
+import { buildAntiSlopBlock } from '../../prompts/plAntiSlop.ts';
 import { enforceAntiSlopTextServer } from '../../lib/antiSlop.js';
 
 export function createTextGenerationRouter(): Router {

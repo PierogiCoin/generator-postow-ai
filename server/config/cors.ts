@@ -10,7 +10,7 @@ export function getCorsOptions(): cors.CorsOptions {
   const env = loadEnv();
   const allowedOriginsEnv = (env.ALLOWED_ORIGINS || '')
     .split(',')
-    .map((o) => o.trim())
+    .map((o) => o.trim().replace(/\/+$/, ''))
     .filter(Boolean);
 
   return {
@@ -19,7 +19,8 @@ export function getCorsOptions(): cors.CorsOptions {
       if (!origin) return callback(null, true);
 
       try {
-        if (allowedOriginsEnv.includes(origin)) return callback(null, true);
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+        if (allowedOriginsEnv.includes(normalizedOrigin)) return callback(null, true);
 
         const u = new URL(origin);
         const host = u.hostname;

@@ -11,9 +11,18 @@ RUN npm ci --omit=dev 2>/dev/null || npm install --omit=dev
 WORKDIR /workspace
 COPY config ./config
 COPY types.ts ./types.ts
+COPY prompts ./prompts
+COPY utils ./utils
 COPY server ./server
 
 WORKDIR /workspace/server
+
+# Fail build early if vendored shared modules are missing
+RUN test -f ./prompts/plAntiSlop.ts \
+  && test -f ./utils/textSimilarity.ts \
+  && grep -q 'export function buildAntiSlopBlock' ./prompts/plAntiSlop.ts \
+  && grep -q 'export function tokenizeSimilarity' ./utils/textSimilarity.ts \
+  && npx tsx -e "import { buildAntiSlopBlock } from './prompts/plAntiSlop.ts'; import { tokenizeSimilarity } from './utils/textSimilarity.ts'; if (typeof buildAntiSlopBlock !== 'function' || typeof tokenizeSimilarity !== 'function') { console.error('bad exports'); process.exit(1); } console.log('server shared modules ok')"
 
 ENV NODE_ENV=production
 EXPOSE 3001
