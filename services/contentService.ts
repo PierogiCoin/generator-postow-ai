@@ -21,8 +21,11 @@ import { normalizeCtaUrl } from '../utils/publishCaption';
 import { buildCompetitorPromptBlock } from '../utils/competitorBrandVoice';
 import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
 import { retrieveBrandMemoryContext } from './brandMemoryService';
-import { getUserNiche } from '../utils/userNiche';
-import { matchIndustryPack } from '../utils/industryPacks';
+import {
+  formatNicheSystemInstruction,
+  formatNicheUserPromptLines,
+  resolveNicheContext,
+} from '../utils/nicheContext';
 
 function attachBrandCtaUrl(
     details: Record<string, unknown>,
@@ -59,19 +62,17 @@ export async function* generateSocialMediaContentStream(
     let visualVibe: string | undefined;
     const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-2.5-flash";
 
-    const nicheResolved =
-        (brandVoice?.niche && brandVoice.niche.trim()) ||
-        (formData.audience && formData.audience.trim()) ||
-        getUserNiche(userId) ||
-        '';
-    const industryPack = nicheResolved ? matchIndustryPack(nicheResolved) : null;
+    const nicheCtx = resolveNicheContext({
+        userId,
+        brandVoice,
+        audience: formData.audience,
+    });
 
     const contents = `Generate an engaging ${formData.platform} post. 
 TOPIC: ${formData.topic || 'General engaging content'}
 TONE: ${formData.tone}
-AUDIENCE: ${formData.audience || 'General public'}
-NISZA: ${nicheResolved || 'nieokreślona'}
-${industryPack ? `INDUSTRY_PACK: ${industryPack.name}${industryPack.subNicheLabel ? ` / ${industryPack.subNicheLabel}` : ''}` : ''}
+AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
+${formatNicheUserPromptLines(nicheCtx)}
 
 CRITICAL: Do not ask for more information. Do not respond conversationally. Provide ONLY the post content.`;
 
@@ -80,16 +81,7 @@ CRITICAL: Do not ask for more information. Do not respond conversationally. Prov
 CURRENT DATE: ${currentDateStr} (Ensure any temporal references, years, or dates in the post align with this date. Never reference outdated years like 2024 or 2025 unless explicitly asked to describe past events).
 ${buildAntiSlopBlock()}`;
 
-    if (nicheResolved) {
-        systemInstruction += `\n\nNISZA / BRANŻA: ${nicheResolved}.`;
-        if (industryPack) {
-            systemInstruction += ` Dopasowany pack: ${industryPack.name}${industryPack.subNicheLabel ? ` (${industryPack.subNicheLabel})` : ''}.`;
-            systemInstruction += ` Pisz konkretnie jak dla tej branży w Polsce — unikać generycznych frazesów marketingowych; używać realnych scenariuszy (np. menu dnia, metamorfoza, case study, produkt).`;
-            if (industryPack.topicHint) {
-                systemInstruction += ` Kontekst packa: ${industryPack.topicHint}.`;
-            }
-        }
-    }
+    systemInstruction += formatNicheSystemInstruction(nicheCtx);
 
     const platformInstructions: Record<string, string> = {
         [Platform.Facebook]: `
@@ -602,9 +594,11 @@ export const repurposeContent = async (text: string, newPlatform: Platform, user
 };
 
 export const generateABTestVariations = async (formData: FormData, brandVoice: BrandVoiceData | null, userId: string): Promise<[Partial<GenerationResult>, Partial<GenerationResult>]> => {
+    const nicheCtx = resolveNicheContext({ userId, brandVoice, audience: formData.audience });
     const prompt = `Generate two distinct versions (Variant A and Variant B) for a ${formData.platform} post about: "${formData.topic}".
     TONE: ${formData.tone}
-    AUDIENCE: ${formData.audience}
+    AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
+    ${formatNicheUserPromptLines(nicheCtx)}
     KEYWORDS: ${formData.keywords}
     
     Variant A should focus on: Emotional appeal and benefits.
@@ -614,7 +608,10 @@ export const generateABTestVariations = async (formData: FormData, brandVoice: B
 
     const response = await generateJson<{ variantA: { postText: string }, variantB: { postText: string } }>({
         model: "gemini-flash-latest",
-        contents: prompt
+        contents: prompt,
+        config: {
+            systemInstruction: `You are an elite social media copywriter.${formatNicheSystemInstruction(nicheCtx)}${brandVoice ? ` Follow brand voice: ${JSON.stringify(brandVoice)}.` : ''}\n${buildAntiSlopBlock()}`,
+        },
     }, userId);
 
     return [
@@ -640,12 +637,14 @@ export const generateHookVariations = async (postText: string, userId: string): 
 
 export const generateOmnichannelPosts = async (formData: FormData, brandVoice: BrandVoiceData | null, userId: string): Promise<OmnichannelPost[]> => {
     const platforms = formData.selectedPlatforms || [Platform.Facebook, Platform.Instagram, Platform.LinkedIn, Platform.X];
+    const nicheCtx = resolveNicheContext({ userId, brandVoice, audience: formData.audience });
 
     try {
         const response = await generateJson<{ posts: OmnichannelPost[] }>({
             model: "gemini-flash-latest",
             contents: `Generate simultaneous high-engagement social media posts for multiple platforms about: "${formData.topic}".
-            TARGET AUDIENCE: ${formData.audience}
+            TARGET AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
+            ${formatNicheUserPromptLines(nicheCtx)}
             TONE: ${formData.tone}
             PLATFORMS: ${platforms.join(', ')}
             
@@ -658,6 +657,9 @@ export const generateOmnichannelPosts = async (formData: FormData, brandVoice: B
                 { "platform": "PlatformName", "postText": "content...", "hashtags": ["#tag1", "#tag2"] }
               ]
             }`,
+            config: {
+                systemInstruction: `You are an elite multi-platform social media strategist.${formatNicheSystemInstruction(nicheCtx)}${brandVoice ? ` Follow brand voice: ${JSON.stringify(brandVoice)}.` : ''}\n${buildAntiSlopBlock()}`,
+            },
         }, userId);
         return response.posts;
     } catch (error: unknown) {

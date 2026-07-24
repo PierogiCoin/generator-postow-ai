@@ -36,7 +36,9 @@ import {
   applySubNicheToPack,
   type IndustryPack,
 } from '../utils/industryPacks';
+import { persistIndustryNiche } from '../utils/nicheContext';
 import type { IndustrySubNicheDef } from '../shared/industryPacks';
+import { setUserNiche } from '../utils/userNiche';
 import type { StrategicIdea, Platform as PlatformType } from '../types';
 import { Platform, NotificationType } from '../types';
 import type { SocialConnection } from '../types/socialPublishing';
@@ -79,7 +81,7 @@ const StatCard: React.FC<{
     </div>
 );
 
-const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
+const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> = ({ niche, userId }) => {
     const navigate = useNavigate();
     const matched = matchIndustryPack(niche);
     const packs = matched ? [matched, ...getAllIndustryPacks().filter((p) => p.id !== matched.id)] : getAllIndustryPacks();
@@ -104,13 +106,10 @@ const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
     const topicIdeas = activePack.topicIdeas.slice(0, 8);
 
     const openPack = (pack: IndustryPack, topic?: string) => {
+        const audience = persistIndustryNiche(pack, userId, niche);
         navigate('/generator', {
             state: {
-                prefillData: industryPackToFormPrefill(
-                    pack,
-                    topic,
-                    pack.subNicheLabel ? `${pack.name} — ${pack.subNicheLabel}` : undefined
-                ),
+                prefillData: industryPackToFormPrefill(pack, topic, audience),
             },
         });
     };
@@ -169,7 +168,19 @@ const IndustryPackSection: React.FC<{ niche: string }> = ({ niche }) => {
                                 <button
                                     key={sub.id}
                                     type="button"
-                                    onClick={() => setActiveSub(selected ? null : sub)}
+                                    onClick={() => {
+                                        const next = selected ? null : sub;
+                                        setActiveSub(next);
+                                        if (next) {
+                                            const pack = applySubNicheToPack(
+                                                matched?.id === 'pl-lokal' ? matched! : primary,
+                                                next
+                                            );
+                                            persistIndustryNiche(pack, userId, niche);
+                                        } else if (matched) {
+                                            setUserNiche(matched.name, userId);
+                                        }
+                                    }}
                                     className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
                                         selected
                                             ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
@@ -214,7 +225,11 @@ const StrategyAssistant: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [retryTrigger, setRetryTrigger] = useState(0);
-    const niche = getUserNiche(user?.id);
+    const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore();
+    const activeBv = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId);
+    const niche =
+        activeBv?.settings?.niche?.trim() ||
+        getUserNiche(user?.id);
 
     useEffect(() => {
         const fetchIdeas = async () => {
@@ -235,13 +250,14 @@ const StrategyAssistant: React.FC = () => {
 
     const onGenerateFromIdea = (topic: string) => {
         const pack = matchIndustryPack(niche);
-        navigate('/generator', {
-            state: {
-                prefillData: pack
-                    ? industryPackToFormPrefill(pack, topic)
-                    : { topic },
-            },
-        });
+        if (pack) {
+            const audience = persistIndustryNiche(pack, user?.id, niche);
+            navigate('/generator', {
+                state: { prefillData: industryPackToFormPrefill(pack, topic, audience) },
+            });
+            return;
+        }
+        navigate('/generator', { state: { prefillData: { topic, audience: niche } } });
     };
 
     const IdeaTypeIcon: React.FC<{ type: StrategicIdea['type'] }> = ({ type }) => {
@@ -475,7 +491,7 @@ export const DashboardView: React.FC = () => {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const { history, scheduledPosts, stats, drafts } = useDataStore();
+    const { history, scheduledPosts, stats, drafts, brandVoiceProfiles, activeBrandVoiceId } = useDataStore();
     const { setIsCommandPaletteOpen } = useUIStore();
     const notificationSystem = useNotifications();
     const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification);
@@ -518,7 +534,8 @@ export const DashboardView: React.FC = () => {
 
     const oneWeekFromNow = Date.now() + 7 * 24 * 60 * 60 * 1000;
     const scheduledThisWeek = scheduledPosts.filter(p => p.scheduleTimestamp <= oneWeekFromNow).length;
-    const niche = getUserNiche(user.id);
+    const bvNiche = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId)?.settings?.niche?.trim();
+    const niche = bvNiche || getUserNiche(user.id);
     const nichePack = matchIndustryPack(niche);
     const quickPlaceholder = nichePack?.topicIdeas[0]
         ?? 'Np. 3 wskazówki na zwiększenie sprzedaży w restauracji...';
@@ -614,7 +631,7 @@ export const DashboardView: React.FC = () => {
 
             <QuickCommandBar />
 
-            <IndustryPackSection niche={niche} />
+            <IndustryPackSection niche={niche} userId={user.id} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                 <StatCard
                     icon={RocketLaunchIcon}

@@ -7,6 +7,7 @@ import { BrandVoiceProfile } from '../../types';
 import { NotificationType } from '../../types';
 import * as geminiService from '../../services/geminiService';
 import { learnedPayloadToSettings, mergeLearnedIntoProfile } from '../../utils/brandVoiceLearn';
+import { setUserNiche } from '../../utils/userNiche';
 import {
   buildLearnedFromCompetitors,
   mergeCompetitorIntelIntoProfile,
@@ -48,6 +49,8 @@ export const useBrandVoiceHandlers = ({ addToast, t, handleApiError }: BrandVoic
 
     const handleSaveBrandVoiceProfile = useCallback((profile: BrandVoiceProfile) => {
         if (!user) return;
+        const niche = profile.settings.niche?.trim();
+        if (niche) setUserNiche(niche, user.id);
         dataActions.saveBrandVoiceProfile({
             ...profile,
             userId: user.id,

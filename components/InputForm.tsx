@@ -97,6 +97,7 @@ export const InputForm: React.FC<InputFormProps> = ({
     handleSubmit,
     handleInputChange,
     handleRichTextChange,
+    handleAudienceChange,
     handlePlatformChange,
     handleGenerationTypeChange,
     handleSelectTemplate,
@@ -265,6 +266,7 @@ export const InputForm: React.FC<InputFormProps> = ({
             onPlatformChange={handlePlatformChange}
             onToneChange={(tone) => setFormData((p) => ({ ...p, tone }))}
             onContentLanguageChange={(contentLanguage) => setFormData((p) => ({ ...p, contentLanguage }))}
+            onAudienceChange={handleAudienceChange}
             onSubmit={handleSubmit}
             onSaveDraft={handleSaveDraft}
             onOpenAssistant={() => setIsAssistantModalOpen(true)}

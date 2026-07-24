@@ -26,6 +26,7 @@ import {
   applySubNicheToPack,
   type IndustryPack,
 } from '../../utils/industryPacks';
+import { persistIndustryNiche } from '../../utils/nicheContext';
 import { useAuth } from '../../contexts/AuthContext';
 import type { IndustrySubNicheDef } from '../../shared/industryPacks';
 
@@ -35,6 +36,7 @@ export interface InputFormQuickFlowProps {
   onPlatformChange: (platform: Platform) => void;
   onToneChange: (tone: FormData['tone']) => void;
   onContentLanguageChange: (lang: FormData['contentLanguage']) => void;
+  onAudienceChange?: (audience: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onSaveDraft: () => void;
   onOpenAssistant: () => void;
@@ -55,6 +57,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
   onPlatformChange,
   onToneChange,
   onContentLanguageChange,
+  onAudienceChange,
   onSubmit,
   onSaveDraft,
   onOpenAssistant,
@@ -80,7 +83,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
 
   React.useEffect(() => {
     if (matchedPack?.subNicheId) {
-      setActiveSub(gastroSubs.find((s) => s.id === matchedPack.subNicheId) ?? null);
+      setActiveSub(getGastroSubNiches().find((s) => s.id === matchedPack.subNicheId) ?? null);
     }
   }, [matchedPack?.subNicheId, matchedPack?.id]);
 
@@ -90,10 +93,16 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
       : basePack;
   const topicIdeas = ideaPack.topicIdeas.slice(0, 8);
 
+  const applyPackContext = (pack: IndustryPack) => {
+    const label = persistIndustryNiche(pack, user?.id, formData.audience);
+    onAudienceChange?.(label);
+    onPlatformChange(pack.platform);
+    onToneChange(pack.tone);
+  };
+
   const applyIndustryIdea = (idea: string) => {
     onTopicChange(`<p>${idea}</p>`);
-    onPlatformChange(ideaPack.platform);
-    onToneChange(ideaPack.tone);
+    applyPackContext(ideaPack);
   };
 
   const STEPS = [
@@ -217,7 +226,14 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                     <button
                       key={sub.id}
                       type="button"
-                      onClick={() => setActiveSub(selected ? null : sub)}
+                      onClick={() => {
+                        const next = selected ? null : sub;
+                        setActiveSub(next);
+                        const pack = next
+                          ? applySubNicheToPack(basePack, next)
+                          : basePack;
+                        applyPackContext(pack);
+                      }}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md border ${
                         selected
                           ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
@@ -251,8 +267,7 @@ export const InputFormQuickFlow: React.FC<InputFormQuickFlowProps> = ({
                     type="button"
                     onClick={() => {
                       onTopicChange(`<p>${pack.topicIdeas[0]}</p>`);
-                      onPlatformChange(pack.platform);
-                      onToneChange(pack.tone);
+                      applyPackContext(pack);
                     }}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold rounded-md border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40"
                   >
