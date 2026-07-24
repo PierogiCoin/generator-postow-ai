@@ -497,7 +497,7 @@ export const GeneratorView: React.FC = () => {
                     </button>
                 )}
 
-                <div className={`w-full transition-all duration-300 ${isResultVisible && !isMobile ? 'grid gap-6 lg:gap-8 lg:grid-cols-[minmax(0,1fr),minmax(0,1.05fr)]' : ''}`}>
+                <div className={`w-full transition-all duration-300 ${isResultVisible && !isMobile ? 'grid gap-6 xl:gap-8 lg:grid-cols-2 items-start' : ''}`}>
                     {isResultVisible && isMobile && (
                         <div
                             className="lg:hidden sticky top-[4.5rem] z-30 mb-4 flex p-1 rounded-xl bg-slate-100/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-sm"
