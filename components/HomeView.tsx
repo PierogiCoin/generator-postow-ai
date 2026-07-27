@@ -344,6 +344,72 @@ const ProofStrip: React.FC = () => {
   );
 };
 
+const FAQSection: React.FC = () => {
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
+
+  const faqs = [
+    {
+      q: 'Czy teksty wygenerowane przez AI nie brzmią sztywno lub sztucznie?',
+      a: 'Nie. AI Content Pro posiada dedykowany moduł Anti-Slop oraz silnik Głosu Marki (Brand Voice). Zamiast generycznych formułek z ChatGPT, otrzymujesz treść sformatowaną z unikalnym tonem, haczykami i konkretną wartością pod Twoją branżę.',
+    },
+    {
+      q: 'Jak działa dopasowanie do mojej branży?',
+      a: 'Podczas konfigurowania studia wybierasz swoją niszę lub wpisujesz własną. Nasz system dobiera optymalny framework copywriterski (np. PAS, AIDA, Storytelling), odpowiedni zestaw słów kluczowych i styl graficzny dostosowany do Twoich odbiorców.',
+    },
+    {
+      q: 'Czy potrzebuję podawać kartę kredytową na start?',
+      a: 'Nie, konto założysz bez podawania jakichkolwiek danych płatniczych. Otrzymujesz darmowe kredyty na przetestowanie generowania postów, grafik i harmonogramu.',
+    },
+    {
+      q: 'Czy wygenerowane treści mogę publikować bezpośrednio w social media?',
+      a: 'Tak! System pozwala na eksport postów, kopiowanie gotowych formatów lub zaplanowanie ich bezpośrednio w wbudowanym kalendarzu publikacji.',
+    },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 bg-[var(--hero-surface)] border-t border-white/5">
+      <div className="max-w-4xl mx-auto px-4">
+        <div className="text-center max-w-2xl mx-auto mb-12">
+          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
+            Często zadawane pytania
+          </span>
+          <h2 className="font-display text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            Wszystko, co musisz wiedzieć przed startem
+          </h2>
+        </div>
+
+        <div className="space-y-3">
+          {faqs.map((faq, idx) => {
+            const isOpen = openIndex === idx;
+            return (
+              <div
+                key={idx}
+                className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] overflow-hidden transition-colors"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenIndex(isOpen ? null : idx)}
+                  className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 dark:text-white hover:text-[var(--hero-accent)] transition-colors"
+                >
+                  <span className="text-base md:text-lg">{faq.q}</span>
+                  <span className={`text-xl transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--hero-accent)]' : 'text-slate-500'}`}>
+                    ▾
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="px-5 pb-5 text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-white/5 pt-3">
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const FinalCTASection: React.FC<{ onNavigateToApp: () => void; isLoggedIn: boolean }> = ({
   onNavigateToApp,
   isLoggedIn,
@@ -455,6 +521,10 @@ export const HomeView: React.FC<HomeViewProps> = () => {
 
       <Reveal reducedMotion={reducedMotion}>
         <ProofStrip />
+      </Reveal>
+
+      <Reveal reducedMotion={reducedMotion}>
+        <FAQSection />
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
