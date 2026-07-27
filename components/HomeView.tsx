@@ -44,7 +44,7 @@ const ScrollProgressBar: React.FC = () => {
   );
 };
 
-const LandingNav: React.FC<{ onSignup: () => void; isLoggedIn: boolean }> = ({ onSignup, isLoggedIn }) => {
+const LandingNav: React.FC<{ onSignup: () => void; onPricing: () => void; isLoggedIn: boolean }> = ({ onSignup, onPricing, isLoggedIn }) => {
   const { t } = useTranslation();
   const items = [
     { label: t('home.journey.nav_problem'), id: 'problem' },
@@ -79,6 +79,13 @@ const LandingNav: React.FC<{ onSignup: () => void; isLoggedIn: boolean }> = ({ o
               {item.label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={onPricing}
+            className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          >
+            {t('home.nav.pricing')}
+          </button>
         </div>
         <ModernButton
           variant="primary"
@@ -155,15 +162,15 @@ const HeroSection: React.FC<{
         {/* Trust Badges */}
         <div className="mt-8 flex flex-wrap justify-center items-center gap-5 text-xs text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">⚡</span> Rejestracja w 10 sekund
+            <span className="text-emerald-400">⚡</span> {t('home.journey.trust_signup')}
           </span>
           <span className="hidden sm:inline text-slate-700">•</span>
           <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">💳</span> Brak wymaganej karty
+            <span className="text-emerald-400">💳</span> {t('home.journey.trust_no_card')}
           </span>
           <span className="hidden sm:inline text-slate-700">•</span>
           <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">🎁</span> Darmowe kredyty na start
+            <span className="text-emerald-400">🎁</span> {t('home.journey.trust_credits')}
           </span>
         </div>
       </div>
@@ -345,6 +352,7 @@ const ProofStrip: React.FC = () => {
 };
 
 const FAQSection: React.FC = () => {
+  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
@@ -371,10 +379,10 @@ const FAQSection: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
-            Często zadawane pytania
+            {t('home.journey.faq_kicker')}
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Wszystko, co musisz wiedzieć przed startem
+            {t('home.journey.faq_title')}
           </h2>
         </div>
 
@@ -389,18 +397,23 @@ const FAQSection: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
+                  aria-expanded={isOpen}
+                  aria-controls={`landing-faq-panel-${idx}`}
                   className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 dark:text-white hover:text-[var(--hero-accent)] transition-colors"
                 >
                   <span className="text-base md:text-lg">{faq.q}</span>
-                  <span className={`text-xl transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--hero-accent)]' : 'text-slate-500'}`}>
-                    ▾
-                  </span>
+                  <ChevronDownIcon
+                    className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--hero-accent)]' : 'text-slate-500'}`}
+                    aria-hidden="true"
+                  />
                 </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-white/5 pt-3">
-                    {faq.a}
-                  </div>
-                )}
+                <div
+                  id={`landing-faq-panel-${idx}`}
+                  hidden={!isOpen}
+                  className="px-5 pb-5 text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-white/5 pt-3"
+                >
+                  {faq.a}
+                </div>
               </div>
             );
           })}
@@ -441,15 +454,15 @@ const FinalCTASection: React.FC<{ onNavigateToApp: () => void; isLoggedIn: boole
         {/* Trust Badges */}
         <div className="pt-2 flex flex-wrap justify-center items-center gap-4 text-xs text-slate-400">
           <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">⚡</span> Natychmiastowy dostęp
+            <span className="text-emerald-400">⚡</span> {t('home.journey.final_trust_access')}
           </span>
           <span className="hidden sm:inline text-slate-700">•</span>
           <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">🔒</span> Bezpieczeństwo i prywatność
+            <span className="text-emerald-400">🔒</span> {t('home.journey.final_trust_security')}
           </span>
           <span className="hidden sm:inline text-slate-700">•</span>
           <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">💳</span> Bez podawania karty
+            <span className="text-emerald-400">💳</span> {t('home.journey.final_trust_no_card')}
           </span>
         </div>
 
@@ -462,7 +475,7 @@ const FinalCTASection: React.FC<{ onNavigateToApp: () => void; isLoggedIn: boole
 export const HomeView: React.FC<HomeViewProps> = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { setAuthModal } = useUIStore();
+  const { setAuthModal, setIsPricingModalOpen } = useUIStore();
   const reducedMotion = usePrefersReducedMotion();
   const { t } = useTranslation();
 
@@ -483,7 +496,11 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   };
 
   const startJourney = () => {
-    scrollToAnchor('problem', reducedMotion);
+    openSignupOrApp();
+  };
+
+  const openPricing = () => {
+    setIsPricingModalOpen(true);
   };
 
   const goToIndustries = () => {
@@ -493,7 +510,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   return (
     <div className="relative pb-0">
       <ScrollProgressBar />
-      <LandingNav onSignup={openSignupOrApp} isLoggedIn={isLoggedIn} />
+      <LandingNav onSignup={openSignupOrApp} onPricing={openPricing} isLoggedIn={isLoggedIn} />
       <HeroSection reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} onStart={startJourney} />
 
       <Reveal reducedMotion={reducedMotion}>

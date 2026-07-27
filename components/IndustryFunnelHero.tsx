@@ -6,12 +6,14 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModernButton } from './ui';
+import { setUserNiche } from '../utils/userNiche';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { getAllIndustryPacks, type IndustryPackId } from '../utils/industryPacks';
 import {
   formatIndustriesLabel,
   getPendingIndustryIds,
   getUserIndustryIds,
+  setPendingCustomIndustry,
   setPendingIndustryIds,
   setUserIndustryIds,
 } from '../utils/userIndustries';
@@ -23,7 +25,7 @@ export interface IndustryFunnelHeroProps {
   reducedMotion: boolean;
   isLoggedIn: boolean;
   userId?: string | null;
-  onContinue: (selectedIds: IndustryPackId[]) => void;
+  onContinue: (selectedIds: IndustryPackId[], customIndustry: string) => void;
 }
 
 export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
@@ -57,11 +59,13 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
     try {
       if (isLoggedIn && userId) {
         await setUserIndustryIds(selected, { userId, syncRemote: true });
+        if (customIndustry.trim()) setUserNiche(customIndustry.trim(), userId);
       } else {
         setPendingIndustryIds(selected);
+        setPendingCustomIndustry(customIndustry);
         await setUserIndustryIds(selected, { syncRemote: false });
       }
-      onContinue(selected);
+      onContinue(selected, customIndustry.trim());
     } finally {
       setSaving(false);
     }
@@ -95,10 +99,10 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
         {/* Step indicator */}
         <div className="mt-8 flex items-center justify-center gap-3 text-xs font-medium text-slate-400">
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[var(--hero-accent)] text-white text-xs font-bold">1</span>
-          <span className="text-white font-semibold">Wybierz branże</span>
+          <span className="text-white font-semibold">{t('home.funnel.pick_label')}</span>
           <span className="text-slate-600">→</span>
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold">2</span>
-          <span>Dopasuj studio AI</span>
+          <span>{t('home.funnel.step3')}</span>
         </div>
 
         {/* Industry Card Selector Grid */}
@@ -155,7 +159,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
             <span className="absolute left-3.5 text-base">✍️</span>
             <input
               type="text"
-              placeholder="Inna branża lub nisza? Wpisz nazwę (np. Fotografia ślubna, Stolarnia)..."
+              placeholder={t('home.funnel.custom_placeholder')}
               value={customIndustry}
               onChange={(e) => setCustomIndustry(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.04] text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[var(--hero-accent)] focus:ring-1 focus:ring-[var(--hero-accent)] transition-all"
@@ -171,12 +175,12 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
             <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
                 <SparklesIcon className="w-4 h-4" />
-                Dopasowany profil studium AI
+                {t('home.funnel.title')}
               </span>
               <span className="text-xs text-slate-400">{selected.length + (customIndustry.trim() ? 1 : 0)} wybrana(e)</span>
             </div>
             <p className="text-sm text-slate-200">
-              <span className="text-slate-400">Wybrane ścieżki:</span>{' '}
+              <span className="text-slate-400">{t('home.funnel.selected_prefix')}</span>{' '}
               <span className="font-semibold text-white">
                 {selectedLabel}
                 {customIndustry.trim() ? `${selectedLabel ? ', ' : ''}${customIndustry.trim()}` : ''}
@@ -216,20 +220,6 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
               ? t('home.funnel.saving')
               : t(isLoggedIn ? 'home.journey.gate_cta_logged_in' : 'home.journey.gate_cta')}
           </ModernButton>
-
-          {/* Social Proof & Metrics */}
-          <div className="mt-2 flex flex-col sm:flex-row items-center gap-4 text-xs text-slate-400">
-            <div className="flex items-center gap-1.5 text-amber-400">
-              <span>⭐⭐⭐⭐⭐</span>
-              <span className="font-semibold text-slate-200">4.9/5</span>
-              <span className="text-slate-400">(1,200+ marketerów)</span>
-            </div>
-            <span className="hidden sm:inline text-slate-600">•</span>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>Ponad <strong>85,000+ wygenerowanych postów</strong></span>
-            </div>
-          </div>
 
           <p className="text-xs text-slate-500 max-w-md leading-relaxed mt-1">
             {t(isLoggedIn ? 'home.funnel.proof_logged_in' : 'home.journey.gate_proof')}

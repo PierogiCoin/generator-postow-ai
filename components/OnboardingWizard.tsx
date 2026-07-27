@@ -13,6 +13,7 @@ import { matchIndustryPack, getIndustryPackById } from '../utils/industryPacks';
 import { setUserNiche } from '../utils/userNiche';
 import {
   formatIndustriesLabel,
+  getPendingCustomIndustry,
   getPendingIndustryIds,
   getUserIndustryIds,
   setUserIndustryIds,
@@ -73,10 +74,11 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ onComplete }
     const pending = getPendingIndustryIds();
     const saved = getUserIndustryIds();
     const ids = pending.length > 0 ? pending : saved;
-    if (ids.length === 0) return;
+    const customIndustry = getPendingCustomIndustry();
+    if (ids.length === 0 && !customIndustry) return;
     setIndustryIds(ids);
     const label = formatIndustriesLabel(ids);
-    if (label) setNiche(label);
+    if (label || customIndustry) setNiche(customIndustry || label);
     const primary = getIndustryPackById(ids[0]);
     if (primary) {
       setPlatform(primary.platform);

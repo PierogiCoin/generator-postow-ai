@@ -9,6 +9,7 @@ import { getUserNiche, setUserNiche } from './userNiche';
 
 const GLOBAL_IDS_KEY = 'userIndustryIds';
 const PENDING_IDS_KEY = 'pendingUserIndustryIds';
+const PENDING_CUSTOM_KEY = 'pendingCustomIndustry';
 
 function perUserIdsKey(userId: string): string {
   return `${GLOBAL_IDS_KEY}_${userId}`;
@@ -120,6 +121,24 @@ export function getPendingIndustryIds(): IndustryPackId[] {
   return readIds(PENDING_IDS_KEY);
 }
 
+export function getPendingCustomIndustry(): string {
+  try {
+    return localStorage.getItem(PENDING_CUSTOM_KEY)?.trim() || '';
+  } catch {
+    return '';
+  }
+}
+
+export function setPendingCustomIndustry(value: string): void {
+  try {
+    const trimmed = value.trim();
+    if (trimmed) localStorage.setItem(PENDING_CUSTOM_KEY, trimmed);
+    else localStorage.removeItem(PENDING_CUSTOM_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export function setPendingIndustryIds(ids: IndustryPackId[]): void {
   const unique = Array.from(new Set(ids));
   writeIds(PENDING_IDS_KEY, unique);
@@ -128,6 +147,7 @@ export function setPendingIndustryIds(ids: IndustryPackId[]): void {
 export function clearPendingIndustryIds(): void {
   try {
     localStorage.removeItem(PENDING_IDS_KEY);
+    localStorage.removeItem(PENDING_CUSTOM_KEY);
   } catch {
     // ignore
   }
@@ -211,8 +231,10 @@ export async function hydrateIndustriesOnAuth(
   profileNiche?: string | null
 ): Promise<IndustryPackId[]> {
   const pending = getPendingIndustryIds();
-  if (pending.length > 0) {
+  const pendingCustom = getPendingCustomIndustry();
+  if (pending.length > 0 || pendingCustom) {
     const saved = await setUserIndustryIds(pending, { userId, syncRemote: true });
+    if (pendingCustom) setUserNiche(pendingCustom, userId);
     clearPendingIndustryIds();
     return saved;
   }

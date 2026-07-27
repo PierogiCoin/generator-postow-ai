@@ -64,23 +64,42 @@ export async function runGroundedJsonGeneration<T>(
     systemInstruction: options?.systemInstruction,
   });
 
-  const result = await retryWithBackoff(
-    () =>
-      withTimeout(
-        model.generateContent({
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: options?.temperature ?? 0.35,
-            maxOutputTokens: options?.maxOutputTokens ?? 8192,
-            responseMimeType: 'application/json',
-          },
-          tools: [{ googleSearch: {} }],
-        }),
-        120000,
-        'Intelligence generation timed out'
-      ),
-    { maxRetries: 2, baseDelay: 1500 }
-  );
+  let result;
+  try {
+    result = await retryWithBackoff(
+      () =>
+        withTimeout(
+          model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: options?.temperature ?? 0.35,
+              maxOutputTokens: options?.maxOutputTokens ?? 8192,
+            },
+            tools: [{ googleSearchRetrieval: {} }] as never,
+          }),
+          120000,
+          'Intelligence generation timed out'
+        ),
+      { maxRetries: 2, baseDelay: 1500 }
+    );
+  } catch (groundingError) {
+    logger.warn('[intelligenceEngine] Grounded generation failed, retrying without Search grounding', groundingError);
+    result = await retryWithBackoff(
+      () =>
+        withTimeout(
+          model.generateContent({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: options?.temperature ?? 0.35,
+              maxOutputTokens: options?.maxOutputTokens ?? 8192,
+            },
+          }),
+          120000,
+          'Intelligence generation timed out'
+        ),
+      { maxRetries: 1, baseDelay: 1000 }
+    );
+  }
 
   const response = await result.response;
   const rawText = response.text();

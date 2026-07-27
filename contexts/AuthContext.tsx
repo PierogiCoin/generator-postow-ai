@@ -188,12 +188,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const fetchTable = async <T = unknown[]>(table: string, orderCol = 'timestamp', ascending = false): Promise<T[]> => {
         try {
           const result = await withTimeout(
-            supabase.from(table).select('*').order(orderCol, { ascending }),
+            supabase.from(table).select('*').eq('user_id', sbUser.id).order(orderCol, { ascending }),
             8000,
             `${table}_fetch`
           ) as { data: T[] | null; error: unknown } | undefined;
-          return (result?.error ? [] : (result?.data || [])) as T[];
-        } catch {
+          if (result?.error) {
+            console.error(`[fetchTable] ${table} failed:`, result.error);
+            return [];
+          }
+          return (result?.data || []) as T[];
+        } catch (err) {
+          console.error(`[fetchTable] ${table} exception:`, err);
           return [];
         }
       };

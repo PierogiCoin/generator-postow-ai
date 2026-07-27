@@ -12,8 +12,10 @@ WORKDIR /workspace
 COPY config ./config
 COPY types.ts ./types.ts
 COPY prompts ./prompts
+COPY shared ./shared
 COPY utils ./utils
 COPY server ./server
+RUN printf '{"type":"module"}\n' > /workspace/package.json
 
 WORKDIR /workspace/server
 

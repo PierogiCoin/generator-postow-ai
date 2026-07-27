@@ -16,7 +16,8 @@ export const fetchLatestAudit = async (userId: string): Promise<StrategicAuditRe
         return null;
     }
 
-    return data.report;
+    if (!data) return null;
+    return (data as Record<string, unknown>).report as StrategicAuditReport;
 };
 
 export interface AuditHistoryEntry {
@@ -35,7 +36,11 @@ export const fetchAuditHistory = async (userId: string, limit = 10): Promise<Aud
         .limit(limit);
 
     if (error || !data) return [];
-    return data as AuditHistoryEntry[];
+    return data.map((entry) => ({
+        id: entry.id,
+        timestamp: entry.timestamp,
+        report: entry.report,
+    }));
 };
 
 export const saveStrategicAudit = async (report: StrategicAuditReport): Promise<void> => {

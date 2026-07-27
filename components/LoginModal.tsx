@@ -175,6 +175,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onSwitchToSignUp
               id="login-email"
               name="email"
               value={email}
+              autoFocus
               onChange={e => setEmail(e.target.value)}
               onBlur={handleBlur}
               required

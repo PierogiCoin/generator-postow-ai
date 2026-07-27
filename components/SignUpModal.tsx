@@ -160,7 +160,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
         <button
           type="button"
           onClick={handleGoogle}
-          disabled={isLoading || !termsAccepted}
+          disabled={isLoading}
           className="w-full flex items-center justify-center gap-3 border border-slate-300 dark:border-white/15 bg-white dark:bg-[#071018] text-slate-800 dark:text-slate-100 font-semibold py-3 px-4 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50 transition-colors mb-3"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -202,6 +202,7 @@ export const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onSwitchToLogi
               id="signup-email"
               name="email"
               value={email}
+              autoFocus
               onChange={e => setEmail(e.target.value)}
               onBlur={handleBlur}
               required
