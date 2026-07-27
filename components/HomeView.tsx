@@ -151,6 +151,21 @@ const HeroSection: React.FC<{
             {t('home.journey.hero_secondary')}
           </ModernButton>
         </div>
+
+        {/* Trust Badges */}
+        <div className="mt-8 flex flex-wrap justify-center items-center gap-5 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="text-emerald-400">⚡</span> Rejestracja w 10 sekund
+          </span>
+          <span className="hidden sm:inline text-slate-700">•</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-emerald-400">💳</span> Brak wymaganej karty
+          </span>
+          <span className="hidden sm:inline text-slate-700">•</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-emerald-400">🎁</span> Darmowe kredyty na start
+          </span>
+        </div>
       </div>
 
       <button
@@ -320,6 +335,22 @@ const FinalCTASection: React.FC<{ onNavigateToApp: () => void; isLoggedIn: boole
             {t(isLoggedIn ? 'home.journey.nav_app' : 'home.journey.final_cta')}
           </ModernButton>
         </div>
+
+        {/* Trust Badges */}
+        <div className="pt-2 flex flex-wrap justify-center items-center gap-4 text-xs text-slate-400">
+          <span className="flex items-center gap-1.5">
+            <span className="text-emerald-400">⚡</span> Natychmiastowy dostęp
+          </span>
+          <span className="hidden sm:inline text-slate-700">•</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-emerald-400">🔒</span> Bezpieczeństwo i prywatność
+          </span>
+          <span className="hidden sm:inline text-slate-700">•</span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-emerald-400">💳</span> Bez podawania karty
+          </span>
+        </div>
+
         <p className="text-xs text-slate-500">{t('home.journey.final_note')}</p>
       </div>
     </section>
