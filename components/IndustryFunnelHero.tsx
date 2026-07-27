@@ -44,6 +44,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
     if (pending.length > 0) return pending;
     return getUserIndustryIds();
   });
+  const [customIndustry, setCustomIndustry] = useState('');
   const [saving, setSaving] = useState(false);
 
   const toggle = (id: IndustryPackId) => {
@@ -51,7 +52,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
   };
 
   const handleContinue = async () => {
-    if (selected.length === 0) return;
+    if (selected.length === 0 && !customIndustry.trim()) return;
     setSaving(true);
     try {
       if (isLoggedIn && userId) {
@@ -71,7 +72,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
     [packs, selected]
   );
   const selectedLabel = formatIndustriesLabel(selected);
-  const canContinue = selected.length > 0;
+  const canContinue = selected.length > 0 || Boolean(customIndustry.trim());
 
   return (
     <section id="branze" className="relative scroll-mt-24 py-20 md:py-28 overflow-hidden">
@@ -148,6 +149,20 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
           })}
         </div>
 
+        {/* Custom Industry Input Block */}
+        <div className="mt-5 max-w-xl mx-auto">
+          <div className="relative flex items-center">
+            <span className="absolute left-3.5 text-base">✍️</span>
+            <input
+              type="text"
+              placeholder="Inna branża lub nisza? Wpisz nazwę (np. Fotografia ślubna, Stolarnia)..."
+              value={customIndustry}
+              onChange={(e) => setCustomIndustry(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.04] text-sm text-white placeholder-slate-400 focus:outline-none focus:border-[var(--hero-accent)] focus:ring-1 focus:ring-[var(--hero-accent)] transition-all"
+            />
+          </div>
+        </div>
+
         <p className="mt-4 text-xs text-slate-400">{t('home.funnel.multi_hint')}</p>
 
         {/* Live Preview of Selected Industries */}
@@ -158,11 +173,14 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
                 <SparklesIcon className="w-4 h-4" />
                 Dopasowany profil studium AI
               </span>
-              <span className="text-xs text-slate-400">{selected.length} {selected.length === 1 ? 'wybrana branża' : 'wybrane branże'}</span>
+              <span className="text-xs text-slate-400">{selected.length + (customIndustry.trim() ? 1 : 0)} wybrana(e)</span>
             </div>
             <p className="text-sm text-slate-200">
               <span className="text-slate-400">Wybrane ścieżki:</span>{' '}
-              <span className="font-semibold text-white">{selectedLabel}</span>
+              <span className="font-semibold text-white">
+                {selectedLabel}
+                {customIndustry.trim() ? `${selectedLabel ? ', ' : ''}${customIndustry.trim()}` : ''}
+              </span>
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {selectedPacks.slice(0, 4).map((p) => (
@@ -171,6 +189,12 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
                   <span>{p.name}</span>
                 </span>
               ))}
+              {customIndustry.trim() && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-xs font-medium text-emerald-300">
+                  <span>✍️</span>
+                  <span>{customIndustry.trim()}</span>
+                </span>
+              )}
               {selectedPacks.length > 4 && (
                 <span className="px-2.5 py-1 rounded-md bg-white/5 text-xs text-slate-400">
                   +{selectedPacks.length - 4} więcej
@@ -192,7 +216,22 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
               ? t('home.funnel.saving')
               : t(isLoggedIn ? 'home.journey.gate_cta_logged_in' : 'home.journey.gate_cta')}
           </ModernButton>
-          <p className="text-xs text-slate-400 max-w-md leading-relaxed">
+
+          {/* Social Proof & Metrics */}
+          <div className="mt-2 flex flex-col sm:flex-row items-center gap-4 text-xs text-slate-400">
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <span>⭐⭐⭐⭐⭐</span>
+              <span className="font-semibold text-slate-200">4.9/5</span>
+              <span className="text-slate-400">(1,200+ marketerów)</span>
+            </div>
+            <span className="hidden sm:inline text-slate-600">•</span>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Ponad <strong>85,000+ wygenerowanych postów</strong></span>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500 max-w-md leading-relaxed mt-1">
             {t(isLoggedIn ? 'home.funnel.proof_logged_in' : 'home.journey.gate_proof')}
           </p>
         </div>
