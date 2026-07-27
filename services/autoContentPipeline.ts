@@ -1,7 +1,8 @@
 import { callApi } from './apiClient';
-import { FormData, GenerationResult, Platform, ContentType, Tone } from '../types';
+import { FormData, GenerationResult, Platform, ContentType, Tone, BrandVoiceData, ContentLanguage, GenerationType, VisualStyle, AIModel } from '../types';
 import { STORAGE_KEYS } from '../utils/storageUtils';
-import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
+import { composeTextPrompt, composeImagePrompt } from './promptBuilders';
+import { DEFAULT_TEXT_MODEL } from '../shared/config/generationConfig';
 
 /**
  * Auto Content Pipeline Service
@@ -63,18 +64,31 @@ export async function generateWeekContent(
   weekTheme: string,
   userId: string,
   previousWeeksTopics?: string[], // avoid repetition
-  brandVoice?: string
+  brandVoice?: BrandVoiceData | null,
+  contentLanguage: ContentLanguage = ContentLanguage.Polish
 ): Promise<WeekContentPlan> {
-  const weekPrompt = `Create a strategic 7-day content plan for:
+  const formData: FormData = {
+    topic: `<p>${weekTheme}</p><p>Plan tygodniowy: ${contentTypes.join(', ')}</p>`,
+    audience: niche,
+    tone,
+    platform,
+    contentType: ContentType.Post,
+    visualStyle: VisualStyle.PlatformSpecific,
+    generationType: GenerationType.PostWithImage,
+    model: AIModel.Flash,
+    contentLanguage,
+  };
 
-NICHE: ${niche}
-PLATFORM: ${platform}
-TONE: ${tone}
-WEEK THEME: ${weekTheme}
-${brandVoice ? `BRAND VOICE: ${brandVoice}` : ''}
+  const { contents, config } = await composeTextPrompt({
+    formData,
+    brandVoice: brandVoice ?? null,
+    userId,
+  });
+
+  const userPrompt = `${contents}
+
+TASK: Create a strategic 7-day content plan for the week theme above.
 ${previousWeeksTopics ? `PREVIOUS TOPICS (avoid repeating): ${previousWeeksTopics.join(', ')}` : ''}
-
-Create exactly 5-7 posts (one per day, skip weekends if not relevant):
 
 For each day provide:
 1. DAY: Day of week
@@ -88,17 +102,13 @@ For each day provide:
 9. CTA: Call-to-action for engagement
 10. ESTIMATED ENGAGEMENT: Score 1-10
 
-Include:
-- Overall week theme strategy
-- How posts connect/create narrative arc
-- Cross-promotion opportunities
-
+Include overall week theme strategy, narrative arc, and cross-promotion opportunities.
 Focus on variety, progression, and strategic sequencing.`;
 
   const response = await callApi("generate-content", {
-    model: "gemini-2.5-flash",
-    contents: weekPrompt,
-    systemInstruction: "You are a content strategist. Create cohesive, strategic content plans that build engagement throughout the week. Ensure variety in content types while maintaining thematic consistency.",
+    model: DEFAULT_TEXT_MODEL,
+    contents: userPrompt,
+    config,
   }, userId);
 
   return parseWeekContentPlan(response.text || response, weekTheme, platform);
@@ -109,18 +119,35 @@ Focus on variety, progression, and strategic sequencing.`;
  */
 export async function generateFullPostContent(
   dailyPost: DailyPost,
-  brandVoice: string,
+  brandVoice: BrandVoiceData | null,
   platform: Platform,
-  userId: string
+  userId: string,
+  contentLanguage: ContentLanguage = ContentLanguage.Polish
 ): Promise<DailyPost> {
-  const contentPrompt = `Create complete social media content:
+  const formData: FormData = {
+    topic: `<p>${dailyPost.topic}</p>`,
+    audience: dailyPost.angle,
+    tone: Tone.Casual,
+    platform,
+    contentType: ContentType.Post,
+    visualStyle: VisualStyle.PlatformSpecific,
+    generationType: GenerationType.PostWithImage,
+    model: AIModel.Flash,
+    contentLanguage,
+  };
 
-TOPIC: ${dailyPost.topic}
+  const { contents, config } = await composeTextPrompt({
+    formData,
+    brandVoice,
+    userId,
+  });
+
+  const userPrompt = `${contents}
+
+TASK: Create complete social media content based on the daily brief below.
 ANGLE: ${dailyPost.angle}
-HOOK: ${dailyPost.hook}
+HOOK TO USE AS OPENING: ${dailyPost.hook}
 FORMAT: ${dailyPost.format}
-PLATFORM: ${platform}
-${brandVoice ? `BRAND VOICE: ${brandVoice}` : ''}
 CTA: ${dailyPost.cta}
 
 Generate:
@@ -133,12 +160,26 @@ Generate:
 Make it ready to publish.`;
 
   const response = await callApi("generate-content", {
-    model: "gemini-2.5-flash",
-    contents: contentPrompt,
-    systemInstruction: `You are an expert social media copywriter. Create engaging, platform-optimized content that sounds authentic and human.\n\n${buildAntiSlopBlock()}`,
+    model: DEFAULT_TEXT_MODEL,
+    contents: userPrompt,
+    config,
   }, userId);
 
-  return parseFullContent(response.text || response, dailyPost);
+  const parsed = parseFullContent(response.text || response, dailyPost);
+
+  // Compose image prompt via the modular builder if a visual format was requested
+  if (parsed.generatedContent?.postText && dailyPost.format !== 'text-only') {
+    const composedImage = composeImagePrompt({
+      postText: parsed.generatedContent.postText,
+      platform,
+      imageStyle: VisualStyle.PlatformSpecific,
+      brandVoice,
+      userId,
+    });
+    parsed.generatedContent.imagePrompt = composedImage.prompt;
+  }
+
+  return parsed;
 }
 
 /**
@@ -174,7 +215,7 @@ For each part provide:
 Include overall series objective and target metrics.`;
 
   const response = await callApi("generate-content", {
-    model: "gemini-2.5-flash",
+    model: DEFAULT_TEXT_MODEL,
     contents: seriesPrompt,
     systemInstruction: "You are a content series architect. Create binge-worthy, interconnected content that keeps audiences engaged across multiple posts.",
   }, userId);
@@ -213,7 +254,7 @@ For each target platform:
 Consider algorithm differences and audience expectations.`;
 
   const response = await callApi("generate-content", {
-    model: "gemini-2.5-flash",
+    model: DEFAULT_TEXT_MODEL,
     contents: repurposePrompt,
     systemInstruction: "You are a content adaptation expert. Maximize content value across platforms through strategic repurposing.",
   }, userId);
@@ -221,51 +262,205 @@ Consider algorithm differences and audience expectations.`;
   return parseRepurposingSuggestions(response.text || response, targetPlatforms);
 }
 
-// Parser helper functions
-function parseWeekContentPlan(text: string, theme: string, platform: Platform): WeekContentPlan {
-  const lines = text.split('\n');
-  const posts: DailyPost[] = [];
-  
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const dayMap: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
-  
-  // Find sections for each day
-  for (const day of days) {
-    const dayIdx = lines.findIndex(l => l.includes(day) && (l.includes('DAY') || l.match(/^\d+\.?\s*$/)));
-    if (dayIdx === -1) continue;
-    
-    const sectionEnd = lines.findIndex((l, i) => i > dayIdx && (days.some(d => l.includes(d) && i > dayIdx) || l.includes('CROSS') || l.includes('ENGAGEMENT')));
-    const section = lines.slice(dayIdx, sectionEnd === -1 ? dayIdx + 15 : sectionEnd);
-    
-    const getValue = (keywords: string[]): string => {
-      for (const keyword of keywords) {
-        const line = section.find(l => l.toLowerCase().includes(keyword.toLowerCase()));
-        if (line) {
-          return line.split(/[:\-]/).pop()?.trim() || '';
-        }
+// Robust parser helpers ------------------------------------------------------
+
+const DAY_NAMES_EN = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const DAY_NAMES_PL = ['poniedziałek', 'wtorek', 'środa', 'czwartek', 'piątek', 'sobota', 'niedziela'];
+const DAY_SHORT_PL = ['pon', 'wt', 'śr', 'czw', 'pt', 'sob', 'nd'];
+const DAY_SHORT_EN = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+const DAY_NAME_TO_INDEX: Record<string, number> = Object.fromEntries(
+  [DAY_NAMES_EN, DAY_NAMES_PL, DAY_SHORT_PL, DAY_SHORT_EN].flatMap((names, srcIdx) =>
+    names.map((name, i) => [name, i])
+  )
+);
+
+const VALID_CONTENT_TYPES: DailyPost['contentType'][] = [
+  'educational', 'entertaining', 'inspirational', 'promotional', 'community', 'behind-the-scenes'
+];
+const VALID_FORMATS: DailyPost['format'][] = [
+  'carousel', 'single-image', 'video', 'story', 'reel', 'text-only'
+];
+const VALID_CONFIDENCE: DailyPost['confidence'][] = ['high', 'medium', 'low'];
+
+function tryExtractJson<T>(text: string): T | null {
+  const cleaned = text
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim();
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch {
+    // Some models wrap the JSON in prose; try to find the first `{...}` or `[...]` block.
+    const objectMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (objectMatch) {
+      try {
+        return JSON.parse(objectMatch[0]) as T;
+      } catch {
+        return null;
       }
-      return '';
-    };
-    
-    const topic = getValue(['TOPIC', 'Subject']);
-    if (!topic) continue;
-    
-    posts.push({
-      day,
-      dayOfWeek: dayMap[day] || 1,
-      contentType: (getValue(['CONTENT TYPE', 'Type']).toLowerCase() as DailyPost['contentType']) || 'educational',
-      topic,
-      angle: getValue(['ANGLE', 'Approach']) || 'Standard',
-      hook: getValue(['HOOK', 'Opening']) || topic,
-      format: (getValue(['FORMAT', 'Form']).toLowerCase() as DailyPost['format']) || 'single-image',
-      optimalTime: getValue(['OPTIMAL TIME', 'Time', 'Posting']) || '14:00',
-      hashtags: getValue(['HASHTAGS', 'Tags']).split(/[,#\s]+/).filter(h => h).slice(0, 8),
-      cta: getValue(['CTA', 'Call to action', 'Action']) || 'Comment below!',
-      estimatedEngagement: parseInt(getValue(['ENGAGEMENT', 'Score'])) || 6,
-      confidence: (getValue(['CONFIDENCE']).toLowerCase() as DailyPost['confidence']) || 'medium',
+    }
+    return null;
+  }
+}
+
+function normalizeContentType(value: string): DailyPost['contentType'] {
+  const lower = value.toLowerCase();
+  const match = VALID_CONTENT_TYPES.find((t) => lower.includes(t)) ||
+    VALID_CONTENT_TYPES.find((t) => t.includes(lower.replace(/\s+/g, '-')));
+  return match || 'educational';
+}
+
+function normalizeFormat(value: string): DailyPost['format'] {
+  const lower = value.toLowerCase().replace(/\s+/g, '-');
+  const map: Record<string, DailyPost['format']> = {
+    carousel: 'carousel',
+    'single-image': 'single-image',
+    image: 'single-image',
+    photo: 'single-image',
+    video: 'video',
+    story: 'story',
+    reel: 'reel',
+    'text-only': 'text-only',
+    text: 'text-only',
+  };
+  return map[lower] || 'single-image';
+}
+
+function normalizeConfidence(value: string): DailyPost['confidence'] {
+  const lower = value.toLowerCase();
+  return VALID_CONFIDENCE.find((c) => lower.includes(c)) || 'medium';
+}
+
+function parseHashtags(value: string): string[] {
+  if (!value) return [];
+  return value
+    .split(/[,#\s]+/)
+    .map((h) => h.trim().replace(/^#+/, ''))
+    .filter((h) => h.length > 0)
+    .slice(0, 12);
+}
+
+function extractField(section: string, labels: string[]): string {
+  const lines = section.split('\n');
+  for (const label of labels) {
+    const pattern = new RegExp(
+      `^(?:\\s*[-*•])?(?:\\s*\\d+[.):])?\\s*${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*[:=\\-)]*\\s*(.*)$`,
+      'i'
+    );
+    for (const line of lines) {
+      const match = line.match(pattern);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+  }
+  return '';
+}
+
+function findDayIndex(name: string): number {
+  const lower = name.toLowerCase();
+  return DAY_NAME_TO_INDEX[lower] ?? -1;
+}
+
+function splitIntoDaySections(text: string): { dayIndex: number; section: string }[] {
+  const sections: { dayIndex: number; section: string }[] = [];
+  const headerPattern = new RegExp(
+    `^(?:\\s*[-*•]|\\s*#+)?(?:\\s*(?:(?:Day|Dzień|Dzien)\\s*))?(\\d+|${[...DAY_NAMES_EN, ...DAY_NAMES_PL, ...DAY_SHORT_PL, ...DAY_SHORT_EN].join('|')})[.):)]?(?=\\s|$)`,
+    'gim'
+  );
+
+  const matches: { index: number; dayIndex: number }[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = headerPattern.exec(text)) !== null) {
+    const raw = match[1].toLowerCase();
+    const dayIndex = /\d+/.test(raw) ? parseInt(raw, 10) - 1 : findDayIndex(raw);
+    if (dayIndex >= 0 && dayIndex <= 6) {
+      matches.push({ index: match.index, dayIndex });
+    }
+  }
+
+  for (let i = 0; i < matches.length; i++) {
+    const start = matches[i].index;
+    const end = matches[i + 1]?.index ?? text.length;
+    sections.push({
+      dayIndex: matches[i].dayIndex,
+      section: text.slice(start, end).trim(),
     });
   }
 
+  return sections;
+}
+
+export function parseWeekContentPlan(text: string, theme: string, platform: Platform): WeekContentPlan {
+  // 1. Try structured JSON first
+  const jsonPlan = tryExtractJson<{ days?: unknown[]; posts?: unknown[] }>(text);
+  if (jsonPlan) {
+    const rawPosts = jsonPlan.days ?? jsonPlan.posts ?? [];
+    const parsedPosts: DailyPost[] = rawPosts
+      .map((day: unknown) => {
+        const d = day as Record<string, unknown>;
+        const dayName = String(d.day ?? d.dayOfWeek ?? 'Monday');
+        const dayIndex = findDayIndex(dayName);
+        const topic = String(d.topic ?? d.subject ?? d.title ?? '').trim();
+        if (!topic) return null;
+        return {
+          day: dayName,
+          dayOfWeek: dayIndex >= 0 ? dayIndex : 1,
+          contentType: normalizeContentType(String(d.contentType ?? d.type ?? '')),
+          topic,
+          angle: String(d.angle ?? d.approach ?? 'Standard'),
+          hook: String(d.hook ?? d.opening ?? topic),
+          format: normalizeFormat(String(d.format ?? d.form ?? '')),
+          optimalTime: String(d.optimalTime ?? d.time ?? d.postingTime ?? '14:00'),
+          hashtags: Array.isArray(d.hashtags)
+            ? d.hashtags.map((h) => String(h).replace(/^#+/, '').trim()).filter(Boolean)
+            : parseHashtags(String(d.hashtags ?? d.tags ?? '')),
+          cta: String(d.cta ?? d.callToAction ?? d.action ?? 'Comment below!'),
+          estimatedEngagement: Number(d.estimatedEngagement ?? d.engagement ?? d.score) || 6,
+          confidence: normalizeConfidence(String(d.confidence ?? '')),
+        } as DailyPost;
+      })
+      .filter((p): p is DailyPost => p !== null);
+
+    if (parsedPosts.length > 0) {
+      return {
+        weekNumber: 1,
+        theme,
+        contentPillar: theme,
+        posts: parsedPosts,
+        crossPromotionStrategy: 'Share across stories',
+        engagementLoops: [],
+      };
+    }
+  }
+
+  // 2. Robust regex-based section parsing
+  const posts: DailyPost[] = [];
+  const sections = splitIntoDaySections(text);
+
+  for (const { dayIndex, section } of sections) {
+    const topic = extractField(section, ['TOPIC', 'SUBJECT', 'TITLE', 'TEMAT']);
+    if (!topic) continue;
+
+    const dayName = DAY_NAMES_EN[dayIndex] ?? 'Monday';
+    posts.push({
+      day: dayName,
+      dayOfWeek: dayIndex,
+      contentType: normalizeContentType(extractField(section, ['CONTENT TYPE', 'TYPE', 'TYP'])),
+      topic,
+      angle: extractField(section, ['ANGLE', 'APPROACH', 'KĄT']) || 'Standard',
+      hook: extractField(section, ['HOOK', 'OPENING', 'ZACZEPKA']) || topic,
+      format: normalizeFormat(extractField(section, ['FORMAT', 'FORM', 'FORMA'])),
+      optimalTime: extractField(section, ['OPTIMAL TIME', 'TIME', 'POSTING', 'GODZINA']) || '14:00',
+      hashtags: parseHashtags(extractField(section, ['HASHTAGS', 'TAGS'])),
+      cta: extractField(section, ['CTA', 'CALL TO ACTION', 'ACTION']) || 'Comment below!',
+      estimatedEngagement: Number(extractField(section, ['ESTIMATED ENGAGEMENT', 'ENGAGEMENT', 'SCORE'])) || 6,
+      confidence: normalizeConfidence(extractField(section, ['CONFIDENCE', 'PEWNOŚĆ'])),
+    });
+  }
+
+  const lines = text.split('\n');
   return {
     weekNumber: 1,
     theme,
@@ -276,28 +471,55 @@ function parseWeekContentPlan(text: string, theme: string, platform: Platform): 
   };
 }
 
-function parseFullContent(text: string, basePost: DailyPost): DailyPost {
-  const lines = text.split('\n');
-  
+export function parseFullContent(text: string, basePost: DailyPost): DailyPost {
+  // 1. Try JSON first
+  const jsonContent = tryExtractJson<{
+    postText?: string;
+    completePostText?: string;
+    imagePrompt?: string;
+    hashtags?: string[] | string;
+    postingTime?: string;
+  }>(text);
+  if (jsonContent) {
+    const hashtags = Array.isArray(jsonContent.hashtags)
+      ? jsonContent.hashtags.map((h) => String(h).replace(/^#+/, '').trim()).filter(Boolean)
+      : parseHashtags(String(jsonContent.hashtags ?? ''));
+    return {
+      ...basePost,
+      generatedContent: {
+        postText: jsonContent.postText ?? jsonContent.completePostText ?? basePost.hook,
+        imagePrompt: jsonContent.imagePrompt || undefined,
+        hashtags: hashtags.length > 0 ? hashtags : basePost.hashtags,
+      },
+    };
+  }
+
+  // 2. Regex-based section extraction
   const findSection = (headers: string[]): string => {
-    for (const header of headers) {
-      const idx = lines.findIndex(l => l.toLowerCase().includes(header.toLowerCase()));
-      if (idx !== -1) {
-        const content: string[] = [];
-        for (let i = idx + 1; i < lines.length; i++) {
-          if (lines[i].match(/^[A-Z]/) && lines[i].includes(':')) break;
-          if (lines[i].trim()) content.push(lines[i]);
-        }
-        return content.join('\n').trim();
-      }
+    const pattern = new RegExp(
+      `^(?:\\s*[-*•])?(?:\\s*\\d+[.):])?\\s*(?:${headers.join('|')})\\s*[:=\\-)]*\\s*$`,
+      'gim'
+    );
+    const matches: RegExpExecArray[] = [];
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(text)) !== null) matches.push(m);
+
+    for (const match of matches) {
+      const start = match.index + match[0].length;
+      const nextHeader = /\n(?:\s*[-*•])?(?:\s*\d+[.):])?\s*[A-Z][A-Z\s]{2,}[\s:=\-)]/;
+      const remaining = text.slice(start);
+      const endMatch = remaining.match(nextHeader);
+      const end = endMatch ? start + endMatch.index! : text.length;
+      const content = text.slice(start, end).trim();
+      if (content) return content;
     }
     return '';
   };
 
-  const postText = findSection(['COMPLETE POST', 'POST TEXT', 'Content']) || basePost.hook;
-  const imagePrompt = findSection(['IMAGE PROMPT', 'Visual', 'Image']);
-  const hashtagLine = findSection(['HASHTAGS', 'Tags']);
-  const hashtags = hashtagLine.split(/[,#\s]+/).filter(h => h.length > 2).slice(0, 12);
+  const postText = findSection(['COMPLETE POST TEXT', 'POST TEXT', 'CONTENT', 'TREŚĆ']) || basePost.hook;
+  const imagePrompt = findSection(['IMAGE PROMPT', 'VISUAL', 'IMAGE', 'PROMPT GRAFICZNY']);
+  const hashtagLine = findSection(['FINAL HASHTAGS', 'HASHTAGS', 'TAGS']);
+  const hashtags = parseHashtags(hashtagLine);
 
   return {
     ...basePost,
@@ -396,7 +618,7 @@ function parseRepurposingSuggestions(
   }));
 }
 
-function generateDefaultWeekPlan(theme: string): DailyPost[] {
+export function generateDefaultWeekPlan(theme: string): DailyPost[] {
   return [
     { day: 'Monday', dayOfWeek: 1, contentType: 'educational', topic: `${theme} - Podstawy`, angle: 'Introductory', hook: 'Zaczynamy od podstaw...', format: 'carousel', optimalTime: '10:00', hashtags: ['#monday', '#tips'], cta: 'Zapisz ten post!', estimatedEngagement: 7, confidence: 'high' },
     { day: 'Tuesday', dayOfWeek: 2, contentType: 'entertaining', topic: `${theme} - Ciekawostka`, angle: 'Did you know', hook: 'Czy wiesz, że...', format: 'single-image', optimalTime: '14:00', hashtags: ['#tuesday', '#funfact'], cta: 'Tag friend!', estimatedEngagement: 6, confidence: 'medium' },
@@ -437,7 +659,7 @@ Example format:
 3. Trending Tools Showcase`;
 
   const response = await callApi("generate-content", {
-    model: "gemini-2.5-flash",
+    model: DEFAULT_TEXT_MODEL,
     contents: prompt,
     systemInstruction: "You are a content strategist. Suggest themes that are timely, engaging, and aligned with the niche. Be concise.",
   }, userId);

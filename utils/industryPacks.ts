@@ -30,6 +30,8 @@ export interface IndustryPack {
   topicIdeas: string[];
   subNicheId?: IndustrySubNicheId;
   subNicheLabel?: string;
+  systemInstruction?: string;
+  imagePromptPrefix?: string;
 }
 
 const TONE_MAP: Record<string, Tone> = {
@@ -64,6 +66,8 @@ export function defToIndustryPack(def: IndustryPackDef, sub?: IndustrySubNicheDe
     topicIdeas: def.topicIdeas,
     subNicheId: sub?.id,
     subNicheLabel: sub?.label,
+    systemInstruction: def.systemInstruction,
+    imagePromptPrefix: def.imagePromptPrefix,
   };
 }
 
@@ -100,6 +104,8 @@ export function applySubNicheToPack(pack: IndustryPack, sub: IndustrySubNicheDef
     topicHint: `${pack.topicHint} (podbranża: ${sub.label})`,
     subNicheId: sub.id,
     subNicheLabel: sub.label,
+    systemInstruction: pack.systemInstruction,
+    imagePromptPrefix: pack.imagePromptPrefix,
   };
 }
 

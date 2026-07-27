@@ -176,6 +176,9 @@ export interface FormData {
   /** Przed publikacją dostosuj treść per platforma (multi-platform optimizer) */
   autoOptimizePerPlatform?: boolean;
 
+  /** Włącz automatyczną ocenę jakości i retry dla wygenerowanego posta */
+  enableQualityGate?: boolean;
+
   // Internal: visual vibe analysis result passed between generation steps
   _visualVibe?: string;
 }
@@ -552,6 +555,8 @@ export interface IntelligentCalendarPlanItem {
   /** post | reel | story — slot w szablonie cadence */
   slotType?: 'post' | 'reel' | 'story';
   contentIntent?: 'educational' | 'entertaining' | 'inspirational' | 'promotional' | 'community' | 'behind-the-scenes';
+  suggestedDayOfWeek?: string;
+  suggestedTimeSlot?: string;
 }
 
 /** Kontekst slotu kalendarza przekazywany do generatora (planowanie po wygenerowaniu). */

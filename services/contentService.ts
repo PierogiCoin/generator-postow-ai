@@ -1,5 +1,5 @@
 import { clearQuotaDepleted } from '../utils/chunkReload';
-import { getApiBaseUrl, generateContent, generateJson, applyAiLanguage, getApiAuthHeaders } from './apiClient';
+import { getApiBaseUrl, generateContent, generateJson, applyAiLanguage, getApiAuthHeaders, callApi } from './apiClient';
 import { generateImages } from './mediaService';
 import {
     FormData,
@@ -11,21 +11,24 @@ import {
     OmnichannelPost,
     PerformancePrediction,
     CopywritingFramework,
-    VisualStyle,
 } from '../types';
-import {
-    buildPlatformImagePrompt,
-    resolveAspectRatioForPlatform,
-} from '../utils/platformVisualSpec';
 import { normalizeCtaUrl } from '../utils/publishCaption';
-import { buildCompetitorPromptBlock } from '../utils/competitorBrandVoice';
 import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
-import { retrieveBrandMemoryContext } from './brandMemoryService';
 import {
   formatNicheSystemInstruction,
   formatNicheUserPromptLines,
   resolveNicheContext,
 } from '../utils/nicheContext';
+import { composeTextPrompt } from './promptBuilders';
+import { buildImageGenerationInput } from './imagePromptBuilder';
+import {
+  DEFAULT_FAST_MODEL,
+  DEFAULT_LITE_MODEL,
+  DEFAULT_PRO_MODEL,
+  DEFAULT_TEXT_MODEL,
+  QUALITY_GATE_THRESHOLD,
+} from '../shared/config/generationConfig';
+import type { ContentScore } from '../server/contentScoring';
 
 function attachBrandCtaUrl(
     details: Record<string, unknown>,
@@ -46,6 +49,142 @@ function logNonBlockingError(scope: string, error: unknown, meta?: Record<string
     });
 }
 
+export interface QualityGateResult {
+    text: string;
+    score: ContentScore;
+    retried: boolean;
+}
+
+/**
+ * Auto-evaluate generated content and attempt one rewrite if quality is below threshold.
+ */
+export async function scoreAndImprovePost(
+    postText: string,
+    formData: FormData,
+    brandVoice: BrandVoiceData | null,
+    userId: string
+): Promise<QualityGateResult> {
+    const enabled = formData.enableQualityGate !== false;
+    if (!enabled || postText.trim().length < 20) {
+        return {
+            text: postText,
+            score: {
+                overall: 0,
+                engagement: { score: 0, level: 'low', feedback: [] },
+                seo: { score: 0, level: 'low', feedback: [] },
+                platformFit: { score: 0, level: 'poor', feedback: [] },
+                suggestions: ['Quality gate disabled or content too short to score.'],
+                badge: 'yellow',
+            },
+            retried: false,
+        };
+    }
+
+    async function score(text: string): Promise<ContentScore> {
+        try {
+            const response = await callApi(
+                'score-content',
+                {
+                    content: text,
+                    platform: formData.platform,
+                    context: {
+                        targetAudience: formData.audience,
+                        hasHashtags: text.includes('#'),
+                        hasEmojis: /[\u{1F600}-\u{1F64F}]/u.test(text),
+                    },
+                },
+                userId
+            );
+            return (response?.score as ContentScore) || fallbackScore(text, formData.platform);
+        } catch (error: unknown) {
+            logNonBlockingError('Quality gate scoring failed', error, { platform: formData.platform });
+            return fallbackScore(text, formData.platform);
+        }
+    }
+
+    let currentText = postText;
+    let currentScore = await score(currentText);
+
+    if (currentScore.overall >= QUALITY_GATE_THRESHOLD) {
+        return { text: currentText, score: currentScore, retried: false };
+    }
+
+    // One auto-retry with scoring feedback
+    const feedbackLines = [
+        ...currentScore.suggestions,
+        ...currentScore.engagement.feedback,
+        ...currentScore.seo.feedback,
+        ...currentScore.platformFit.feedback,
+    ];
+    const feedback = feedbackLines.length
+        ? feedbackLines.join('\n- ')
+        : 'Improve clarity, hook strength, and platform fit.';
+
+    try {
+        const { contents, config } = await composeTextPrompt({
+            formData,
+            brandVoice,
+            userId,
+        });
+
+        const rewritePrompt = `${contents}
+
+QUALITY GATE REWRITE:
+The previous version scored ${currentScore.overall}/100 for ${formData.platform}. Improve the post based on this feedback:
+- ${feedback}
+
+Return ONLY the rewritten post text — no commentary, no markdown.`;
+
+        const rewriteResponse = await generateContent({
+            model: DEFAULT_FAST_MODEL,
+            contents: rewritePrompt,
+            config,
+        }, userId);
+
+        const rewrittenText = rewriteResponse.text?.trim() || currentText;
+        if (rewrittenText.length >= 20 && rewrittenText !== currentText) {
+            const newScore = await score(rewrittenText);
+            return {
+                text: rewrittenText,
+                score: newScore,
+                retried: true,
+            };
+        }
+    } catch (error: unknown) {
+        logNonBlockingError('Quality gate rewrite failed — keeping original', error, {
+            platform: formData.platform,
+        });
+    }
+
+    return { text: currentText, score: currentScore, retried: false };
+}
+
+function fallbackScore(content: string, platform: string): ContentScore {
+    const length = content.length;
+    const hasEmojis = /[\u{1F600}-\u{1F64F}]/u.test(content);
+    const hasHashtags = content.includes('#');
+    const hasQuestion = content.includes('?');
+    const hasCTA = /\b(klik|sprawdź|zobacz|download|kupić|dołącz|zapisz|link)\b/i.test(content);
+
+    let score = 50;
+    if (platform === 'TikTok' && length < 150) score += 10;
+    if (platform === 'LinkedIn' && length > 200 && length < 600) score += 10;
+    if (platform === 'Twitter' && length < 280) score += 10;
+    if (hasEmojis) score += 5;
+    if (hasHashtags) score += 5;
+    if (hasQuestion) score += 10;
+    if (hasCTA) score += 10;
+
+    return {
+        overall: Math.min(score, 100),
+        engagement: { score: Math.min(score, 100), level: score >= 70 ? 'high' : score >= 50 ? 'medium' : 'low', feedback: [] },
+        seo: { score: Math.min(score, 100), level: score >= 70 ? 'high' : score >= 50 ? 'medium' : 'low', feedback: [] },
+        platformFit: { score: Math.min(score, 100), level: score >= 70 ? 'excellent' : score >= 50 ? 'good' : 'poor', feedback: [] },
+        suggestions: ['Automatic scoring unavailable'],
+        badge: score >= 70 ? 'green' : score >= 50 ? 'yellow' : 'red',
+    };
+}
+
 
 /**
  * Content Service
@@ -60,195 +199,19 @@ export async function* generateSocialMediaContentStream(
     signal?: AbortSignal
 ): AsyncGenerator<string> {
     let visualVibe: string | undefined;
-    const model = formData.model === "Pro" ? "gemini-pro-latest" : "gemini-2.5-flash";
+    const model = formData.model === "Pro" ? DEFAULT_PRO_MODEL : DEFAULT_TEXT_MODEL;
 
-    const nicheCtx = resolveNicheContext({
-        userId,
+    const nicheCtx = resolveNicheContext({ userId, brandVoice, audience: formData.audience });
+
+    const { contents, config: { systemInstruction } } = await composeTextPrompt({
+        formData,
         brandVoice,
-        audience: formData.audience,
+        userId,
+        insights,
     });
-
-    const contents = `Generate an engaging ${formData.platform} post. 
-TOPIC: ${formData.topic || 'General engaging content'}
-TONE: ${formData.tone}
-AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
-${formatNicheUserPromptLines(nicheCtx)}
-
-CRITICAL: Do not ask for more information. Do not respond conversationally. Provide ONLY the post content.`;
-
-    const currentDateStr = new Date().toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' });
-    let systemInstruction = `You are an elite social media growth expert. Your task is to generate high-converting, creative, and human-like social media content.
-CURRENT DATE: ${currentDateStr} (Ensure any temporal references, years, or dates in the post align with this date. Never reference outdated years like 2024 or 2025 unless explicitly asked to describe past events).
-${buildAntiSlopBlock()}`;
-
-    systemInstruction += formatNicheSystemInstruction(nicheCtx);
-
-    const platformInstructions: Record<string, string> = {
-        [Platform.Facebook]: `
-FACEBOOK STYLE GUIDELINES:
-- Write in a friendly, conversational, and community-oriented tone.
-- Keep the structure highly readable with short paragraphs and spacing.
-- Include an engaging question at the end to prompt discussions and comments.
-- Use a moderate amount of emojis (3-6 max).`,
-
-        [Platform.Instagram]: `
-INSTAGRAM STYLE GUIDELINES:
-- The very first line MUST be an extremely compelling hook that forces the user to click "...more".
-- Move hashtags to the very bottom, separating them from the main copy by 4-5 empty lines or dots (e.g., ".").
-- Use spacing to make lists readable. Tone should be visually evoking, lifestyle-focused, or inspiring.`,
-
-        [Platform.LinkedIn]: `
-LINKEDIN STYLE GUIDELINES:
-- Write in an expert, professional, yet conversational and authentic tone.
-- Avoid corporate jargon or excessive corporate fluff.
-- Use mobile-friendly layouts: maximum 1-2 sentences per line/paragraph.
-- Use bullet points or numbered lists to structure complex ideas.
-- Include a "Key Takeaway" or action step at the end.
-- CRITICAL: Keep emojis to an absolute minimum (maximum 3 in the entire post).`,
-
-        [Platform.X]: `
-X (TWITTER) STYLE GUIDELINES:
-- Be highly concise, punchy, and direct. Skip introductions entirely.
-- Hook in the very first sentence. Use bold claims, contrarian views, or stats.
-- Keep it strictly within the character limit. Use at most 1 relevant hashtag at the end (or none).`,
-
-        [Platform.TikTok]: `
-TIKTOK STYLE GUIDELINES:
-- Write in an energetic, informal, speaking-oriented verbal format.
-- Include suggested overlay text captions in brackets [like this] that should appear on screen.
-- Focus on short, fast-paced setups.`,
-
-        [Platform.YouTube]: `
-YOUTUBE STYLE GUIDELINES:
-- Focus on searchability and hooks.
-- Write a compelling description layout: brief hook, timestamp indicators, and call to action.`
-    };
-
-    if (platformInstructions[formData.platform]) {
-        systemInstruction += platformInstructions[formData.platform];
-    }
-
-    // Apply copywriting framework if selected
-    const framework = formData.copywritingFramework;
-    if (framework && framework !== CopywritingFramework.Auto) {
-        const frameworkInstructions: Record<CopywritingFramework, string> = {
-            [CopywritingFramework.PAS]: `STRUCTURE - Use PAS Framework:
-1. PROBLEM: Start with a relatable pain point that resonates with the audience. Be specific and empathetic.
-2. AGITATION: Amplify the emotions around this problem. Make the reader feel the urgency and discomfort.
-3. SOLUTION: Present the solution clearly. Show transformation and relief. End with a strong CTA.`,
-
-            [CopywritingFramework.AIDA]: `STRUCTURE - Use AIDA Framework:
-1. ATTENTION: Hook with a bold statement, question, or curiosity gap in first 2 lines.
-2. INTEREST: Build interest with relevant facts, benefits, or intriguing details.
-3. DESIRE: Create desire by painting a picture of the outcome/benefits. Use emotional language.
-4. ACTION: Strong, clear call-to-action that creates urgency.`,
-
-            [CopywritingFramework.Storytelling]: `STRUCTURE - Use Storytelling Framework:
-1. SETUP: Establish the scene and characters. Create immediate relatability.
-2. CONFLICT: Present the challenge or struggle. Build tension.
-3. CLIMAX: The turning point or moment of realization.
-4. RESOLUTION: How it all turned out. The lesson learned.
-5. BRIDGE: Connect story to reader's life and include soft CTA.`,
-
-            [CopywritingFramework.HookStoryOffer]: `STRUCTURE - Use Hook-Story-Offer Framework:
-1. HOOK: Pattern interrupt. Something that stops the scroll (contrarian, curiosity, or bold claim).
-2. STORY: Brief, engaging narrative that supports the hook. Personal or relatable.
-3. OFFER: The value proposition. What they'll get/how this helps them.
-4. CTA: Simple next step.`,
-
-            [CopywritingFramework.ProblemAgitateSolve]: `STRUCTURE - Use Problem-Agitate-Solve:
-1. PROBLEM: Identify a specific pain point your audience faces daily.
-2. AGITATE: Describe the worst-case scenario if this continues. Use vivid, emotional language.
-3. SOLVE: Present your solution as the obvious relief. Show before/after contrast.
-4. PROOF: Add credibility (stats, testimonials, or logic).`,
-
-            [CopywritingFramework.BeforeAfterBridge]: `STRUCTURE - Use Before-After-Bridge:
-1. BEFORE: Paint the picture of current struggle/frustration. Make it visceral.
-2. AFTER: Describe the ideal outcome. How life looks when problem is solved.
-3. BRIDGE: How to get from Before to After. The method/tool/solution.
-4. CTA: Invite them to take the first step on the bridge.`,
-
-            [CopywritingFramework.FeatureBenefit]: `STRUCTURE - Use Feature-Benefit-Outcome:
-1. HOOK: Catch attention with the main feature.
-2. FEATURE: What it is (the specs/functionality).
-3. BENEFIT: What it does for them (immediate value).
-4. OUTCOME: The transformation in their life/business (emotional payoff).
-5. CTA: Encourage them to experience the outcome.`,
-
-            [CopywritingFramework.Auto]: ''
-        };
-        
-        systemInstruction += `\n\n${frameworkInstructions[framework]}`;
-    }
-
-    if (brandVoice) {
-        systemInstruction += ` Follow this brand voice: ${JSON.stringify(brandVoice)}.`;
-        if (brandVoice.successPatterns && brandVoice.successPatterns.length > 0) {
-            systemInstruction += ` CRITICAL: Replicate these specific success patterns that worked for this brand: ${brandVoice.successPatterns.join(", ")}.`;
-        }
-
-        // Branding Assets Implementation
-        if (formData.includeLogo && brandVoice.logoUrl) {
-            systemInstruction += ` \nBRANDING: Make sure to mention or leave space for the brand logo (URL: ${brandVoice.logoUrl}). Describe how it should be positioned.`;
-        }
-
-        if (formData.useMascot === true && brandVoice.mascotDescription) {
-            systemInstruction += ` \nMASCOT: YOU MUST INCLUDE the brand mascot "${brandVoice.mascotName || 'the mascot'}" in this post. Mascot description: "${brandVoice.mascotDescription}". URL: ${brandVoice.mascotUrl || 'N/A'}. Explain how the mascot interacts with the content.`;
-        } else if (formData.useMascot === "auto" && brandVoice.mascotDescription) {
-            systemInstruction += ` \nMASCOT SUGGESTION: The brand has a mascot "${brandVoice.mascotName || 'the mascot'}" (${brandVoice.mascotDescription}). Decide if including the mascot would increase engagement for this specific topic. If yes, incorporate it creatively.`;
-        }
-
-        const competitorBlock = buildCompetitorPromptBlock(brandVoice);
-        if (competitorBlock) {
-            systemInstruction += competitorBlock;
-        }
-    }
-
-    // Brand Memory RAG (top posts + ingested docs)
-    try {
-        const memory = await retrieveBrandMemoryContext(userId, {
-            topic: formData.topic,
-            platform: formData.platform,
-            limit: 5,
-        });
-        if (memory.promptBlock) {
-            systemInstruction += `\n\n${memory.promptBlock}`;
-        }
-    } catch (error: unknown) {
-        logNonBlockingError('Brand memory context failed — continuing without memory', error, {
-            platform: formData.platform,
-        });
-    }
-
-    if (insights && insights.length > 0) {
-        systemInstruction += ` Use these high-performance insights retrieved from analytics: ${JSON.stringify(insights)}. Focus on "positive" insights to replicate success.`;
-
-        const postMortemInsight = insights.find(i => (i as AIInsight & { textTemplateSuggestion?: string; imagePromptSuggestion?: string }).textTemplateSuggestion || (i as AIInsight & { textTemplateSuggestion?: string; imagePromptSuggestion?: string }).imagePromptSuggestion);
-        if (postMortemInsight) {
-            const extended = postMortemInsight as AIInsight & { textTemplateSuggestion?: string };
-            if (extended.textTemplateSuggestion) {
-                systemInstruction += ` CRITICAL: Follow this proven text template that worked best for this brand: "${extended.textTemplateSuggestion}".`;
-            }
-        }
-    }
-
-    if (formData.repurposeFrom) {
-        if (formData.generationType === GenerationType.SeriesFollowUp) {
-            systemInstruction += ` \nSERIES MODE: You are creating a follow-up. Build upon this previous post: "${formData.repurposeFrom}". Reference its key points if appropriate to create a narrative journey.`;
-        } else if (formData.topic.includes("Odśwież ten post")) {
-            systemInstruction += ` \nRECYCLE MODE: Refresh this high-performing post: "${formData.repurposeFrom}". Maintain its core "vibe" but update the hook and context for today.`;
-        } else {
-            systemInstruction += ` \nREPURPOSE MODE: Adapt this content for ${formData.platform}: "${formData.repurposeFrom}".`;
-        }
-    } else if (insights && insights.length > 0) {
-        // If we have insights but no specific repurpose, we can look at the "Previous Context" if provided via insights
-        const contextStr = insights.find(i => i.category === "context")?.text;
-        if (contextStr) systemInstruction += ` \nCONTEXT ECHO: Your previous related post was about: "${contextStr}". Ensure this new post feels like a natural next step in the brand's story.`;
-    }
 
     if (formData.repurposeImageFrom) {
         try {
-            // Analizujemy "vibe" obrazu, aby dostosować tekst
             const { analyzeImage } = await import('./mediaService');
             let base64: string;
             let mimeType: string;
@@ -269,13 +232,16 @@ YOUTUBE STYLE GUIDELINES:
             }
 
             visualVibe = await analyzeImage(base64, mimeType, "Describe the visual style, mood, colors, and overall 'vibe' of this image in 2 sentences. Focus on things that help create similar content.", userId);
-            systemInstruction += ` The visual style of the inspiration image is: "${visualVibe}". Ensure the text content complements this visual style and maintains the same professional/artistic mood.`;
         } catch (error: unknown) {
             logNonBlockingError('Repurpose image analysis failed — continuing without visual vibe', error, {
                 platform: formData.platform,
             });
         }
     }
+
+    const effectiveContents = visualVibe
+        ? `${contents}\n\nVISUAL INSPIRATION: The visual style of the inspiration image is: "${visualVibe}". Ensure the text content complements this visual style and maintains the same professional/artistic mood.`
+        : contents;
 
     const streamAuthHeaders = await getApiAuthHeaders(userId);
     const streamResponse = await fetch(`${getApiBaseUrl()}/api/generate-content-stream`, {
@@ -290,7 +256,7 @@ YOUTUBE STYLE GUIDELINES:
         body: JSON.stringify(
             applyAiLanguage({
                 model,
-                contents,
+                contents: effectiveContents,
                 config: { systemInstruction },
                 contentLanguage: formData.contentLanguage,
             })
@@ -364,7 +330,7 @@ ${buildAntiSlopBlock()}
 
 Return ONLY the rewritten post text.`;
     const response = await generateContent({
-        model: "gemini-flash-latest",
+        model: DEFAULT_FAST_MODEL,
         contents: prompt
     }, userId);
     const { enforceAntiSlopText } = await import('./antiSlopService');
@@ -385,7 +351,7 @@ export const generatePostDetails = async (
     if (formData.platform === Platform.YouTube) {
         try {
             return await generateJson<Partial<GenerationResult>>({
-                model: "gemini-flash-latest",
+                model: DEFAULT_FAST_MODEL,
                 contents: `For this YouTube script: "${postText.substring(0, 500)}", generate catchy videoTitle, SEO videoDescription, and hashtags [array].`,
             }, userId);
         } catch (error: unknown) {
@@ -396,77 +362,25 @@ export const generatePostDetails = async (
 
     // Post with Image or AB Test
     if (formData.generationType === GenerationType.PostWithImage || formData.generationType === GenerationType.ABTest) {
-        // Image generation
-        let imageStyle = formData.visualStyle || 'modern';
-
-        // Add brand visual style if active
-        if (brandVoice?.visualStyle) {
-            imageStyle = `${brandVoice.visualStyle}, ${imageStyle}` as VisualStyle;
-        }
-        if (brandVoice?.brandColors?.length) {
-            imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}` as VisualStyle;
-        }
-
-        const useMascot =
-            formData.useMascot === true ||
-            (formData.useMascot === 'auto' &&
-                !!brandVoice?.mascotDescription &&
-                postText.toLowerCase().includes((brandVoice.mascotName || 'maskotka').toLowerCase()));
-
-        let mascotPrompt: string | undefined;
-        if (useMascot && brandVoice?.mascotDescription) {
-            mascotPrompt = `FEATURED MASCOT: You MUST include the brand mascot "${brandVoice.mascotName || 'the mascot'}" in this image. Description: ${brandVoice.mascotDescription}.`;
-        }
-
         const postMortemImageHint = insights?.find((i: AIInsight & { imagePromptSuggestion?: string }) => i.imagePromptSuggestion);
+        const postMortemImageHintStr = postMortemImageHint
+            ? (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion
+            : undefined;
 
-        const { buildVisualBrief, visualBriefToPrompt } = await import('./visualBriefService');
-        const brief = await buildVisualBrief({
+        const {
+            imagePrompt,
+            aspectRatio,
+            imageQuality,
+            referenceImages,
+            brief,
+        } = await buildImageGenerationInput({
             postText,
-            platform: formData.platform,
-            imageStyle,
-            brandColors: brandVoice?.brandColors,
-            visualVibe,
-            mascotDescription: useMascot ? brandVoice?.mascotDescription : undefined,
+            formData,
+            brandVoice,
             userId,
+            visualVibe,
+            postMortemImageHint: postMortemImageHintStr,
         });
-
-        let imagePrompt = visualBriefToPrompt(brief);
-        if (mascotPrompt) imagePrompt += ` ${mascotPrompt}`;
-        if (postMortemImageHint) {
-            const hint = (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion;
-            if (hint) imagePrompt += ` PROVEN STYLE: ${hint}`;
-        }
-        // Fallback enrichment from legacy platform builder
-        if (imagePrompt.length < 80) {
-            imagePrompt = buildPlatformImagePrompt({
-                postText,
-                platform: formData.platform,
-                imageStyle,
-                visualVibe,
-                mascotPrompt,
-                postMortemHint: postMortemImageHint
-                    ? (postMortemImageHint as AIInsight & { imagePromptSuggestion?: string }).imagePromptSuggestion
-                    : undefined,
-            });
-        }
-
-        const aspectRatio = resolveAspectRatioForPlatform(
-            formData.platform,
-            formData.aspectRatio,
-            formData.visualStyle as VisualStyle
-        );
-
-        const referenceImages: string[] = [];
-        if (useMascot && brandVoice?.mascotUrl) referenceImages.push(brandVoice.mascotUrl);
-        if (formData.includeLogo !== false && brandVoice?.logoUrl) {
-            // Logo is also canvas-overlaid later; reference helps FLUX brand consistency
-            referenceImages.push(brandVoice.logoUrl);
-        }
-
-        const imageQuality =
-            formData.imageQuality ||
-            (formData.platform === Platform.LinkedIn ? 'typography' : 'standard');
 
         let imageGenerationError: string | null = null;
         let imageResponse = await generateImages(
@@ -517,7 +431,7 @@ export const generatePostDetails = async (
             };
             try {
                 const details = await generateJson<Record<string, unknown>>({
-                    model: "gemini-flash-lite-latest",
+                    model: DEFAULT_LITE_MODEL,
                     contents: `For the following social media post, generate:
                     - 10 relevant hashtags [array]
                     - adHeadline (short, punchy)
@@ -544,7 +458,7 @@ export const generatePostDetails = async (
 
         try {
             const details = await generateJson<Record<string, unknown>>({
-                model: "gemini-flash-lite-latest",
+                model: DEFAULT_LITE_MODEL,
                 contents: `For the following social media post, generate:
                 - 10 relevant hashtags [array]
                 - adHeadline (short, punchy)
@@ -574,7 +488,7 @@ export const generatePostDetails = async (
 export const suggestHashtags = async (postText: string, platform: Platform, userId: string): Promise<string[]> => {
     try {
         return await generateJson<string[]>({
-            model: "gemini-flash-latest",
+            model: DEFAULT_FAST_MODEL,
             contents: `Suggest 10 relevant hashtags for this ${platform} post: "${postText.substring(0, 300)}". Return as array of strings.`,
         }, userId);
     } catch (error: unknown) {
@@ -587,7 +501,7 @@ export const suggestHashtags = async (postText: string, platform: Platform, user
 
 export const repurposeContent = async (text: string, newPlatform: Platform, userId: string): Promise<string> => {
     const response = await generateContent({
-        model: "gemini-pro-latest",
+        model: DEFAULT_PRO_MODEL,
         contents: `Repurpose this content for ${newPlatform}: "${text}". Adapt format and tone.`,
     }, userId);
     return response.text ?? '';
@@ -607,7 +521,7 @@ export const generateABTestVariations = async (formData: FormData, brandVoice: B
     Return as JSON with structure: { variantA: { postText: string }, variantB: { postText: string } }`;
 
     const response = await generateJson<{ variantA: { postText: string }, variantB: { postText: string } }>({
-        model: "gemini-flash-latest",
+        model: DEFAULT_FAST_MODEL,
         contents: prompt,
         config: {
             systemInstruction: `You are an elite social media copywriter.${formatNicheSystemInstruction(nicheCtx)}${brandVoice ? ` Follow brand voice: ${JSON.stringify(brandVoice)}.` : ''}\n${buildAntiSlopBlock()}`,
@@ -623,7 +537,7 @@ export const generateABTestVariations = async (formData: FormData, brandVoice: B
 export const generateHookVariations = async (postText: string, userId: string): Promise<string[]> => {
     try {
         const response = await generateJson<string[]>({
-            model: "gemini-flash-latest",
+            model: DEFAULT_FAST_MODEL,
             contents: `Based on this social media post: "${postText.substring(0, 500)}", generate 4 alternative, highly engaging opening sentences (hooks). 
             Each hook should have a different angle (e.g., curious, controversial, beneficial, storyteller).
             Return ONLY a JSON array of strings.`,
@@ -641,7 +555,7 @@ export const generateOmnichannelPosts = async (formData: FormData, brandVoice: B
 
     try {
         const response = await generateJson<{ posts: OmnichannelPost[] }>({
-            model: "gemini-flash-latest",
+            model: DEFAULT_FAST_MODEL,
             contents: `Generate simultaneous high-engagement social media posts for multiple platforms about: "${formData.topic}".
             TARGET AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
             ${formatNicheUserPromptLines(nicheCtx)}

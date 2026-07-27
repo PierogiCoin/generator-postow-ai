@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 // Eager — shell pierwszej renderacji
 import { Header } from './components/Header';
+import { Footer } from './components/Footer';
 import { ConfirmDialog } from './components/ui/ConfirmDialog';
 import { useConfirm } from './hooks/useConfirm';
 import { getSupabase } from './services/supabaseClient';
@@ -440,6 +441,8 @@ export const App: React.FC = () => {
           <Outlet />
         </SectionErrorBoundary>
       </main>
+
+      {isHomePage && <Footer />}
 
       <GlobalModals
         isHomePage={isHomePage}

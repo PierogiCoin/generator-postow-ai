@@ -35,6 +35,10 @@ export interface IndustryPackDef {
   nicheKeywords: string[];
   topicHint: string;
   topicIdeas: string[];
+  /** Optional system-instruction override/injection for this industry */
+  systemInstruction?: string;
+  /** Optional prefix added to image-generation prompts for this industry */
+  imagePromptPrefix?: string;
 }
 
 export interface IndustrySubNicheDef {
@@ -66,6 +70,8 @@ export const INDUSTRY_PACK_DEFS: IndustryPackDef[] = [
       'foodtruck', 'lokal gastr', 'menu dnia', 'chef', 'cafe', 'coffee',
     ],
     topicHint: 'Lokal gastronomiczny w Polsce: menu dnia, nowość w karcie lub zaproszenie na event',
+    systemInstruction: 'BRANŻA: lokal gastronomiczny w Polsce. Pisz konkretnie o daniach, składnikach, atmosferze lokalu i CTA typu "przyjdź", "zarezerwuj", "spróbuj". Unikaj ogólników typu "najlepsza jakość" bez przykładu. Używaj realnych cen/menu dnia i polskich realiów (lokalni dostawcy, sezonowość).',
+    imagePromptPrefix: 'Appetizing Polish food photography, natural daylight, rustic or modern restaurant interior, shallow depth of field, no text or logos in frame.',
     topicIdeas: [
       'Menu dnia — 3 dania, cena i zaproszenie na lunch',
       'Nowość w karcie: opisz smak, składniki i dla kogo jest idealna',
@@ -128,6 +134,8 @@ export const INDUSTRY_PACK_DEFS: IndustryPackDef[] = [
       'produkt cyfrowy', 'platforma', 'crm', 'automatyzac', 'devops', 'cloud',
     ],
     topicHint: 'Polski SaaS B2B: insight rynkowy, mini case study lub zaproszenie na demo z konkretną korzyścią',
+    systemInstruction: 'BRANŻA: polski B2B SaaS. Pisz jak ekspert, który zna realia CEE: konkretne liczby, case study, wdrożenia, zespoły. Unikaj buzzwordów (AI, automatyzacja, transformacja cyfrowa) bez wyjaśnienia korzyści. CTA powinno być jedno: demo, call, checklista.',
+    imagePromptPrefix: 'Clean B2B SaaS visual, modern UI mockup or professional team in office, blue and neutral tones, no text or logos, credible and minimal.',
     topicIdeas: [
       'Insight rynkowy: 1 teza + konkretna obserwacja z PL/CEE',
       'Mini case study: problem klienta → rozwiązanie → wynik liczbowy',
@@ -159,6 +167,8 @@ export const INDUSTRY_PACK_DEFS: IndustryPackDef[] = [
       'marketplace', 'sprzedaż online',
     ],
     topicHint: 'Sklep online PL: wyróżnij produkt, 3 benefity i CTA z linkiem do oferty',
+    systemInstruction: 'BRANŻA: polski e-commerce. Koncentruj się na produkcie, 3 konkretnych benefitach, social proof (opinie, bestseller), deadline/limited offer i jedno jasne CTA (link, kod, koszyk). Unikaj ogólników typu "wyjątkowa jakość" bez dowodu.',
+    imagePromptPrefix: 'Polish e-commerce product photography, clean background, natural lighting, lifestyle context, no text or watermarks, appealing to mobile shopper.',
     topicIdeas: [
       'Produkt dnia: 3 benefity + CTA do oferty',
       'Unboxing / first look — co klient dostaje w paczce',

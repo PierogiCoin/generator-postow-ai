@@ -1,28 +1,19 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { BrandMarkIcon } from './icons/BrandMarkIcon';
 import { ThemeToggle } from './ThemeToggle';
-import { PostIcon } from './icons/PostIcon';
-import { CalendarIcon } from './icons/CalendarIcon';
-import { ChartPieIcon } from './icons/ChartPieIcon';
 import { UserMenu } from './UserMenu';
-import { TrendingUpIcon } from './icons/TrendingUpIcon';
 import { TeamSwitcher } from './TeamSwitcher';
 import { useAuth } from '../contexts/AuthContext';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { UserPlan, GenerationType } from '../types';
-import { BeakerIcon } from './icons/BeakerIcon';
-import { FilmIcon } from './icons/FilmIcon';
-import { LayoutGridIcon } from './icons/LayoutGridIcon';
+import { UserPlan } from '../types';
 import { MenuIcon } from './icons/MenuIcon';
 import { XMarkIcon } from './icons/XMarkIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { UserIcon } from './icons/UserIcon';
-import { CampaignIcon } from './icons/CampaignIcon';
-import { BrainCircuitIcon } from './icons/BrainCircuitIcon';
-import { UsersIcon } from './icons/UsersIcon';
+import { APP_NAV_ITEMS, CREATE_NAV_ITEMS, planMeets, type AppNavItem, type CreateNavItem } from '../config/navConfig';
 
 interface HeaderProps {
     isCalendarEnabled: boolean;
@@ -31,6 +22,11 @@ interface HeaderProps {
     onSignUpClick: () => void;
     notificationSystem: React.ReactNode;
 }
+
+type ResolvedNavItem = AppNavItem & {
+    disabled: boolean;
+    title: string;
+};
 
 const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string; disabled?: boolean }> = React.memo(({
     to,
@@ -76,25 +72,31 @@ const BottomNavItem: React.FC<{
 ));
 
 const BottomNavBar: React.FC<{
+    items: ResolvedNavItem[];
     onOpenCreateMenu: () => void;
     onOpenMoreMenu: () => void;
     isCreateMenuOpen?: boolean;
     isMoreMenuOpen?: boolean;
 }> = React.memo(({
+    items,
     onOpenCreateMenu,
     onOpenMoreMenu,
     isCreateMenuOpen = false,
     isMoreMenuOpen = false,
 }) => {
     const { t } = useTranslation();
+    const dashboard = items.find((i) => i.id === 'dashboard');
+    const calendar = items.find((i) => i.id === 'calendar');
+    const generator = items.find((i) => i.id === 'generator');
+
     return (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 pointer-events-none">
             <nav
                 className="pointer-events-auto grid grid-cols-5 items-end gap-1 w-full max-w-lg mx-auto rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/95 dark:bg-[#071018]/95 backdrop-blur-md px-1 py-1.5 shadow-lg shadow-slate-900/5"
                 aria-label={t('header.nav.ariaLabel')}
             >
-                <BottomNavItem to="/dashboard" icon={LayoutGridIcon} label={t('header.nav.dashboard')} />
-                <BottomNavItem to="/calendar" icon={CalendarIcon} label={t('header.nav.calendar')} />
+                {dashboard && <BottomNavItem to={dashboard.to} icon={dashboard.icon} label={t(dashboard.labelKey)} />}
+                {calendar && <BottomNavItem to={calendar.to} icon={calendar.icon} label={t(calendar.labelKey)} />}
                 <div className="flex items-center justify-center -mt-5">
                     <button
                         type="button"
@@ -108,7 +110,7 @@ const BottomNavBar: React.FC<{
                         <SparklesIcon className="w-7 h-7" />
                     </button>
                 </div>
-                <BottomNavItem to="/generator" icon={PostIcon} label={t('header.nav.generator')} />
+                {generator && <BottomNavItem to={generator.to} icon={generator.icon} label={t(generator.labelKey)} />}
                 <button
                     type="button"
                     onClick={onOpenMoreMenu}
@@ -124,36 +126,26 @@ const BottomNavBar: React.FC<{
     );
 });
 
-interface CreateNavItem {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  to: string;
-  state?: Record<string, unknown> | null;
-  disabled?: boolean;
-  badge?: string;
-}
-
 const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () => void }> = React.memo(({ createNavItems, onClose }) => {
     const { t } = useTranslation();
     return (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-[60] sm:hidden animate-fade-in" onClick={onClose}>
             <div className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[92%] max-w-sm bg-gradient-to-br from-slate-900/95 to-slate-800/95 rounded-[3rem] border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-6 animate-slide-in backdrop-blur-2xl">
                 <div className="grid grid-cols-2 gap-3">
-                    {createNavItems.map(({ id, to, label, icon: Icon, state, disabled }, i) => (
+                    {createNavItems.map(({ id, to, labelKey, icon: Icon, state }, i) => (
                         <NavLink
                             key={id}
                             to={to}
                             state={state}
                             onClick={onClose}
-                            className={`group flex flex-col items-center justify-center gap-3 p-4 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 hover:scale-105 active:scale-95 animate-fade-in-up relative overflow-hidden ${disabled ? 'opacity-30 cursor-not-allowed pointer-events-none' : ''}`}
+                            className="group flex flex-col items-center justify-center gap-3 p-4 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 hover:scale-105 active:scale-95 animate-fade-in-up relative overflow-hidden"
                             style={{ animationDelay: `${i * 0.08}s`, animationFillMode: 'both' }}
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
                             <div className="relative z-10 w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-purple-500/25 rotate-6 hover:rotate-0 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-purple-500/40">
                                 <Icon className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
                             </div>
-                            <span className="relative z-10 font-bold text-xs text-center uppercase tracking-tight text-slate-200 group-hover:text-white transition-colors duration-300">{label}</span>
+                            <span className="relative z-10 font-bold text-xs text-center uppercase tracking-tight text-slate-200 group-hover:text-white transition-colors duration-300">{t(labelKey)}</span>
                         </NavLink>
                     ))}
                 </div>
@@ -181,29 +173,38 @@ export const Header: React.FC<HeaderProps> = ({
     const location = useLocation();
     const isLandingPage = location.pathname === '/';
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
-    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
-    const createMenuRef = useRef<HTMLDivElement>(null);
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
     const moreMenuRef = useRef<HTMLDivElement>(null);
     const mobileMenuRef = useRef<HTMLDivElement>(null);
 
     const userPlan = user?.plan || UserPlan.Free;
-    const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
-    const isStrategistEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(userPlan);
+
+    const resolvedItems = useMemo<ResolvedNavItem[]>(() => {
+        return APP_NAV_ITEMS.map((item) => {
+            const planLocked = item.minPlan ? !planMeets(userPlan, item.minPlan) : false;
+            const gatedLocked = item.gated ? !isCalendarEnabled : false;
+            const disabled = planLocked || gatedLocked;
+            const titleKey = disabled ? item.disabledTooltipKey : item.enabledTooltipKey;
+            return { ...item, disabled, title: titleKey ? t(titleKey) : t(item.labelKey) };
+        });
+    }, [isCalendarEnabled, userPlan, t]);
+
+    const primaryItems = useMemo(() => resolvedItems.filter((i) => i.section === 'main'), [resolvedItems]);
+    const moreItems = useMemo(() => resolvedItems.filter((i) => i.section !== 'main'), [resolvedItems]);
+    const moreSections = useMemo(() => [
+        { key: 'strategy', labelKey: 'header.nav.sectionStrategy', items: moreItems.filter((i) => i.section === 'strategy') },
+        { key: 'tools', labelKey: 'header.nav.sectionTools', items: moreItems.filter((i) => i.section === 'tools') },
+    ], [moreItems]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (createMenuRef.current && !createMenuRef.current.contains(event.target as Node)) {
-                setIsCreateMenuOpen(false);
-            }
             if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
                 setIsMoreMenuOpen(false);
             }
         };
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                setIsCreateMenuOpen(false);
                 setIsMoreMenuOpen(false);
                 setIsMobileCreateMenuOpen(false);
             }
@@ -250,69 +251,15 @@ export const Header: React.FC<HeaderProps> = ({
         }
     }, [isMobileMenuOpen]);
 
-    const createNavItems = useMemo(() => [
-        { id: 'new-post', to: '/generator', label: t('header.nav.newPost'), icon: PostIcon, state: null, disabled: false },
-        { id: 'new-campaign', to: '/generator', label: t('header.nav.newCampaign'), icon: CampaignIcon, state: { prefillData: { generationType: GenerationType.Campaign } }, disabled: false },
-        { id: 'new-storyboard', to: '/storyboard', label: t('header.nav.newStoryboard'), icon: FilmIcon, state: null, disabled: false },
-    ], [t]);
-
-    const primaryNavItems = useMemo(() => [
-        { id: 'dashboard', to: '/dashboard', label: t('header.nav.dashboard'), icon: LayoutGridIcon },
-        { id: 'generator', to: '/generator', label: t('header.nav.generator'), icon: PostIcon },
-        {
-            id: 'calendar',
-            to: '/calendar',
-            label: t('header.nav.calendar'),
-            icon: CalendarIcon,
-            disabled: !isCalendarEnabled,
-            title: !isCalendarEnabled ? t('header.calendarDisabledTooltip') : t('header.calendarTooltip'),
-        },
-        {
-            id: 'analytics',
-            to: '/analytics',
-            label: t('header.nav.analytics'),
-            icon: ChartPieIcon,
-            disabled: !isAnalyticsEnabled,
-            title: !isAnalyticsEnabled ? t('header.analyticsDisabledTooltip') : t('header.analyticsTooltip'),
-        },
-    ], [t, isCalendarEnabled, isAnalyticsEnabled]);
-
-    const moreNavItems = useMemo(() => [
-        {
-            id: 'strategist',
-            to: '/strategist',
-            label: t('header.nav.strategist'),
-            icon: BrainCircuitIcon,
-            disabled: !isStrategistEnabled,
-            title: !isStrategistEnabled ? t('header.strategistDisabledTooltip') : t('header.strategistTooltip'),
-        },
-        { id: 'trends', to: '/trends', label: t('header.nav.trends'), icon: TrendingUpIcon },
-        { id: 'competitors', to: '/competitors', label: t('header.nav.competitors'), icon: UsersIcon },
-        { id: 'analyzer', to: '/analyzer', label: t('header.nav.analyzer'), icon: BeakerIcon },
-        { id: 'storyboard', to: '/storyboard', label: t('header.nav.storyboard'), icon: FilmIcon },
-    ], [t, isStrategistEnabled]);
-
-    const mobileDrawerNavItems = useMemo(() => [
-        ...primaryNavItems,
-        ...moreNavItems,
-        { id: 'account', to: '/account', label: t('userMenu.myAccount'), icon: UserIcon },
-    ], [primaryNavItems, moreNavItems, t]);
-
-    const landingNavItems = useMemo<Array<
-        | { id: string; label: string; href: string }
-        | { id: string; label: string; onClick: () => void }
-    >>(() => [
+    const landingNavItems = useMemo<Array<{ id: string; label: string; href: string }>>(() => [
         { id: 'how-it-works', href: '#how-it-works', label: t('home.nav.howItWorks') },
         { id: 'features', href: '#features', label: t('home.nav.features') },
-        { id: 'pricing', onClick: onUpgradeClick, label: t('home.nav.pricing') },
+        { id: 'pricing', href: '#pricing', label: t('home.nav.pricing') },
         { id: 'faq', href: '#faq', label: t('home.nav.faq') },
-    ], [t, onUpgradeClick]);
+    ], [t]);
 
     const landingNavLinkClass =
         'px-3 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 rounded-lg hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-white/5 transition-colors';
-
-    const landingNavMobileLinkClass =
-        'px-5 py-3 text-base font-semibold text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-left w-full';
 
     return (
         <>
@@ -333,17 +280,11 @@ export const Header: React.FC<HeaderProps> = ({
                         {user && <div className="shrink-0 hidden sm:block"><TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} /></div>}
                         {!user && isLandingPage && (
                             <nav className="hidden md:flex items-center gap-1 ml-2" aria-label={t('home.nav.ariaLabel')}>
-                                {landingNavItems.map((item) =>
-                                    'href' in item ? (
-                                        <a key={item.id} href={item.href} className={landingNavLinkClass}>
-                                            {item.label}
-                                        </a>
-                                    ) : (
-                                        <button key={item.id} type="button" onClick={item.onClick} className={landingNavLinkClass}>
-                                            {item.label}
-                                        </button>
-                                    )
-                                )}
+                                {landingNavItems.map((item) => (
+                                    <a key={item.id} href={item.href} className={landingNavLinkClass}>
+                                        {item.label}
+                                    </a>
+                                ))}
                             </nav>
                         )}
                     </div>
@@ -353,24 +294,21 @@ export const Header: React.FC<HeaderProps> = ({
                             className="hidden sm:flex items-center gap-1 p-1 rounded-lg border border-slate-200/80 dark:border-white/10 bg-white/60 dark:bg-white/[0.03]"
                             aria-label={t('header.nav.ariaLabel')}
                         >
-                            {primaryNavItems.map(({ id, to, label, icon: Icon, disabled, title }) => (
-                                <NavItem key={id} to={to} title={title || label} disabled={disabled}>
+                            {primaryItems.map(({ id, to, labelKey, icon: Icon, disabled, title }) => (
+                                <NavItem key={id} to={to} title={title} disabled={disabled}>
                                     <Icon className="w-4 h-4 shrink-0 opacity-90" />
-                                    <span className="hidden lg:inline">{label}</span>
+                                    <span className="hidden lg:inline">{t(labelKey)}</span>
                                 </NavItem>
                             ))}
 
                             <div className="relative" ref={moreMenuRef}>
                                 <button
                                     type="button"
-                                    onClick={() => {
-                                        setIsMoreMenuOpen((v) => !v);
-                                        setIsCreateMenuOpen(false);
-                                    }}
+                                    onClick={() => setIsMoreMenuOpen((v) => !v)}
                                     aria-expanded={isMoreMenuOpen}
                                     aria-haspopup="menu"
                                     className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold uppercase tracking-wide rounded-lg transition-colors border ${
-                                        isMoreMenuOpen || moreNavItems.some((i) => location.pathname.startsWith(i.to))
+                                        isMoreMenuOpen || moreItems.some((i) => location.pathname.startsWith(i.to))
                                             ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] border-[var(--hero-accent)]/35'
                                             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/80 dark:hover:bg-white/5 border-transparent'
                                     }`}
@@ -385,73 +323,37 @@ export const Header: React.FC<HeaderProps> = ({
                                         className="absolute top-full right-0 mt-3 w-[560px] rounded-2xl border border-slate-200/90 dark:border-white/10 bg-white/95 dark:bg-[#071018]/95 backdrop-blur-2xl shadow-2xl z-50 p-5 animate-scale-in"
                                     >
                                         <div className="grid grid-cols-2 gap-4">
-                                            {/* Column 1: Strategia & Analiza */}
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block px-2">
-                                                    Strategia & Analiza
-                                                </span>
-                                                {[
-                                                    { id: 'strategist', to: '/strategist', label: t('header.nav.strategist'), desc: 'Audyt marki i planowanie', icon: BrainCircuitIcon, disabled: !isStrategistEnabled },
-                                                    { id: 'analytics', to: '/analytics', label: t('header.nav.analytics'), desc: 'Statystyki i efektywność', icon: ChartPieIcon, disabled: !isAnalyticsEnabled },
-                                                    { id: 'competitors', to: '/competitors', label: t('header.nav.competitors'), desc: 'Monitoring konkurencji', icon: UsersIcon },
-                                                ].map(({ id, to, label, desc, icon: Icon, disabled }) => (
-                                                    <NavLink
-                                                        key={id}
-                                                        to={to}
-                                                        role="menuitem"
-                                                        onClick={() => setIsMoreMenuOpen(false)}
-                                                        className={({ isActive }) =>
-                                                            `flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                                                                isActive
-                                                                    ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] font-bold'
-                                                                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                                                            } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
-                                                        }
-                                                    >
-                                                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-[var(--hero-accent)] shrink-0">
-                                                            <Icon className="w-4 h-4" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-xs font-bold leading-none">{label}</div>
-                                                            <div className="text-[11px] text-slate-400 mt-1 font-normal">{desc}</div>
-                                                        </div>
-                                                    </NavLink>
-                                                ))}
-                                            </div>
-
-                                            {/* Column 2: Narzędzia & Odkrycia */}
-                                            <div className="space-y-2">
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block px-2">
-                                                    Narzędzia & Odkrycia
-                                                </span>
-                                                {[
-                                                    { id: 'trends', to: '/trends', label: t('header.nav.trends'), desc: 'Najnowsze rynkowe trendy', icon: TrendingUpIcon },
-                                                    { id: 'analyzer', to: '/analyzer', label: t('header.nav.analyzer'), desc: 'Analizator postów i tekstu', icon: BeakerIcon },
-                                                    { id: 'storyboard', to: '/storyboard', label: t('header.nav.storyboard'), desc: 'Generator scenariuszy wideo', icon: FilmIcon },
-                                                ].map(({ id, to, label, desc, icon: Icon }) => (
-                                                    <NavLink
-                                                        key={id}
-                                                        to={to}
-                                                        role="menuitem"
-                                                        onClick={() => setIsMoreMenuOpen(false)}
-                                                        className={({ isActive }) =>
-                                                            `flex items-start gap-3 p-2.5 rounded-xl transition-all ${
-                                                                isActive
-                                                                    ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] font-bold'
-                                                                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
-                                                            }`
-                                                        }
-                                                    >
-                                                        <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-[var(--hero-accent)] shrink-0">
-                                                            <Icon className="w-4 h-4" />
-                                                        </div>
-                                                        <div>
-                                                            <div className="text-xs font-bold leading-none">{label}</div>
-                                                            <div className="text-[11px] text-slate-400 mt-1 font-normal">{desc}</div>
-                                                        </div>
-                                                    </NavLink>
-                                                ))}
-                                            </div>
+                                            {moreSections.map(({ key, labelKey, items }) => (
+                                                <div key={key} className="space-y-2">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 block px-2">
+                                                        {t(labelKey)}
+                                                    </span>
+                                                    {items.map(({ id, to, labelKey, icon: Icon, disabled, title }) => (
+                                                        <NavLink
+                                                            key={id}
+                                                            to={to}
+                                                            role="menuitem"
+                                                            title={disabled ? title : undefined}
+                                                            onClick={() => setIsMoreMenuOpen(false)}
+                                                            className={({ isActive }) =>
+                                                                `flex items-start gap-3 p-2.5 rounded-xl transition-all ${
+                                                                    isActive
+                                                                        ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] font-bold'
+                                                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                                } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                            }
+                                                        >
+                                                            <div className="p-2 rounded-lg bg-slate-100 dark:bg-white/5 text-[var(--hero-accent)] shrink-0">
+                                                                <Icon className="w-4 h-4" />
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-xs font-bold leading-none">{t(labelKey)}</div>
+                                                                <div className="text-[11px] text-slate-400 mt-1 font-normal">{t(`header.nav.desc${id.charAt(0).toUpperCase() + id.slice(1)}`)}</div>
+                                                            </div>
+                                                        </NavLink>
+                                                    ))}
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
@@ -459,45 +361,14 @@ export const Header: React.FC<HeaderProps> = ({
 
                             <div className="w-px h-6 bg-slate-200 dark:bg-white/10 mx-0.5" aria-hidden />
 
-                            <div className="relative shrink-0" ref={createMenuRef}>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setIsCreateMenuOpen((prev) => !prev);
-                                        setIsMoreMenuOpen(false);
-                                    }}
-                                    aria-expanded={isCreateMenuOpen}
-                                    aria-haspopup="menu"
-                                    className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors text-white hover:brightness-110 shadow-sm shrink-0 whitespace-nowrap"
-                                    style={{ backgroundColor: 'var(--hero-accent)' }}
-                                >
-                                    <SparklesIcon className="w-4 h-4 shrink-0" />
-                                    <span>{t('header.nav.create')}</span>
-                                    <ChevronDownIcon className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${isCreateMenuOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {isCreateMenuOpen && (
-                                    <div
-                                        role="menu"
-                                        className="absolute top-full right-0 mt-2 w-60 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0a1220] shadow-lg z-50 p-1.5"
-                                    >
-                                        {createNavItems.map(({ id, to, label, icon: Icon, state }) => (
-                                            <NavLink
-                                                key={id}
-                                                to={to}
-                                                state={state}
-                                                role="menuitem"
-                                                onClick={() => setIsCreateMenuOpen(false)}
-                                                className="flex w-full items-center gap-3 px-3 py-2.5 text-sm font-semibold rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
-                                            >
-                                                <span className="p-1.5 rounded-md bg-slate-100 dark:bg-white/5">
-                                                    <Icon className="w-4 h-4" />
-                                                </span>
-                                                {label}
-                                            </NavLink>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
+                            <NavLink
+                                to="/generator"
+                                className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors text-white hover:brightness-110 shadow-sm shrink-0 whitespace-nowrap"
+                                style={{ backgroundColor: 'var(--hero-accent)' }}
+                            >
+                                <SparklesIcon className="w-4 h-4 shrink-0" />
+                                <span>{t('header.nav.create')}</span>
+                            </NavLink>
                         </nav>
                     )}
 
@@ -589,7 +460,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mb-1">
                                             {t('header.nav.sectionMain')}
                                         </p>
-                                        {mobileDrawerNavItems.slice(0, 4).map(({ id, to, label, icon: Icon, disabled = false }) => (
+                                        {primaryItems.map(({ id, to, labelKey, icon: Icon, disabled }) => (
                                             <NavLink
                                                 key={id}
                                                 to={to}
@@ -604,13 +475,13 @@ export const Header: React.FC<HeaderProps> = ({
                                                 }
                                             >
                                                 <Icon className="w-5 h-5 shrink-0" />
-                                                {label}
+                                                {t(labelKey)}
                                             </NavLink>
                                         ))}
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mt-4 mb-1">
                                             {t('header.nav.sectionMore')}
                                         </p>
-                                        {mobileDrawerNavItems.slice(4).map(({ id, to, label, icon: Icon, disabled = false }) => (
+                                        {moreItems.map(({ id, to, labelKey, icon: Icon, disabled }) => (
                                             <NavLink
                                                 key={id}
                                                 to={to}
@@ -624,42 +495,29 @@ export const Header: React.FC<HeaderProps> = ({
                                                 }
                                             >
                                                 <Icon className="w-5 h-5 shrink-0" />
-                                                {label}
+                                                {t(labelKey)}
                                             </NavLink>
                                         ))}
+                                        <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+                                        <NavLink
+                                            to="/account"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+                                                    isActive
+                                                        ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
+                                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                }`
+                                            }
+                                        >
+                                            <UserIcon className="w-5 h-5 shrink-0" />
+                                            {t('userMenu.myAccount')}
+                                        </NavLink>
                                         <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
                                         <TeamSwitcher user={user} onSwitchTeam={(id) => { setCurrentTeamId(id); setIsMobileMenuOpen(false); }} />
                                     </>
                                 ) : (
                                     <div className="flex flex-col gap-4">
-                                        {isLandingPage && (
-                                            <nav className="flex flex-col gap-2 mb-2" aria-label={t('home.nav.ariaLabel')}>
-                                                {landingNavItems.map((item) =>
-                                                    'href' in item ? (
-                                                        <a
-                                                            key={item.id}
-                                                            href={item.href}
-                                                            onClick={() => setIsMobileMenuOpen(false)}
-                                                            className={landingNavMobileLinkClass}
-                                                        >
-                                                            {item.label}
-                                                        </a>
-                                                    ) : (
-                                                        <button
-                                                            key={item.id}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                item.onClick();
-                                                                setIsMobileMenuOpen(false);
-                                                            }}
-                                                            className={landingNavMobileLinkClass}
-                                                        >
-                                                            {item.label}
-                                                        </button>
-                                                    )
-                                                )}
-                                            </nav>
-                                        )}
                                         <button type="button" onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl transition-colors duration-200 hover:bg-slate-200 dark:hover:bg-slate-700">
                                             {t('header.login')}
                                         </button>
@@ -684,10 +542,10 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {/* Mobile "Create" menu */}
-            {isMobileCreateMenuOpen && <MobileCreateMenu createNavItems={createNavItems} onClose={() => setIsMobileCreateMenuOpen(false)} />}
+            {isMobileCreateMenuOpen && <MobileCreateMenu createNavItems={CREATE_NAV_ITEMS} onClose={() => setIsMobileCreateMenuOpen(false)} />}
 
             {/* Bottom Navigation Bar */}
-            {user && <BottomNavBar onOpenCreateMenu={() => setIsMobileCreateMenuOpen(true)} onOpenMoreMenu={() => setIsMobileMenuOpen(true)} />}
+            {user && <BottomNavBar items={resolvedItems} onOpenCreateMenu={() => setIsMobileCreateMenuOpen(true)} onOpenMoreMenu={() => setIsMobileMenuOpen(true)} />}
         </>
     );
 };

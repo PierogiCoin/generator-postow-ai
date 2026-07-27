@@ -362,6 +362,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
           initialText={suggestedLayouts[0]?.text || result.postText.substring(0, 30)}
           logoUrl={activeProfile?.settings?.logoUrl}
           mascotUrl={activeProfile?.settings?.mascotUrl}
+          brandVoice={activeProfile?.settings}
           userId={user?.id}
           onExport={(dataUrl) => {
             handleApplyImageEdit(dataUrl);

@@ -7,12 +7,20 @@ import {
   type TextLayer,
   type CanvasSnapshot,
   type DragType,
+  type LogoPosition,
   FONT_STACK,
   POSITION_PRESETS,
   clamp,
   applySnap,
   buildDefaultTextLayer,
+  computeLogoPlacement,
+  BASE_LOGO_WIDTH,
 } from './creativeCanvas/model';
+import type { BrandVoiceData } from '../../types';
+import {
+  DEFAULT_LOGO_SIZE_PERCENT,
+  DEFAULT_LOGO_PADDING_PERCENT,
+} from '../../shared/config/generationConfig';
 import { useCanvasHistory } from './creativeCanvas/useCanvasHistory';
 
 interface CreativeCanvasProps {
@@ -20,6 +28,8 @@ interface CreativeCanvasProps {
   initialText?: string;
   logoUrl?: string;
   mascotUrl?: string;
+  /** Brand voice settings used to auto-position/size the logo layer. */
+  brandVoice?: BrandVoiceData | null;
   /** When set, enables „Wykryj tekst z grafiki” (Gemini OCR → editable layer). */
   userId?: string;
   onExport?: (dataUrl: string) => void;
@@ -31,6 +41,7 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
   initialText = 'Twój Tekst',
   logoUrl,
   mascotUrl,
+  brandVoice,
   userId,
   onExport,
   onClose,
@@ -93,6 +104,7 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
   const activeLayerIdRef = useRef(activeLayerId);
   const layersRef = useRef(layers);
   const backgroundUrlRef = useRef(backgroundUrl);
+  const logoAutoPositionedRef = useRef(false);
 
   useEffect(() => {
     activeLayerIdRef.current = activeLayerId;
@@ -103,6 +115,56 @@ export const CreativeCanvas: React.FC<CreativeCanvasProps> = ({
   useEffect(() => {
     backgroundUrlRef.current = backgroundUrl;
   }, [backgroundUrl]);
+
+  // Auto-position logo once based on Brand Voice settings.
+  useEffect(() => {
+    if (!logoUrl || !brandVoice || !containerRef.current || logoAutoPositionedRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const aspectRatio = img.naturalWidth && img.naturalHeight
+        ? img.naturalWidth / img.naturalHeight
+        : 1;
+      const placement = computeLogoPlacement({
+        position: (brandVoice.logoPosition as LogoPosition) ?? 'bottom-right',
+        sizePercent: brandVoice.logoSizePercent ?? DEFAULT_LOGO_SIZE_PERCENT,
+        paddingPercent: DEFAULT_LOGO_PADDING_PERCENT,
+        canvasWidth: rect.width,
+        canvasHeight: rect.height,
+        aspectRatio,
+      });
+      setBrandAssets((prev) => ({
+        ...prev,
+        logo: {
+          ...prev.logo,
+          x: placement.x,
+          y: placement.y,
+          scale: placement.scale,
+        },
+      }));
+      logoAutoPositionedRef.current = true;
+    };
+    img.onerror = () => {
+      // Apply fallback placement even if the logo image fails to load.
+      const placement = computeLogoPlacement({
+        position: (brandVoice.logoPosition as LogoPosition) ?? 'bottom-right',
+        sizePercent: brandVoice.logoSizePercent ?? DEFAULT_LOGO_SIZE_PERCENT,
+        paddingPercent: DEFAULT_LOGO_PADDING_PERCENT,
+        canvasWidth: rect.width,
+        canvasHeight: rect.height,
+      });
+      setBrandAssets((prev) => ({
+        ...prev,
+        logo: { ...prev.logo, x: placement.x, y: placement.y, scale: placement.scale },
+      }));
+      logoAutoPositionedRef.current = true;
+    };
+    img.src = logoUrl;
+  }, [logoUrl, brandVoice]);
 
   const updatePosition = useCallback((type: DragType, xRaw: number, yRaw: number) => {
     const sx = applySnap(xRaw);

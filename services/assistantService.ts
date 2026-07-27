@@ -12,8 +12,10 @@ import {
     GenerationType,
     Scene,
     FormData,
-    FavoritePost
+    FavoritePost,
+    BrandVoiceData,
 } from '../types';
+import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
 
 /**
  * Assistant Service
@@ -57,10 +59,19 @@ export const generateSpeech = async (text: string, userId: string): Promise<Blob
     }
 };
 
+export interface AIActionContext {
+    fullText: string;
+    formData: FormData | null;
+    tone?: string;
+    brandVoice?: BrandVoiceData | null;
+    niche?: string;
+    [key: string]: unknown;
+}
+
 export const performAIAction = async (
     action: AIAssistantAction,
     text: string,
-    context: { fullText: string, formData: FormData | null, tone?: string, [key: string]: unknown },
+    context: AIActionContext,
     userId: string
 ): Promise<{ resultText: string }> => {
     let prompt = "";
@@ -77,9 +88,24 @@ export const performAIAction = async (
         default: prompt = `Process this text according to the action "${action}": "${text}"`;
     }
 
+    const systemParts = [
+        'You are an expert social media editor. Perform the requested action while keeping the output natural, platform-appropriate, and free of generic marketing clichés.',
+        buildAntiSlopBlock(),
+    ];
+
+    if (context.brandVoice) {
+        systemParts.push(`BRAND VOICE: Follow this brand profile: ${JSON.stringify(context.brandVoice)}.`);
+    }
+    if (context.niche) {
+        systemParts.push(`NICHE / BRANŻA: ${context.niche}. Write specifically for this industry and avoid generic examples.`);
+    }
+
     const response = await generateContent({
         model: "gemini-flash-latest",
-        contents: prompt
+        contents: prompt,
+        config: {
+            systemInstruction: systemParts.filter(Boolean).join('\n\n'),
+        },
     }, userId);
 
     return { resultText: response.text ?? '' };

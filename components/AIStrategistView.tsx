@@ -124,14 +124,14 @@ const ReportDisplay: React.FC<{
             ...(report.contentPillars || []).map(p => `- **${p.pillar}**: ${p.description}`),
             '',
             '## Grupa Docelowa (Persona)',
-            `- **Demografia**: ${report.audiencePersona?.demographics || 'N/A'}`,
-            `- **Ból / Potrzeby**: ${(report.audiencePersona?.painPoints || []).join(', ')}`,
+            `- **Demografia**: ${report.refinedPersona?.demographics || 'N/A'}`,
+            `- **Ból / Potrzeby**: ${(report.refinedPersona?.painPoints || []).join(', ')}`,
             '',
             '## Analiza SWOT',
-            `### Mocne Strony\n${(report.swotAnalysis?.strengths || []).map(s => `- ${s}`).join('\n')}`,
-            `### Słabe Strony\n${(report.swotAnalysis?.weaknesses || []).map(w => `- ${w}`).join('\n')}`,
-            `### Szanse\n${(report.swotAnalysis?.opportunities || []).map(o => `- ${o}`).join('\n')}`,
-            `### Zagrożenia\n${(report.swotAnalysis?.threats || []).map(t => `- ${t}`).join('\n')}`,
+            `### Mocne Strony\n${(report.swot?.strengths || []).map(s => `- ${s}`).join('\n')}`,
+            `### Słabe Strony\n${(report.swot?.weaknesses || []).map(w => `- ${w}`).join('\n')}`,
+            `### Szanse\n${(report.swot?.opportunities || []).map(o => `- ${o}`).join('\n')}`,
+            `### Zagrożenia\n${(report.swot?.threats || []).map(t => `- ${t}`).join('\n')}`,
             '',
             '## Plan Działań',
             ...(report.actionablePlan || []).map(item => `- [${item.platform}] ${item.topic} (Sugestia: ${item.suggestedDayOfWeek} ${item.suggestedTimeSlot})`),
@@ -146,7 +146,7 @@ const ReportDisplay: React.FC<{
     const healthScore = useMemo(() => {
         let score = 70;
         if (report.contentPillars?.length >= 3) score += 10;
-        if (report.swotAnalysis?.strengths?.length > 0) score += 10;
+        if (report.swot?.strengths?.length > 0) score += 10;
         if (report.actionablePlan?.length >= 5) score += 10;
         return Math.min(score, 100);
     }, [report]);

@@ -28,7 +28,6 @@ import {
 } from './helpers.js';
 import { startGenerationTrace } from '../../lib/langfuse.js';
 import { buildAntiSlopBlock } from '../../prompts/plAntiSlop.ts';
-import { enforceAntiSlopTextServer } from '../../lib/antiSlop.js';
 
 export function createTextGenerationRouter(): Router {
   const router = Router();
@@ -67,18 +66,22 @@ Requirements:
 - Include ${template.includeHashtags ? `${template.hashtagCount} relevant hashtags` : 'no hashtags'}
 - Keep it concise and impactful
 
-${buildAntiSlopBlock()}
-
 Output format:
 TITLE: [Catchy title]
 DESCRIPTION: [Main content]
 ${template.includeHashtags ? 'HASHTAGS: [Space-separated hashtags]' : ''}`;
 
-        const genModel = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
-        const result = await genModel.generateContent(prompt);
-        let text = result.response.text();
-        const cleaned = await enforceAntiSlopTextServer(text);
-        text = cleaned.text;
+        const currentDateStr = new Date().toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' });
+        const systemParts = [
+          'You are an elite social media growth expert.',
+          `CURRENT DATE: ${currentDateStr} (Ensure any temporal references align with this date).`,
+          buildAntiSlopBlock(),
+          template.industrySystemInstruction,
+        ].filter(Boolean);
+        const systemInstruction = systemParts.join('\n\n');
+
+        const result = await runTextGeneration('gemini-flash-latest', prompt, { systemInstruction });
+        let text = result.text;
 
         // Parse response
         const titleMatch = text.match(/TITLE:\s*(.+)/);

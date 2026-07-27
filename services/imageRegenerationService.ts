@@ -1,9 +1,8 @@
-import type { FormData } from '../types';
-import { GenerationType, Platform, VisualStyle } from '../types';
+import type { FormData, BrandVoiceProfile } from '../types';
+import { GenerationType, Platform } from '../types';
 import { generateImages } from './mediaService';
-import { buildPlatformImagePrompt, resolveAspectRatioForPlatform, getPlatformVisualSpec } from '../utils/platformVisualSpec';
-import type { BrandVoiceProfile } from '../types';
-import { buildVisualBrief, visualBriefToPrompt } from './visualBriefService';
+import { getPlatformVisualSpec } from '../utils/platformVisualSpec';
+import { buildImageGenerationInput } from './imagePromptBuilder';
 
 /** Typy generacji, dla których ma sens (re)generacja grafiki. */
 export function supportsImageGeneration(formData: FormData | null | undefined): boolean {
@@ -24,33 +23,21 @@ export async function regeneratePostImage(
     variationSeed?: number;
   }
 ): Promise<string> {
-  let imageStyle = formData.visualStyle || 'modern';
-  const brandVoice = options?.brandVoice?.settings;
+  const brandVoice = options?.brandVoice?.settings ?? null;
 
-  if (brandVoice?.visualStyle) {
-    imageStyle = `${brandVoice.visualStyle}, ${imageStyle}` as VisualStyle;
-  }
-  if (brandVoice?.brandColors?.length) {
-    imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}` as VisualStyle;
-  }
-
-  const useMascot = formData.useMascot === true && !!brandVoice?.mascotDescription;
-  let mascotPrompt: string | undefined;
-  if (useMascot && brandVoice?.mascotDescription) {
-    mascotPrompt = `FEATURED MASCOT: Include "${brandVoice.mascotName || 'mascot'}". ${brandVoice.mascotDescription}`;
-  }
-
-  const brief = await buildVisualBrief({
+  const {
+    imagePrompt: baseImagePrompt,
+    aspectRatio,
+    imageQuality,
+    referenceImages,
+  } = await buildImageGenerationInput({
     postText,
-    platform: formData.platform,
-    imageStyle,
-    brandColors: brandVoice?.brandColors,
-    mascotDescription: useMascot ? brandVoice?.mascotDescription : undefined,
+    formData,
+    brandVoice,
     userId,
   });
 
-  let imagePrompt = visualBriefToPrompt(brief);
-  if (mascotPrompt) imagePrompt += ` ${mascotPrompt}`;
+  let imagePrompt = baseImagePrompt;
 
   if (options?.customInstruction?.trim()) {
     imagePrompt += `\n\nCREATIVE DIRECTION: ${options.customInstruction.trim()}`;
@@ -59,31 +46,6 @@ export async function regeneratePostImage(
   if (options?.variationSeed != null) {
     imagePrompt += `\n\nCreate a distinctly different visual variation (seed ${options.variationSeed}).`;
   }
-
-  if (imagePrompt.length < 60) {
-    imagePrompt = buildPlatformImagePrompt({
-      postText,
-      platform: formData.platform,
-      imageStyle,
-      mascotPrompt,
-    });
-  }
-
-  const aspectRatio = resolveAspectRatioForPlatform(
-    formData.platform,
-    formData.aspectRatio,
-    formData.visualStyle as VisualStyle
-  );
-
-  const referenceImages: string[] = [];
-  if (useMascot && brandVoice?.mascotUrl) referenceImages.push(brandVoice.mascotUrl);
-  if (formData.includeLogo !== false && brandVoice?.logoUrl) referenceImages.push(brandVoice.logoUrl);
-
-  const imageQuality =
-    formData.imageQuality ||
-    (formData.platform === Platform.LinkedIn || formData.platform === Platform.YouTube
-      ? 'typography'
-      : 'standard');
 
   const imageResponse = await generateImages(
     imagePrompt,

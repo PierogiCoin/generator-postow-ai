@@ -27,6 +27,10 @@ export interface ContentTemplate {
   topicIdeas?: string[];
   /** Keywords used by matchIndustryPack / for-niche */
   nicheKeywords?: string[];
+  /** Optional industry-specific system instruction injected into generation prompts */
+  industrySystemInstruction?: string;
+  /** Optional prefix added to image-generation prompts for this industry */
+  imagePromptPrefix?: string;
 }
 
 export const CONTENT_TEMPLATES: ContentTemplate[] = [
@@ -207,6 +211,8 @@ function industryDefToTemplate(def: IndustryPackDef): ContentTemplate {
     topicHint: def.topicHint,
     topicIdeas: def.topicIdeas,
     nicheKeywords: def.nicheKeywords,
+    industrySystemInstruction: def.systemInstruction,
+    imagePromptPrefix: def.imagePromptPrefix,
   };
 }
 

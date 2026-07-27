@@ -1,5 +1,6 @@
 import { findBannedPhrases, hasBannedPhrases, buildAntiSlopRewritePrompt } from '../prompts/plAntiSlop';
 import { generateContent } from './apiClient';
+import { DEFAULT_FAST_MODEL } from '../shared/config/generationConfig';
 
 /**
  * If generated text contains banned PL/EN marketing clichés, rewrite once via Gemini.
@@ -17,7 +18,7 @@ export async function enforceAntiSlopText(
   try {
     const response = await generateContent(
       {
-        model: 'gemini-flash-latest',
+        model: DEFAULT_FAST_MODEL,
         contents: buildAntiSlopRewritePrompt(text, banned),
       },
       userId

@@ -10,6 +10,7 @@ import { FeaturePanelModal } from '../ui/FeaturePanelModal';
 import { stripTopicHtml } from '../../utils/inputFormMode';
 import { resolveNicheContext } from '../../utils/nicheContext';
 import { useDataStore } from '../../stores/dataStore';
+import type { BrandVoiceData } from '../../types';
 
 const TrendAnalysisPanel = lazy(() => import('../TrendAnalysisPanel').then((m) => ({ default: m.TrendAnalysisPanel })));
 const TechRadarPanel = lazy(() => import('./TechRadarPanel').then((m) => ({ default: m.TechRadarPanel })));
@@ -112,6 +113,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
 }) => {
   const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore();
   const activeBv = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId);
+  const activeBrandVoiceData: BrandVoiceData | null = activeBv?.settings ?? null;
   const resolvedNiche = useMemo(() => {
     const ctx = resolveNicheContext({
       userId,
@@ -226,7 +228,7 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
             contentType={formData.contentType}
             tone={formData.tone}
             currentPostText={formData.topic}
-            brandVoice={brandVoiceDescription}
+            brandVoice={activeBrandVoiceData}
           />
         </FeaturePanelModal>
       </SectionErrorBoundary>

@@ -132,7 +132,14 @@
       "ariaLabel": "Nawigacja główna",
       "sectionMain": "Główne",
       "sectionMore": "Więcej",
-      "menu": "Menu"
+      "menu": "Menu",
+      "sectionStrategy": "Strategia i analiza",
+      "sectionTools": "Narzędzia i odkrycia",
+      "descStrategist": "Audyt marki i planowanie",
+      "descCompetitors": "Monitoring konkurencji",
+      "descTrends": "Najnowsze rynkowe trendy",
+      "descAnalyzer": "Analizator postów i tekstu",
+      "descStoryboard": "Generator scenariuszy wideo"
     },
     "calendarDisabledTooltip": "Wygeneruj plan kampanii, aby aktywować kalendarz",
     "calendarTooltip": "Kalendarz treści",
@@ -876,15 +883,7 @@
       "pricing": "Cennik",
       "faq": "FAQ"
     },
-    "trust": {
-      "title": "Jeden workflow dla contentu",
-      "item_generate": "Generator postów",
-      "item_plan": "Planer kampanii",
-      "item_analyze": "Analityka treści"
-    },
     "stats": {
-      "title": "Stworzone dla szybkości contentu",
-      "subtitle": "Liczby od zespołów, które już używają AI Content Pro.",
       "stat1_value": "10",
       "stat1_suffix": "x",
       "stat1_label": "Szybsze tworzenie treści",
@@ -1054,23 +1053,20 @@
       "subtitle_logged_in": "Wróć do generatora i kontynuuj tworzenie treści.",
       "button": "Wygeneruj pierwszy post"
     },
+    "logged_in": {
+      "title": "Witaj ponownie",
+      "subtitle": "Kontynuuj tworzenie treści lub sprawdź pulpit.",
+      "credits": "Masz {{count}} kredytów",
+      "cta_generator": "Przejdź do generatora",
+      "cta_dashboard": "Pulpit"
+    },
     "features_ecosystem": {
-      "title": "Kompletne Studio Contentowe AI",
-      "subtitle": "Zamiast płacić za 5 osobnych subskrypcji, zyskujesz zintegrowany ekosystem narzędzi.",
       "brand_voice_title": "Głos Marki (Brand Voice AI)",
       "brand_voice_desc": "AI uczy się Twojego unikalnego stylu z ulubionych postów lub strony www. Twoje posty brzmią w 100% autentycznie.",
-      "tech_radar_title": "Tech Radar & Live News",
-      "tech_radar_desc": "Wyszukuj najnowsze trendy z Google Search w swojej niszy i zamieniaj je w wiralowe posty przed konkurencją.",
       "omnichannel_title": "Generator Omnichannel & A/B",
       "omnichannel_desc": "Twórz pełne kampanie marketingowe, testuj wielokrotne warianty nagłówków i treści w jednym zapytaniu.",
       "video_title": "Generator Wideo AI & Audio",
       "video_desc": "Zamieniaj teksty w dynamiczne krótkie wideo z podkładem muzycznym, idealne na TikTok, Reels i Shorts.",
-      "repurpose_title": "Smart Repurpose",
-      "repurpose_desc": "Przekształcaj jeden dany artykuł lub post na idealnie dopasowane formaty na LinkedIn, Instagram, X i FB.",
-      "safety_title": "Skaner Bezpieczeństwa Treści",
-      "safety_desc": "Ochrona przed shadowbanem, weryfikacja wrażliwych słów i gwarancja wysokiego wskaźnika zaangażowania.",
-      "publishing_title": "Bezpośrednia Auto-Publikacja",
-      "publishing_desc": "Łącz swoje konta społecznościowe i publikuj lub planuj posty bezpośrednio z poziomu kalendarza.",
       "analytics_title": "Inteligentna Analityka",
       "analytics_desc": "Śledź wskaźniki skuteczności i optymalizuj godziny publikacji na podstawie zachowań odbiorców."
     },
@@ -1092,7 +1088,6 @@
       "title": "Proste cennik",
       "subtitle": "Zacznij za darmo. Ulepsz, gdy potrzebujesz więcej.",
       "plan_free_name": "Darmowy",
-      "plan_free_price": "$0",
       "plan_free_desc": "Wypróbuj AI bez karty",
       "plan_creator_name": "Creator",
       "plan_creator_desc": "Dla freelancerów i twórców",
@@ -1106,6 +1101,12 @@
       "cta_free": "Zacznij za darmo",
       "cta_choose": "Wybierz plan"
     }
+  },
+  "footer": {
+    "ariaLabel": "Stopka",
+    "pricing": "Cennik",
+    "terms": "Regulamin",
+    "privacy": "Polityka prywatności"
   },
   "langSwitcher": {
     "changeLanguage": "Zmień język"

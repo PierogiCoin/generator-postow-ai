@@ -131,7 +131,14 @@
       "ariaLabel": "Main navigation",
       "sectionMain": "Main",
       "sectionMore": "More",
-      "menu": "Menu"
+      "menu": "Menu",
+      "sectionStrategy": "Strategy & analysis",
+      "sectionTools": "Tools & discovery",
+      "descStrategist": "Brand audit & planning",
+      "descCompetitors": "Competitor monitoring",
+      "descTrends": "Latest market trends",
+      "descAnalyzer": "Post & text analyzer",
+      "descStoryboard": "Video script generator"
     },
     "calendarDisabledTooltip": "Generate a campaign plan to activate the calendar",
     "calendarTooltip": "Content Calendar",
@@ -873,15 +880,7 @@
       "pricing": "Pricing",
       "faq": "FAQ"
     },
-    "trust": {
-      "title": "One workflow for content",
-      "item_generate": "Post generator",
-      "item_plan": "Campaign planner",
-      "item_analyze": "Content analytics"
-    },
     "stats": {
-      "title": "Built for content velocity",
-      "subtitle": "Numbers from teams already using AI Content Pro.",
       "stat1_value": "10",
       "stat1_suffix": "x",
       "stat1_label": "Faster content creation",
@@ -1051,11 +1050,17 @@
       "subtitle_logged_in": "Go back to the generator and keep creating.",
       "button": "Generate your first post"
     },
+    "logged_in": {
+      "title": "Welcome back",
+      "subtitle": "Keep creating content or check your dashboard.",
+      "credits": "You have {{count}} credits",
+      "cta_generator": "Go to generator",
+      "cta_dashboard": "Dashboard"
+    },
     "pricing_preview": {
       "title": "Simple pricing",
       "subtitle": "Start free. Upgrade when you need more.",
       "plan_free_name": "Free",
-      "plan_free_price": "$0",
       "plan_free_desc": "Try AI with no card",
       "plan_creator_name": "Creator",
       "plan_creator_desc": "For freelancers and creators",
@@ -1069,6 +1074,12 @@
       "cta_free": "Start free",
       "cta_choose": "Choose plan"
     }
+  },
+  "footer": {
+    "ariaLabel": "Footer",
+    "pricing": "Pricing",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy"
   },
   "langSwitcher": {
     "changeLanguage": "Change language"

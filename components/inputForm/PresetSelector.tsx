@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bookmark, Plus, Trash2, Check } from 'lucide-react';
+import { Tone, ContentLanguage } from '../../types';
 import type { FormData, Platform } from '../../types';
 
 export interface PromptPreset {
@@ -14,9 +15,9 @@ export interface PromptPreset {
 const STORAGE_KEY = 'generator_prompt_presets';
 
 const DEFAULT_PRESETS: PromptPreset[] = [
-  { id: 'default-1', name: 'Zabawny Post IG', platform: 'instagram' as Platform, tone: 'humorous', contentLanguage: 'pl' },
-  { id: 'default-2', name: 'Biznesowy LinkedIn', platform: 'linkedin' as Platform, tone: 'professional', contentLanguage: 'pl' },
-  { id: 'default-3', name: 'Viralowy TikTok', platform: 'tiktok' as Platform, tone: 'energetic', contentLanguage: 'pl' },
+  { id: 'default-1', name: 'Zabawny Post IG', platform: 'instagram' as Platform, tone: Tone.Witty, contentLanguage: ContentLanguage.Polish },
+  { id: 'default-2', name: 'Biznesowy LinkedIn', platform: 'linkedin' as Platform, tone: Tone.Professional, contentLanguage: ContentLanguage.Polish },
+  { id: 'default-3', name: 'Viralowy TikTok', platform: 'tiktok' as Platform, tone: Tone.Persuasive, contentLanguage: ContentLanguage.Polish },
 ];
 
 interface PresetSelectorProps {

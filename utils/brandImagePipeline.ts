@@ -1,5 +1,10 @@
 import { overlayLogoOnImage } from './imageBranding';
 import type { BrandVoiceSettings } from '../types';
+import {
+  DEFAULT_LOGO_POSITION,
+  DEFAULT_IMAGE_LOGO_PADDING,
+  DEFAULT_IMAGE_LOGO_SIZE_PERCENT,
+} from '../shared/config/generationConfig';
 
 /** Nakłada logo marki na grafikę, jeśli skonfigurowane w Brand Voice. */
 export async function applyBrandLogoToImage(
@@ -18,9 +23,9 @@ export async function applyBrandLogoToImage(
     return await overlayLogoOnImage(
       imageUrl,
       logo,
-      options?.position ?? settings?.logoPosition ?? 'bottom-right',
-      28,
-      options?.sizePercent ?? settings?.logoSizePercent ?? 13
+      options?.position ?? settings?.logoPosition ?? DEFAULT_LOGO_POSITION,
+      DEFAULT_IMAGE_LOGO_PADDING,
+      options?.sizePercent ?? settings?.logoSizePercent ?? DEFAULT_IMAGE_LOGO_SIZE_PERCENT
     );
   } catch {
     return imageUrl;

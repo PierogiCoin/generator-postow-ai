@@ -53,6 +53,7 @@ describe('brandVoiceLearn', () => {
     const { score } = computeBrandVoiceCompleteness({
       brandName: 'X',
       description: 'Y',
+      niche: 'X',
       keywords: 'z',
       avoid: '',
       websiteUrl: 'https://a.pl',

@@ -474,16 +474,21 @@ export const useGenerationHandlers = ({ addToast, t, handleApiError }: Generatio
             genActions.setProgress(t('progress.analyzing_content'));
 
             let streamedText = streamedTextRaw;
-            if (!isQuotaDepleted() && streamedTextRaw.trim().length > 0) {
+
+            if (!isQuotaDepleted() && streamedText.trim().length > 0 && formData.enableQualityGate !== false) {
                 try {
-                    const { enforceAntiSlopText } = await import('../../services/antiSlopService');
-                    const cleaned = await enforceAntiSlopText(streamedTextRaw, user.id);
-                    if (cleaned.rewritten) {
-                        streamedText = cleaned.text;
-                        genActions.updateResultText(cleaned.text);
+                    const quality = await geminiService.scoreAndImprovePost(
+                        streamedText,
+                        formData,
+                        activeBrandVoice?.settings || null,
+                        user.id
+                    );
+                    if (quality.retried && quality.text !== streamedText) {
+                        streamedText = quality.text;
+                        genActions.updateResultText(quality.text);
                     }
                 } catch (error: unknown) {
-                    console.warn('[useGenerationHandlers] anti-slop post processing failed, keeping streamed text', {
+                    console.warn('[useGenerationHandlers] quality gate failed, keeping streamed text', {
                         error: error instanceof Error ? error.message : String(error),
                     });
                 }

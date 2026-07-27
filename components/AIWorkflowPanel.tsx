@@ -19,7 +19,7 @@ import {
   comparePosts,
   ContentComparison,
 } from '../services/engagementPrediction';
-import { Platform, ContentType, Tone, NotificationType } from '../types';
+import { Platform, ContentType, Tone, NotificationType, type BrandVoiceData } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { useDataStore } from '../stores/dataStore';
@@ -41,7 +41,7 @@ interface AIWorkflowPanelProps {
   contentType: ContentType;
   tone: Tone;
   currentPostText?: string;
-  brandVoice?: string;
+  brandVoice?: BrandVoiceData | null;
 }
 
 const WORKFLOW_TABS = {
@@ -188,7 +188,7 @@ export const AIWorkflowPanel: React.FC<AIWorkflowPanelProps> = ({
     try {
       const fullPost = await generateFullPostContent(
         post,
-        brandVoice || '',
+        brandVoice || null,
         platform,
         user.id
       );

@@ -100,7 +100,7 @@ export async function getApiAuthHeaders(userId?: string): Promise<Record<string,
 /**
  * Funkcja pomocnicza do wywołań API Proxy
  */
-export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}, retries = 2) => {
+export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}, retries = 2): Promise<any> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
