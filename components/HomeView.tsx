@@ -182,40 +182,76 @@ const HeroSection: React.FC<{
 
 const ProblemSection: React.FC = () => {
   const { t } = useTranslation();
-  const pains = [
-    t('home.journey.pain_1'),
-    t('home.journey.pain_2'),
-    t('home.journey.pain_3'),
+
+  const comparisons = [
+    {
+      before: 'Godziny stracone przed pustą kartką i szukanie pomysłu na post',
+      after: 'Gotowe propozycje i plany treści dopasowane do Twojej niszy w parę sekund',
+    },
+    {
+      before: 'Generyczne treści z ChatGPT, które brzmią tak samo jak u konkurencji',
+      after: 'Głos marki (Brand Voice) i system zapobiegający sztywnemu slopowi AI',
+    },
+    {
+      before: 'Chaotyczne publikowanie bez strategii i słabe zasięgi organiczne',
+      after: 'Spójny kalendarz publikacji i wielokanałowy lejek przynoszący klientów',
+    },
   ];
 
   return (
-    <section id="problem" className="scroll-mt-24 py-20 md:py-28 bg-[var(--hero-surface)]">
-      <div className="max-w-3xl mx-auto px-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hero-accent)]">
-          {t('home.journey.problem_kicker')}
-        </p>
-        <h2 className="mt-3 font-display text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-[1.1]">
-          {t('home.journey.problem_title')}
-        </h2>
-        <p className="mt-4 text-base md:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
-          {t('home.journey.problem_subtitle')}
-        </p>
-        <ul className="mt-12 space-y-0">
-          {pains.map((pain, i) => (
-            <li
-              key={pain}
-              className="border-t border-slate-300/70 dark:border-white/10 py-6 flex gap-5 items-start"
+    <section id="problem" className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white">
+      <div className="max-w-5xl mx-auto px-4">
+        <div className="text-center max-w-3xl mx-auto">
+          <span className="inline-block px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-widest mb-3">
+            {t('home.journey.problem_kicker')}
+          </span>
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+            {t('home.journey.problem_title')}
+          </h2>
+          <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed">
+            {t('home.journey.problem_subtitle')}
+          </p>
+        </div>
+
+        {/* Before vs After Comparison Grid */}
+        <div className="mt-14 space-y-4">
+          {comparisons.map((item, idx) => (
+            <div
+              key={idx}
+              className="grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden border border-white/10 shadow-xl"
             >
-              <span className="font-display text-2xl font-bold text-[var(--hero-accent)] tabular-nums shrink-0">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <p className="text-lg md:text-xl font-medium text-slate-800 dark:text-slate-100 leading-snug pt-0.5">
-                {pain}
-              </p>
-            </li>
+              {/* BEFORE (Stary sposób) */}
+              <div className="p-6 md:p-8 bg-red-950/20 border-b md:border-b-0 md:border-r border-white/10 flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-400 font-bold flex items-center justify-center shrink-0 text-sm">
+                  ✕
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/90 block mb-1">
+                    Bez AI Content Pro
+                  </span>
+                  <p className="text-slate-300 text-base md:text-lg font-medium leading-snug">
+                    {item.before}
+                  </p>
+                </div>
+              </div>
+
+              {/* AFTER (Nowy sposób z AI Content Pro) */}
+              <div className="p-6 md:p-8 bg-emerald-950/25 flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0 text-sm">
+                  ✓
+                </div>
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-1">
+                    Z AI Content Pro
+                  </span>
+                  <p className="text-white text-base md:text-lg font-semibold leading-snug">
+                    {item.after}
+                  </p>
+                </div>
+              </div>
+            </div>
           ))}
-        </ul>
-        <div className="border-t border-slate-300/70 dark:border-white/10" />
+        </div>
       </div>
     </section>
   );
