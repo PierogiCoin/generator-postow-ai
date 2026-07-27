@@ -105,23 +105,12 @@ const HeroSection: React.FC<{
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
       <div className="absolute inset-0 home-grid-bg opacity-40 pointer-events-none" aria-hidden="true" />
 
-      {/* Dominant full-bleed visual plane */}
+      {/* Ambient background glow and grid */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#050706] via-[#0a1210]/90 to-transparent" />
         <div
           className={`absolute left-1/2 -translate-x-1/2 bottom-[18%] w-[min(120vw,920px)] h-px landing-stream ${reducedMotion ? 'opacity-40' : 'animate-home-stream'}`}
         />
-        <div className="absolute left-[8%] bottom-[22%] right-[8%] max-w-5xl mx-auto opacity-50">
-          <div className="space-y-3 font-display text-[clamp(1.1rem,3.5vw,2rem)] font-bold leading-tight tracking-tight text-white/25">
-            <p className={reducedMotion ? '' : 'animate-home-float'}>{t('home.journey.hero_visual_1')}</p>
-            <p className={`pl-[8%] ${reducedMotion ? '' : 'animate-home-float'}`} style={reducedMotion ? undefined : { animationDelay: '0.6s' }}>
-              {t('home.journey.hero_visual_2')}
-            </p>
-            <p className={`pl-[16%] text-[var(--hero-accent)]/70 ${reducedMotion ? '' : 'animate-home-float'}`} style={reducedMotion ? undefined : { animationDelay: '1.2s' }}>
-              {t('home.journey.hero_visual_3')}
-            </p>
-          </div>
-        </div>
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col justify-center max-w-4xl mx-auto px-4 pt-16 pb-28 text-center">
