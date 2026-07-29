@@ -1,4 +1,19 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+vi.hoisted(() => {
+  process.env.SUPABASE_URL = process.env.SUPABASE_URL || 'https://example.supabase.co';
+  process.env.SUPABASE_SERVICE_KEY =
+    process.env.SUPABASE_SERVICE_KEY || 'test-service-key';
+});
+
+vi.mock('../server/supabase.js', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn(),
+    },
+  },
+}));
+
 import { isAdminUser } from '../server/middleware/supabaseAuth';
 
 describe('isAdminUser', () => {

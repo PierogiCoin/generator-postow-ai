@@ -76,8 +76,27 @@ export function getLongRunningApiBaseUrl(): string {
     return getApiBaseUrl();
 }
 
-/** @deprecated Użyj getApiBaseUrl() — wartość liczona przy imporcie może być myląca w testach. */
-export const API_BASE_URL = typeof window !== 'undefined' ? getApiBaseUrl() : '';
+/**
+ * Błąd API z opcjonalnym HTTP status i kodem maszynowym.
+ * FE mapuje `code` / `status` na komunikaty i18n.
+ */
+export class ApiClientError extends Error {
+    status?: number;
+    code?: string;
+
+    constructor(message: string, opts?: { status?: number; code?: string }) {
+        super(message);
+        this.name = 'ApiClientError';
+        this.status = opts?.status;
+        this.code = opts?.code;
+    }
+}
+
+export type ApiErrorBody = {
+    message?: string;
+    error?: string;
+    code?: string;
+};
 
 export async function getApiAuthHeaders(userId?: string): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
@@ -98,9 +117,16 @@ export async function getApiAuthHeaders(userId?: string): Promise<Record<string,
 }
 
 /**
- * Funkcja pomocnicza do wywołań API Proxy
+ * Wywołanie API Proxy z typowanym JSON.
+ * Błędy rzucane jako `ApiClientError` (`status`, `code`).
  */
-export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}, retries = 2): Promise<any> => {
+export async function callApi<T = any>(
+    endpoint: string,
+    payload: Record<string, unknown>,
+    userId?: string,
+    headers: Record<string, string> = {},
+    retries = 2
+): Promise<T> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -127,14 +153,18 @@ export const callApi = async (endpoint: string, payload: Record<string, unknown>
         clearTimeout(timeout);
         if (retries > 0 && !(err instanceof Error && err.name === 'AbortError')) {
             await new Promise(res => setTimeout(res, 1000 * (3 - retries)));
-            return callApi(endpoint, payload, userId, headers, retries - 1);
+            return callApi<T>(endpoint, payload, userId, headers, retries - 1);
         }
         if (err instanceof Error && err.name === 'AbortError') {
-            throw new Error('Przekroczono czas oczekiwania na odpowiedź AI (30s). Spróbuj ponownie.');
+            throw new ApiClientError(
+                'Przekroczono czas oczekiwania na odpowiedź AI (30s). Spróbuj ponownie.',
+                { code: 'TIMEOUT' }
+            );
         }
-        const netErr = new Error('Nie udało się połączyć z serwerem. Sprawdź internet i odśwież stronę.') as Error & { status?: number; code?: string };
-        netErr.code = 'NETWORK_ERROR';
-        throw netErr;
+        throw new ApiClientError(
+            'Nie udało się połączyć z serwerem. Sprawdź internet i odśwież stronę.',
+            { code: 'NETWORK_ERROR' }
+        );
     }
     clearTimeout(timeout);
 
@@ -143,42 +173,46 @@ export const callApi = async (endpoint: string, payload: Record<string, unknown>
 
     try {
         bodyText = await response.text();
-    } catch (e) { }
+    } catch {
+        // ignore body read errors
+    }
 
     if (!response.ok) {
         let errorMessage = `Błąd API (${response.status}) z ${endpoint}`;
         let errorCode: string | undefined;
-        if (contentType?.includes('application/json')) {
+        if (contentType?.includes('application/json') && bodyText) {
             try {
-                const errorJson = JSON.parse(bodyText);
+                const errorJson = JSON.parse(bodyText) as ApiErrorBody;
                 errorMessage = errorJson.message || errorJson.error || errorMessage;
                 errorCode = errorJson.code;
-            } catch { }
+            } catch {
+                // non-JSON error body
+            }
         }
-        const err = new Error(errorMessage) as Error & { status?: number; code?: string };
-        err.status = response.status;
         if (response.status === 402) {
             errorCode = 'insufficient_credits';
             errorMessage = errorMessage || 'Brak kredytów. Ulepsz plan lub dokup pakiet kredytów.';
         }
-        if (errorCode) err.code = errorCode;
         if (response.status === 429 || errorCode === 'GEMINI_QUOTA_EXCEEDED') {
             markQuotaDepleted();
         }
-        throw err;
+        throw new ApiClientError(errorMessage, {
+            status: response.status,
+            code: errorCode,
+        });
     }
 
     clearQuotaDepleted();
 
     if (contentType?.includes('application/json')) {
-        const parsed = JSON.parse(bodyText);
+        const parsed = JSON.parse(bodyText) as T;
         applyCreditsFromResponse(parsed, response.headers);
         return parsed;
     }
 
     applyCreditsFromResponse(null, response.headers);
-    return bodyText;
-};
+    return bodyText as T;
+}
 
 /**
  * Bezpieczne wywołanie dla generowania treści, obsługujące błędy bezpieczeństwa.

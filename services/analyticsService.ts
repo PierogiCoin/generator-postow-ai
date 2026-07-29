@@ -25,14 +25,6 @@ export function hasLiveMetrics(
   });
 }
 
-/** @deprecated Używa zer zamiast fałszywych liczb — zachowane dla kompatybilności importów. */
-export const generateMockPerformanceData = (history: CampaignHistoryItem[]): CampaignHistoryItem[] => {
-  return history.map((item) => ({
-    ...item,
-    performance: emptyPerformance(),
-  }));
-};
-
 const normalizeText = (text: string) =>
   text.replace(/<[^>]*>?/gm, '').toLowerCase().replace(/\s+/g, ' ').trim().slice(0, 120);
 

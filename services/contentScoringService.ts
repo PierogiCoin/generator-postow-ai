@@ -1,28 +1,8 @@
 import { callApi } from './apiClient';
 import type { Platform } from '../types';
+import type { ContentScore } from '../shared/contentScore';
 
-export interface ContentScore {
-  overall: number;
-  engagement: {
-    score: number;
-    level: 'low' | 'medium' | 'high';
-    feedback: string[];
-  };
-  seo: {
-    score: number;
-    level: 'low' | 'medium' | 'high';
-    feedback: string[];
-  };
-  platformFit: {
-    score: number;
-    level: 'poor' | 'good' | 'excellent';
-    feedback: string[];
-  };
-  suggestions: string[];
-  badge: 'red' | 'yellow' | 'green';
-  calibratedMinScore?: number;
-  calibrationSampleSize?: number;
-}
+export type { ContentScore } from '../shared/contentScore';
 
 export async function scorePostContent(
   content: string,
@@ -34,17 +14,17 @@ export async function scorePostContent(
     targetAudience?: string;
   }
 ): Promise<ContentScore> {
-  const response = await callApi(
-    'score-content',
-    { content, platform, context },
-    userId
-  );
+  const response = await callApi<{
+    success?: boolean;
+    score?: ContentScore;
+    message?: string;
+  }>('score-content', { content, platform, context }, userId);
 
   if (!response?.success || !response.score) {
     throw new Error(response?.message || 'Nie udało się ocenić treści');
   }
 
-  return response.score as ContentScore;
+  return response.score;
 }
 
 export function buildAutoFixPrompt(score: ContentScore): string {
