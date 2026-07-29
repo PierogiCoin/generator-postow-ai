@@ -223,7 +223,11 @@ export async function createPortalSession(userId: string) {
 // CREDIT MANAGEMENT
 // ============================================
 
-const creditsDisabled = () => process.env.DISABLE_CREDIT_LIMITS === 'true';
+/** Bypass kredytów tylko poza production. */
+export function creditsDisabled(): boolean {
+  if (process.env.NODE_ENV === 'production') return false;
+  return process.env.DISABLE_CREDIT_LIMITS === 'true';
+}
 
 export async function deductCredits(
   userId: string,
@@ -255,7 +259,6 @@ export async function deductCredits(
   if (!rpcError && typeof rpcBalance === 'number') {
     remainingCredits = rpcBalance;
   } else {
-    // Fallback gdy RPC jeszcze nie wdrożone — lepszy niż nic, ale nadal lekko racy
     if (rpcError) {
       logger.warn('[credits] debit_credits RPC unavailable, using fallback', rpcError);
     }
@@ -263,10 +266,9 @@ export async function deductCredits(
     if (!check.hasEnough) {
       throw new Error('Insufficient credits');
     }
-    const newBalance = check.currentCredits - amount;
     const { data: updated, error } = await supabase
       .from('profiles')
-      .update({ credits: newBalance })
+      .update({ credits: check.currentCredits - amount })
       .eq('id', userId)
       .gte('credits', amount)
       .select('credits')
@@ -305,21 +307,36 @@ export async function deductCredits(
 }
 
 export async function addCredits(userId: string, amount: number, reason: string) {
-  const { data: profile, error: fetchError } = await supabase
-    .from('profiles')
-    .select('credits')
-    .eq('id', userId)
-    .maybeSingle();
+  if (amount <= 0) throw new Error('invalid_amount');
 
-  if (fetchError || !profile) throw new Error('User not found');
+  const { data: rpcBalance, error: rpcError } = await supabase.rpc('add_credits', {
+    p_user_id: userId,
+    p_amount: amount,
+  });
 
-  const newBalance = (profile.credits ?? 0) + amount;
-  const { error } = await supabase
-    .from('profiles')
-    .update({ credits: newBalance })
-    .eq('id', userId);
+  let newBalance: number;
+  if (!rpcError && typeof rpcBalance === 'number') {
+    newBalance = rpcBalance;
+  } else {
+    if (rpcError) {
+      logger.warn('[credits] add_credits RPC unavailable, using fallback', rpcError);
+    }
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', userId)
+      .maybeSingle();
 
-  if (error) throw error;
+    if (fetchError || !profile) throw new Error('User not found');
+
+    newBalance = (profile.credits ?? 0) + amount;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ credits: newBalance })
+      .eq('id', userId);
+
+    if (error) throw error;
+  }
 
   try {
     await supabase.from('credit_transactions').insert({
@@ -374,13 +391,43 @@ export async function checkCredits(userId: string, requiredAmount: number) {
 // WEBHOOK HANDLERS
 // ============================================
 
+async function claimStripeEvent(event: Stripe.Event): Promise<boolean> {
+  const { error } = await supabase.from('stripe_webhook_events').insert({
+    event_id: event.id,
+    event_type: event.type,
+    processed_at: new Date().toISOString(),
+  });
+
+  if (!error) return true;
+
+  // Unique violation → already processed (idempotent no-op)
+  const code = (error as { code?: string }).code;
+  if (code === '23505' || /duplicate|unique/i.test(error.message || '')) {
+    logger.info('[Stripe] Skipping already-processed event', {
+      eventId: event.id,
+      type: event.type,
+    });
+    return false;
+  }
+
+  // Tabela może nie istnieć na starszych DB — fail-open z ostrzeżeniem (lepsze niż blokada webhooków)
+  logger.warn('[Stripe] stripe_webhook_events insert failed; processing without idempotency', error);
+  return true;
+}
+
 export async function handleStripeWebhook(event: Stripe.Event) {
+  const claimed = await claimStripeEvent(event);
+  if (!claimed) return;
+
   switch (event.type) {
     case 'checkout.session.completed':
       await handleCheckoutComplete(event.data.object as Stripe.Checkout.Session);
       break;
 
     case 'customer.subscription.created':
+      await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+      break;
+
     case 'customer.subscription.updated':
       await handleSubscriptionUpdate(event.data.object as Stripe.Subscription);
       break;
@@ -402,6 +449,56 @@ export async function handleStripeWebhook(event: Stripe.Event) {
   }
 }
 
+function resolvePlanFromPriceId(priceId: string): string {
+  for (const [key, value] of Object.entries(PRICING.subscriptions)) {
+    if (value.priceId === priceId || value.yearlyPriceId === priceId) {
+      return key;
+    }
+  }
+  return 'free';
+}
+
+async function resolveSubscriptionUserId(
+  subscription: Stripe.Subscription
+): Promise<string | undefined> {
+  let userId = subscription.metadata?.userId;
+
+  if (!userId && subscription.customer) {
+    const customerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer.id;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('stripe_customer_id', customerId)
+      .maybeSingle();
+    userId = profile?.id;
+  }
+
+  return userId;
+}
+
+async function upsertSubscriptionRow(
+  userId: string,
+  subscription: Stripe.Subscription,
+  plan: string
+) {
+  await supabase.from('subscriptions').upsert({
+    user_id: userId,
+    stripe_subscription_id: subscription.id,
+    plan,
+    status: subscription.status,
+    current_period_start: new Date(
+      (subscription as unknown as { current_period_start: number }).current_period_start * 1000
+    ),
+    current_period_end: new Date(
+      (subscription as unknown as { current_period_end: number }).current_period_end * 1000
+    ),
+    cancel_at_period_end: subscription.cancel_at_period_end,
+  });
+}
+
 async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId;
   if (!userId) return;
@@ -417,7 +514,7 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
 
   // Check if it's a subscription or credit pack
   if (session.mode === 'subscription') {
-    // Handled by subscription.created webhook
+    // Handled by subscription.created / invoice webhooks
     return;
   }
 
@@ -427,79 +524,75 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   );
 
   if (creditPack) {
-    await addCredits(userId, creditPack.credits, 'Credit pack purchase');
+    await addCredits(
+      userId,
+      creditPack.credits,
+      `Credit pack purchase:${session.id}`
+    );
   }
 }
 
-async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  let userId = subscription.metadata?.userId;
-
-  if (!userId && subscription.customer) {
-    const customerId =
-      typeof subscription.customer === 'string'
-        ? subscription.customer
-        : subscription.customer.id;
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('stripe_customer_id', customerId)
-      .maybeSingle();
-    userId = profile?.id;
-  }
-
+/** Pierwsza subskrypcja: metadata planu + jednorazowy allotment kredytów (add, nie set). */
+async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+  const userId = await resolveSubscriptionUserId(subscription);
   if (!userId) return;
 
   const priceId = subscription.items.data[0]?.price.id;
   if (!priceId) return;
 
-  let plan = 'free';
-  for (const [key, value] of Object.entries(PRICING.subscriptions)) {
-    if (value.priceId === priceId || value.yearlyPriceId === priceId) {
-      plan = key;
-      break;
-    }
-  }
-
+  const plan = resolvePlanFromPriceId(priceId);
   const planConfig = PRICING.subscriptions[plan as keyof typeof PRICING.subscriptions];
 
   await supabase
     .from('profiles')
     .update({
       plan,
-      credits: planConfig.credits,
       subscription_id: subscription.id,
       subscription_status: subscription.status,
-      subscription_current_period_end: new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000),
+      subscription_current_period_end: new Date(
+        (subscription as unknown as { current_period_end: number }).current_period_end * 1000
+      ),
     })
     .eq('id', userId);
 
-  await supabase.from('subscriptions').upsert({
-    user_id: userId,
-    stripe_subscription_id: subscription.id,
-    plan,
-    status: subscription.status,
-    current_period_start: new Date((subscription as unknown as { current_period_start: number }).current_period_start * 1000),
-    current_period_end: new Date((subscription as unknown as { current_period_end: number }).current_period_end * 1000),
-    cancel_at_period_end: subscription.cancel_at_period_end,
-  });
+  await upsertSubscriptionRow(userId, subscription, plan);
+
+  if (planConfig?.credits && planConfig.credits > 0) {
+    await addCredits(
+      userId,
+      planConfig.credits,
+      `Subscription initial allotment:${subscription.id}`
+    );
+  }
+}
+
+/** Update planu/statusu — NIGDY nie nadpisuje salda kredytów (chroni kupione pakiety). */
+async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+  const userId = await resolveSubscriptionUserId(subscription);
+  if (!userId) return;
+
+  const priceId = subscription.items.data[0]?.price.id;
+  if (!priceId) return;
+
+  const plan = resolvePlanFromPriceId(priceId);
+
+  await supabase
+    .from('profiles')
+    .update({
+      plan,
+      subscription_id: subscription.id,
+      subscription_status: subscription.status,
+      subscription_current_period_end: new Date(
+        (subscription as unknown as { current_period_end: number }).current_period_end * 1000
+      ),
+    })
+    .eq('id', userId);
+
+  await upsertSubscriptionRow(userId, subscription, plan);
 }
 
 async function handleSubscriptionCancelled(subscription: Stripe.Subscription) {
-  let userId = subscription.metadata?.userId;
-
-  if (!userId && subscription.customer) {
-    const customerId =
-      typeof subscription.customer === 'string'
-        ? subscription.customer
-        : subscription.customer.id;
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('stripe_customer_id', customerId)
-      .maybeSingle();
-    userId = profile?.id;
-  }
-
+  const userId = await resolveSubscriptionUserId(subscription);
   if (!userId) return;
 
   await supabase
@@ -522,65 +615,95 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   const userId = await resolveUserIdFromInvoice(invoice, stripe);
   if (!userId) return;
 
+  const billingReason = (invoice as unknown as { billing_reason?: string }).billing_reason;
+  // Pierwszy invoice po create — kredyty już przyznane w subscription.created
+  if (billingReason === 'subscription_create') {
+    logger.info('[Stripe] Skipping renew on subscription_create invoice', {
+      invoiceId: invoice.id,
+      userId,
+    });
+    try {
+      await supabase
+        .from('abandoned_checkouts')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('status', 'pending');
+    } catch {
+      // silent
+    }
+    return;
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('plan, credits')
     .eq('id', userId)
     .maybeSingle();
 
-  if (profile?.plan) {
-    const planConfig = PRICING.subscriptions[profile.plan as keyof typeof PRICING.subscriptions];
-    if (planConfig) {
-      // Credit Rollover — loss aversion retention tactic
-      // Niewykorzystane kredyty przechodzą na kolejny miesiąc (max 50% limitu planu)
-      const currentCredits = typeof profile.credits === 'number' ? profile.credits : 0;
-      const unusedCredits = Math.max(0, currentCredits);
-      const rolloverCap = Math.floor(planConfig.credits * 0.5);
-      const rollover = Math.min(unusedCredits, rolloverCap);
-      const newCredits = planConfig.credits + rollover;
+  if (!profile?.plan) return;
 
-      await supabase
-        .from('profiles')
-        .update({
-          credits: newCredits,
-          subscription_status: 'active',
-        })
-        .eq('id', userId);
+  const planConfig = PRICING.subscriptions[profile.plan as keyof typeof PRICING.subscriptions];
+  if (!planConfig) return;
 
-      // Zaloguj rollover do tabeli credit_rollover_log
-      if (rollover > 0) {
-        try {
-          await supabase.from('credit_rollover_log').insert({
-            user_id: userId,
-            rolled_over: rollover,
-            previous_balance: currentCredits,
-            new_balance: newCredits,
-            plan: profile.plan,
-          });
-        } catch {
-          // tabela może nie istnieć — ignore
-        }
-      }
+  // Credit Rollover — niewykorzystane kredyty max 50% limitu planu
+  const currentCredits = typeof profile.credits === 'number' ? profile.credits : 0;
+  const unusedCredits = Math.max(0, currentCredits);
+  const rolloverCap = Math.floor(planConfig.credits * 0.5);
+  const rollover = Math.min(unusedCredits, rolloverCap);
+  const newCredits = planConfig.credits + rollover;
 
-      logger.info('[Stripe] Credits renewed with rollover', {
-        userId,
+  await supabase
+    .from('profiles')
+    .update({
+      credits: newCredits,
+      subscription_status: 'active',
+    })
+    .eq('id', userId);
+
+  try {
+    await supabase.from('credit_transactions').insert({
+      user_id: userId,
+      amount: newCredits - currentCredits,
+      type: 'credit',
+      reason: `Subscription renew:${invoice.id}`,
+      balance_after: newCredits,
+    });
+  } catch {
+    // optional
+  }
+
+  if (rollover > 0) {
+    try {
+      await supabase.from('credit_rollover_log').insert({
+        user_id: userId,
+        rolled_over: rollover,
+        previous_balance: currentCredits,
+        new_balance: newCredits,
         plan: profile.plan,
-        baseCredits: planConfig.credits,
-        rollover,
-        total: newCredits,
+        invoice_id: invoice.id,
       });
-
-      // Oznacz abandoned checkout jako completed
-      try {
-        await supabase
-          .from('abandoned_checkouts')
-          .update({ status: 'completed', completed_at: new Date().toISOString() })
-          .eq('user_id', userId)
-          .eq('status', 'pending');
-      } catch {
-        // silent
-      }
+    } catch {
+      // tabela może nie istnieć — ignore
     }
+  }
+
+  logger.info('[Stripe] Credits renewed with rollover', {
+    userId,
+    plan: profile.plan,
+    baseCredits: planConfig.credits,
+    rollover,
+    total: newCredits,
+    invoiceId: invoice.id,
+  });
+
+  try {
+    await supabase
+      .from('abandoned_checkouts')
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('status', 'pending');
+  } catch {
+    // silent
   }
 }
 

@@ -1,4 +1,5 @@
 -- Atomowy debit kredytów (race-safe przy równoległych requestach)
+-- Tylko service_role — NIE przyznawać authenticated (SECURITY DEFINER + dowolne p_user_id).
 CREATE OR REPLACE FUNCTION public.debit_credits(p_user_id uuid, p_amount integer)
 RETURNS integer
 LANGUAGE plpgsql
@@ -26,5 +27,5 @@ BEGIN
 END;
 $$;
 
+REVOKE EXECUTE ON FUNCTION public.debit_credits(uuid, integer) FROM PUBLIC, authenticated;
 GRANT EXECUTE ON FUNCTION public.debit_credits(uuid, integer) TO service_role;
-GRANT EXECUTE ON FUNCTION public.debit_credits(uuid, integer) TO authenticated;

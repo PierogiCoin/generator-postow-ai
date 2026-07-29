@@ -89,8 +89,10 @@ router.post(
   requireSupabaseAuth,
   async (req: SupabaseAuthRequest, res: Response, next: NextFunction) => {
     try {
-      const { plan = 'pro', trialDays = 7 } = req.body as { plan?: string; trialDays?: number };
+      const { plan = 'pro' } = req.body as { plan?: string; trialDays?: number };
       const userId = req.user!.id;
+      // Stały 7-dniowy trial — ignoruj trialDays z body (zapobiega nadużyciu)
+      const trialDays = 7;
 
       if (!isPaidPlan(plan)) {
         return res.status(400).json({ error: 'Nieprawidłowy plan' });

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
-import { checkCredits, deductCredits, PRICING } from '../stripe.js';
+import { checkCredits, deductCredits, addCredits, PRICING } from '../stripe.js';
 import { requireSupabaseAuth, assertNoSpoofedUserId } from './supabaseAuth.js';
 import logger from '../logger.js';
 
@@ -12,6 +12,7 @@ declare global {
       user?: { id: string; email: string; appMetadata?: Record<string, unknown> };
       creditCost?: number;
       creditAction?: string;
+      creditsReserved?: boolean;
     }
   }
 }
@@ -22,6 +23,10 @@ function resolveCost(req: Request, action: CreditAction, cost?: CostResolver): n
   return PRICING.costs[action];
 }
 
+/**
+ * Debit przed pracą (rezerwacja). Przy non-2xx — refund.
+ * Usuwa race check→work→debit i fail-open przy błędzie debitu po sukcesie.
+ */
 export function requireCredits(action: CreditAction, cost?: CostResolver) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -45,6 +50,33 @@ export function requireCredits(action: CreditAction, cost?: CostResolver) {
 
       req.creditCost = amount;
       req.creditAction = action;
+
+      try {
+        const result = await deductCredits(userId, amount, action, {
+          path: req.path,
+          method: req.method,
+          phase: 'reserve',
+        });
+        req.creditsReserved = true;
+        res.setHeader('X-Credits-Remaining', String(result.remainingCredits));
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Credit debit failed';
+        if (message === 'Insufficient credits' || /insufficient/i.test(message)) {
+          return res.status(402).json({
+            error: 'insufficient_credits',
+            message: 'Brak kredytów na tę operację. Ulepsz plan lub dokup pakiet kredytów.',
+            required: amount,
+            current: check.currentCredits,
+            plan: check.plan,
+          });
+        }
+        logger.error('Credit reserve/debit error:', error);
+        return res.status(500).json({
+          error: 'credit_debit_failed',
+          message: 'Nie udało się pobrać kredytów. Spróbuj ponownie.',
+        });
+      }
+
       next();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Credit check failed';
@@ -54,41 +86,53 @@ export function requireCredits(action: CreditAction, cost?: CostResolver) {
   };
 }
 
-function deductOnSuccess(): RequestHandler {
+function refundOnFailure(): RequestHandler {
   return (req: Request, res: Response, next: NextFunction) => {
-    let deducted = false;
+    let settled = false;
 
-    const runDeduction = async (): Promise<number | null> => {
-      if (deducted) return null;
-      if (res.statusCode < 200 || res.statusCode >= 300) return null;
-      if (!req.user?.id || !req.creditCost) return null;
+    const settle = async (): Promise<void> => {
+      if (settled) return;
+      settled = true;
 
-      deducted = true;
-      const userId = req.user.id;
-      const cost = req.creditCost;
-      const action = req.creditAction || 'unknown';
+      if (!req.creditsReserved || !req.user?.id || !req.creditCost) return;
+
+      const status = res.statusCode;
+      if (status >= 200 && status < 300) return;
 
       try {
-        const result = await deductCredits(userId, cost, action, {
+        await addCredits(
+          req.user.id,
+          req.creditCost,
+          `Refund failed request:${req.creditAction || 'unknown'}`
+        );
+        logger.info('[credits] Refunded after failed request', {
+          userId: req.user.id,
+          amount: req.creditCost,
           path: req.path,
-          method: req.method,
+          status,
         });
-        return result.remainingCredits;
       } catch (error) {
-        logger.error('Credit deduction error:', error);
-        return null;
+        logger.error('[credits] CRITICAL: refund failed after non-2xx', error);
       }
     };
 
     const originalJson = res.json.bind(res);
-
-    res.json = function jsonWithCredits(body?: unknown) {
+    res.json = function jsonWithRefund(body?: unknown) {
       void (async () => {
-        const remaining = await runDeduction();
-        if (remaining !== null) {
-          res.setHeader('X-Credits-Remaining', String(remaining));
-          if (body && typeof body === 'object' && body !== null && !Array.isArray(body)) {
-            (body as Record<string, unknown>).creditsRemaining = remaining;
+        await settle();
+        if (
+          req.creditsReserved &&
+          res.statusCode >= 200 &&
+          res.statusCode < 300 &&
+          body &&
+          typeof body === 'object' &&
+          body !== null &&
+          !Array.isArray(body) &&
+          !('creditsRemaining' in (body as object))
+        ) {
+          const remainingHeader = res.getHeader?.('X-Credits-Remaining');
+          if (remainingHeader !== undefined) {
+            (body as Record<string, unknown>).creditsRemaining = Number(remainingHeader);
           }
         }
         originalJson(body);
@@ -96,13 +140,21 @@ function deductOnSuccess(): RequestHandler {
       return res;
     };
 
+    const originalEnd = res.end.bind(res);
+    res.end = function endWithRefund(...args: unknown[]) {
+      void settle().finally(() => {
+        (originalEnd as (...a: unknown[]) => unknown)(...args);
+      });
+      return res;
+    } as typeof res.end;
+
     next();
   };
 }
 
-/** Auth Supabase + sprawdzenie salda + pobranie kredytów po sukcesie */
+/** Auth Supabase + rezerwacja kredytów przed pracą + refund przy nie-2xx */
 export function creditGate(action: CreditAction, cost?: CostResolver): RequestHandler[] {
-  return [requireSupabaseAuth, assertNoSpoofedUserId, requireCredits(action, cost), deductOnSuccess()];
+  return [requireSupabaseAuth, assertNoSpoofedUserId, requireCredits(action, cost), refundOnFailure()];
 }
 
 export function videoStoryCreditCost(req: Request): number {
@@ -121,7 +173,8 @@ export async function deductCreditsMiddleware(
   const userId = req.user?.id;
   const cost = req.creditCost;
 
-  if (userId && cost) {
+  // Debit already done in requireCredits; keep for legacy callers that skip creditGate
+  if (userId && cost && !req.creditsReserved) {
     await deductCredits(userId, cost, action, metadata);
   }
 }

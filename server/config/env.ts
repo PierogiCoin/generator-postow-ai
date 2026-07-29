@@ -73,6 +73,29 @@ export function loadEnv(): Env {
     throw new Error('Brak konfiguracji Supabase w .env');
   }
 
+  if (parsed.data.NODE_ENV === 'production') {
+    if (process.env.DISABLE_CREDIT_LIMITS === 'true') {
+      throw new Error(
+        'DISABLE_CREDIT_LIMITS=true jest zabronione w production — usuń tę zmienną'
+      );
+    }
+    if (process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_WEBHOOK_SECRET) {
+      throw new Error(
+        'STRIPE_WEBHOOK_SECRET jest wymagany w production gdy STRIPE_SECRET_KEY jest ustawiony'
+      );
+    }
+    if (!parsed.data.OAUTH_STATE_SECRET) {
+      logger.warn(
+        '⚠️  OAUTH_STATE_SECRET nieustawiony w production — używany fallback secret (ryzyko)'
+      );
+    }
+    if (!process.env.CRON_SECRET) {
+      logger.warn(
+        '⚠️  CRON_SECRET nieustawiony w production — endpointy cron będą zwracać 503'
+      );
+    }
+  }
+
   cachedEnv = {
     ...parsed.data,
     GOOGLE_API_KEY: googleApiKey,
