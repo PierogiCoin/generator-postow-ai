@@ -21,7 +21,7 @@ export function mapSocialPost(
     id: string;
     content?: string;
     title?: string;
-    publishedAt: string;
+    publishedAt: string | Date;
     url?: string;
     mediaUrl?: string;
     likes?: number;

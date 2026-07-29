@@ -10,7 +10,7 @@ import {
 } from '../../lib/geminiErrors.js';
 import { validateRequest, imageGenerationSchema } from '../../middleware/validate.js';
 import { expensiveLimiter } from '../../middleware/rateLimiter.js';
-import { creditGate } from '../../middleware/credits.js';
+import { rateLimitedCreditGate } from '../../middleware/credits.js';
 import { getAuthUserId } from '../../middleware/supabaseAuth.js';
 import {
   generateTogetherImage,
@@ -98,8 +98,7 @@ export function createImageGenerationRouter(): Router {
 
   router.post(
     '/api/generate-images',
-    expensiveLimiter,
-    ...creditGate('generateImage'),
+    ...rateLimitedCreditGate(expensiveLimiter, 'generateImage'),
     validateRequest(imageGenerationSchema),
     async (req, res) => {
       try {

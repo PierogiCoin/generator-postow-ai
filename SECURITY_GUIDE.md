@@ -221,12 +221,11 @@ if (!clientValidation.valid) {
 - [x] Rate Limiting (frontend)
 - [x] Content Security Policy
 - [x] Suspicious Pattern Detection
-- [x] SQL Injection Prevention
 - [x] Secure Input Components
 - [x] Safe Content Rendering
-- [ ] Backend Rate Limiting (already implemented)
-- [ ] CSRF Protection (Supabase handles this)
-- [ ] SQL Injection Prevention (Supabase ORM safe)
+- [x] Backend Rate Limiting (`server/middleware/rateLimiter.ts`, JWT/IP keys — no header spoof bypass)
+- [x] CSRF Protection (Supabase Auth + same-site API; no cookie session CSRF vector)
+- [x] SQL Injection Prevention (Supabase client / parameterized queries)
 
 ## Testing Security
 

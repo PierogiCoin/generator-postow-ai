@@ -79,7 +79,9 @@ export function createApp(): express.Application {
     stripeWebhookHandler
   );
 
-  app.use(express.json({ limit: '50mb' }));
+  // Duże body tylko na endpointach z obrazami (base64); reszta API ma niski limit (anti-DoS)
+  app.use('/api/generate-images', express.json({ limit: '25mb' }));
+  app.use(express.json({ limit: '2mb' }));
   app.use(generalLimiter);
 
   app.get('/', (req, res) => {

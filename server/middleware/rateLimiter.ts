@@ -5,6 +5,7 @@ import { logRateLimit } from '../logger.js';
 /**
  * Klucz limitu: zweryfikowany user z JWT (req.user) albo IP.
  * Nigdy nie ufamy nagłówkom klienta (x-user-id / x-user-tier).
+ * Store: in-memory (per-process). Multi-replica → osobne buckety; Redis = przyszłość.
  */
 const rateLimitKeyGenerator = (req: Request): string => {
   const userId = req.user?.id;
