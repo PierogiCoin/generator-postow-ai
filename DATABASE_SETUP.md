@@ -2,9 +2,15 @@
 
 ## 📋 Przegląd
 
-Aplikacja wymaga bazy danych **Supabase** (PostgreSQL). Masz 2 schematy do wgrania:
-1. **DATABASE_SCHEMA.sql** - Główna baza danych (14KB, ~370 linii)
-2. **DATABASE_SCHEMA_PAYMENTS.sql** - System płatności (10KB, opcjonalny)
+Aplikacja wymaga bazy danych **Supabase** (PostgreSQL). Kanoniczny schemat używa tabeli **`profiles`** (nie `users`).
+
+**Kolejność wgrywania (SQL Editor):**
+
+1. **`DATABASE_SCHEMA_SUPABASE.sql`** — główny schemat (`profiles` + Auth)
+2. **`DATABASE_SCHEMA_PAYMENTS.sql`** — płatności / subskrypcje (dostosuj FK do `profiles` jeśli w pliku jest jeszcze `users`)
+3. **`server/DATABASE_FIX_CREDITS_SECURITY.sql`** — atomowe `debit_credits` / `add_credits` (tylko `service_role`) + tabela `stripe_webhook_events`
+
+> ⚠️ Nie zaczynaj od legacy `DATABASE_SCHEMA.sql` (tabela `users`) — kod aplikacji i Stripe operują na `profiles`.
 
 ---
 
@@ -26,17 +32,17 @@ Aplikacja wymaga bazy danych **Supabase** (PostgreSQL). Masz 2 schematy do wgran
 
 1. W Supabase dashboard, kliknij **SQL Editor** (lewa sidebar)
 2. Kliknij **"New query"**
-3. Skopiuj **CAŁY** plik `DATABASE_SCHEMA.sql`
+3. Skopiuj **CAŁY** plik `DATABASE_SCHEMA_SUPABASE.sql`
 4. Wklej do edytora SQL
 5. Kliknij **"Run"** (lub Ctrl/Cmd + Enter)
 6. Poczekaj na sukces ✅
 
-### Krok 3: (Opcjonalne) Wgraj system płatności
+### Krok 3: Płatności + bezpieczeństwo kredytów
 
-Jeśli chcesz obsługę płatności (Stripe):
-1. Kliknij **"New query"** ponownie
-2. Skopiuj **CAŁY** plik `DATABASE_SCHEMA_PAYMENTS.sql`
-3. Wklej i kliknij **"Run"**
+1. Wgraj `DATABASE_SCHEMA_PAYMENTS.sql` (opcjonalnie, jeśli używasz Stripe)
+2. **Wymagane dla P0:** wgraj `server/DATABASE_FIX_CREDITS_SECURITY.sql`
+   - RPC `debit_credits` / `add_credits` tylko dla `service_role`
+   - tabela `stripe_webhook_events` (idempotencja webhooków)
 
 ### Krok 4: Pobierz credentials
 

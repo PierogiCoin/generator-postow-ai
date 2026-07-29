@@ -585,7 +585,14 @@ export function createSocialRouter(): Router {
       const response = await result.response;
       const analysis = JSON.parse(response.text().replace(/```json|```/g, ''));
 
-      await supabase.from('social_posts').update({ ai_analysis: analysis }).in('id', postIds);
+      await supabase
+        .from('social_posts')
+        .update({ ai_analysis: analysis })
+        .in(
+          'id',
+          posts.map((p) => p.id)
+        )
+        .eq('user_id', userId);
 
       res.json(analysis);
     } catch (error: unknown) {

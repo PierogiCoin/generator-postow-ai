@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import axios from 'axios';
 import logger from '../logger.js';
 import { genAI, supabase } from '../lib/clients.js';
 import { syncUserSocialPosts } from '../socialSync.js';
@@ -10,6 +9,7 @@ import {
   brandVoiceExtractUrlSchema,
   brandVoiceLearnSchema,
 } from '../middleware/validate.js';
+import { assertSafeUrl, safeFetch } from '../lib/safeFetch.js';
 
 function normalizeWebsiteUrl(raw: string): string {
   const trimmed = raw.trim();
@@ -53,19 +53,32 @@ router.post(
   const websiteUrl = normalizeWebsiteUrl(url);
 
   try {
-    const pageRes = await axios.get<string>(websiteUrl, {
-      timeout: 12000,
-      maxRedirects: 5,
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; BrandVoiceBot/1.0)' },
-      responseType: 'text',
-      validateStatus: (s) => s < 500,
-    });
+    try {
+      assertSafeUrl(websiteUrl);
+    } catch (err: unknown) {
+      const status = (err as { status?: number }).status || 400;
+      const message = err instanceof Error ? err.message : 'URL niedozwolony';
+      return res.status(status).json({ error: message });
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    let pageRes: Response;
+    try {
+      pageRes = await safeFetch(websiteUrl, {
+        signal: controller.signal,
+        userAgent: 'Mozilla/5.0 (compatible; BrandVoiceBot/1.0)',
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (pageRes.status >= 400) {
       return res.status(400).json({ error: `Nie udało się pobrać strony (HTTP ${pageRes.status})` });
     }
 
-    const signals = extractHtmlSignals(pageRes.data.slice(0, 120_000));
+    const html = (await pageRes.text()).slice(0, 120_000);
+    const signals = extractHtmlSignals(html);
     const model = genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
     const prompt = `Na podstawie metadanych strony marki wygeneruj profil Brand Voice w JSON.
 URL: ${websiteUrl}
@@ -94,9 +107,13 @@ Zwróć JSON:
 
     res.json(parsed);
   } catch (error: unknown) {
+    const status = (error as { status?: number }).status;
     const message = error instanceof Error ? error.message : 'Ekstrakcja nie powiodła się';
+    if (status === 400) {
+      return res.status(400).json({ error: message });
+    }
     logger.error('[BrandVoice] extract-url failed:', error);
-    res.status(500).json({ error: message });
+    res.status(status && status >= 400 && status < 600 ? status : 500).json({ error: message });
   }
 });
 
