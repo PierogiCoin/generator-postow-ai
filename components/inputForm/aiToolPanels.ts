@@ -30,7 +30,8 @@ export interface AiToolPanelOpeners {
   setIsContentSafetyOpen: (open: boolean) => void;
   setIsRepurposingOpen: (open: boolean) => void;
   setIsCrossPlatformOpen: (open: boolean) => void;
-  setIsSocialMediaOpen: (open: boolean) => void;
+  /** Opens OAuth social connections modal (server-backed). */
+  setIsSocialConnectionsModalOpen: (open: boolean) => void;
   setIsOmniOpen: (open: boolean) => void;
 }
 
@@ -120,11 +121,14 @@ export function createAiToolPanels(
         },
         {
           id: 'publisher',
-          title: t('aiTools.publisher.title', 'Publikacja w social media'),
-          description: t('aiTools.publisher.desc', 'Publikuj bezpośrednio na kontach'),
+          title: t('aiTools.publisher.title', 'Połączone konta social'),
+          description: t(
+            'aiTools.publisher.desc',
+            'Połącz Facebook, Instagram, LinkedIn i publikuj przez OAuth'
+          ),
           icon: GlobeIcon,
           iconGradient: 'from-blue-500 to-cyan-500',
-          onClick: () => openers.setIsSocialMediaOpen(true),
+          onClick: () => openers.setIsSocialConnectionsModalOpen(true),
         },
         {
           id: 'omni',

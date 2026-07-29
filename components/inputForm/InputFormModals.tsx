@@ -19,7 +19,6 @@ const AIWorkflowPanel = lazy(() => import('../AIWorkflowPanel').then((m) => ({ d
 const ContentSafetyPanel = lazy(() => import('../ContentSafetyPanel').then((m) => ({ default: m.ContentSafetyPanel })));
 const ContentRepurposingPanel = lazy(() => import('../ContentRepurposingPanel').then((m) => ({ default: m.ContentRepurposingPanel })));
 const CrossPlatformCommandCenter = lazy(() => import('../CrossPlatformCommandCenter').then((m) => ({ default: m.CrossPlatformCommandCenter })));
-const SocialMediaManager = lazy(() => import('../SocialMediaManager').then((m) => ({ default: m.SocialMediaManager })));
 const GeminiOmniPanel = lazy(() => import('../GeminiOmniPanel').then((m) => ({ default: m.GeminiOmniPanel })));
 
 export interface InputFormModalsProps {
@@ -40,7 +39,6 @@ export interface InputFormModalsProps {
   isContentSafetyOpen: boolean;
   isRepurposingOpen: boolean;
   isCrossPlatformOpen: boolean;
-  isSocialMediaOpen: boolean;
   isOmniOpen: boolean;
   onCloseSaveModal: () => void;
   onCloseTemplateBrowser: () => void;
@@ -53,7 +51,6 @@ export interface InputFormModalsProps {
   onCloseContentSafety: () => void;
   onCloseRepurposing: () => void;
   onCloseCrossPlatform: () => void;
-  onCloseSocialMedia: () => void;
   onCloseOmni: () => void;
   onSaveTemplate: (name: string) => void;
   onSelectTemplate: (templateId: string) => void;
@@ -85,7 +82,6 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   isContentSafetyOpen,
   isRepurposingOpen,
   isCrossPlatformOpen,
-  isSocialMediaOpen,
   isOmniOpen,
   onCloseSaveModal,
   onCloseTemplateBrowser,
@@ -98,7 +94,6 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
   onCloseContentSafety,
   onCloseRepurposing,
   onCloseCrossPlatform,
-  onCloseSocialMedia,
   onCloseOmni,
   onSaveTemplate,
   onSelectTemplate,
@@ -272,13 +267,6 @@ export const InputFormModals: React.FC<InputFormModalsProps> = ({
             tone={formData.tone}
             sourcePlatform={formData.platform}
           />
-        </FeaturePanelModal>
-      </SectionErrorBoundary>
-    )}
-    {isSocialMediaOpen && (
-      <SectionErrorBoundary sectionName="Social Media Manager">
-        <FeaturePanelModal open={isSocialMediaOpen} onClose={onCloseSocialMedia} sectionName="Social Media Manager">
-          <SocialMediaManager currentContent={formData.topic} />
         </FeaturePanelModal>
       </SectionErrorBoundary>
     )}

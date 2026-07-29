@@ -51,7 +51,7 @@ export function useInputFormController({
   const { isLoading } = useGenerationStore();
 
   const { templates, brandVoiceProfiles, activeBrandVoiceId, inspiration, selectInspiration } = useDataStore();
-  const { setIsBrandVoiceManagerOpen } = useUIStore();
+  const { setIsBrandVoiceManagerOpen, setIsSocialConnectionsModalOpen } = useUIStore();
   const activeBrandVoice = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId);
   const brandVoiceDescription = activeBrandVoice
     ? [
@@ -86,7 +86,6 @@ export function useInputFormController({
   const [isContentSafetyOpen, setIsContentSafetyOpen] = useState(false);
   const [isRepurposingOpen, setIsRepurposingOpen] = useState(false);
   const [isCrossPlatformOpen, setIsCrossPlatformOpen] = useState(false);
-  const [isSocialMediaOpen, setIsSocialMediaOpen] = useState(false);
   const [isOmniOpen, setIsOmniOpen] = useState(false);
   const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
   const [formMode, setFormMode] = useState<InputFormMode>(() => {
@@ -444,12 +443,12 @@ export function useInputFormController({
           setIsContentSafetyOpen,
           setIsRepurposingOpen,
           setIsCrossPlatformOpen,
-          setIsSocialMediaOpen,
+          setIsSocialConnectionsModalOpen,
           setIsOmniOpen,
         },
         (key, fallback) => t(key, fallback ?? key)
       ),
-    [t]
+    [t, setIsSocialConnectionsModalOpen]
   );
 
   const handleAddTechNewsToCalendar = useCallback(
@@ -545,8 +544,6 @@ export function useInputFormController({
     setIsRepurposingOpen,
     isCrossPlatformOpen,
     setIsCrossPlatformOpen,
-    isSocialMediaOpen,
-    setIsSocialMediaOpen,
     isOmniOpen,
     setIsOmniOpen,
     aiToolPanels,

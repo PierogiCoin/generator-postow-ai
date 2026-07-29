@@ -34,7 +34,7 @@ export const STORAGE_KEYS = {
   VIDEO_CACHE: 'video_generation_jobs',
   // autoContentPipeline.ts
   PIPELINE_CACHE: 'auto_content_pipeline',
-  // socialMediaApiService.ts
+  // legacy client social stack removed — key cleared on logout for old localStorage leftovers
   SOCIAL_ACCOUNTS: 'social_media_accounts',
   OPTIMAL_POST_TIME: 'optimal_post_time',
   USER_NICHE: 'userNiche',
