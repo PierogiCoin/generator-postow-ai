@@ -6,6 +6,9 @@ Aplikacja wymaga bazy danych **Supabase** (PostgreSQL). Masz 2 schematy do wgran
 1. **DATABASE_SCHEMA.sql** - Główna baza danych (14KB, ~370 linii)
 2. **DATABASE_SCHEMA_PAYMENTS.sql** - System płatności (10KB, opcjonalny)
 
+Dodatkowo (video story async / multi-instance):
+3. **`server/DATABASE_SCHEMA_VIDEO_JOBS.sql`** — tabela `video_jobs` (status generowania wideo)
+
 ---
 
 ## 🚀 Quick Start (5 minut)
