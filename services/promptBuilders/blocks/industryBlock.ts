@@ -1,4 +1,4 @@
-import type { TextPromptContext, ImagePromptContext } from '../types';
+import type { TextPromptContext } from '../types';
 
 export function industryBlock(ctx: TextPromptContext): string | null {
   const pack = ctx.nicheCtx.pack;
@@ -26,12 +26,4 @@ export function industryBlock(ctx: TextPromptContext): string | null {
   }
 
   return lines.join('\n');
-}
-
-export function industryImagePrefix(ctx: ImagePromptContext): string | null {
-  const pack = ctx.brandVoice?.niche
-    ? undefined // We'll resolve via the caller if needed
-    : undefined;
-  // Note: image prefix is applied by the composer using the resolved nicheCtx.
-  return null;
 }

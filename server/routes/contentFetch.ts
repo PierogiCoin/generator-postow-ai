@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireSupabaseAuth, getAuthUserId } from '../middleware/supabaseAuth.js';
 import { expensiveLimiter } from '../middleware/rateLimiter.js';
 import logger from '../logger.js';
+import { assertSafeUrl } from '../lib/safeUrl.js';
 
 const MAX_BYTES = 1_500_000;
 const FETCH_TIMEOUT_MS = 12_000;
@@ -61,31 +62,6 @@ function extractRssItems(xml: string): { title: string; text: string } {
     title: stripHtml(items[0][0].match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || 'RSS'),
     text: parts.join('\n\n---\n\n'),
   };
-}
-
-function isPrivateHost(hostname: string): boolean {
-  const h = hostname.toLowerCase();
-  if (h === 'localhost' || h.endsWith('.local') || h.endsWith('.internal')) return true;
-  if (/^(127\.|10\.|192\.168\.|169\.254\.)/.test(h)) return true;
-  if (/^172\.(1[6-9]|2\d|3[0-1])\./.test(h)) return true;
-  if (h === '0.0.0.0' || h === '[::1]' || h === '::1') return true;
-  return false;
-}
-
-function assertSafeUrl(urlRaw: string): URL {
-  let parsed: URL;
-  try {
-    parsed = new URL(urlRaw);
-  } catch {
-    throw Object.assign(new Error('Nieprawidłowy URL'), { status: 400 });
-  }
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
-    throw Object.assign(new Error('Dozwolone tylko http/https'), { status: 400 });
-  }
-  if (isPrivateHost(parsed.hostname)) {
-    throw Object.assign(new Error('URL niedozwolony'), { status: 400 });
-  }
-  return parsed;
 }
 
 /** Fetch z ręczną obsługą redirectów — każdy hop re-waliduje host (anti-SSRF). */

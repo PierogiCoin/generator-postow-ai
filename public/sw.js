@@ -1,11 +1,15 @@
 // Service Worker — minimal PWA caching for static assets
-const CACHE_NAME = 'postai-v2';
+const CACHE_NAME = 'postai-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/robots.txt',
   '/sitemap.xml',
+  '/offline.html',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon.svg',
 ];
 
 self.addEventListener('install', (event) => {
@@ -52,7 +56,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match(request).then((r) => r || caches.match('/')))
+        .catch(() => caches.match(request).then((r) => r || caches.match('/index.html').then((idx) => idx || caches.match('/offline.html'))))
     );
     return;
   }

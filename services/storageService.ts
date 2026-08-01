@@ -1,7 +1,7 @@
 import { getSupabase } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 
-type BrandAssetType = 'logos' | 'mascots';
+type BrandAssetType = 'logos' | 'mascots' | 'products' | 'styles' | 'locations';
 
 /**
  * Upload logo / maskotki marki do Supabase Storage.

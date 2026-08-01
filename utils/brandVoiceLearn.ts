@@ -115,6 +115,8 @@ export function computeBrandVoiceCompleteness(settings: BrandVoiceSettings): {
     { label: 'URL strony', ok: Boolean(settings.websiteUrl?.trim()) },
     { label: 'Styl wizualny', ok: Boolean(settings.visualStyle?.trim()) },
     { label: 'Logo', ok: Boolean(settings.logoUrl?.trim()) },
+    { label: 'Zdjęcia produktów', ok: (settings.productImages?.length ?? 0) > 0 },
+    { label: 'Zdjęcia referencyjne stylu', ok: (settings.styleImages?.length ?? 0) > 0 },
     { label: 'Przykład do naśladowania', ok: (settings.examplesToFollow?.filter(Boolean).length ?? 0) > 0 },
     { label: 'Archetyp', ok: Boolean(settings.archetype) },
   ];

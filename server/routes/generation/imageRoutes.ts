@@ -55,6 +55,23 @@ async function uploadGeneratedImage(
   return dataUrl;
 }
 
+function normalizeImagenRequest(
+  prompt: string,
+  config: { aspectRatio?: string; [key: string]: unknown },
+  negativePrompt?: string
+): { prompt: string; aspectRatio: string } {
+  let imagenRatio = config?.aspectRatio || '1:1';
+  if (imagenRatio === '4:3') imagenRatio = '16:9';
+  if (imagenRatio === '3:4' || imagenRatio === '4:5' || imagenRatio === '3:5') imagenRatio = '9:16';
+  if (!['1:1', '16:9', '9:16'].includes(imagenRatio)) imagenRatio = '1:1';
+
+  const imagenPrompt = negativePrompt?.trim()
+    ? `${prompt}\n\nAVOID: ${negativePrompt.trim()}`
+    : prompt;
+
+  return { prompt: imagenPrompt, aspectRatio: imagenRatio };
+}
+
 async function generateViaImagen(
   prompt: string,
   config: {
@@ -103,7 +120,7 @@ export function createImageGenerationRouter(): Router {
     validateRequest(imageGenerationSchema),
     async (req, res) => {
       try {
-        const { prompt, config, referenceImages, quality, provider } = req.body;
+        const { prompt, config, referenceImages, quality, provider, negativePrompt } = req.body;
         const userId = getAuthUserId(req);
         const googleKey = process.env.GOOGLE_API_KEY || process.env.VITE_API_KEY;
         const startTime = Date.now();
@@ -135,6 +152,7 @@ export function createImageGenerationRouter(): Router {
                       : undefined,
                     width: dims.width,
                     height: dims.height,
+                    negativePrompt: typeof negativePrompt === 'string' ? negativePrompt : undefined,
                   }),
                   120000,
                   'Together generation timed out'
@@ -152,13 +170,13 @@ export function createImageGenerationRouter(): Router {
             if (!googleKey) {
               throw togetherErr;
             }
-            // Map UI ratios Imagen can't do
-            let imagenRatio = config?.aspectRatio || '1:1';
-            if (imagenRatio === '4:3') imagenRatio = '16:9';
-            if (imagenRatio === '3:4') imagenRatio = '9:16';
-            if (!['1:1', '16:9', '9:16'].includes(imagenRatio)) imagenRatio = '1:1';
-            const imagen = await generateViaImagen(
+            const { prompt: imagenPrompt, aspectRatio: imagenRatio } = normalizeImagenRequest(
               prompt,
+              config,
+              negativePrompt
+            );
+            const imagen = await generateViaImagen(
+              imagenPrompt,
               { ...config, aspectRatio: imagenRatio },
               googleKey
             );
@@ -174,12 +192,13 @@ export function createImageGenerationRouter(): Router {
               .status(503)
               .json({ message: 'Image generation unavailable — configure TOGETHER_API_KEY or GOOGLE_API_KEY' });
           }
-          let imagenRatio = config?.aspectRatio || '1:1';
-          if (imagenRatio === '4:3') imagenRatio = '16:9';
-          if (imagenRatio === '3:4') imagenRatio = '9:16';
-          if (!['1:1', '16:9', '9:16'].includes(imagenRatio)) imagenRatio = '1:1';
-          const imagen = await generateViaImagen(
+          const { prompt: imagenPrompt, aspectRatio: imagenRatio } = normalizeImagenRequest(
             prompt,
+            config,
+            negativePrompt
+          );
+          const imagen = await generateViaImagen(
+            imagenPrompt,
             { ...config, aspectRatio: imagenRatio },
             googleKey
           );

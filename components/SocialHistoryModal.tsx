@@ -95,8 +95,8 @@ export const SocialHistoryModal: React.FC<SocialHistoryModalProps> = ({
             const data = await res.json();
             setPosts(data.posts || []);
         } catch (err: unknown) {
-            if ((err as Error).name === 'AbortError') return;
-            setError((err as Error).message || 'Nieznany błąd');
+            if (err instanceof Error && err.name === 'AbortError') return;
+            setError(err instanceof Error ? err.message : 'Nieznany błąd');
         } finally {
             setIsLoading(false);
         }

@@ -5,7 +5,10 @@ import { useUIStore } from '../stores/uiStore';
 import { useTranslation } from 'react-i18next';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+import { MenuIcon } from './icons/MenuIcon';
 import { ModernButton } from './ui';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { ThemeToggle } from './ThemeToggle';
 import {
   usePrefersReducedMotion,
   useSEO,
@@ -44,14 +47,20 @@ const ScrollProgressBar: React.FC = () => {
   );
 };
 
-const LandingNav: React.FC<{ onSignup: () => void; onPricing: () => void; isLoggedIn: boolean }> = ({ onSignup, onPricing, isLoggedIn }) => {
+const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricing: () => void; isLoggedIn: boolean }> = ({ onSignup, onLogin, onPricing, isLoggedIn }) => {
   const { t } = useTranslation();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const items = [
     { label: t('home.journey.nav_problem'), id: 'problem' },
     { label: t('home.journey.nav_solution'), id: 'solution' },
     { label: t('home.journey.nav_methods'), id: 'methods' },
     { label: t('home.journey.nav_industries'), id: 'branze' },
   ];
+
+  const handleNavClick = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setMobileOpen(false);
+  };
 
   return (
     <nav
@@ -71,9 +80,7 @@ const LandingNav: React.FC<{ onSignup: () => void; onPricing: () => void; isLogg
             <button
               key={item.id}
               type="button"
-              onClick={() => {
-                document.getElementById(item.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
+              onClick={() => handleNavClick(item.id)}
               className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
             >
               {item.label}
@@ -81,21 +88,83 @@ const LandingNav: React.FC<{ onSignup: () => void; onPricing: () => void; isLogg
           ))}
           <button
             type="button"
-            onClick={onPricing}
+            onClick={() => { onPricing(); }}
             className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
           >
             {t('home.nav.pricing')}
           </button>
         </div>
-        <ModernButton
+        <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-3">
+            <LanguageSwitcher />
+            <ThemeToggle />
+            {!isLoggedIn && (
+              <button
+                type="button"
+                onClick={onLogin}
+                className="px-3 py-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+              >
+                {t('header.login')}
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileOpen((v) => !v)}
+            className="sm:hidden p-1.5 text-slate-400 hover:text-white transition-colors"
+            aria-label={t('home.nav.openMenu')}
+            aria-expanded={mobileOpen}
+          >
+            <MenuIcon className="w-5 h-5" />
+          </button>
+          <ModernButton
           variant="primary"
           size="sm"
           onClick={onSignup}
           className="!bg-[var(--hero-accent)] ![background-image:none] text-white text-xs font-semibold rounded-lg px-3 py-2 shrink-0"
         >
           {t(isLoggedIn ? 'home.journey.nav_app' : 'home.journey.nav_signup')}
-        </ModernButton>
+          </ModernButton>
+        </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="sm:hidden border-t border-white/5 bg-[#07090c]/95 backdrop-blur-md">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
+            {items.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => handleNavClick(item.id)}
+                className="px-3 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors text-left"
+              >
+                {item.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => { onPricing(); setMobileOpen(false); }}
+              className="px-3 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors text-left"
+            >
+              {t('home.nav.pricing')}
+            </button>
+            {!isLoggedIn && (
+              <button
+                type="button"
+                onClick={() => { onLogin(); setMobileOpen(false); }}
+                className="px-3 py-2 text-sm font-semibold text-slate-400 hover:text-white transition-colors text-left"
+              >
+                {t('header.login')}
+              </button>
+            )}
+            <div className="flex items-center gap-4 px-3 pt-2 mt-1 border-t border-white/5">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };
@@ -192,16 +261,16 @@ const ProblemSection: React.FC = () => {
 
   const comparisons = [
     {
-      before: 'Godziny stracone przed pustą kartką i szukanie pomysłu na post',
-      after: 'Gotowe propozycje i plany treści dopasowane do Twojej niszy w parę sekund',
+      before: t('home.journey.compare_1_before'),
+      after: t('home.journey.compare_1_after'),
     },
     {
-      before: 'Generyczne treści z ChatGPT, które brzmią tak samo jak u konkurencji',
-      after: 'Głos marki (Brand Voice) i system zapobiegający sztywnemu slopowi AI',
+      before: t('home.journey.compare_2_before'),
+      after: t('home.journey.compare_2_after'),
     },
     {
-      before: 'Chaotyczne publikowanie bez strategii i słabe zasięgi organiczne',
-      after: 'Spójny kalendarz publikacji i wielokanałowy lejek przynoszący klientów',
+      before: t('home.journey.compare_3_before'),
+      after: t('home.journey.compare_3_after'),
     },
   ];
 
@@ -234,7 +303,7 @@ const ProblemSection: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/90 block mb-1">
-                    Bez AI Content Pro
+                    {t('home.journey.compare_before_label')}
                   </span>
                   <p className="text-slate-300 text-base md:text-lg font-medium leading-snug">
                     {item.before}
@@ -249,7 +318,7 @@ const ProblemSection: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-1">
-                    Z AI Content Pro
+                    {t('home.journey.compare_after_label')}
                   </span>
                   <p className="text-white text-base md:text-lg font-semibold leading-snug">
                     {item.after}
@@ -357,20 +426,20 @@ const FAQSection: React.FC = () => {
 
   const faqs = [
     {
-      q: 'Czy teksty wygenerowane przez AI nie brzmią sztywno lub sztucznie?',
-      a: 'Nie. AI Content Pro posiada dedykowany moduł Anti-Slop oraz silnik Głosu Marki (Brand Voice). Zamiast generycznych formułek z ChatGPT, otrzymujesz treść sformatowaną z unikalnym tonem, haczykami i konkretną wartością pod Twoją branżę.',
+      q: t('home.journey.faq_1_q'),
+      a: t('home.journey.faq_1_a'),
     },
     {
-      q: 'Jak działa dopasowanie do mojej branży?',
-      a: 'Podczas konfigurowania studia wybierasz swoją niszę lub wpisujesz własną. Nasz system dobiera optymalny framework copywriterski (np. PAS, AIDA, Storytelling), odpowiedni zestaw słów kluczowych i styl graficzny dostosowany do Twoich odbiorców.',
+      q: t('home.journey.faq_2_q'),
+      a: t('home.journey.faq_2_a'),
     },
     {
-      q: 'Czy potrzebuję podawać kartę kredytową na start?',
-      a: 'Nie, konto założysz bez podawania jakichkolwiek danych płatniczych. Otrzymujesz darmowe kredyty na przetestowanie generowania postów, grafik i harmonogramu.',
+      q: t('home.journey.faq_3_q'),
+      a: t('home.journey.faq_3_a'),
     },
     {
-      q: 'Czy wygenerowane treści mogę publikować bezpośrednio w social media?',
-      a: 'Tak! System pozwala na eksport postów, kopiowanie gotowych formatów lub zaplanowanie ich bezpośrednio w wbudowanym kalendarzu publikacji.',
+      q: t('home.journey.faq_4_q'),
+      a: t('home.journey.faq_4_a'),
     },
   ];
 
@@ -496,7 +565,8 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   };
 
   const startJourney = () => {
-    openSignupOrApp();
+    if (user) navigate('/dashboard');
+    else scrollToAnchor('problem', reducedMotion);
   };
 
   const openPricing = () => {
@@ -510,7 +580,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   return (
     <div className="relative pb-0">
       <ScrollProgressBar />
-      <LandingNav onSignup={openSignupOrApp} onPricing={openPricing} isLoggedIn={isLoggedIn} />
+      <LandingNav onSignup={openSignupOrApp} onLogin={() => setAuthModal('login')} onPricing={openPricing} isLoggedIn={isLoggedIn} />
       <HeroSection reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} onStart={startJourney} />
 
       <Reveal reducedMotion={reducedMotion}>

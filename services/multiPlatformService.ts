@@ -226,7 +226,7 @@ export const generateABTestVariants = async (
     return response.json();
   } catch (err) {
     clearTimeout(timeout);
-    if ((err as Error).name === 'AbortError') throw new Error('Przekroczono limit czasu generowania wariantów A/B');
+    if (err instanceof Error && err.name === 'AbortError') throw new Error('Przekroczono limit czasu generowania wariantów A/B');
     throw err;
   }
 };

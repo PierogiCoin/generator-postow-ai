@@ -53,5 +53,6 @@ export interface ComposedTextPrompt {
 export interface ComposedImagePrompt {
   prompt: string;
   referenceImages: string[];
+  referenceImageLabels?: string[];
   mascotPrompt?: string;
 }

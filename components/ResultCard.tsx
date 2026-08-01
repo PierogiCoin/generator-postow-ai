@@ -300,6 +300,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ historyResult }) => {
                 onOpenAiStudio={() => setIsVisualStudioOpen(true)}
                 onOpenCreativeStudio={() => void handleOpenCreativeStudio()}
                 onReformatForPlatform={(p) => void appHandlers.handleReformatImageForPlatform(p)}
+                onRestoreImage={(url) => appHandlers.handleRestoreImage(url)}
               />
             )}
 

@@ -11,6 +11,7 @@ import {
   benchmarkContentSchema,
   scoreImageSchema,
 } from '../middleware/validate.js';
+import { assertSafeUrl } from '../lib/safeUrl.js';
 
 export function createScoringRouter(): Router {
   const router = Router();
@@ -64,7 +65,7 @@ export function createScoringRouter(): Router {
     validateRequest(scoreImageSchema),
     async (req, res) => {
       try {
-        const { imageUrl, base64, mimeType, platform, briefSummary } = req.body;
+        const { imageUrl, base64, mimeType, platform, briefSummary, postText, contentIntent, negativePrompt } = req.body;
         const userId = getAuthUserId(req);
 
         let imageBase64 = typeof base64 === 'string' ? base64 : '';
@@ -78,9 +79,20 @@ export function createScoringRouter(): Router {
               imageBase64 = match[2];
             }
           } else {
+            try {
+              assertSafeUrl(imageUrl);
+            } catch (err: unknown) {
+              const status = (err as { status?: number })?.status || 400;
+              return res.status(status).json({
+                error: 'Unsafe image URL',
+                message: err instanceof Error ? err.message : 'URL niedozwolony',
+                code: 'UNSAFE_IMAGE_URL',
+              });
+            }
             const imgRes = await axios.get(imageUrl, {
               responseType: 'arraybuffer',
               timeout: 30_000,
+              maxRedirects: 0,
             });
             imageMime = (imgRes.headers['content-type'] as string) || 'image/jpeg';
             imageBase64 = Buffer.from(imgRes.data).toString('base64');
@@ -97,6 +109,9 @@ export function createScoringRouter(): Router {
           mimeType: imageMime,
           platform,
           briefSummary: briefSummary || '',
+          postText: postText || '',
+          contentIntent: contentIntent || {},
+          negativePrompt,
         });
 
         logCost(userId, 'visual-scoring', 0.002, 'Gemini');

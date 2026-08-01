@@ -103,6 +103,10 @@ describe('score-image route', () => {
       brandFit: 80,
       textLegibility: 80,
       platformFit: 80,
+      contentMatch: 80,
+      subjectAccuracy: 80,
+      offerMatch: 80,
+      audienceMatch: 80,
       feedback: [],
       badge: 'green',
     });
@@ -116,6 +120,8 @@ describe('score-image route', () => {
           imageUrl: 'data:image/png;base64,cmVtb3RlLWltYWdl',
           platform: 'Instagram',
           briefSummary: 'hero shot',
+          postText: 'Post about a product benefit',
+          contentIntent: { primarySubject: 'product' },
         },
       },
       res
@@ -126,6 +132,8 @@ describe('score-image route', () => {
       mimeType: 'image/png',
       platform: 'Instagram',
       briefSummary: 'hero shot',
+      postText: 'Post about a product benefit',
+      contentIntent: { primarySubject: 'product' },
     });
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -134,5 +142,51 @@ describe('score-image route', () => {
       })
     );
 
+  });
+
+  it('rejects private/local image URLs (SSRF guard)', async () => {
+    const handler = await getScoreImageHandler();
+    const res = mockRes();
+
+    await handler(
+      {
+        body: {
+          imageUrl: 'http://127.0.0.1/secret.png',
+          platform: 'Instagram',
+          briefSummary: 'hero shot',
+        },
+      },
+      res
+    );
+
+    expect(scoreImageVisual).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: 'Unsafe image URL',
+        code: 'UNSAFE_IMAGE_URL',
+      })
+    );
+  });
+
+  it('rejects metadata / link-local hosts', async () => {
+    const handler = await getScoreImageHandler();
+    const res = mockRes();
+
+    await handler(
+      {
+        body: {
+          imageUrl: 'http://169.254.169.254/latest/meta-data/',
+          platform: 'Instagram',
+        },
+      },
+      res
+    );
+
+    expect(scoreImageVisual).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ code: 'UNSAFE_IMAGE_URL' })
+    );
   });
 });

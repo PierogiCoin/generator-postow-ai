@@ -72,20 +72,57 @@ interface AIInsightWithTemplate {
   text?: string;
 }
 
-export function brandImageBlock(ctx: ImagePromptContext): { referenceImages: string[]; mascotPrompt?: string } {
+export function brandImageBlock(ctx: ImagePromptContext): { referenceImages: string[]; mascotPrompt?: string; referenceImageLabels?: string[] } {
   const { brandVoice, useMascot } = ctx;
   const referenceImages: string[] = [];
+  const referenceImageLabels: string[] = [];
   let mascotPrompt: string | undefined;
 
   // Logo is intentionally NOT passed as reference image; it is overlaid in CreativeCanvas.
   // This avoids FLUX "baking" the logo into the generated scene.
 
   if (useMascot && brandVoice?.mascotDescription) {
-    mascotPrompt = `FEATURED MASCOT: Include the brand mascot "${brandVoice.mascotName || 'the mascot'}". Description: ${brandVoice.mascotDescription}.`;
+    const mascotName = brandVoice.mascotName || 'the mascot';
+    if (useMascot === true) {
+      mascotPrompt = `FEATURED MASCOT: Include the brand mascot "${mascotName}". Description: ${brandVoice.mascotDescription}.`;
+    } else {
+      mascotPrompt = `MASCOT (optional): The brand has a mascot "${mascotName}" (${brandVoice.mascotDescription}). Include it only if it fits the scene naturally — do not force it.`;
+    }
     if (brandVoice.mascotUrl) {
       referenceImages.push(brandVoice.mascotUrl);
+      referenceImageLabels.push('mascot');
     }
   }
 
-  return { referenceImages, mascotPrompt };
+  // Product reference images — highest priority for visual fidelity
+  if (brandVoice?.productImages?.length) {
+    for (const url of brandVoice.productImages) {
+      if (url) {
+        referenceImages.push(url);
+        referenceImageLabels.push('product');
+      }
+    }
+  }
+
+  // Style / mood reference images
+  if (brandVoice?.styleImages?.length) {
+    for (const url of brandVoice.styleImages) {
+      if (url) {
+        referenceImages.push(url);
+        referenceImageLabels.push('style');
+      }
+    }
+  }
+
+  // Location / environment reference images
+  if (brandVoice?.locationImages?.length) {
+    for (const url of brandVoice.locationImages) {
+      if (url) {
+        referenceImages.push(url);
+        referenceImageLabels.push('location');
+      }
+    }
+  }
+
+  return { referenceImages, mascotPrompt, referenceImageLabels };
 }

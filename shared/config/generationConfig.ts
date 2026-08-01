@@ -8,6 +8,9 @@
 // Quality gate
 export const QUALITY_GATE_THRESHOLD = 80;
 
+// Visual QA minimum score for auto-publishing and auto-regeneration
+export const VISUAL_QA_MIN_SCORE = 65;
+
 // Logo / brand asset overlay defaults
 export const BASE_LOGO_WIDTH = 80; // px — matches the Tailwind w-20 base used in CreativeCanvas
 export const DEFAULT_LOGO_SIZE_PERCENT = 12;

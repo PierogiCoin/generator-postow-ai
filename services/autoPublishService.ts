@@ -17,6 +17,9 @@ import {
   scorePostContent,
 } from './contentScoringService';
 import { isApprovalBlockingPublish } from '../utils/publishApproval';
+import { resolveNicheContext } from '../utils/nicheContext';
+import { getPlatformVisualSpec } from '../utils/platformVisualSpec';
+import { DEFAULT_IMAGE_NEGATIVE_PROMPT } from '../shared/config/visualConfig';
 
 export const PLATFORM_TO_SOCIAL: Partial<Record<Platform, SocialPlatform>> = {
   [Platform.Facebook]: SocialPlatform.Facebook,
@@ -77,6 +80,75 @@ export function getPublishablePostText(result: GenerationResult): string {
   return fromOmni || main;
 }
 
+async function scoreVisualForAutoPublish(
+  result: GenerationResult,
+  formData: FormData,
+  userId: string
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const needsImage =
+    formData.generationType === GenerationType.PostWithImage ||
+    formData.platform === Platform.Instagram;
+
+  if (!needsImage) {
+    return { ok: true };
+  }
+
+  if (!result.imageUrl) {
+    return {
+      ok: false,
+      reason: 'Brak grafiki — wymagana do automatycznej publikacji tego typu treści.',
+    };
+  }
+
+  try {
+    const { scoreGeneratedImage, VISUAL_QA_MIN_SCORE } = await import('./visualQualityService');
+    const nichePack = resolveNicheContext({ userId, audience: formData.audience }).pack;
+    const spec = getPlatformVisualSpec(formData.platform);
+    const negativePrompt = [...spec.avoid, ...DEFAULT_IMAGE_NEGATIVE_PROMPT].join(', ');
+    const briefSummary = [
+      `Platform: ${formData.platform}`,
+      `Topic: ${formData.topic || result.postText?.slice(0, 160)}`,
+      `Audience: ${formData.audience || ''}`,
+      nichePack?.imagePromptPrefix ? `Visual style: ${nichePack.imagePromptPrefix}` : '',
+      nichePack?.imageMustShow?.length ? `Must show: ${nichePack.imageMustShow.join('; ')}` : '',
+    ]
+      .filter(Boolean)
+      .join(' | ')
+      .slice(0, 400);
+    const visual = await scoreGeneratedImage({
+      imageUrl: result.imageUrl.startsWith('http') ? result.imageUrl : undefined,
+      base64: result.imageUrl.startsWith('data:')
+        ? result.imageUrl.split(',')[1]
+        : undefined,
+      platform: formData.platform,
+      briefSummary,
+      postText: getPublishablePostText(result),
+      negativePrompt,
+      contentIntent: {
+        primarySubject: formData.topic || result.postText?.slice(0, 160) || '',
+        requiredObjects: nichePack?.imageMustShow || [],
+        audience: formData.audience || '',
+        coreBenefit: '',
+        emotion: formData.tone || 'interest',
+        forbiddenInterpretations: ['unsupported claims', 'unrelated products or services'],
+      },
+      userId,
+    });
+    if (visual.overall < VISUAL_QA_MIN_SCORE) {
+      return {
+        ok: false,
+        reason: `Grafika ${visual.overall}/100 — wymagane min. ${VISUAL_QA_MIN_SCORE} (thumb-stop / brand / platform).`,
+      };
+    }
+    return { ok: true };
+  } catch {
+    return {
+      ok: false,
+      reason: 'Nie udało się ocenić grafiki — publikacja wstrzymana.',
+    };
+  }
+}
+
 /**
  * Wspólna brama jakości dla auto / bulk / publish-now.
  * Fail-closed: krótki tekst lub błąd scoringu wstrzymuje publikację.
@@ -130,13 +202,39 @@ export async function enforcePublishQualityGate(
       }
       try {
         const { scoreGeneratedImage, VISUAL_QA_MIN_SCORE } = await import('./visualQualityService');
+        const nichePack = resolveNicheContext({ userId, audience: formData.audience }).pack;
+        const spec = getPlatformVisualSpec(formData.platform);
+        const negativePrompt = [
+          ...spec.avoid,
+          ...DEFAULT_IMAGE_NEGATIVE_PROMPT,
+        ].join(', ');
+        const briefSummary = [
+          `Platform: ${formData.platform}`,
+          `Topic: ${formData.topic || text.slice(0, 160)}`,
+          `Audience: ${formData.audience || ''}`,
+          nichePack?.imagePromptPrefix ? `Visual style: ${nichePack.imagePromptPrefix}` : '',
+          nichePack?.imageMustShow?.length ? `Must show: ${nichePack.imageMustShow.join('; ')}` : '',
+        ]
+          .filter(Boolean)
+          .join(' | ')
+          .slice(0, 400);
         const visual = await scoreGeneratedImage({
           imageUrl: result.imageUrl.startsWith('http') ? result.imageUrl : undefined,
           base64: result.imageUrl.startsWith('data:')
             ? result.imageUrl.split(',')[1]
             : undefined,
           platform: formData.platform,
-          briefSummary: text.slice(0, 400),
+          briefSummary,
+          postText: text,
+          negativePrompt,
+          contentIntent: {
+            primarySubject: formData.topic || text.slice(0, 160),
+            requiredObjects: nichePack?.imageMustShow || [],
+            audience: formData.audience || '',
+            coreBenefit: '',
+            emotion: formData.tone || 'interest',
+            forbiddenInterpretations: ['unsupported claims', 'unrelated products or services'],
+          },
           userId,
         });
         if (visual.overall < VISUAL_QA_MIN_SCORE) {

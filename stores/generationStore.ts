@@ -98,7 +98,14 @@ type GenerationState = {
   applyHook: (newHook: string) => void;
   startImageRegeneration: () => void;
   finishImageRegeneration: () => void;
-  updateResultImage: (imageUrl: string) => void;
+  updateResultImage: (
+    imageUrl: string,
+    opts?: {
+      visualScore?: GenerationResult['visualScore'] | null;
+      pushHistory?: boolean;
+    }
+  ) => void;
+  restoreResultImage: (url: string) => void;
   updateResultVideo: (videoUrl: string) => void;
   setPendingCalendarSlot: (slot: CalendarSlotContext | null) => void;
   clearPendingCalendarSlot: () => void;
@@ -243,18 +250,46 @@ export const useGenerationStore = create<GenerationState>()(
   }),
   startImageRegeneration: () => set({ isRegeneratingImage: true }),
   finishImageRegeneration: () => set({ isRegeneratingImage: false }),
-  updateResultImage: (imageUrl) => set(state =>
-    state.result
-      ? {
-          result: {
-            ...state.result,
-            imageUrl,
-            imageGenerationFailed: false,
-            imageGenerationError: undefined,
-          },
-        }
-      : {}
-  ),
+  updateResultImage: (imageUrl, opts) => set(state => {
+    if (!state.result) return {};
+    const pushHistory = opts?.pushHistory !== false;
+    const prevUrl = state.result.imageUrl;
+    const nextHistory =
+      pushHistory && prevUrl && prevUrl !== imageUrl
+        ? [prevUrl, ...(state.result.imageHistory || []).filter((u) => u !== prevUrl && u !== imageUrl)].slice(0, 10)
+        : state.result.imageHistory;
+    const nextScore =
+      opts && 'visualScore' in opts
+        ? (opts.visualScore ?? undefined)
+        : state.result.visualScore;
+    return {
+      result: {
+        ...state.result,
+        imageHistory: nextHistory,
+        imageUrl,
+        imageGenerationFailed: false,
+        imageGenerationError: undefined,
+        visualScore: nextScore,
+      },
+    };
+  }),
+  restoreResultImage: (url) => set(state => {
+    if (!state.result || !url || state.result.imageUrl === url) return {};
+    const current = state.result.imageUrl;
+    const rest = (state.result.imageHistory || []).filter((u) => u !== url && u !== current);
+    const nextHistory = current ? [current, ...rest].slice(0, 10) : rest.slice(0, 10);
+    return {
+      result: {
+        ...state.result,
+        imageUrl: url,
+        imageHistory: nextHistory,
+        imageGenerationFailed: false,
+        imageGenerationError: undefined,
+        // Keep previous score; restored URL may not match it, but clearing was worse UX.
+        // Callers can re-score after restore if needed.
+      },
+    };
+  }),
   updateResultVideo: (videoUrl) => set(state =>
     state.result ? { result: { ...state.result, videoUrl } } : {}
   ),

@@ -1,5 +1,6 @@
 import { FormData, BrandVoiceData, Platform, VisualStyle } from '../types';
-import type { ImageQuality } from './mediaService';
+import { generateImages, type ImageQuality } from './mediaService';
+import { DEFAULT_IMAGE_NEGATIVE_PROMPT } from '../shared/config/visualConfig';
 import {
   buildPlatformImagePrompt,
   resolveAspectRatioForPlatform,
@@ -11,7 +12,7 @@ import type { VisualBrief } from '../utils/visualBrief';
 
 export interface ImagePromptBuilderInput {
   postText: string;
-  formData: Pick<FormData, 'platform' | 'aspectRatio' | 'visualStyle' | 'imageQuality' | 'useMascot'>;
+  formData: Pick<FormData, 'platform' | 'aspectRatio' | 'visualStyle' | 'imageQuality' | 'useMascot' | 'audience'>;
   brandVoice: BrandVoiceData | null;
   userId: string;
   visualVibe?: string;
@@ -25,6 +26,7 @@ export interface ImagePromptBuilderResult {
   referenceImages: string[];
   brief: VisualBrief;
   composedMascotPrompt?: string;
+  negativePrompt?: string;
 }
 
 /**
@@ -56,9 +58,6 @@ function resolveImageStyle(
   if (brandVoice?.visualStyle) {
     imageStyle = `${brandVoice.visualStyle}, ${imageStyle}`;
   }
-  if (brandVoice?.brandColors?.length) {
-    imageStyle = `${imageStyle}, brand colors: ${brandVoice.brandColors.join(', ')}`;
-  }
   return imageStyle;
 }
 
@@ -81,21 +80,26 @@ export async function buildImageGenerationInput(
   const imageStyle = resolveImageStyle(formData, brandVoice);
   const useMascot = resolveUseMascot(formData.useMascot, brandVoice, postText);
 
+  const nichePack = resolveNicheContext({
+    userId,
+    brandVoice,
+    audience: formData.audience,
+  }).pack;
+
+  const industryImagePrefix = nichePack?.imagePromptPrefix;
+  const industryMustShow = nichePack?.imageMustShow;
+
   const brief = await buildVisualBrief({
     postText,
     platform: formData.platform,
     imageStyle,
+    brandVoice,
     brandColors: brandVoice?.brandColors,
     visualVibe,
     mascotDescription: useMascot ? brandVoice?.mascotDescription : undefined,
+    industryMustShow,
     userId,
   });
-
-  const industryImagePrefix = resolveNicheContext({
-    userId,
-    brandVoice,
-    audience: undefined,
-  }).pack?.imagePromptPrefix;
 
   const composedImage = composeImagePrompt({
     postText,
@@ -107,26 +111,67 @@ export async function buildImageGenerationInput(
     useMascot,
     postMortemImageHint,
     industryImagePromptPrefix: industryImagePrefix,
+    industryMustShow,
+    textOnImage: brief.textOnImage,
+    headline: brief.headline,
   });
 
-  let imagePrompt = visualBriefToPrompt(brief);
-  if (composedImage.mascotPrompt) {
-    imagePrompt += ` ${composedImage.mascotPrompt}`;
-  }
-  if (postMortemImageHint) {
-    imagePrompt += ` PROVEN STYLE: ${postMortemImageHint}`;
+  let imagePrompt = [
+    visualBriefToPrompt(brief),
+    'ADDITIONAL BRAND, INDUSTRY, PLATFORM, AND POST CONTEXT:',
+    composedImage.prompt,
+    'Preserve semantic fidelity to CONTENT INTENT above. Do not replace required subjects with generic visual metaphors.',
+  ].join('\n\n');
+
+  if (composedImage.referenceImages.length > 0 && composedImage.referenceImageLabels?.length) {
+    const labelCounts: Record<string, number> = {};
+    for (const label of composedImage.referenceImageLabels) {
+      labelCounts[label] = (labelCounts[label] || 0) + 1;
+    }
+    const refDesc = Object.entries(labelCounts)
+      .map(([label, count]) => `${count} ${label}${count > 1 ? 's' : ''}`)
+      .join(', ');
+    imagePrompt += `\n\nREFERENCE IMAGES provided: ${refDesc}. Use them as visual guides for style, composition, and subject fidelity — do not copy them literally.`;
   }
 
   if (imagePrompt.length < 80) {
-    imagePrompt = buildPlatformImagePrompt({
-      postText,
-      platform: formData.platform,
-      imageStyle,
-      visualVibe,
-      mascotPrompt: composedImage.mascotPrompt,
-      postMortemHint: postMortemImageHint,
-    });
+    const fallbackLines: string[] = [
+      buildPlatformImagePrompt({
+        postText,
+        platform: formData.platform,
+        imageStyle,
+        visualVibe,
+        mascotPrompt: composedImage.mascotPrompt,
+        postMortemHint: postMortemImageHint,
+      }),
+    ];
+
+    if (industryMustShow?.length) {
+      fallbackLines.push(`INDUSTRY MUST SHOW: ${industryMustShow.join('; ')}.`);
+    }
+
+    if (brief.contentIntent?.primarySubject) {
+      fallbackLines.push(`CONTENT INTENT — primary subject: ${brief.contentIntent.primarySubject}.`);
+    }
+    if (brief.contentIntent?.requiredObjects?.length) {
+      fallbackLines.push(`Required objects: ${brief.contentIntent.requiredObjects.join(', ')}.`);
+    }
+    if (brief.contentIntent?.forbiddenInterpretations?.length) {
+      fallbackLines.push(`AVOID: ${brief.contentIntent.forbiddenInterpretations.join('; ')}.`);
+    }
+
+    if (composedImage.referenceImages.length > 0) {
+      fallbackLines.push(`REFERENCE IMAGES provided: ${composedImage.referenceImages.length} image(s). Use them as visual guides — do not copy literally.`);
+    }
+
+    imagePrompt = fallbackLines.join(' ');
   }
+
+  const negativePrompt = [
+    ...(brief.avoid || []),
+    ...DEFAULT_IMAGE_NEGATIVE_PROMPT,
+    ...(brief.contentIntent?.forbiddenInterpretations || []),
+  ].join(', ');
 
   const aspectRatio = resolveAspectRatioForPlatform(
     formData.platform,
@@ -147,5 +192,6 @@ export async function buildImageGenerationInput(
     referenceImages: composedImage.referenceImages,
     brief,
     composedMascotPrompt: composedImage.mascotPrompt,
+    negativePrompt,
   };
 }

@@ -61,6 +61,8 @@ describe('brandVoiceLearn', () => {
       logoUrl: 'https://l.png',
       archetype: ToneArchetype.Expert,
       examplesToFollow: ['hook'],
+      productImages: ['https://p.png'],
+      styleImages: ['https://s.png'],
     });
     expect(score).toBe(100);
   });

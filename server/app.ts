@@ -24,6 +24,7 @@ const NOT_FOUND_ENDPOINTS = [
   'GET /health',
   'POST /api/generate-content',
   'POST /api/generate-content-stream',
+  'POST /api/generate-json',
   'POST /api/generate-images',
   'POST /api/generate-video-story',
   'POST /api/optimize-multi-platform',

@@ -165,10 +165,11 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
                 generationType: GenerationType.PostWithImage,
             };
 
-            let imageUrl = await regeneratePostImage(result.postText, regenForm, user.id, {
+            let { imageUrl, visualScore } = await regeneratePostImage(result.postText, regenForm, user.id, {
                 brandVoice,
                 customInstruction,
                 variationSeed: Date.now(),
+                visualVibe: formData._visualVibe,
             });
 
             if (shouldApplyBrandLogo(regenForm.includeLogo) && brandVoice?.settings) {
@@ -177,7 +178,7 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
 
             imageUrl = (await persistImageUrl(imageUrl, user.id)) ?? imageUrl;
 
-            genActions.updateResultImage(imageUrl);
+            genActions.updateResultImage(imageUrl, { visualScore: visualScore ?? null });
             addToast('Nowa grafika została wygenerowana!', NotificationType.Success);
         } catch (e) {
             handleApiError(e, 'errors.generation_failed');
@@ -198,14 +199,19 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
 
     const handleApplyImageEdit = useCallback(async (newImageUrl: string) => {
         if (!user) {
-            genActions.updateResultImage(newImageUrl);
+            genActions.updateResultImage(newImageUrl, { visualScore: null });
             return;
         }
         const persisted = (await persistImageUrl(newImageUrl, user.id, () => {
             addToast('Grafika zapisana lokalnie — nie udało się przesłać do chmury. Będzie dostępna tylko w tej sesji.', NotificationType.Info);
         })) ?? newImageUrl;
-        genActions.updateResultImage(persisted);
+        // Edited image no longer matches previous Visual QA score.
+        genActions.updateResultImage(persisted, { visualScore: null });
     }, [user, genActions, addToast]);
+
+    const handleRestoreImage = useCallback((url: string) => {
+        genActions.restoreResultImage(url);
+    }, [genActions]);
 
     const handleReformatImageForPlatform = useCallback(async (targetPlatform: Platform) => {
         const { result, lastFormData } = useGenerationStore.getState();
@@ -220,7 +226,7 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
             const { brandVoiceProfiles, activeBrandVoiceId } = useDataStore.getState();
             const brandVoice = brandVoiceProfiles.find((p) => p.id === activeBrandVoiceId) ?? null;
 
-            let imageUrl = await regeneratePostImageForPlatform(
+            let { imageUrl, visualScore } = await regeneratePostImageForPlatform(
                 result.postText,
                 lastFormData,
                 targetPlatform,
@@ -233,7 +239,7 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
             }
             imageUrl = (await persistImageUrl(imageUrl, user.id)) ?? imageUrl;
 
-            genActions.updateResultImage(imageUrl);
+            genActions.updateResultImage(imageUrl, { visualScore: visualScore ?? null });
             addToast(`Grafika dostosowana do ${targetPlatform}!`, NotificationType.Success);
         } catch (e) {
             handleApiError(e, 'errors.generation_failed');
@@ -262,6 +268,7 @@ export const useEditorHandlers = ({ addToast, handleApiError }: EditorHandlerDep
         handleApplyHookWithNewImage,
         handleRegenerateImage,
         handleApplyImageEdit,
+        handleRestoreImage,
         handleReformatImageForPlatform,
         handleToggleLiveAssistant,
         handleAddHashtag,

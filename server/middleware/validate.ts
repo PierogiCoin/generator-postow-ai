@@ -25,6 +25,7 @@ export const textGenerationSchema = z.object({
       }).passthrough()),
     }).passthrough()),
   ]),
+  systemInstruction: z.string().max(50000).optional(),
   config: z
     .object({
       temperature: z.number().min(0).max(2).optional(),
@@ -45,11 +46,12 @@ export const imageGenerationSchema = z.object({
   provider: z.enum(['auto', 'together', 'imagen']).optional(),
   quality: z.enum(['standard', 'typography', 'hd']).optional(),
   referenceImages: z.array(z.string().min(1).max(2_000_000)).max(8).optional(),
+  negativePrompt: z.string().max(2000).optional(),
   config: z
     .object({
-      numberOfImages: z.number().min(1).max(1).optional(),
+      numberOfImages: z.number().min(1).max(4).optional(),
       outputMimeType: z.enum(['image/jpeg', 'image/png']).optional(),
-      aspectRatio: z.enum(['1:1', '16:9', '9:16', '4:3', '3:4']).optional(),
+      aspectRatio: z.enum(['1:1', '16:9', '9:16', '4:3', '3:4', '4:5', '3:5']).optional(),
       quality: z.enum(['standard', 'typography', 'hd']).optional(),
       safetyFilterLevel: z.string().optional(),
     })
@@ -166,6 +168,19 @@ export const scoreContentSchema = z.object({
 export const scoreImageSchema = z.object({
   platform: z.string().min(1).max(50),
   briefSummary: z.string().max(4000).optional(),
+  postText: z.string().max(10000).optional(),
+  negativePrompt: z.string().max(2000).optional(),
+  contentIntent: z.object({
+    primarySubject: z.string().max(1000).optional(),
+    requiredObjects: z.array(z.string().max(500)).max(20).optional(),
+    audience: z.string().max(1000).optional(),
+    coreBenefit: z.string().max(1000).optional(),
+    offer: z.string().max(1000).optional(),
+    location: z.string().max(500).optional(),
+    emotion: z.string().max(500).optional(),
+    action: z.string().max(500).optional(),
+    forbiddenInterpretations: z.array(z.string().max(500)).max(20).optional(),
+  }).optional(),
   imageUrl: z.string().max(2_000_000).optional(),
   base64: z.string().max(8_000_000).optional(),
   mimeType: z.string().max(100).optional(),

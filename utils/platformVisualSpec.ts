@@ -1,6 +1,6 @@
 import { Platform, VisualStyle } from '../types';
 
-export type VisualAspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4';
+export type VisualAspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5' | '3:5';
 
 export interface PlatformVisualSpec {
   platform: Platform;
@@ -38,7 +38,7 @@ const SPECS: Record<Platform, PlatformVisualSpec> = {
   [Platform.Instagram]: {
     platform: Platform.Instagram,
     defaultAspectRatio: '1:1',
-    allowedAspectRatios: ['1:1', '4:3', '9:16'],
+    allowedAspectRatios: ['1:1', '4:3', '4:5', '9:16'],
     summaryPl: 'IG feed: kwadrat lub 4:5, żywe kolory, estetyka lifestyle.',
     composition:
       'Square or portrait feed aesthetic, vibrant cohesive palette, lifestyle or product flat-lay, clean negative space.',
@@ -133,7 +133,7 @@ export function resolveAspectRatioForPlatform(
   if (userRatio && spec.allowedAspectRatios.includes(userRatio)) {
     return userRatio;
   }
-  return userRatio || spec.defaultAspectRatio;
+  return spec.defaultAspectRatio;
 }
 
 export function buildPlatformImagePrompt(params: {
@@ -179,7 +179,7 @@ export function isAspectRatioAllowedForPlatform(
 /** Imagen API obsługuje tylko 1:1, 16:9, 9:16 — mapujemy pozostałe proporcje UI. */
 export function mapAspectRatioToApi(ratio?: VisualAspectRatio): '1:1' | '16:9' | '9:16' {
   if (ratio === '16:9') return '16:9';
-  if (ratio === '9:16' || ratio === '3:4') return '9:16';
+  if (ratio === '9:16' || ratio === '3:4' || ratio === '4:5' || ratio === '3:5') return '9:16';
   if (ratio === '4:3') return '16:9';
   return '1:1';
 }

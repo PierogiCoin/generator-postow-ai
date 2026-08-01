@@ -42,14 +42,14 @@ describe('matchIndustryPack', () => {
     expect(matchIndustryPack('Finanse osobiste')?.id).toBe('pl-finanse');
   });
 
-  it('exposes eight industry packs', () => {
-    expect(getAllIndustryPacks()).toHaveLength(8);
+  it('exposes fourteen industry packs', () => {
+    expect(getAllIndustryPacks()).toHaveLength(14);
     expect(getGastroSubNiches()).toHaveLength(4);
   });
 
   it('returns null for unrelated niches', () => {
     expect(matchIndustryPack('marketing')).toBeNull();
-    expect(matchIndustryPack('podróże egzotyczne')).toBeNull();
+    expect(matchIndustryPack('astrologia ezoteryka')).toBeNull();
   });
 });
 
@@ -90,14 +90,14 @@ describe('onboarding industry mapping', () => {
   });
 
   it('buildIndustryFirstPostTopic returns null without pack', () => {
-    expect(buildIndustryFirstPostTopic('podróże', Platform.Instagram)).toBeNull();
+    expect(buildIndustryFirstPostTopic('astrologia ezoteryka', Platform.Instagram)).toBeNull();
   });
 });
 
 describe('server matchIndustryPack (shared source)', () => {
-  it('matches the same gastro pack id and has 8 industry templates', () => {
+  it('matches the same gastro pack id and has 14 industry templates', () => {
     expect(matchServerPack('lokal gastronomiczny')?.id).toBe('pl-lokal');
     expect(matchServerPack('kawiarnia')?.topicIdeas?.[0]).toMatch(/Kawa/i);
-    expect(getTemplatesByCategory('industry')).toHaveLength(8);
+    expect(getTemplatesByCategory('industry')).toHaveLength(14);
   });
 });

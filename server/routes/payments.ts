@@ -8,6 +8,7 @@ import {
   checkCredits,
   getUsageStats,
   PRICING,
+  isStripeConfigured,
 } from '../stripe.js';
 
 const subscriptionCheckoutSchema = z.object({
@@ -89,6 +90,10 @@ router.post(
   requireSupabaseAuth,
   async (req: SupabaseAuthRequest, res: Response, next: NextFunction) => {
     try {
+      if (!isStripeConfigured()) {
+        return res.status(503).json({ error: 'Płatności nie są skonfigurowane. Skontaktuj się z supportem.' });
+      }
+
       const { plan = 'pro', trialDays = 7 } = req.body as { plan?: string; trialDays?: number };
       const userId = req.user!.id;
 

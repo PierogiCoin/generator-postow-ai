@@ -23,28 +23,32 @@ export const errorHandler = (
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: err.message,
-      statusCode: err.statusCode
+      code: err.statusCode,
+      statusCode: err.statusCode,
+      message: err.message,
     });
   }
 
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ error: 'Invalid token' });
+    return res.status(401).json({ error: 'Invalid token', code: 401, statusCode: 401, message: 'Invalid token' });
   }
 
   if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ error: 'Token expired' });
+    return res.status(401).json({ error: 'Token expired', code: 401, statusCode: 401, message: 'Token expired' });
   }
 
   // Validation errors
   if (err.name === 'ValidationError') {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err.message, code: 400, statusCode: 400, message: err.message });
   }
 
   // Default error
   res.status(500).json({
     error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+    code: 500,
+    statusCode: 500,
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 };
 

@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BrandMarkIcon } from './icons/BrandMarkIcon';
 import { useAuth } from '../contexts/AuthContext';
+import { useUIStore } from '../stores/uiStore';
 
 const linkClass =
-  'text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors';
+  'text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer';
 
 export const Footer: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { setIsPricingModalOpen } = useUIStore();
 
   return (
     <footer
@@ -31,9 +33,9 @@ export const Footer: React.FC = () => {
           className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2"
           aria-label={t('footer.ariaLabel')}
         >
-          <a href="#pricing" className={linkClass}>
+          <button type="button" onClick={() => setIsPricingModalOpen(true)} className={linkClass}>
             {t('footer.pricing')}
-          </a>
+          </button>
           <Link to="/terms" className={linkClass}>
             {t('footer.terms')}
           </Link>

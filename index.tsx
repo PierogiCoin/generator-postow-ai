@@ -9,6 +9,9 @@ import { I18nextProvider } from 'react-i18next';
 import i18nPromise, { i18n } from './i18n';
 
 import { setupChunkReloadRecovery, lazyWithRetry } from './utils/chunkReload';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import PageSkeleton from './components/ui/SkeletonLoader';
+import { RoutePrefetcher } from './components/RoutePrefetcher';
 
 setupChunkReloadRecovery();
 
@@ -83,7 +86,11 @@ const router = createBrowserRouter([
 ]);
 
 const AppRouter: React.FC = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 };
 
 
@@ -153,12 +160,13 @@ async function startApp() {
 
     // 4. Renderowanie głównej aplikacji dopiero po udanej inicjalizacji
     root.render(
-      <Suspense fallback={<CenteredSpinner />}>
+      <Suspense fallback={<PageSkeleton />}>
         <I18nextProvider i18n={i18n}>
           <ThemeProvider>
             <AuthProvider>
               <NotificationsProvider>
                 <ToastProvider />
+                <RoutePrefetcher />
                 <AppRouter />
               </NotificationsProvider>
             </AuthProvider>

@@ -4,9 +4,19 @@ import logger from './logger.js';
 import { buildCreditPacksConfig, buildSubscriptionsConfig } from './lib/pricingConfig.js';
 import { resolveUserIdFromInvoice } from './lib/stripeUserResolve.js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  logger.warn('[Stripe] STRIPE_SECRET_KEY is not set — payment endpoints will return 503');
+}
+
+const stripe = new Stripe(stripeSecretKey || 'sk_test_disabled', {
   apiVersion: '2024-11-20.acacia' as Stripe.LatestApiVersion,
 });
+
+export function isStripeConfigured(): boolean {
+  return Boolean(stripeSecretKey);
+}
 
 // ============================================
 // PRICING CONFIGURATION

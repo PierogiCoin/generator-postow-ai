@@ -1,8 +1,10 @@
-import type { FormData, BrandVoiceProfile } from '../types';
+import type { FormData, BrandVoiceProfile, GenerationResult } from '../types';
 import { GenerationType, Platform } from '../types';
 import { generateImages } from './mediaService';
 import { getPlatformVisualSpec } from '../utils/platformVisualSpec';
 import { buildImageGenerationInput } from './imagePromptBuilder';
+import { scoreGeneratedImage } from './visualQualityService';
+import type { VisualBrief } from '../utils/visualBrief';
 
 /** Typy generacji, dla których ma sens (re)generacja grafiki. */
 export function supportsImageGeneration(formData: FormData | null | undefined): boolean {
@@ -13,6 +15,11 @@ export function supportsImageGeneration(formData: FormData | null | undefined): 
   );
 }
 
+export interface RegenerationResult {
+  imageUrl: string;
+  visualScore?: GenerationResult['visualScore'];
+}
+
 export async function regeneratePostImage(
   postText: string,
   formData: FormData,
@@ -21,8 +28,10 @@ export async function regeneratePostImage(
     brandVoice?: BrandVoiceProfile | null;
     customInstruction?: string;
     variationSeed?: number;
+    visualVibe?: string;
+    postMortemImageHint?: string;
   }
-): Promise<string> {
+): Promise<RegenerationResult> {
   const brandVoice = options?.brandVoice?.settings ?? null;
 
   const {
@@ -30,11 +39,15 @@ export async function regeneratePostImage(
     aspectRatio,
     imageQuality,
     referenceImages,
+    brief,
+    negativePrompt,
   } = await buildImageGenerationInput({
     postText,
     formData,
     brandVoice,
     userId,
+    visualVibe: options?.visualVibe,
+    postMortemImageHint: options?.postMortemImageHint,
   });
 
   let imagePrompt = baseImagePrompt;
@@ -54,6 +67,7 @@ export async function regeneratePostImage(
       quality: imageQuality,
       provider: 'auto',
       referenceImages: referenceImages.length ? referenceImages : undefined,
+      negativePrompt,
     },
     userId
   );
@@ -66,7 +80,24 @@ export async function regeneratePostImage(
     throw new Error('Nie udało się wygenerować grafiki.');
   }
 
-  return imageUrl;
+  let visualScore: GenerationResult['visualScore'];
+  try {
+    visualScore = await scoreGeneratedImage({
+      imageUrl: imageUrl.startsWith('http') ? imageUrl : undefined,
+      base64: imageResponse.generatedImages?.[0]?.image?.imageBytes,
+      mimeType: imageResponse.generatedImages?.[0]?.image?.mimeType || 'image/jpeg',
+      platform: formData.platform,
+      briefSummary: `${brief.scene} | ${brief.mood} | ${brief.fluxPrompt.slice(0, 400)}`,
+      postText,
+      contentIntent: brief.contentIntent,
+      negativePrompt,
+      userId,
+    });
+  } catch {
+    // Scoring failed — return without visualScore
+  }
+
+  return { imageUrl, visualScore };
 }
 
 /** Regeneruje grafikę pod inną platformę (repurpose wizualny). */
@@ -79,7 +110,7 @@ export async function regeneratePostImageForPlatform(
     brandVoice?: BrandVoiceProfile | null;
     customInstruction?: string;
   }
-): Promise<string> {
+): Promise<RegenerationResult> {
   const spec = getPlatformVisualSpec(targetPlatform);
   const formData: FormData = {
     ...sourceFormData,

@@ -25,6 +25,10 @@ export function aspectRatioToPixels(
       return { width: 1152, height: 896 };
     case '3:4':
       return { width: 896, height: 1152 };
+    case '4:5':
+      return { width: 896, height: 1120 };
+    case '3:5':
+      return { width: 840, height: 1400 };
     case '1:1':
     default:
       return { width: 1024, height: 1024 };
@@ -52,6 +56,7 @@ export async function generateTogetherImage(params: {
   referenceImages?: string[];
   width?: number;
   height?: number;
+  negativePrompt?: string;
 }): Promise<TogetherImageResult> {
   const apiKey = process.env.TOGETHER_API_KEY?.trim();
   if (!apiKey) {
@@ -75,6 +80,10 @@ export async function generateTogetherImage(params: {
 
   if (params.referenceImages?.length) {
     body.reference_images = params.referenceImages.slice(0, 8);
+  }
+
+  if (params.negativePrompt?.trim()) {
+    body.negative_prompt = params.negativePrompt.trim();
   }
 
   logger.info('[Together] Generating image', {

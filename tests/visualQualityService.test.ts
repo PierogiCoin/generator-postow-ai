@@ -29,6 +29,7 @@ describe('visualQualityService', () => {
         generatedImages: [{ image: { mimeType: 'image/jpeg', imageBytes: 'abc' } }],
       },
       prompt: 'prompt',
+      postText: 'Post about a product benefit',
       brief: {
         scene: 'Scene',
         subjects: ['subject'],
@@ -37,6 +38,14 @@ describe('visualQualityService', () => {
         textOnImage: 'none',
         avoid: ['noise'],
         fluxPrompt: 'flux',
+        contentIntent: {
+          primarySubject: 'product',
+          requiredObjects: ['product'],
+          audience: 'customers',
+          coreBenefit: 'clear product benefit',
+          emotion: 'interest',
+          forbiddenInterpretations: ['unrelated product'],
+        },
       },
       platform: Platform.Instagram,
       aspectRatio: '1:1',
@@ -70,6 +79,7 @@ describe('visualQualityService', () => {
         generatedImages: [{ image: { mimeType: 'image/jpeg', imageBytes: 'old' } }],
       },
       prompt: 'prompt',
+      postText: 'Post about a product benefit',
       brief: {
         scene: 'Scene',
         subjects: [],
@@ -78,6 +88,14 @@ describe('visualQualityService', () => {
         textOnImage: 'none',
         avoid: [],
         fluxPrompt: 'flux',
+        contentIntent: {
+          primarySubject: 'product',
+          requiredObjects: ['product'],
+          audience: 'customers',
+          coreBenefit: 'clear product benefit',
+          emotion: 'interest',
+          forbiddenInterpretations: ['unrelated product'],
+        },
       },
       platform: Platform.Instagram,
       aspectRatio: '1:1',
@@ -89,7 +107,7 @@ describe('visualQualityService', () => {
     expect((result as { visualScore?: { overall: number } }).visualScore?.overall).toBe(40);
   });
 
-  it('zwraca zregenerowany obraz i przenosi visualScore z pierwszej oceny', async () => {
+  it('zwraca zregenerowany obraz, gdy regen ma wyższy visualScore', async () => {
     callApi.mockResolvedValueOnce({
       success: true,
       score: {
@@ -100,6 +118,17 @@ describe('visualQualityService', () => {
         platformFit: 50,
         feedback: ['Boost contrast'],
         improvedPromptHint: 'Use stronger focal point',
+        badge: 'yellow',
+      },
+    }).mockResolvedValueOnce({
+      success: true,
+      score: {
+        overall: 60,
+        thumbStop: 60,
+        brandFit: 60,
+        textLegibility: 60,
+        platformFit: 60,
+        feedback: ['Better contrast'],
         badge: 'yellow',
       },
     });
@@ -116,6 +145,7 @@ describe('visualQualityService', () => {
         generatedImages: [{ image: { mimeType: 'image/jpeg', imageBytes: 'old' } }],
       },
       prompt: 'prompt',
+      postText: 'Post about a product benefit',
       brief: {
         scene: 'Scene',
         subjects: [],
@@ -124,6 +154,14 @@ describe('visualQualityService', () => {
         textOnImage: 'none',
         avoid: [],
         fluxPrompt: 'flux',
+        contentIntent: {
+          primarySubject: 'product',
+          requiredObjects: ['product'],
+          audience: 'customers',
+          coreBenefit: 'clear product benefit',
+          emotion: 'interest',
+          forbiddenInterpretations: ['unrelated product'],
+        },
       },
       platform: Platform.Instagram,
       aspectRatio: '1:1',
@@ -132,6 +170,6 @@ describe('visualQualityService', () => {
     });
 
     expect((result as { publicUrls?: string[] }).publicUrls?.[0]).toBe('https://cdn.example.com/regen.jpg');
-    expect((result as { visualScore?: { overall: number } }).visualScore?.overall).toBe(50);
+    expect((result as { visualScore?: { overall: number } }).visualScore?.overall).toBe(60);
   });
 });

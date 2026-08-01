@@ -31,6 +31,7 @@ export const generateImages = async (
     quality?: ImageQuality;
     provider?: ImageProvider;
     referenceImages?: string[];
+    negativePrompt?: string;
   } = {},
   userId?: string
 ) => {
@@ -42,6 +43,7 @@ export const generateImages = async (
       provider: config.provider || 'auto',
       quality: config.quality || 'standard',
       referenceImages: config.referenceImages?.filter(Boolean).slice(0, 8),
+      negativePrompt: config.negativePrompt,
       config: {
         numberOfImages: config.numberOfImages || 1,
         outputMimeType: config.outputMimeType || 'image/jpeg',

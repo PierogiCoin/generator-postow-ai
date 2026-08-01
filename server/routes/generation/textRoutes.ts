@@ -131,13 +131,18 @@ ${template.includeHashtags ? 'HASHTAGS: [Space-separated hashtags]' : ''}`;
 
 router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
   const userId = getAuthUserId(req);
-  const { model = 'gemini-flash-latest', contents, config } = req.body || {};
+  const { model = 'gemini-flash-latest', contents, config, systemInstruction } = req.body || {};
   const primaryModel = mapModel(model);
   const candidates = modelsWithFallback(primaryModel);
   const inputPreview =
     typeof contents === 'string'
       ? contents
       : JSON.stringify(contents)?.slice(0, 1500);
+
+  const mergedConfig = {
+    ...config,
+    ...(systemInstruction && !config?.systemInstruction ? { systemInstruction } : {}),
+  };
 
   const trace = startGenerationTrace({
     name: 'generate-content',
@@ -152,7 +157,7 @@ router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'),
     let lastError: unknown;
     for (const modelName of candidates) {
       try {
-        const result = await runTextGeneration(modelName, contents, config);
+        const result = await runTextGeneration(modelName, contents, mergedConfig);
         if (modelName !== primaryModel) {
           logger.info(`[generate-content] Fallback ${primaryModel} → ${modelName} succeeded`);
         }
@@ -371,6 +376,68 @@ router.post('/api/generate-ab-variants', textLimiter, ...creditGate('contentOpti
 
   } catch (error: unknown) {
     res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+  }
+});
+
+// JSON generation — like generate-content but forces JSON output via responseMimeType
+router.post('/api/generate-json', textLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
+  const userId = getAuthUserId(req);
+  const { model = 'gemini-flash-latest', contents, config, systemInstruction } = req.body || {};
+  const primaryModel = mapModel(model);
+  const candidates = modelsWithFallback(primaryModel);
+
+  const trace = startGenerationTrace({
+    name: 'generate-json',
+    userId,
+    model: primaryModel,
+    inputPreview: typeof contents === 'string' ? contents : JSON.stringify(contents)?.slice(0, 1500),
+    tags: ['generate-json', 'json'],
+    metadata: { candidates },
+  });
+
+  try {
+    let lastError: unknown;
+    for (const modelName of candidates) {
+      try {
+        const mergedConfig = {
+          ...config,
+          responseMimeType: 'application/json',
+          ...(systemInstruction && !config?.systemInstruction ? { systemInstruction } : {}),
+        };
+        const result = await runTextGeneration(modelName, contents, mergedConfig);
+        if (modelName !== primaryModel) {
+          logger.info(`[generate-json] Fallback ${primaryModel} → ${modelName} succeeded`);
+        }
+        trace.end({ output: result.text, model: modelName });
+
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(result.text);
+        } catch {
+          parsed = { raw: result.text };
+        }
+        return res.json(parsed);
+      } catch (error) {
+        lastError = error;
+        if (!isGeminiQuotaError(error) || modelName === candidates[candidates.length - 1]) {
+          break;
+        }
+        logger.warn(`[generate-json] Quota on ${modelName}, trying ${candidates[candidates.indexOf(modelName) + 1]}`);
+      }
+    }
+
+    trace.end({
+      level: 'ERROR',
+      statusMessage: geminiErrorMessage(lastError),
+      model: primaryModel,
+    });
+    sendGenerationError(res, lastError);
+  } catch (error: unknown) {
+    trace.end({
+      level: 'ERROR',
+      statusMessage: error instanceof Error ? error.message : 'unknown',
+    });
+    sendGenerationError(res, error);
   }
 });
 

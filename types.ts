@@ -144,7 +144,7 @@ export interface FormData {
   audioDescription?: string;
   videoTranscript?: string;
   keywords?: string;
-  aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4";
+  aspectRatio?: "1:1" | "16:9" | "9:16" | "4:3" | "3:4" | "4:5" | "3:5";
   /** FLUX.2-pro (standard) vs FLUX.2-flex (typography / LinkedIn) */
   imageQuality?: "standard" | "typography";
   imageForVideo?: { base64: string, mimeType: string };
@@ -215,6 +215,23 @@ export interface GenerationResult {
   /** Link docelowy CTA (np. strona marki) — używany przy publikacji */
   ctaUrl?: string | null;
   imageUrl: string | null;
+  /** Previous image URLs from regenerations (newest first). */
+  imageHistory?: string[];
+  /** Visual QA score from Gemini Vision (thumb-stop, brand fit, content match, etc.) */
+  visualScore?: {
+    overall: number;
+    thumbStop: number;
+    brandFit: number;
+    textLegibility: number;
+    platformFit: number;
+    contentMatch: number;
+    subjectAccuracy: number;
+    offerMatch: number;
+    audienceMatch: number;
+    feedback: string[];
+    improvedPromptHint?: string;
+    badge: 'red' | 'yellow' | 'green';
+  } | null;
   /** Set when PostWithImage/ABTest ran but image gen failed (text still returned). */
   imageGenerationFailed?: boolean;
   imageGenerationError?: string;
@@ -413,6 +430,14 @@ export interface BrandVoiceSettings {
   mascotName?: string;
   mascotDescription?: string;
   includeMascotInGeneration?: boolean;
+
+  // Reference images for image generation
+  /** Photos of products to use as visual references */
+  productImages?: string[];
+  /** Style / mood / aesthetic reference images */
+  styleImages?: string[];
+  /** Location / interior / environment reference images */
+  locationImages?: string[];
 
   // URL-based extraction
   websiteUrl?: string;

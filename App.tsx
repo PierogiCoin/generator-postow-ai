@@ -414,6 +414,7 @@ export const App: React.FC = () => {
       <AppVersionBanner />
       {creditGuard.prompt}
 
+      {(!isHomePage || user) && (
       <Header
         onUpgradeClick={() => setIsPricingModalOpen(true)}
         onLoginClick={() => setAuthModal('login')}
@@ -431,6 +432,7 @@ export const App: React.FC = () => {
           />
         }
       />
+      )}
 
       <main
         className={`flex-grow mx-auto w-full ${

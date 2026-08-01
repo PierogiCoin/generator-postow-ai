@@ -68,6 +68,9 @@ const emptyProfile: BrandVoiceProfile = {
         brandColors: [],
         logoPosition: 'bottom-right',
         logoSizePercent: 13,
+        productImages: [],
+        styleImages: [],
+        locationImages: [],
     }
 };
 
@@ -189,24 +192,45 @@ const ProfileForm: React.FC<{
     const { addToast } = useNotifications();
     const [isUploading, setIsUploading] = useState<string | null>(null);
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logos' | 'mascots') => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logos' | 'mascots' | 'products' | 'styles' | 'locations') => {
         const file = e.target.files?.[0];
         if (!file || !user) return;
 
         setIsUploading(type);
         try {
             const publicUrl = await uploadBrandAsset(file, type, user.id);
-            const fieldName = type === 'logos' ? 'logoUrl' : 'mascotUrl';
-            setFormData(prev => ({
-                ...prev,
-                settings: { ...prev.settings, [fieldName]: publicUrl }
-            }));
+            if (type === 'logos' || type === 'mascots') {
+                const fieldName = type === 'logos' ? 'logoUrl' : 'mascotUrl';
+                setFormData(prev => ({
+                    ...prev,
+                    settings: { ...prev.settings, [fieldName]: publicUrl }
+                }));
+            } else {
+                const fieldName = type === 'products' ? 'productImages' : type === 'styles' ? 'styleImages' : 'locationImages';
+                setFormData(prev => ({
+                    ...prev,
+                    settings: {
+                        ...prev.settings,
+                        [fieldName]: [...(prev.settings[fieldName] || []), publicUrl].slice(0, 5),
+                    }
+                }));
+            }
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Błąd podczas wgrywania pliku';
             addToast(errorMessage, NotificationType.Error);
         } finally {
             setIsUploading(null);
         }
+    };
+
+    const handleRemoveReferenceImage = (type: 'productImages' | 'styleImages' | 'locationImages', index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            settings: {
+                ...prev.settings,
+                [type]: (prev.settings[type] || []).filter((_, i) => i !== index),
+            }
+        }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -526,6 +550,60 @@ const ProfileForm: React.FC<{
                                 />
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <div className="space-y-4 md:col-span-2">
+                    <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Obrazy Referencyjne (AI gen-grafiki)</label>
+                    <p className="text-[11px] text-slate-500 -mt-2">Wgraj zdjęcia produktów, stylu i lokalizacji — AI użyje ich jako wizualnego punktu odniesienia przy generowaniu grafik.</p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {([
+                            { type: 'products' as const, field: 'productImages' as const, label: 'Produkty', icon: '📦', desc: 'Zdjęcia produktów do naśladowania' },
+                            { type: 'styles' as const, field: 'styleImages' as const, label: 'Styl / mood', icon: '🎨', desc: 'Klimat, estetyka, kolory' },
+                            { type: 'locations' as const, field: 'locationImages' as const, label: 'Lokalizacja', icon: '📍', desc: 'Wnętrze, otoczenie, środowisko' },
+                        ]).map(({ type, field, label, icon, desc }) => (
+                            <div key={type} className="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-extrabold uppercase tracking-widest text-slate-600 dark:text-slate-300">{icon} {label}</span>
+                                    <span className="text-[10px] text-slate-400">{(formData.settings[field] || []).length}/5</span>
+                                </div>
+                                <p className="text-[10px] text-slate-500">{desc}</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {(formData.settings[field] || []).map((url, i) => (
+                                        <div key={`${type}-${i}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 group">
+                                            <img src={url} alt={`${label} ${i + 1}`} className="w-full h-full object-cover" loading="lazy" />
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveReferenceImage(field, i)}
+                                                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                                                aria-label={`Usuń ${label}`}
+                                            >
+                                                <TrashIcon className="w-4 h-4 text-white" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    {(formData.settings[field] || []).length < 5 && (
+                                        <label
+                                            htmlFor={`${type}-upload`}
+                                            className={`w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center cursor-pointer transition-all ${isUploading === type ? 'opacity-50' : 'hover:border-[var(--hero-accent)]'}`}
+                                        >
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={(e) => handleFileUpload(e, type)}
+                                                className="hidden"
+                                                id={`${type}-upload`}
+                                            />
+                                            {isUploading === type ? (
+                                                <span className="text-[10px] text-slate-400">...</span>
+                                            ) : (
+                                                <PlusCircleIcon className="w-5 h-5 text-slate-400" />
+                                            )}
+                                        </label>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 

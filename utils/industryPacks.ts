@@ -32,6 +32,7 @@ export interface IndustryPack {
   subNicheLabel?: string;
   systemInstruction?: string;
   imagePromptPrefix?: string;
+  imageMustShow?: string[];
 }
 
 const TONE_MAP: Record<string, Tone> = {
@@ -68,6 +69,7 @@ export function defToIndustryPack(def: IndustryPackDef, sub?: IndustrySubNicheDe
     subNicheLabel: sub?.label,
     systemInstruction: def.systemInstruction,
     imagePromptPrefix: def.imagePromptPrefix,
+    imageMustShow: def.imageMustShow,
   };
 }
 
@@ -105,7 +107,8 @@ export function applySubNicheToPack(pack: IndustryPack, sub: IndustrySubNicheDef
     subNicheId: sub.id,
     subNicheLabel: sub.label,
     systemInstruction: pack.systemInstruction,
-    imagePromptPrefix: pack.imagePromptPrefix,
+    imagePromptPrefix: sub.imagePromptPrefix ?? pack.imagePromptPrefix,
+    imageMustShow: sub.imageMustShow ?? pack.imageMustShow,
   };
 }
 

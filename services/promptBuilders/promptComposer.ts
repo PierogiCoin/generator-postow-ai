@@ -107,6 +107,9 @@ export interface ComposeImagePromptOptions {
   useMascot?: boolean;
   postMortemImageHint?: string;
   industryImagePromptPrefix?: string;
+  industryMustShow?: string[];
+  textOnImage?: 'none' | 'minimal' | 'headline';
+  headline?: string;
 }
 
 /**
@@ -122,6 +125,7 @@ export function composeImagePrompt(opts: ComposeImagePromptOptions): ComposedIma
     useMascot,
     postMortemImageHint,
     industryImagePromptPrefix,
+    industryMustShow,
   } = opts;
 
   const ctx: ImagePromptContext = {
@@ -142,6 +146,10 @@ export function composeImagePrompt(opts: ComposeImagePromptOptions): ComposedIma
     lines.push(industryImagePromptPrefix);
   }
 
+  if (industryMustShow && industryMustShow.length > 0) {
+    lines.push(`INDUSTRY MUST SHOW: ${industryMustShow.join('; ')}.`);
+  }
+
   lines.push(`High quality social media image for ${platform}.`);
   lines.push(`Topic/context from post: "${postText.substring(0, 200)}".`);
   lines.push(`Visual style: ${imageStyle}.`);
@@ -151,7 +159,23 @@ export function composeImagePrompt(opts: ComposeImagePromptOptions): ComposedIma
   }
 
   if (brandVoice?.brandColors?.length) {
-    lines.push(`Brand colors: ${brandVoice.brandColors.join(', ')}.`);
+    lines.push(`Dominant colors: ${brandVoice.brandColors.join(', ')}.`);
+  }
+
+  if (brandVoice?.description?.trim()) {
+    lines.push(`Brand identity: ${brandVoice.description.trim()}.`);
+  }
+
+  if (brandVoice?.keywords?.trim()) {
+    lines.push(`Brand keywords to reflect visually: ${brandVoice.keywords.trim()}.`);
+  }
+
+  if (brandVoice?.visualStyle?.trim()) {
+    lines.push(`Brand visual style: ${brandVoice.visualStyle.trim()}.`);
+  }
+
+  if (brandVoice?.avoid?.trim()) {
+    lines.push(`Brand visual elements to avoid: ${brandVoice.avoid.trim()}.`);
   }
 
   if (brandResult.mascotPrompt) {
@@ -162,11 +186,18 @@ export function composeImagePrompt(opts: ComposeImagePromptOptions): ComposedIma
     lines.push(`PROVEN STYLE: ${postMortemImageHint}`);
   }
 
-  lines.push('Leave the image clean — no text, letters, watermarks, or logos rendered in the frame (brand assets are added in post-production).');
+  if (opts.textOnImage === 'headline' && opts.headline) {
+    lines.push(`Text policy: include only this short, highly legible headline: "${opts.headline}". No other text, watermarks, or logos.`);
+  } else if (opts.textOnImage === 'minimal') {
+    lines.push('Text policy: minimal short text only if essential. No watermarks or logos; brand assets are added in post-production.');
+  } else {
+    lines.push('Text policy: no text, letters, watermarks, or logos rendered in the frame; brand assets are added in post-production.');
+  }
 
   return {
     prompt: lines.join(' '),
     referenceImages: brandResult.referenceImages,
+    referenceImageLabels: brandResult.referenceImageLabels,
     mascotPrompt: brandResult.mascotPrompt,
   };
 }

@@ -35,6 +35,7 @@ const baseFormData = {
   aspectRatio: '1:1' as const,
   imageQuality: undefined as 'standard' | 'typography' | undefined,
   useMascot: undefined as boolean | 'auto' | undefined,
+  audience: '',
 };
 
 function mockVisualBrief() {

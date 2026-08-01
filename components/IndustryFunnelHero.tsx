@@ -43,8 +43,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
       if (saved.length > 0) return saved;
     }
     const pending = getPendingIndustryIds();
-    if (pending.length > 0) return pending;
-    return getUserIndustryIds();
+    return pending;
   });
   const [customIndustry, setCustomIndustry] = useState('');
   const [saving, setSaving] = useState(false);
@@ -102,7 +101,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
           <span className="text-white font-semibold">{t('home.funnel.pick_label')}</span>
           <span className="text-slate-600">→</span>
           <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 text-slate-400 text-xs font-bold">2</span>
-          <span>{t('home.funnel.step3')}</span>
+          <span>{t('home.funnel.step2')}</span>
         </div>
 
         {/* Industry Card Selector Grid */}
@@ -177,7 +176,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
                 <SparklesIcon className="w-4 h-4" />
                 {t('home.funnel.title')}
               </span>
-              <span className="text-xs text-slate-400">{selected.length + (customIndustry.trim() ? 1 : 0)} wybrana(e)</span>
+              <span className="text-xs text-slate-400">{t('home.funnel.selected_count', { count: selected.length + (customIndustry.trim() ? 1 : 0) })}</span>
             </div>
             <p className="text-sm text-slate-200">
               <span className="text-slate-400">{t('home.funnel.selected_prefix')}</span>{' '}
@@ -201,7 +200,7 @@ export const IndustryFunnelHero: React.FC<IndustryFunnelHeroProps> = ({
               )}
               {selectedPacks.length > 4 && (
                 <span className="px-2.5 py-1 rounded-md bg-white/5 text-xs text-slate-400">
-                  +{selectedPacks.length - 4} więcej
+                  {t('home.funnel.more_count', { count: selectedPacks.length - 4 })}
                 </span>
               )}
             </div>

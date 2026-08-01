@@ -15,8 +15,6 @@ import {
 import { normalizeCtaUrl } from '../utils/publishCaption';
 import { buildAntiSlopBlock } from '../prompts/plAntiSlop';
 import {
-  formatNicheSystemInstruction,
-  formatNicheUserPromptLines,
   resolveNicheContext,
 } from '../utils/nicheContext';
 import { composeTextPrompt } from './promptBuilders';
@@ -373,6 +371,7 @@ export const generatePostDetails = async (
             imageQuality,
             referenceImages,
             brief,
+            negativePrompt,
         } = await buildImageGenerationInput({
             postText,
             formData,
@@ -390,6 +389,7 @@ export const generatePostDetails = async (
                 quality: imageQuality,
                 provider: 'auto',
                 referenceImages: referenceImages.length ? referenceImages : undefined,
+                negativePrompt,
             },
             userId
         ).catch((err: unknown) => {
@@ -405,11 +405,13 @@ export const generatePostDetails = async (
                 imageResponse = await ensureImageQuality({
                     imageResponse,
                     prompt: imagePrompt,
+                    postText,
                     brief,
                     platform: formData.platform,
                     aspectRatio,
                     quality: imageQuality,
                     referenceImages,
+                    negativePrompt,
                     userId,
                 });
             } catch (error: unknown) {
@@ -455,6 +457,7 @@ export const generatePostDetails = async (
         }
 
         const imageUrl = imageResponse.publicUrls?.[0] || `data:image/jpeg;base64,${imageResponse.generatedImages?.[0]?.image?.imageBytes ?? ""}`;
+        const visualScore = (imageResponse as { visualScore?: GenerationResult['visualScore'] }).visualScore ?? null;
 
         try {
             const details = await generateJson<Record<string, unknown>>({
@@ -472,13 +475,13 @@ export const generatePostDetails = async (
 
                 CRITICAL: Return ONLY valid JSON.`,
             }, userId);
-            return { imageUrl, ...details, ...attachBrandCtaUrl(details, brandVoice) };
+            return { imageUrl, visualScore, ...details, ...attachBrandCtaUrl(details, brandVoice) };
 
         } catch (error: unknown) {
             logNonBlockingError('Post details generation failed — returning minimal details', error, {
                 platform: formData.platform,
             });
-            return { imageUrl, hashtags: [], ...attachBrandCtaUrl({}, brandVoice) };
+            return { imageUrl, visualScore, hashtags: [], ...attachBrandCtaUrl({}, brandVoice) };
         }
     }
 
@@ -508,24 +511,24 @@ export const repurposeContent = async (text: string, newPlatform: Platform, user
 };
 
 export const generateABTestVariations = async (formData: FormData, brandVoice: BrandVoiceData | null, userId: string): Promise<[Partial<GenerationResult>, Partial<GenerationResult>]> => {
-    const nicheCtx = resolveNicheContext({ userId, brandVoice, audience: formData.audience });
-    const prompt = `Generate two distinct versions (Variant A and Variant B) for a ${formData.platform} post about: "${formData.topic}".
-    TONE: ${formData.tone}
-    AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
-    ${formatNicheUserPromptLines(nicheCtx)}
-    KEYWORDS: ${formData.keywords}
-    
-    Variant A should focus on: Emotional appeal and benefits.
-    Variant B should focus on: Direct facts and call to action.
-    
-    Return as JSON with structure: { variantA: { postText: string }, variantB: { postText: string } }`;
+    const { contents, config: { systemInstruction } } = await composeTextPrompt({
+        formData,
+        brandVoice,
+        userId,
+    });
+
+    const abInstruction = `${contents}
+
+Generate two distinct versions of this post:
+- Variant A: Emotional appeal and benefits focus
+- Variant B: Direct facts and call to action focus
+
+Return as JSON with structure: { variantA: { postText: string }, variantB: { postText: string } }`;
 
     const response = await generateJson<{ variantA: { postText: string }, variantB: { postText: string } }>({
         model: DEFAULT_FAST_MODEL,
-        contents: prompt,
-        config: {
-            systemInstruction: `You are an elite social media copywriter.${formatNicheSystemInstruction(nicheCtx)}${brandVoice ? ` Follow brand voice: ${JSON.stringify(brandVoice)}.` : ''}\n${buildAntiSlopBlock()}`,
-        },
+        contents: abInstruction,
+        config: { systemInstruction },
     }, userId);
 
     return [
@@ -551,29 +554,31 @@ export const generateHookVariations = async (postText: string, userId: string): 
 
 export const generateOmnichannelPosts = async (formData: FormData, brandVoice: BrandVoiceData | null, userId: string): Promise<OmnichannelPost[]> => {
     const platforms = formData.selectedPlatforms || [Platform.Facebook, Platform.Instagram, Platform.LinkedIn, Platform.X];
-    const nicheCtx = resolveNicheContext({ userId, brandVoice, audience: formData.audience });
+
+    const { contents, config: { systemInstruction } } = await composeTextPrompt({
+        formData,
+        brandVoice,
+        userId,
+    });
+
+    const omniInstruction = `${contents}
+
+TASK: Generate simultaneous posts for these platforms: ${platforms.join(', ')}.
+Each post MUST be perfectly adapted to its platform's style and character limits.
+Include hashtags for each platform.
+
+Return JSON in this format:
+{
+  "posts": [
+    { "platform": "PlatformName", "postText": "content...", "hashtags": ["#tag1", "#tag2"] }
+  ]
+}`;
 
     try {
         const response = await generateJson<{ posts: OmnichannelPost[] }>({
             model: DEFAULT_FAST_MODEL,
-            contents: `Generate simultaneous high-engagement social media posts for multiple platforms about: "${formData.topic}".
-            TARGET AUDIENCE: ${formData.audience || nicheCtx.niche || 'General public'}
-            ${formatNicheUserPromptLines(nicheCtx)}
-            TONE: ${formData.tone}
-            PLATFORMS: ${platforms.join(', ')}
-            
-            Each post MUST be perfectly adapted to its platform's style and character limits.
-            Include hashtags for each platform.
-            
-            Return JSON in this format:
-            {
-              "posts": [
-                { "platform": "PlatformName", "postText": "content...", "hashtags": ["#tag1", "#tag2"] }
-              ]
-            }`,
-            config: {
-                systemInstruction: `You are an elite multi-platform social media strategist.${formatNicheSystemInstruction(nicheCtx)}${brandVoice ? ` Follow brand voice: ${JSON.stringify(brandVoice)}.` : ''}\n${buildAntiSlopBlock()}`,
-            },
+            contents: omniInstruction,
+            config: { systemInstruction },
         }, userId);
         return response.posts;
     } catch (error: unknown) {

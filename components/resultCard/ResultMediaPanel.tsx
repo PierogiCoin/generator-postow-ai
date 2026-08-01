@@ -9,6 +9,8 @@ import { RefreshCwIcon } from '../icons/RefreshCwIcon';
 import { CameraIcon } from '../icons/CameraIcon';
 import { PencilIcon } from '../icons/PencilIcon';
 import { Spinner } from '../ui/LoadingStates';
+import { VisualScoreBadge } from './VisualScoreBadge';
+import { ImageHistoryStrip } from './ImageHistoryStrip';
 
 interface ResultMediaPanelProps {
   result: GenerationResult;
@@ -18,6 +20,7 @@ interface ResultMediaPanelProps {
   onOpenAiStudio: () => void;
   onOpenCreativeStudio: () => void;
   onReformatForPlatform?: (platform: Platform) => void;
+  onRestoreImage?: (url: string) => void;
 }
 
 export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
@@ -28,6 +31,7 @@ export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
   onOpenAiStudio,
   onOpenCreativeStudio,
   onReformatForPlatform,
+  onRestoreImage,
 }) => {
   const { t } = useTranslation();
   const [imagePrompt, setImagePrompt] = useState('');
@@ -85,6 +89,28 @@ export const ResultMediaPanel: React.FC<ResultMediaPanelProps> = ({
             </>
           )}
         </div>
+      )}
+
+      {result.imageHistory && result.imageHistory.length > 0 && onRestoreImage && (
+        <ImageHistoryStrip
+          history={result.imageHistory}
+          currentImageUrl={result.imageUrl}
+          onRestore={onRestoreImage}
+        />
+      )}
+
+      {result.visualScore && result.visualScore.overall > 0 && (
+        <VisualScoreBadge
+          visualScore={result.visualScore}
+          isRegenerating={isRegeneratingImage}
+          onRegenerateByCategory={(category, instruction) => {
+            const hint = result.visualScore?.improvedPromptHint?.trim();
+            const focusBlock = `FIX FOCUS: ${category}. ${instruction}`;
+            onRegenerateImage(
+              hint ? `${focusBlock}\nDirection: ${hint}` : focusBlock
+            );
+          }}
+        />
       )}
 
       {result.visualStrategyTips && (

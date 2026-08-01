@@ -3,6 +3,7 @@ import { FormData, GenerationResult, Platform, ContentType, Tone, BrandVoiceData
 import { STORAGE_KEYS } from '../utils/storageUtils';
 import { composeTextPrompt, composeImagePrompt } from './promptBuilders';
 import { DEFAULT_TEXT_MODEL } from '../shared/config/generationConfig';
+import { resolveNicheContext } from '../utils/nicheContext';
 
 /**
  * Auto Content Pipeline Service
@@ -126,7 +127,7 @@ export async function generateFullPostContent(
 ): Promise<DailyPost> {
   const formData: FormData = {
     topic: `<p>${dailyPost.topic}</p>`,
-    audience: dailyPost.angle,
+    audience: brandVoice?.niche || '',
     tone: Tone.Casual,
     platform,
     contentType: ContentType.Post,
@@ -169,12 +170,15 @@ Make it ready to publish.`;
 
   // Compose image prompt via the modular builder if a visual format was requested
   if (parsed.generatedContent?.postText && dailyPost.format !== 'text-only') {
+    const nichePack = resolveNicheContext({ userId, brandVoice, audience: formData.audience }).pack;
     const composedImage = composeImagePrompt({
       postText: parsed.generatedContent.postText,
       platform,
       imageStyle: VisualStyle.PlatformSpecific,
       brandVoice,
       userId,
+      industryImagePromptPrefix: nichePack?.imagePromptPrefix,
+      industryMustShow: nichePack?.imageMustShow,
     });
     parsed.generatedContent.imagePrompt = composedImage.prompt;
   }
