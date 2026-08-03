@@ -26,7 +26,7 @@ import {
   DEFAULT_TEXT_MODEL,
   QUALITY_GATE_THRESHOLD,
 } from '../shared/config/generationConfig';
-import type { ContentScore } from '../server/contentScoring';
+import type { ContentScore } from '../shared/contentScore';
 
 function attachBrandCtaUrl(
     details: Record<string, unknown>,

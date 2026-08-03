@@ -24,8 +24,6 @@ export interface AuthContextType {
   refreshUserCredits: () => Promise<{ credits: number; plan: UserPlan } | null>;
   setCurrentTeamId: (teamId: string | null) => void;
   refreshTeams: () => Promise<void>;
-  authModal: 'login' | 'signup' | null;
-  setAuthModal: React.Dispatch<React.SetStateAction<'login' | 'signup' | null>>;
   currentTeamId: string | null;
 }
 
@@ -60,7 +58,6 @@ async function wakeUpSupabase(supabase: SupabaseClient): Promise<void> {
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [authModal, setAuthModal] = useState<'login' | 'signup' | null>(null);
   const [loading, setLoading] = useState(true);
   const initialCheckDone = useRef(false);
   const syncInProgress = useRef<string | null>(null);
@@ -438,8 +435,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     refreshUserCredits,
     setCurrentTeamId,
     refreshTeams,
-    authModal,
-    setAuthModal,
     currentTeamId: user?.currentTeamId || null
   };
 

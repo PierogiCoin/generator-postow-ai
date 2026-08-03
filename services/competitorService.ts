@@ -134,11 +134,6 @@ export async function fetchTrackedCompetitors(userId: string): Promise<TrackedCo
   return (data as CompetitorRow[]).map(rowToCompetitor);
 }
 
-/** @deprecated Użyj fetchTrackedCompetitors — synchroniczny odczyt tylko z localStorage */
-export function getTrackedCompetitors(userId?: string): TrackedCompetitor[] {
-  return readLocalCompetitors(userId);
-}
-
 export async function addTrackedCompetitor(
   handle: string,
   platform: Platform,
