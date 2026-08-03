@@ -106,7 +106,13 @@ export async function syncUserSocialPosts(userId: string) {
                         break;
                     case 'tiktok':
                         const tt = new TikTokPublisher(tiktokConfig);
-                        posts = await tt.getPosts(conn.access_token);
+                        posts = (await tt.getPosts(conn.access_token)).map((p) => ({
+                            id: p.id,
+                            content: p.title || '',
+                            url: p.url,
+                            publishedAt: p.publishedAt,
+                            title: p.title,
+                        }));
                         break;
                 }
 

@@ -38,5 +38,9 @@ jobs:
       - name: TypeScript check (frontend)
         run: npm run typecheck
 
+      - name: TypeScript check (server)
+        run: npm run typecheck
+        working-directory: server
+
       - name: Production build
         run: npm run build

@@ -22,6 +22,10 @@ const envSchema = z
     FRONTEND_URL: z.string().optional(),
     PUBLIC_BACKEND_URL: z.string().optional(),
     OAUTH_STATE_SECRET: z.string().optional(),
+    CRON_SECRET: z.string().optional(),
+    STRIPE_SECRET_KEY: z.string().optional(),
+    STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    DISABLE_CREDIT_LIMITS: z.string().optional(),
   })
   .refine((data) => Boolean(data.SUPABASE_URL || data.VITE_SUPABASE_URL), {
     message: 'SUPABASE_URL or VITE_SUPABASE_URL is required',
@@ -44,9 +48,17 @@ export type Env = {
   FRONTEND_URL?: string;
   PUBLIC_BACKEND_URL?: string;
   OAUTH_STATE_SECRET?: string;
+  CRON_SECRET?: string;
+  STRIPE_SECRET_KEY?: string;
+  STRIPE_WEBHOOK_SECRET?: string;
 };
 
 let cachedEnv: Env | null = null;
+
+/** Clear cache — tests only. */
+export function resetEnvCache(): void {
+  cachedEnv = null;
+}
 
 export function loadEnv(): Env {
   if (cachedEnv) return cachedEnv;
@@ -71,6 +83,30 @@ export function loadEnv(): Env {
   const supabaseUrl = parsed.data.SUPABASE_URL || parsed.data.VITE_SUPABASE_URL;
   if (!supabaseUrl) {
     throw new Error('Brak konfiguracji Supabase w .env');
+  }
+
+  const isProd = parsed.data.NODE_ENV === 'production';
+
+  if (isProd) {
+    if (parsed.data.DISABLE_CREDIT_LIMITS === 'true') {
+      throw new Error(
+        'DISABLE_CREDIT_LIMITS=true jest zabronione w production — usuń tę zmienną'
+      );
+    }
+    if (!parsed.data.ALLOWED_ORIGINS?.trim()) {
+      throw new Error('ALLOWED_ORIGINS jest wymagany w production');
+    }
+    if (!parsed.data.OAUTH_STATE_SECRET?.trim()) {
+      throw new Error('OAUTH_STATE_SECRET jest wymagany w production');
+    }
+    if (!parsed.data.CRON_SECRET?.trim()) {
+      throw new Error('CRON_SECRET jest wymagany w production');
+    }
+    if (parsed.data.STRIPE_SECRET_KEY && !parsed.data.STRIPE_WEBHOOK_SECRET) {
+      throw new Error(
+        'STRIPE_WEBHOOK_SECRET jest wymagany w production gdy STRIPE_SECRET_KEY jest ustawiony'
+      );
+    }
   }
 
   cachedEnv = {

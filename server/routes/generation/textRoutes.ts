@@ -17,8 +17,8 @@ import {
   chatGenerationSchema,
   abVariantsSchema,
 } from '../../middleware/validate.js';
+import { rateLimitedCreditGate } from '../../middleware/credits.js';
 import { textLimiter, streamLimiter } from '../../middleware/rateLimiter.js';
-import { creditGate } from '../../middleware/credits.js';
 import { getAuthUserId } from '../../middleware/supabaseAuth.js';
 import { PRICING } from '../../stripe.js';
 import {
@@ -32,7 +32,7 @@ import { buildAntiSlopBlock } from '../../prompts/plAntiSlop.ts';
 export function createTextGenerationRouter(): Router {
   const router = Router();
 
-router.post('/api/generate-batch', textLimiter, ...creditGate('generatePost', (req) =>
+router.post('/api/generate-batch', ...rateLimitedCreditGate(textLimiter, 'generatePost', (req) =>
   PRICING.costs.generatePost * Math.max(1, Array.isArray(req.body?.platforms) ? req.body.platforms.length : 1)
 ), validateRequest(batchGenerationSchema), async (req, res) => {
   try {
@@ -129,7 +129,7 @@ ${template.includeHashtags ? 'HASHTAGS: [Space-separated hashtags]' : ''}`;
   }
 });
 
-router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
+router.post('/api/generate-content', ...rateLimitedCreditGate(textLimiter, 'generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
   const userId = getAuthUserId(req);
   const { model = 'gemini-flash-latest', contents, config, systemInstruction } = req.body || {};
   const primaryModel = mapModel(model);
@@ -192,7 +192,7 @@ router.post('/api/generate-content', textLimiter, ...creditGate('generatePost'),
 });
 
 // ✅ STREAMING (AI Studio) - with text limiter + validation
-router.post('/api/generate-content-stream', streamLimiter, ...creditGate('generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
+router.post('/api/generate-content-stream', ...rateLimitedCreditGate(streamLimiter, 'generatePost'), validateRequest(textGenerationSchema), async (req, res) => {
   const { model = 'gemini-flash-latest', contents, config } = req.body || {};
   const candidates = modelsWithFallback(mapModel(model));
 
@@ -258,7 +258,7 @@ router.post('/api/generate-content-stream', streamLimiter, ...creditGate('genera
 });
 
 // ✅ CHAT (AI Studio) - with text limiter
-router.post('/api/generate', textLimiter, ...creditGate('generatePost'), validateRequest(chatGenerationSchema), async (req, res) => {
+router.post('/api/generate', ...rateLimitedCreditGate(textLimiter, 'generatePost'), validateRequest(chatGenerationSchema), async (req, res) => {
   try {
     const { prompt, history, model = 'gemini-flash-latest' } = req.body;
     const modelName = mapModel(model);
@@ -284,7 +284,7 @@ router.post('/api/generate', textLimiter, ...creditGate('generatePost'), validat
   }
 });
 
-router.post('/api/optimize-multi-platform', textLimiter, ...creditGate('contentOptimization', (req) =>
+router.post('/api/optimize-multi-platform', ...rateLimitedCreditGate(textLimiter, 'contentOptimization', (req) =>
   PRICING.costs.contentOptimization * Math.max(1, Array.isArray(req.body?.targetPlatforms) ? req.body.targetPlatforms.length : 1)
 ), validateRequest(multiPlatformSchema), async (req, res) => {
   const PLATFORM_CHAR_LIMITS: Record<string, number> = {
@@ -363,7 +363,7 @@ router.post('/api/optimize-multi-platform', textLimiter, ...creditGate('contentO
 });
 
 // 🧪 A/B Test Variants - with text limiter
-router.post('/api/generate-ab-variants', textLimiter, ...creditGate('contentOptimization'), validateRequest(abVariantsSchema), async (req, res) => {
+router.post('/api/generate-ab-variants', ...rateLimitedCreditGate(textLimiter, 'contentOptimization'), validateRequest(abVariantsSchema), async (req, res) => {
   try {
     const { originalText, platform, tone } = req.body;
     const systemPrompt = `Create A/B variants for ${platform} (${tone}). Original: "${originalText}". Return JSON: { "variantA": "...", "variantB": "..." }`;

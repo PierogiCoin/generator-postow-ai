@@ -7,7 +7,7 @@ import { retryWithBackoff, withTimeout, sleep } from '../../lib/retry.js';
 import { isGeminiQuotaError, geminiErrorMessage } from '../../lib/geminiErrors.js';
 import { validateRequest, videoGenerationSchema } from '../../middleware/validate.js';
 import { expensiveLimiter } from '../../middleware/rateLimiter.js';
-import { creditGate, videoStoryCreditCost } from '../../middleware/credits.js';
+import { rateLimitedCreditGate, videoStoryCreditCost } from '../../middleware/credits.js';
 import { requireSupabaseAuth, getAuthUserId } from '../../middleware/supabaseAuth.js';
 import {
   createVideoJob,
@@ -21,8 +21,8 @@ import {
 export function createVideoStoryRouter(): Router {
   const router = Router();
 
-router.get('/api/video-story-status/:jobId', requireSupabaseAuth, (req, res) => {
-  const job = getVideoJob(req.params.jobId);
+router.get('/api/video-story-status/:jobId', requireSupabaseAuth, async (req, res) => {
+  const job = await getVideoJob(req.params.jobId);
   if (!job) {
     return res.status(404).json({ message: 'Nie znaleziono zadania generowania wideo' });
   }
@@ -32,12 +32,12 @@ router.get('/api/video-story-status/:jobId', requireSupabaseAuth, (req, res) => 
   return res.json(job);
 });
 
-router.post('/api/generate-video-story', expensiveLimiter, ...creditGate('generateVideo', videoStoryCreditCost), validateRequest(videoGenerationSchema), async (req, res) => {
+router.post('/api/generate-video-story', ...rateLimitedCreditGate(expensiveLimiter, 'generateVideo', videoStoryCreditCost), validateRequest(videoGenerationSchema), async (req, res) => {
   let jobId: string | null = null;
   let httpSent = false;
 
   const deliver = (data: VideoJobResult) => {
-    if (jobId) completeVideoJob(jobId, data);
+    if (jobId) void completeVideoJob(jobId, data);
     if (!httpSent) {
       httpSent = true;
       res.json(data);
@@ -46,7 +46,7 @@ router.post('/api/generate-video-story', expensiveLimiter, ...creditGate('genera
   };
 
   const deliverError = (status: number, message: string, code?: string) => {
-    if (jobId) failVideoJob(jobId, message);
+    if (jobId) void failVideoJob(jobId, message);
     if (!httpSent) {
       httpSent = true;
       res.status(status).json({ message, ...(code ? { code } : {}) });
@@ -97,9 +97,9 @@ router.post('/api/generate-video-story', expensiveLimiter, ...creditGate('genera
     });
 
     if (useAsync) {
-      jobId = createVideoJob(userId, provider);
+      jobId = await createVideoJob(userId, provider);
       httpSent = true;
-      res.status(202).json({ jobId, status: getVideoJob(jobId) });
+      res.status(202).json({ jobId, status: await getVideoJob(jobId) });
     }
 
     const report = jobReporter(jobId);

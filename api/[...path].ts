@@ -4,7 +4,8 @@ import { proxyToBackend } from './_lib/proxy.js';
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '50mb',
+      // Align with backend: most routes 2mb; image proxy needs headroom for base64 refs
+      sizeLimit: '25mb',
     },
   },
   maxDuration: 300,

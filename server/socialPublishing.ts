@@ -159,7 +159,12 @@ export class LinkedInPublisher {
     };
 
     if (imageUrl) {
-      postData.specificContent['com.linkedin.ugc.ShareContent'].media = [{
+      const shareContent = (
+        postData.specificContent as {
+          'com.linkedin.ugc.ShareContent': Record<string, unknown>;
+        }
+      )['com.linkedin.ugc.ShareContent'];
+      shareContent.media = [{
         status: 'READY',
         description: {
           text: 'Shared from Social Media Manager'
@@ -218,7 +223,7 @@ export class LinkedInPublisher {
         });
         return (response.data.elements || []).map((post: LinkedInPost) => ({
           id: post.id,
-          content: post.specificContent['com.linkedin.ugc.ShareContent']?.shareCommentary?.text || '',
+          content: post.specificContent?.['com.linkedin.ugc.ShareContent']?.shareCommentary?.text || '',
           url: `https://www.linkedin.com/feed/update/${post.id}`,
           publishedAt: new Date(post.firstPublishedAt || Date.now())
         }));
@@ -324,11 +329,11 @@ export class TwitterPublisher {
         'tweet.fields': ['created_at', 'text', 'public_metrics']
       });
 
-      return (response.data.data || []).map((tweet: TwitterPost) => ({
+      return (response.data.data || []).map((tweet) => ({
         id: tweet.id,
         content: tweet.text,
         url: `https://twitter.com/i/web/status/${tweet.id}`,
-        publishedAt: new Date(tweet.created_at),
+        publishedAt: new Date(tweet.created_at || Date.now()),
         likes: tweet.public_metrics?.like_count,
         comments: tweet.public_metrics?.reply_count,
         shares: tweet.public_metrics?.retweet_count,

@@ -5,6 +5,7 @@ import {
   LinkedInPublisher,
   TwitterPublisher,
   FacebookPublisher,
+  InstagramPublisher,
   TikTokPublisher,
   YouTubePublisher,
   ThreadsPublisher,
@@ -183,7 +184,20 @@ export function createSocialRouter(): Router {
 
       if (error || !connection) return res.status(404).json({ error: 'Connection not found' });
 
-      let posts: unknown[] = [];
+      let posts: Array<{
+        id: string;
+        content?: string;
+        title?: string;
+        publishedAt: Date | string;
+        url?: string;
+        mediaUrl?: string;
+        likes?: number;
+        comments?: number;
+        shares?: number;
+        views?: number;
+        reach?: number;
+        impressions?: number;
+      }> = [];
       switch (connection.platform) {
         case 'linkedin':
           posts = await new LinkedInPublisher(linkedInConfig).getPosts(connection.access_token, connection.account_id);
@@ -227,7 +241,18 @@ export function createSocialRouter(): Router {
 
       const allPostsPromises = connections.map(async (conn) => {
         try {
-          let posts: unknown[] = [];
+          let posts: Array<{
+            id: string;
+            content?: string;
+            title?: string;
+            publishedAt: string | Date;
+            url?: string;
+            mediaUrl?: string;
+            likes?: number;
+            comments?: number;
+            shares?: number;
+            views?: number;
+          }> = [];
           switch (conn.platform) {
             case 'linkedin':
               posts = await new LinkedInPublisher(linkedInConfig).getPosts(conn.access_token, conn.account_id);

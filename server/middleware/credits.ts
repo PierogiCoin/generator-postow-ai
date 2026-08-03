@@ -105,6 +105,24 @@ export function creditGate(action: CreditAction, cost?: CostResolver): RequestHa
   return [requireSupabaseAuth, assertNoSpoofedUserId, requireCredits(action, cost), deductOnSuccess()];
 }
 
+/**
+ * Auth → rate limit (klucz JWT) → credits.
+ * Limiter musi być PO auth, żeby nie bucketować po IP za NAT.
+ */
+export function rateLimitedCreditGate(
+  limiter: RequestHandler,
+  action: CreditAction,
+  cost?: CostResolver
+): RequestHandler[] {
+  return [
+    requireSupabaseAuth,
+    assertNoSpoofedUserId,
+    limiter,
+    requireCredits(action, cost),
+    deductOnSuccess(),
+  ];
+}
+
 export function videoStoryCreditCost(req: Request): number {
   const duration = Number(req.body?.duration ?? req.body?.videoLength ?? 15);
   if (duration <= 15) return PRICING.costs.videoStoryShort;
