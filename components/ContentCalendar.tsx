@@ -11,7 +11,6 @@ import {
 import { ArrowLeftIcon } from './icons/ArrowLeftIcon';
 import { ArrowRightIcon } from './icons/ArrowRightIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
-import { platformConfig } from '../config/platformConfig';
 import { useDataStore } from '../stores/dataStore';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppHandlers } from '../hooks/useAppHandlers';
@@ -29,7 +28,6 @@ import {
   generateCadenceWeekPlan,
   generateMissingDaySlots,
   mergeCalendarPlans,
-  slotTypeBadge,
   type CadencePresetId,
 } from '../services/calendarCadenceService';
 import {
@@ -62,45 +60,13 @@ import {
   dateInWeekForWeekday,
 } from '../utils/calendarDate';
 import { v4 as uuidv4 } from 'uuid';
-
-const WEEK_DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
-
-function formatCellDate(d: Date): string {
-  return formatDateYMDLocal(d);
-}
-
-function isSameCalendarDay(tsOrDate: number | string, cellDate: Date): boolean {
-  if (typeof tsOrDate === 'string' && /^\d{4}-\d{2}-\d{2}/.test(tsOrDate)) {
-    return tsOrDate.startsWith(formatCellDate(cellDate));
-  }
-  const date1 = new Date(tsOrDate);
-  return (
-    date1.getFullYear() === cellDate.getFullYear() &&
-    date1.getMonth() === cellDate.getMonth() &&
-    date1.getDate() === cellDate.getDate()
-  );
-}
-
-function auditScoreClass(score: number): string {
-  if (score >= 80) return 'bg-emerald-500/90 text-white';
-  if (score >= 50) return 'bg-amber-500/90 text-white';
-  return 'bg-red-500/90 text-white';
-}
-
-function auditScoreLabel(score: number, t: (key: string, fallback: string) => string): string {
-  if (score >= 80) return t('calendar.audit.good', 'Dobry');
-  if (score >= 50) return t('calendar.audit.medium', 'Średni');
-  return t('calendar.audit.poor', 'Słaby');
-}
-
-function isToday(date: Date): boolean {
-  const now = new Date();
-  return (
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate()
-  );
-}
+import { CalendarDayCell } from './calendar/CalendarDayCell';
+import {
+  WEEK_DAY_KEYS,
+  formatCellDate,
+  isSameCalendarDay,
+  isToday,
+} from './calendar/calendarDayUtils';
 
 export const ContentCalendar: React.FC = () => {
   const {
@@ -693,171 +659,32 @@ export const ContentCalendar: React.FC = () => {
   }, [selectedDay, selectedDayIsEmpty, user, isSuggesting, loadSuggestionsForDay]);
 
   const renderDayCell = (date: Date, key: React.Key, tall = false) => {
-    const day = date.getDate();
-    const postsForDay = scheduledPosts
-      .filter((p) => isSameCalendarDay(p.scheduleTimestamp, date))
-      .sort((a, b) => a.scheduleTimestamp - b.scheduleTimestamp);
     const planItemsForDay =
       intelligentCalendarPlan?.filter((p) => isSameCalendarDay(p.date, date)) || [];
     const dayAudit = auditCalendarDay(date, presetId, intelligentCalendarPlan || [], scheduledPosts);
-    const hasContent = postsForDay.length > 0 || planItemsForDay.length > 0;
-    const isSelected =
-      selectedDay !== null && isSameCalendarDay(formatCellDate(selectedDay), date);
-    const today = isToday(date);
 
     return (
-      <div
-        key={key}
-        role="button"
-        tabIndex={0}
-        onClick={() => openDay(date)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            openDay(date);
-          }
-        }}
-        className={`group/day relative border rounded-2xl p-2.5 ${
-          tall ? 'min-h-[160px] sm:min-h-[200px]' : 'min-h-[120px] sm:min-h-[145px]'
-        } flex flex-col cursor-pointer transition-all duration-300 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 ${
-          isSelected
-            ? 'border-cyan-500 bg-cyan-500/10 dark:bg-cyan-500/10 ring-2 ring-cyan-500/30 shadow-lg shadow-cyan-500/10'
-            : dragOverDate && dragOverDate.getTime() === date.getTime()
-              ? 'border-cyan-500 bg-cyan-500/20 dark:bg-cyan-500/20 ring-2 ring-cyan-500/50 scale-[1.02] shadow-xl shadow-cyan-500/20'
-              : today
-                ? 'border-cyan-400/80 bg-gradient-to-br from-cyan-500/10 to-transparent dark:from-cyan-500/15 dark:to-transparent hover:border-cyan-500 shadow-md shadow-cyan-500/5'
-                : 'border-slate-200/70 dark:border-white/10 bg-white/60 dark:bg-slate-950/30 hover:bg-white dark:hover:bg-slate-900/60 hover:border-cyan-500/40 hover:shadow-md'
-        }`}
-        onDragOver={(e) => handleDragOver(e, date)}
-        onDragLeave={(e) => handleDragLeave(e, date)}
-        onDrop={(e) => handleDrop(e, date)}
-      >
-        <div className="flex items-center justify-between gap-1">
-          <span
-            className={`font-bold text-xs ${
-              today ? 'text-cyan-600 dark:text-cyan-400' : 'text-slate-800 dark:text-slate-300'
-            }`}
-          >
-            {calendarView === 'week'
-              ? date.toLocaleDateString(i18n.language?.startsWith('en') ? 'en-GB' : 'pl-PL', { weekday: 'short', day: 'numeric', month: 'short' })
-              : day}
-            {today && (
-              <span className="ml-1 text-[8px] font-black uppercase text-cyan-500">{t('calendar.todayLabel')}</span>
-            )}
-          </span>
-          {dayAudit.slotsTarget.post + dayAudit.slotsTarget.reel + dayAudit.slotsTarget.story > 0 && (
-            <span
-              data-calendar-interactive
-              onClick={(e) => {
-                e.stopPropagation();
-                openDay(date);
-              }}
-              className={`text-[9px] font-black px-1.5 py-0.5 rounded-full ${auditScoreClass(dayAudit.score)}`}
-              title={`${t('calendar.audit.open', 'Audyt dnia')}: ${dayAudit.score} — ${auditScoreLabel(dayAudit.score, t)}`}
-            >
-              {dayAudit.score}
-            </span>
-          )}
-        </div>
-
-        <div className="flex-grow space-y-1.5 mt-1.5 overflow-y-auto pr-0.5 custom-scrollbar max-h-[88px] sm:max-h-none">
-          {postsForDay.slice(0, 3).map((post) => {
-            const postPlatform = post.formData?.platform || Platform.Facebook;
-            const config = platformConfig[postPlatform] || platformConfig[Platform.Facebook];
-            const Icon = config.icon;
-            return (
-              <div
-                key={post.id}
-                data-calendar-interactive
-                draggable
-                onDragStart={(e) => handleDragStart(e, post.id, 'post')}
-                onDragEnd={handleDragEnd}
-                onMouseEnter={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  setHoveredPost({ post, pos: { top: rect.top, left: rect.right + 10 } });
-                }}
-                onMouseLeave={() => setHoveredPost(null)}
-                className="group/post relative p-1.5 rounded-lg bg-slate-100/80 dark:bg-white/5 border-l-[3px] border-l-emerald-500 cursor-grab active:cursor-grabbing hover:shadow-md transition-all border border-slate-200/50 dark:border-white/5"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlers.handleEditScheduledPost(post);
-                }}
-              >
-                <div className="flex items-center gap-1">
-                  <Icon className={`w-3 h-3 flex-shrink-0 ${config.iconColor}`} />
-                  <p className="text-[9px] font-bold truncate text-slate-800 dark:text-white flex-1">
-                    {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || t('calendar.untitled')}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-
-          {planItemsForDay
-            .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
-            .slice(0, Math.max(0, 3 - Math.min(postsForDay.length, 3)))
-            .map((item) => {
-              const config = platformConfig[item.platform] || platformConfig[Platform.Facebook];
-              const Icon = config.icon;
-              return (
-                <div
-                  key={item.id}
-                  data-calendar-interactive
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, item.id, 'plan')}
-                  onDragEnd={handleDragEnd}
-                  className="p-1.5 rounded-lg border border-dashed border-cyan-500/40 bg-cyan-500/5 cursor-grab active:cursor-grabbing"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDay(date);
-                  }}
-                >
-                  <div className="flex items-center gap-1">
-                    <span className="text-[9px] shrink-0">{slotTypeBadge(item.slotType)}</span>
-                    <Icon className="w-3 h-3 shrink-0 text-cyan-500" />
-                    <p className="text-[9px] font-bold truncate text-slate-800 dark:text-white flex-1">
-                      {item.topic}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          {postsForDay.length + planItemsForDay.length > 3 && (
-            <p className="text-[8px] font-bold text-cyan-600 dark:text-cyan-400 text-center">
-              +{postsForDay.length + planItemsForDay.length - 3}{' '}
-              {t('calendar.dayDrawer.more', 'więcej')}
-            </p>
-          )}
-        </div>
-
-        <div className="mt-auto pt-1 flex items-center justify-between gap-1">
-          <div className="flex gap-1">
-            {postsForDay.length > 0 && (
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-emerald-500"
-                title={t('calendar.scheduledCount', { count: postsForDay.length })}
-              />
-            )}
-            {planItemsForDay.length > 0 && (
-              <span
-                className="w-1.5 h-1.5 rounded-full bg-cyan-500"
-                title={t('calendar.planCount', { count: planItemsForDay.length })}
-              />
-            )}
-            {!hasContent && (
-              <span
-                className="text-[8px] font-bold text-amber-500/90 dark:text-amber-400/90"
-                title="Brak zaplanowanych treści dla tego dnia"
-              >
-                ⚠️ Pusty
-              </span>
-            )}
-          </div>
-          <span className="text-[8px] font-bold uppercase tracking-wide text-slate-400 group-hover/day:text-cyan-600 dark:group-hover/day:text-cyan-400 transition-colors">
-            {hasContent ? t('calendar.dayDrawer.open', 'Plan dnia') : '+ Dodaj AI'}
-          </span>
-        </div>
-      </div>
+      <CalendarDayCell
+        date={date}
+        cellKey={key}
+        tall={tall}
+        calendarView={calendarView}
+        locale={i18n.language || 'pl'}
+        scheduledPosts={scheduledPosts}
+        planItems={planItemsForDay}
+        dayAudit={dayAudit}
+        selectedDay={selectedDay}
+        dragOverDate={dragOverDate}
+        t={t}
+        onOpenDay={openDay}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onEditPost={(post) => handlers.handleEditScheduledPost(post)}
+        onHoverPost={setHoveredPost}
+      />
     );
   };
 
