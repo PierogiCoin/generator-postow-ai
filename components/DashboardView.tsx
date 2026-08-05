@@ -13,7 +13,11 @@ import { LightbulbIcon } from './icons/LightbulbIcon';
 import { RocketLaunchIcon } from './icons/RocketLaunchIcon';
 import { ClipboardDocumentListIcon } from './icons/ClipboardDocumentListIcon';
 import { CalendarIcon } from './icons/CalendarIcon';
-import { History, RefreshCw, Wifi, Plus, Send, Zap } from 'lucide-react';
+import {
+    History, RefreshCw, Wifi, Plus, Send, Zap,
+    ArrowRight, Utensils, Scissors, Rocket, ShoppingCart, Dumbbell, Shirt, BookOpen, Wallet,
+    TrendingUp, CalendarDays, Clock
+} from 'lucide-react';
 import { LivePulse } from './LivePulse';
 import { recordActivity, getStreakData } from '../services/streakService';
 
@@ -90,6 +94,18 @@ const StatCard: React.FC<{
     </div>
 );
 
+// Map pack IDs to Lucide icons
+const PACK_LUCIDE_ICONS: Record<string, React.ElementType> = {
+    'pl-lokal': Utensils,
+    'pl-uroda': Scissors,
+    'pl-it': Rocket,
+    'pl-ecommerce': ShoppingCart,
+    'pl-fitness': Dumbbell,
+    'pl-fashion': Shirt,
+    'pl-edukacja': BookOpen,
+    'pl-finanse': Wallet,
+};
+
 const UserIndustriesManager: React.FC<{ userId: string; onChange: () => void }> = ({ userId, onChange }) => {
     const packs = getAllIndustryPacks();
     const [selected, setSelected] = useState<IndustryPackId[]>(() => getUserIndustryIds(userId));
@@ -115,18 +131,19 @@ const UserIndustriesManager: React.FC<{ userId: string; onChange: () => void }> 
     return (
         <section className="space-y-3" aria-label="Twoje branże">
             <div>
-                <h2 className="font-display text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <h2 className="font-bold text-xl text-slate-900 dark:text-white tracking-tight">
                     Twoje branże
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                     {label
-                        ? <>Aktywne: <span className="font-semibold" style={{ color: 'var(--hero-accent)' }}>{label}</span>. Kliknij, żeby dodać lub usunąć.</>
-                        : 'Zaznacz jedną lub kilka branż — treści i pomysły dopasują się do konta.'}
+                        ? <>Aktywne: <span className="font-semibold text-emerald-400">{label}</span>. Kliknij, żeby zmienić.</>
+                        : 'Zaznacz branże — treści i pomysły dopasują się do Twojego konta.'}
                 </p>
             </div>
             <div className="flex flex-wrap gap-2">
                 {packs.map((pack) => {
                     const active = selected.includes(pack.id);
+                    const LucideIcon = PACK_LUCIDE_ICONS[pack.id];
                     return (
                         <button
                             key={pack.id}
@@ -134,15 +151,21 @@ const UserIndustriesManager: React.FC<{ userId: string; onChange: () => void }> 
                             disabled={busy}
                             onClick={() => void handleToggle(pack.id)}
                             aria-pressed={active}
-                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50 ${
+                            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-200 disabled:opacity-50 ${
                                 active
-                                    ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
-                                    : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
+                                    ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.12)]'
+                                    : 'border-white/10 text-slate-400 bg-white/5 hover:border-emerald-500/30 hover:text-emerald-400'
                             }`}
                         >
-                            <span aria-hidden>{pack.icon}</span>
+                            {LucideIcon
+                                ? <LucideIcon className="w-3 h-3" aria-hidden />
+                                : <span aria-hidden className="text-xs">{pack.icon}</span>
+                            }
                             {pack.name}
-                            {active ? <span aria-hidden>✓</span> : <Plus className="w-3 h-3 opacity-60" aria-hidden />}
+                            {active
+                                ? <span className="w-3.5 h-3.5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[9px] font-black">✓</span>
+                                : <Plus className="w-3 h-3 opacity-50" aria-hidden />
+                            }
                         </button>
                     );
                 })}
@@ -202,27 +225,34 @@ const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> =
                 </div>
             </div>
 
+            {/* Bento Grid — kafelki branżowe z glassmorphism */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {packs.slice(0, 8).map((pack) => {
                     const isPrimary = matched?.id === pack.id;
+                    const LucideIcon = PACK_LUCIDE_ICONS[pack.id];
                     return (
                         <button
                             key={pack.id}
                             type="button"
                             onClick={() => openPack(pack)}
-                            className={`text-left p-4 border transition-colors rounded-xl ${
+                            className={`text-left p-5 rounded-3xl border transition-all duration-300 shadow-[0_8px_32px_0_rgba(0,0,0,0.36)] group ${
                                 isPrimary
-                                    ? 'border-[var(--hero-accent)]/50 bg-[var(--hero-accent-soft)]'
-                                    : 'border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 hover:border-[var(--hero-accent)]/40'
+                                    ? 'border-emerald-500/50 bg-gradient-to-br from-emerald-500/[0.12] to-emerald-500/[0.04] backdrop-blur-xl ring-1 ring-emerald-500/50 shadow-[0_0_20px_rgba(16,185,129,0.15)]'
+                                    : 'border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-xl hover:scale-[1.02] hover:border-emerald-500/30'
                             }`}
                         >
-                            <span className="text-2xl" aria-hidden>{pack.icon}</span>
-                            <h3 className="mt-2 text-sm font-bold text-slate-900 dark:text-white">{pack.name}</h3>
-                            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-2">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                                {LucideIcon
+                                    ? <LucideIcon className="w-5 h-5" aria-hidden />
+                                    : <span aria-hidden className="text-lg">{pack.icon}</span>
+                                }
+                            </div>
+                            <h3 className="text-sm font-bold text-white tracking-tight">{pack.name}</h3>
+                            <p className="mt-1.5 text-[11px] text-slate-400 leading-relaxed line-clamp-2">
                                 {pack.description}
                             </p>
-                            <span className="mt-3 inline-block text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--hero-accent)' }}>
-                                Użyj packa →
+                            <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 hover:text-emerald-300 transition-colors">
+                                Generuj posty <ArrowRight className="w-3 h-3" aria-hidden />
                             </span>
                         </button>
                     );
@@ -231,7 +261,7 @@ const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> =
 
             {gastroSubs.length > 0 && (
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-2">
                         Typ lokalu
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -254,13 +284,13 @@ const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> =
                                             setUserNiche(matched.name, userId);
                                         }
                                     }}
-                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-full border transition-all duration-200 ${
                                         selected
-                                            ? 'border-[var(--hero-accent)] text-[var(--hero-accent)] bg-[var(--hero-accent-soft)]'
-                                            : 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:border-[var(--hero-accent)]/40'
+                                            ? 'border-emerald-500/50 text-emerald-400 bg-emerald-500/10'
+                                            : 'border-white/10 text-slate-400 bg-white/5 hover:border-emerald-500/30 hover:text-emerald-400'
                                     }`}
                                 >
-                                    <span aria-hidden>{sub.icon}</span>
+                                    <span aria-hidden className="text-xs">{sub.icon}</span>
                                     {sub.label}
                                 </button>
                             );
@@ -269,8 +299,9 @@ const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> =
                 </div>
             )}
 
+            {/* Szybkie pomysły — klikalne pill buttons */}
             <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 mb-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 mb-3">
                     Szybkie pomysły{activeSub ? ` · ${activeSub.label}` : ''}
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -279,7 +310,7 @@ const IndustryPackSection: React.FC<{ niche: string; userId?: string | null }> =
                             key={idea}
                             type="button"
                             onClick={() => openPack(activePack, idea)}
-                            className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:border-[var(--hero-accent)]/45 hover:text-[var(--hero-accent)] transition-colors"
+                            className="px-3.5 py-1.5 text-xs font-medium rounded-full border border-white/10 bg-white/5 text-slate-300 hover:border-emerald-500/30 hover:text-emerald-400 hover:bg-emerald-500/5 transition-all duration-200"
                         >
                             {idea.length > 56 ? `${idea.slice(0, 54)}…` : idea}
                         </button>
@@ -343,18 +374,15 @@ const StrategyAssistant: React.FC = () => {
     }
 
     return (
-        <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
+        <div className="p-6 md:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="font-display text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">Asystent Strategiczny</h3>
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-[0.14em] mt-1">
-                        Wskazówki dla marki: <span style={{ color: 'var(--hero-accent)' }}>{niche}</span>
+                    <h3 className="font-bold text-xl text-white tracking-tight">Asystent Strategiczny</h3>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.14em] mt-1">
+                        Wskazówki dla marki: <span className="text-emerald-400">{niche}</span>
                     </p>
                 </div>
-                <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
-                    style={{ color: 'var(--hero-accent)' }}
-                >
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center border border-white/10 bg-emerald-500/10 text-emerald-400">
                     <SparklesIcon className="w-5 h-5" />
                 </div>
             </div>
@@ -804,74 +832,69 @@ export const DashboardView: React.FC = () => {
                       <SocialMediaSection />
                       <ReferralCard />
 
-                      <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
-                          <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
-                              <span
-                                  className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
-                                  style={{ color: 'var(--hero-accent)' }}
-                              >
-                                  <CalendarIcon className="w-4 h-4" />
+                      {/* Nadchodzące posty — bento glassmorphism */}
+                      <div className="p-6 md:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
+                          <h3 className="font-bold text-lg text-white mb-6 tracking-tight flex items-center gap-3">
+                              <span className="w-9 h-9 rounded-2xl flex items-center justify-center border border-white/10 bg-emerald-500/10 text-emerald-400">
+                                  <CalendarDays className="w-4 h-4" />
                               </span>
                               {t('dashboard.upcomingPosts')}
                           </h3>
 
                           {scheduledPosts.filter(p => p.status === 'scheduled').length > 0 ? (
-                              <div className="space-y-3">
+                              <div className="space-y-2">
                                   {scheduledPosts
                                       .filter(p => p.status === 'scheduled')
                                       .slice(0, 4)
                                       .map(post => {
                                           const config = platformConfig[post.formData?.platform || Platform.Facebook];
                                           return (
-                                              <div key={post.id} className="group relative flex items-center gap-4 p-4 border border-slate-200/70 dark:border-white/10 hover:border-[var(--hero-accent)]/40 transition-colors">
-                                                  <div className={`w-10 h-10 rounded-lg ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5`}>
+                                              <div key={post.id} className="group relative flex items-center gap-3 p-3.5 rounded-2xl border border-white/10 bg-white/5 hover:border-emerald-500/30 transition-all duration-200">
+                                                  <div className={`w-10 h-10 rounded-xl ${config?.selectedBgColor || 'bg-white/10'} flex items-center justify-center shrink-0 border border-white/10`}>
                                                       {config && <config.icon className={`w-5 h-5 ${config.iconColor}`} />}
                                                   </div>
                                                   <div className="min-w-0 flex-grow">
-                                                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={post.formData?.topic}>
+                                                      <p className="text-sm font-semibold text-white truncate" title={post.formData?.topic}>
                                                           {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
                                                       </p>
-                                                      <div className="flex items-center gap-2.5 mt-1">
-                                                          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--hero-accent)' }}>Automated</span>
-                                                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 tabular-nums">
+                                                      <div className="flex items-center gap-2 mt-0.5">
+                                                          <CalendarDays className="w-3 h-3 text-emerald-400" />
+                                                          <p className="text-[10px] font-medium text-slate-400 tabular-nums">
                                                               {new Date(post.scheduleTimestamp).toLocaleString('pl-PL', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                           </p>
                                                       </div>
                                                   </div>
                                                   <button
                                                       onClick={() => handlers.handlePublishNow(post.result, post.formData?.platform || 'Facebook')}
-                                                      className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 w-9 h-9 flex items-center justify-center text-white rounded-lg transition-all hover:brightness-110"
-                                                      style={{ backgroundColor: 'var(--hero-accent)' }}
+                                                      className="opacity-0 group-hover:opacity-100 w-8 h-8 flex items-center justify-center text-white bg-emerald-500 rounded-xl transition-all hover:bg-emerald-400 shrink-0"
                                                       title="Publikuj teraz"
                                                   >
-                                                      <Send className="w-4 h-4" />
+                                                      <Send className="w-3.5 h-3.5" />
                                                   </button>
                                               </div>
                                           );
                                       })}
                               </div>
                           ) : (
-                              <div className="text-center py-10 border border-dashed border-slate-200 dark:border-white/10">
-                                  <ClockIcon className="w-6 h-6 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                              <div className="text-center py-10 rounded-2xl border border-dashed border-white/10">
+                                  <CalendarDays className="w-6 h-6 text-slate-600 mx-auto mb-3" />
                                   <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Kolejka jest pusta</p>
-                                  <p className="text-[11px] text-slate-400 mt-1">Zaplanuj swój pierwszy post</p>
+                                  <p className="text-[11px] text-slate-500 mt-1">Zaplanuj swój pierwszy post</p>
                               </div>
                           )}
                       </div>
 
-                      <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
-                          <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
-                              <span
-                                  className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
-                                  style={{ color: 'var(--hero-accent)' }}
-                              >
-                                  <ClockIcon className="w-4 h-4" />
+                      {/* Ostatnie dzieła — bento glassmorphism */}
+                      <div className="p-6 md:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.07] to-white/[0.02] backdrop-blur-xl shadow-[0_8px_32px_0_rgba(0,0,0,0.36)]">
+                          <h3 className="font-bold text-lg text-white mb-6 tracking-tight flex items-center gap-3">
+                              <span className="w-9 h-9 rounded-2xl flex items-center justify-center border border-white/10 bg-emerald-500/10 text-emerald-400">
+                                  <Clock className="w-4 h-4" />
                               </span>
                               Ostatnie Dzieła
                           </h3>
 
                           {history.length > 0 ? (
-                              <div className="space-y-3">
+                              <div className="space-y-2">
                                   {history.slice(0, 4).map(item => {
                                       const platform = item.formData?.platform || Platform.Facebook;
                                       const config = platformConfig[platform];
@@ -880,26 +903,27 @@ export const DashboardView: React.FC = () => {
                                           <button
                                               key={item.id}
                                               onClick={() => navigate('/generator', { state: { inspirationItem: item } })}
-                                              className="w-full flex items-center gap-4 p-4 border border-slate-200/70 dark:border-white/10 hover:border-[var(--hero-accent)]/40 transition-colors text-left group"
+                                              className="w-full flex items-center gap-3 p-3.5 rounded-2xl border border-white/10 bg-white/5 hover:border-emerald-500/30 transition-all duration-200 text-left group"
                                           >
-                                              <div className={`w-10 h-10 rounded-lg ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5`}>
-                                                  <Icon className={`w-5 h-5 ${config?.iconColor || ''}`} />
+                                              <div className={`w-10 h-10 rounded-xl ${config?.selectedBgColor || 'bg-white/10'} flex items-center justify-center shrink-0 border border-white/10`}>
+                                                  <Icon className={`w-5 h-5 ${config?.iconColor || 'text-slate-400'}`} />
                                               </div>
                                               <div className="min-w-0">
-                                                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={item.formData?.topic}>
+                                                  <p className="text-sm font-semibold text-white truncate" title={item.formData?.topic}>
                                                       {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
                                                   </p>
-                                                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-1 tabular-nums">
-                                                      {new Date(item.timestamp).toLocaleDateString()}
+                                                  <p className="text-[10px] font-medium text-slate-400 mt-0.5 tabular-nums">
+                                                      {new Date(item.timestamp).toLocaleDateString('pl-PL')}
                                                   </p>
                                               </div>
+                                              <ArrowRight className="w-4 h-4 text-slate-600 group-hover:text-emerald-400 ml-auto shrink-0 transition-colors" />
                                           </button>
                                       );
                                   })}
                               </div>
                           ) : (
                               <div className="text-center py-8">
-                                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Twoja historia jest pusta</p>
+                                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Twoja historia jest pusta</p>
                               </div>
                           )}
                       </div>
