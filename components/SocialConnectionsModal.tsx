@@ -276,7 +276,7 @@ export const SocialConnectionsModal: React.FC<SocialConnectionsModalProps> = ({
             className="text-xs font-bold text-slate-500 hover:text-[var(--hero-accent)] disabled:opacity-50"
           >
             {isRefreshing
-              ? t('socialConnections.refreshing', 'Odświeżam…')
+              ? t('socialConnections.refreshing', 'Odświeżanie…')
               : t('socialConnections.refresh', 'Odśwież połączenia')}
           </button>
         </div>

@@ -522,7 +522,7 @@ const SocialMediaSection: React.FC = () => {
 
             <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
-                    <h3 className="text-xl font-bold text-white tracking-tight">Social Intelligence</h3>
+                    <h3 className="text-xl font-bold text-white tracking-tight">{t('dashboard.social.title', 'Połączone konta')}</h3>
                     <div className="flex items-center gap-2 mt-1">
                         <div className={`w-1.5 h-1.5 rounded-full ${
                           connections.length > 0 && autoPublishOn
@@ -536,7 +536,7 @@ const SocialMediaSection: React.FC = () => {
                                 ? t('dashboard.social.noConnections', 'Brak połączonych kont')
                                 : autoPublishOn
                                   ? t('dashboard.social.autoPublishActive', 'Auto-publikacja: włączona')
-                                  : t('dashboard.social.connectedOnly', 'Konta połączone · auto-publikacja wyłączona')}
+                                  : t('dashboard.social.connectedOnly', 'KONTO POŁĄCZONE · AUTO-PUBLIKACJA: WYŁĄCZONA')}
                         </span>
                     </div>
                 </div>

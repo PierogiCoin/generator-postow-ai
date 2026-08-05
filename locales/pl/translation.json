@@ -1456,12 +1456,12 @@
       "drafts": "Aktywne Szkice",
       "draftsTrend": "Gotowe do wysyłki"
     },
-    "upcomingPosts": "Nadchodzące Posty",
+    "upcomingPosts": "Nadchodzące posty",
     "social": {
-      "title": "Social Intelligence",
+      "title": "Połączone konta",
       "autoPublishActive": "Auto-publikacja: włączona",
       "noConnections": "Brak połączonych kont",
-      "connectedOnly": "Konta połączone · auto-publikacja wyłączona"
+      "connectedOnly": "KONTO POŁĄCZONE · AUTO-PUBLIKACJA: WYŁĄCZONA"
     },
     "weeklySummary": {
       "title": "Podsumowanie tygodnia",
@@ -1639,10 +1639,10 @@
     "open": "Otwórz"
   },
   "inbox": {
-    "title": "Skrzynka engagement",
+    "title": "Skrzynka",
     "subtitle": "{{count}} wątków z komentarzami",
     "refresh": "Odśwież",
-    "refreshing": "Odświeżam…",
+    "refreshing": "Odświeżanie…",
     "loading": "Ładowanie komentarzy z połączonych kont…",
     "empty": "Brak wątków. Połącz konta i opublikuj posty — tu pojawią się te z komentarzami.",
     "smartReply": "Szkic odpowiedzi AI",
@@ -1661,8 +1661,8 @@
     "subtitle": "Artykuł lub feed → gotowy szkic posta w generatorze",
     "urlLabel": "URL artykułu lub RSS",
     "pasteLabel": "Lub wklej treść artykułu",
-    "pastePlaceholder": "Wklej tekst, jeśli URL nie da się pobrać…",
-    "convert": "Zrób post z artykułu",
+    "pastePlaceholder": "Wklej tekst, jeśli URL nie może zostać pobrany...",
+    "convert": "Przekształć w post",
     "converting": "Przetwarzam…",
     "ready": "Gotowy draft — otwieram generator",
     "needContent": "Wklej treść artykułu lub podaj URL, który da się pobrać (RSS/HTML).",
