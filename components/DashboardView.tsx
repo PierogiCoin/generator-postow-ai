@@ -22,6 +22,8 @@ import { QuickCommandBar } from './QuickCommandBar';
 import { platformConfig } from '../config/platformConfig';
 import { WeeklySummary } from './WeeklySummary';
 import { SocialHistoryModal } from './SocialHistoryModal';
+import { ModernCard } from './ui/ModernCard';
+import { LazySection } from '../src/components/ui/LazySection';
 import { useNotifications } from '../hooks/useNotifications';
 import { useAppHandlers } from '../hooks/useAppHandlers';
 
@@ -70,21 +72,20 @@ const StatCard: React.FC<{
     value: number | string,
     trend?: string,
 }> = ({ icon: Icon, label, value, trend }) => (
-    <div className="p-6 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70 flex flex-col gap-5">
-        <div
-            className="w-11 h-11 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
-            style={{ color: 'var(--hero-accent)' }}
-        >
-            <Icon className="w-5 h-5" />
-        </div>
-        <div>
-            <p className="font-display text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">{value}</p>
-            <div className="flex items-center justify-between mt-2 gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">{label}</p>
-                {trend ? (
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">{trend}</span>
-                ) : null}
+    <div className="flex flex-col justify-between p-6 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl hover:border-emerald-500/30 transition-all duration-300 shadow-xl group">
+        <div className="flex items-center justify-between">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-white/5 text-emerald-400 group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                <Icon className="w-6 h-6" />
             </div>
+            {trend && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    {trend}
+                </span>
+            )}
+        </div>
+        <div className="mt-6">
+            <p className="font-display text-4xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mt-2">{label}</p>
         </div>
     </div>
 );
@@ -614,45 +615,57 @@ export const DashboardView: React.FC = () => {
     const quickPlaceholder = nichePack?.topicIdeas[0]
         ?? 'Np. 3 wskazówki na zwiększenie sprzedaży w restauracji...';
 
+    const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMousePos({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+        });
+    };
+
     return (
         <div className="space-y-8 animate-fade-in pb-16">
             <TrialBanner />
-            <TrialBanner />
-            {/* Redesigned Hero Header with Central AI Generator Entry */}
-            <header className="relative py-10 md:py-14 px-6 md:px-12 rounded-[2rem] border border-slate-200/80 dark:border-white/10 bg-gradient-to-br from-[#071018] via-[#0a1628] to-[#0d1f33] text-white shadow-2xl overflow-hidden">
-                <div className="absolute inset-0 home-grid-bg opacity-30 pointer-events-none" aria-hidden="true" />
+            {/* Bento Grid AI Content Pro Hero Header z efektem Spotlight */}
+            <header
+                onMouseMove={handleMouseMove}
+                className="relative py-12 md:py-16 px-6 md:px-12 rounded-3xl border border-white/10 bg-gradient-to-br from-[#071018]/90 via-[#0b1728]/90 to-[#0e2137]/90 text-white shadow-2xl overflow-hidden backdrop-blur-xl group"
+            >
+                {/* Spotlight background effect */}
                 <div
-                    className="absolute inset-0 pointer-events-none opacity-60"
+                    className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
                     style={{
-                        background:
-                            'radial-gradient(ellipse 80% 80% at 85% 20%, rgba(29, 155, 240, 0.22), transparent 60%)',
+                        background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(16, 185, 129, 0.15), transparent 80%)`,
                     }}
                     aria-hidden="true"
                 />
+                <div className="absolute inset-0 home-grid-bg opacity-20 pointer-events-none" aria-hidden="true" />
 
                 <div className="relative z-10 space-y-8 max-w-4xl mx-auto text-center md:text-left">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                                 {t('dashboard.systemOnline')}
                             </span>
                             {streak.currentStreak > 0 && (
-                                <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
-                                    {t('dashboard.streakDays', { count: streak.currentStreak })}
+                                <span className="px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-extrabold flex items-center gap-1 shadow-sm backdrop-blur-md" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
+                                    🔥 {t('dashboard.streakDays', { count: streak.currentStreak })}
                                 </span>
                             )}
                         </div>
                     </div>
 
                     <div>
-                        <h1 className="font-display text-3xl md:text-5xl font-black tracking-tight leading-tight">
+                        <h1 className="font-display text-4xl md:text-6xl font-black tracking-tight leading-tight">
                             Witaj ponownie,{' '}
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-sky-400 via-blue-400 to-indigo-400">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 animate-gradient">
                                 {user.name.split(' ')[0]}
                             </span>!
                         </h1>
-                        <p className="text-base text-slate-300 mt-2 max-w-2xl leading-relaxed">
+                        <p className="text-base text-slate-300 mt-3 max-w-2xl leading-relaxed">
                             {nichePack
                                 ? `Szybka ścieżka dla ${nichePack.name}: wybierz pomysł poniżej albo wpisz własny temat.`
                                 : 'O czym ma być Twój dzisiejszy viralowy post? Wpisz temat poniżej i pozwól AI wykonać pracę.'}
@@ -660,9 +673,9 @@ export const DashboardView: React.FC = () => {
                     </div>
 
                     {/* Central Quick Prompt Input Bar */}
-                    <div className="p-2.5 rounded-2xl bg-white/10 dark:bg-slate-900/80 border border-white/20 backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row items-center gap-2">
+                    <div className="p-3 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row items-center gap-2 focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
                         <div className="flex-1 flex items-center gap-3 px-4 w-full">
-                            <SparklesIcon className="w-5 h-5 text-sky-400 shrink-0" />
+                            <SparklesIcon className="w-5.5 h-5.5 text-emerald-400 shrink-0 animate-pulse" />
                             <input
                                 type="text"
                                 placeholder={quickPlaceholder}
@@ -678,9 +691,10 @@ export const DashboardView: React.FC = () => {
                                         });
                                     }
                                 }}
-                                className="w-full bg-transparent text-white placeholder-slate-400 text-sm font-medium focus:outline-none py-2.5"
+                                className="w-full bg-transparent text-white placeholder-slate-400 text-sm md:text-base font-medium focus:outline-none py-2.5"
                             />
                         </div>
+                        {/* Button z efektem Shimmer Glow */}
                         <button
                             type="button"
                             onClick={(e) => {
@@ -694,10 +708,55 @@ export const DashboardView: React.FC = () => {
                                     },
                                 });
                             }}
-                            className="w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-sm text-white bg-[var(--hero-accent)] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-sky-500/25 shrink-0 flex items-center justify-center gap-2"
+                            className="relative group/btn overflow-hidden w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-sm text-white bg-emerald-500 hover:bg-emerald-400 active:scale-95 transition-all shadow-lg shadow-emerald-500/25 shrink-0 flex items-center justify-center gap-2"
                         >
+                            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" />
                             <Send className="w-4 h-4" />
-                            Generuj Post
+                            <span>Generuj Post</span>
+                        </button>
+                    </div>
+
+                    {/* Quick Action Navigation Chips */}
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/generator')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white backdrop-blur-md transition-all active:scale-95 hover:scale-105 shadow-sm"
+                        >
+                            <Zap className="w-3.5 h-3.5 text-amber-400" />
+                            Nowy Post
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/calendar')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white backdrop-blur-md transition-all active:scale-95 hover:scale-105 shadow-sm"
+                        >
+                            <CalendarIcon className="w-3.5 h-3.5 text-cyan-400" />
+                            Kalendarz
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/analytics')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white backdrop-blur-md transition-all active:scale-95 hover:scale-105 shadow-sm"
+                        >
+                            <TrendingUpIcon className="w-3.5 h-3.5 text-emerald-400" />
+                            Analityka
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/trends')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white backdrop-blur-md transition-all active:scale-95 hover:scale-105 shadow-sm"
+                        >
+                            <RocketLaunchIcon className="w-3.5 h-3.5 text-pink-400" />
+                            Trendy
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/strategist')}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold bg-white/5 hover:bg-white/10 border border-white/10 text-white backdrop-blur-md transition-all active:scale-95 hover:scale-105 shadow-sm"
+                        >
+                            <SparklesIcon className="w-3.5 h-3.5 text-purple-400" />
+                            Strateg AI
                         </button>
                     </div>
                 </div>
@@ -728,123 +787,125 @@ export const DashboardView: React.FC = () => {
                 />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                <div className="lg:col-span-2 space-y-8">
-                    <WeeklySummary />
-                    <ApprovalQueuePanel />
-                    <EngagementInboxPanel />
-                    <RssToPostPanel />
-                    <ProductToPostPanel />
-                    <BrandMemoryQuickCard />
-                    <StrategyAssistant />
-                </div>
-                <div className="lg:col-span-1 space-y-8">
-                    <OnboardingChecklist />
-                    <LivePulse />
-                    <SocialMediaSection />
-                    <ReferralCard />
+            <LazySection minHeight="h-96">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  <div className="lg:col-span-2 space-y-8">
+                      <WeeklySummary />
+                      <ApprovalQueuePanel />
+                      <EngagementInboxPanel />
+                      <RssToPostPanel />
+                      <ProductToPostPanel />
+                      <BrandMemoryQuickCard />
+                      <StrategyAssistant />
+                  </div>
+                  <div className="lg:col-span-1 space-y-8">
+                      <OnboardingChecklist />
+                      <LivePulse />
+                      <SocialMediaSection />
+                      <ReferralCard />
 
-                    <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
-                        <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
-                            <span
-                                className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
-                                style={{ color: 'var(--hero-accent)' }}
-                            >
-                                <CalendarIcon className="w-4 h-4" />
-                            </span>
-                            {t('dashboard.upcomingPosts')}
-                        </h3>
+                      <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
+                          <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
+                              <span
+                                  className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
+                                  style={{ color: 'var(--hero-accent)' }}
+                              >
+                                  <CalendarIcon className="w-4 h-4" />
+                              </span>
+                              {t('dashboard.upcomingPosts')}
+                          </h3>
 
-                        {scheduledPosts.filter(p => p.status === 'scheduled').length > 0 ? (
-                            <div className="space-y-3">
-                                {scheduledPosts
-                                    .filter(p => p.status === 'scheduled')
-                                    .slice(0, 4)
-                                    .map(post => {
-                                        const config = platformConfig[post.formData?.platform || Platform.Facebook];
-                                        return (
-                                            <div key={post.id} className="group relative flex items-center gap-4 p-4 border border-slate-200/70 dark:border-white/10 hover:border-[var(--hero-accent)]/40 transition-colors">
-                                                <div className={`w-10 h-10 rounded-lg ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5`}>
-                                                    {config && <config.icon className={`w-5 h-5 ${config.iconColor}`} />}
-                                                </div>
-                                                <div className="min-w-0 flex-grow">
-                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={post.formData?.topic}>
-                                                        {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
-                                                    </p>
-                                                    <div className="flex items-center gap-2.5 mt-1">
-                                                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--hero-accent)' }}>Automated</span>
-                                                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 tabular-nums">
-                                                            {new Date(post.scheduleTimestamp).toLocaleString('pl-PL', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    onClick={() => handlers.handlePublishNow(post.result, post.formData?.platform || 'Facebook')}
-                                                    className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 w-9 h-9 flex items-center justify-center text-white rounded-lg transition-all hover:brightness-110"
-                                                    style={{ backgroundColor: 'var(--hero-accent)' }}
-                                                    title="Publikuj teraz"
-                                                >
-                                                    <Send className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-10 border border-dashed border-slate-200 dark:border-white/10">
-                                <ClockIcon className="w-6 h-6 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Kolejka jest pusta</p>
-                                <p className="text-[11px] text-slate-400 mt-1">Zaplanuj swój pierwszy post</p>
-                            </div>
-                        )}
-                    </div>
+                          {scheduledPosts.filter(p => p.status === 'scheduled').length > 0 ? (
+                              <div className="space-y-3">
+                                  {scheduledPosts
+                                      .filter(p => p.status === 'scheduled')
+                                      .slice(0, 4)
+                                      .map(post => {
+                                          const config = platformConfig[post.formData?.platform || Platform.Facebook];
+                                          return (
+                                              <div key={post.id} className="group relative flex items-center gap-4 p-4 border border-slate-200/70 dark:border-white/10 hover:border-[var(--hero-accent)]/40 transition-colors">
+                                                  <div className={`w-10 h-10 rounded-lg ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5`}>
+                                                      {config && <config.icon className={`w-5 h-5 ${config.iconColor}`} />}
+                                                  </div>
+                                                  <div className="min-w-0 flex-grow">
+                                                      <p className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={post.formData?.topic}>
+                                                          {post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
+                                                      </p>
+                                                      <div className="flex items-center gap-2.5 mt-1">
+                                                          <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: 'var(--hero-accent)' }}>Automated</span>
+                                                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 tabular-nums">
+                                                              {new Date(post.scheduleTimestamp).toLocaleString('pl-PL', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                                          </p>
+                                                      </div>
+                                                  </div>
+                                                  <button
+                                                      onClick={() => handlers.handlePublishNow(post.result, post.formData?.platform || 'Facebook')}
+                                                      className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 w-9 h-9 flex items-center justify-center text-white rounded-lg transition-all hover:brightness-110"
+                                                      style={{ backgroundColor: 'var(--hero-accent)' }}
+                                                      title="Publikuj teraz"
+                                                  >
+                                                      <Send className="w-4 h-4" />
+                                                  </button>
+                                              </div>
+                                          );
+                                      })}
+                              </div>
+                          ) : (
+                              <div className="text-center py-10 border border-dashed border-slate-200 dark:border-white/10">
+                                  <ClockIcon className="w-6 h-6 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Kolejka jest pusta</p>
+                                  <p className="text-[11px] text-slate-400 mt-1">Zaplanuj swój pierwszy post</p>
+                              </div>
+                          )}
+                      </div>
 
-                    <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
-                        <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
-                            <span
-                                className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
-                                style={{ color: 'var(--hero-accent)' }}
-                            >
-                                <ClockIcon className="w-4 h-4" />
-                            </span>
-                            Ostatnie Dzieła
-                        </h3>
+                      <div className="p-6 md:p-8 border border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0a1220]/70">
+                          <h3 className="font-display text-lg font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight flex items-center gap-3">
+                              <span
+                                  className="w-9 h-9 rounded-lg flex items-center justify-center border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5"
+                                  style={{ color: 'var(--hero-accent)' }}
+                              >
+                                  <ClockIcon className="w-4 h-4" />
+                              </span>
+                              Ostatnie Dzieła
+                          </h3>
 
-                        {history.length > 0 ? (
-                            <div className="space-y-3">
-                                {history.slice(0, 4).map(item => {
-                                    const platform = item.formData?.platform || Platform.Facebook;
-                                    const config = platformConfig[platform];
-                                    const Icon = config?.icon || PostIcon;
-                                    return (
-                                        <button
-                                            key={item.id}
-                                            onClick={() => navigate('/generator', { state: { inspirationItem: item } })}
-                                            className="w-full flex items-center gap-4 p-4 border border-slate-200/70 dark:border-white/10 hover:border-[var(--hero-accent)]/40 transition-colors text-left group"
-                                        >
-                                            <div className={`w-10 h-10 rounded-lg ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5`}>
-                                                <Icon className={`w-5 h-5 ${config?.iconColor || ''}`} />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={item.formData?.topic}>
-                                                    {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
-                                                </p>
-                                                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-1 tabular-nums">
-                                                    {new Date(item.timestamp).toLocaleDateString()}
-                                                </p>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8">
-                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Twoja historia jest pusta</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
+                          {history.length > 0 ? (
+                              <div className="space-y-3">
+                                  {history.slice(0, 4).map(item => {
+                                      const platform = item.formData?.platform || Platform.Facebook;
+                                      const config = platformConfig[platform];
+                                      const Icon = config?.icon || PostIcon;
+                                      return (
+                                          <button
+                                              key={item.id}
+                                              onClick={() => navigate('/generator', { state: { inspirationItem: item } })}
+                                              className="w-full flex items-center gap-4 p-4 border border-slate-200/70 dark:border-white/10 hover:border-[var(--hero-accent)]/40 transition-colors text-left group"
+                                          >
+                                              <div className={`w-10 h-10 rounded-lg ${config?.selectedBgColor || 'bg-slate-100'} flex items-center justify-center shrink-0 border border-slate-200/50 dark:border-white/5`}>
+                                                  <Icon className={`w-5 h-5 ${config?.iconColor || ''}`} />
+                                              </div>
+                                              <div className="min-w-0">
+                                                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate" title={item.formData?.topic}>
+                                                      {item.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}
+                                                  </p>
+                                                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-1 tabular-nums">
+                                                      {new Date(item.timestamp).toLocaleDateString()}
+                                                  </p>
+                                              </div>
+                                          </button>
+                                      );
+                                  })}
+                              </div>
+                          ) : (
+                              <div className="text-center py-8">
+                                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Twoja historia jest pusta</p>
+                              </div>
+                          )}
+                      </div>
+                  </div>
+              </div>
+            </LazySection>
         </div>
     );
 };
