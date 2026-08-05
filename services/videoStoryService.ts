@@ -1,6 +1,6 @@
 import type { GenerationResult } from '../types';
 import type { VideoStoryStyle, VideoStoryProvider } from '../components/VideoStoryModal';
-import { getLongRunningApiBaseUrl, getApiAuthHeaders } from './apiClient';
+import { getApiBaseUrl, getApiAuthHeaders } from './apiClient';
 
 /** Timeout dopasowany do Luma/Veo polling (~3–5 min) + bufor */
 const VIDEO_STORY_TIMEOUT_MS = 10 * 60 * 1000;
@@ -51,7 +51,7 @@ export async function fetchVideoStoryStatus(
   userId?: string
 ): Promise<VideoStoryProgressStatus & { result?: VideoStoryResponse }> {
   const authHeaders = await getApiAuthHeaders(userId);
-  const res = await fetch(`${getLongRunningApiBaseUrl()}/api/video-story-status/${jobId}`, {
+  const res = await fetch(`${getApiBaseUrl({ longRunning: true })}/api/video-story-status/${jobId}`, {
     headers: authHeaders,
     credentials: 'include',
   });
@@ -122,7 +122,7 @@ export const generateVideoStory = async (
 
   try {
     const authHeaders = await getApiAuthHeaders(userId);
-    const startRes = await fetch(`${getLongRunningApiBaseUrl()}/api/generate-video-story`, {
+    const startRes = await fetch(`${getApiBaseUrl({ longRunning: true })}/api/generate-video-story`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

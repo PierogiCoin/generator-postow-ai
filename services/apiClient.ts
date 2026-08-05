@@ -13,19 +13,14 @@ import { getSupabase } from './supabaseClient';
 export { extractJson, markQuotaDepleted, clearQuotaDepleted, isQuotaDepleted };
 export { applyAiLanguage, getAppLanguageCode, getAiLanguageInstruction, getAppLocale, resolveAiLanguageCode } from '../utils/aiLanguage';
 
-const isLocalHostname = (hostname: string) =>
-    hostname === 'localhost' || hostname === '127.0.0.1';
-
-/** Ignoruje localhost w env, gdy app działa na produkcji (np. po lokalnym vercel build). */
+/** Sanitizes env API URLs: strips trailing `/api` and rejects loopback addresses. */
 const sanitizeEnvApiUrl = (raw: string | undefined): string | undefined => {
     if (!raw?.trim()) return undefined;
     const url = raw.trim().replace(/\/api$/, '');
     if (!url) return undefined;
 
-    if (typeof window !== 'undefined' && !isLocalHostname(window.location.hostname)) {
-        if (url.includes('localhost') || url.includes('127.0.0.1')) {
-            return undefined;
-        }
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+        return undefined;
     }
     return url;
 };
@@ -65,16 +60,8 @@ export const resolveApiBaseUrl = ({ longRunning = false }: ResolveApiOptions = {
     return '';
 };
 
-export function getApiBaseUrl(): string {
-    return resolveApiBaseUrl();
-}
-
-/**
- * Długie requesty (wideo / multi-platform) — preferuj bezpośredni URL backendu
- * (omija limit czasu proxy Vercel). Bez env → same-origin /api (proxy BACKEND_URL).
- */
-export function getLongRunningApiBaseUrl(): string {
-    return resolveApiBaseUrl({ longRunning: true });
+export function getApiBaseUrl({ longRunning = false }: ResolveApiOptions = {}): string {
+    return resolveApiBaseUrl({ longRunning });
 }
 
 /** @deprecated Użyj getApiBaseUrl() — wartość liczona przy imporcie może być myląca w testach. */

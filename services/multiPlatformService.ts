@@ -1,6 +1,6 @@
 import { Platform, Tone } from '../types';
 import type { PlatformOptimization } from '../components/MultiPlatformOptimizer';
-import { getApiBaseUrl, getLongRunningApiBaseUrl, getApiAuthHeaders } from './apiClient';
+import { getApiBaseUrl, getApiAuthHeaders } from './apiClient';
 
 export interface MultiPlatformRequest {
   originalText: string;
@@ -28,7 +28,7 @@ export const optimizeForPlatforms = async (
 
   try {
     const authHeaders = await getApiAuthHeaders(userId);
-    const response = await fetch(`${getLongRunningApiBaseUrl()}/api/optimize-multi-platform`, {
+    const response = await fetch(`${getApiBaseUrl({ longRunning: true })}/api/optimize-multi-platform`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
