@@ -30,29 +30,38 @@ const sanitizeEnvApiUrl = (raw: string | undefined): string | undefined => {
     return url;
 };
 
-export const resolveApiBaseUrl = (): string => {
-    if (typeof window !== 'undefined') {
-        const { protocol, hostname } = window.location;
+type ResolveApiOptions = {
+    longRunning?: boolean;
+};
 
-        // Lokalny dev: zawsze przez proxy Vite (/api → :3001)
-        if (isLocalHostname(hostname)) {
-            return '';
-        }
-
-        if (/\.app\.github\.dev$/.test(hostname)) {
-            const autoHost = hostname.replace(/-(\d+)\.app\.github\.dev$/, (_suffix, p1) => {
-                const port = Number(p1) || 3000;
-                const newPort = port + 1;
-                return `-${newPort}.app.github.dev`;
-            });
-            return `${protocol}//${autoHost}`;
-        }
+/**
+ * Single resolver for the backend API base URL.
+ *
+ * Precedence:
+ * 1. Local Vite dev → '' (uses the Vite proxy /api → localhost:3001).
+ * 2. VITE_LONG_RUNNING_API_BASE_URL (only when longRunning = true).
+ * 3. VITE_API_BASE_URL.
+ * 4. Same-origin /api (e.g. Vercel serverless → Railway).
+ *
+ * Production URLs containing 'localhost' or '127.0.0.1' are ignored to avoid
+ * accidentally bundling a development backend address into the production build.
+ */
+export const resolveApiBaseUrl = ({ longRunning = false }: ResolveApiOptions = {}): string => {
+    if (import.meta.env.DEV) {
+        return '';
     }
 
-    const envUrl = sanitizeEnvApiUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
+    const envKey = longRunning ? 'VITE_LONG_RUNNING_API_BASE_URL' : 'VITE_API_BASE_URL';
+    const fallbackKey = longRunning ? 'VITE_API_BASE_URL' : undefined;
+
+    const envUrl = sanitizeEnvApiUrl(import.meta.env[envKey] as string | undefined);
     if (envUrl) return envUrl;
 
-    // Produkcja Vercel: /api → serverless proxy → Railway (BACKEND_URL)
+    if (fallbackKey) {
+        const fallbackUrl = sanitizeEnvApiUrl(import.meta.env[fallbackKey] as string | undefined);
+        if (fallbackUrl) return fallbackUrl;
+    }
+
     return '';
 };
 
@@ -65,15 +74,7 @@ export function getApiBaseUrl(): string {
  * (omija limit czasu proxy Vercel). Bez env → same-origin /api (proxy BACKEND_URL).
  */
 export function getLongRunningApiBaseUrl(): string {
-    const direct = sanitizeEnvApiUrl(
-        import.meta.env.VITE_LONG_RUNNING_API_BASE_URL as string | undefined
-    );
-    if (direct) return direct;
-
-    const envUrl = sanitizeEnvApiUrl(import.meta.env.VITE_API_BASE_URL as string | undefined);
-    if (envUrl) return envUrl;
-
-    return getApiBaseUrl();
+    return resolveApiBaseUrl({ longRunning: true });
 }
 
 /** @deprecated Użyj getApiBaseUrl() — wartość liczona przy imporcie może być myląca w testach. */
@@ -100,7 +101,7 @@ export async function getApiAuthHeaders(userId?: string): Promise<Record<string,
 /**
  * Funkcja pomocnicza do wywołań API Proxy
  */
-export const callApi = async (endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}, retries = 2): Promise<any> => {
+export const callApi = async <T = any>(endpoint: string, payload: Record<string, unknown>, userId?: string, headers: Record<string, string> = {}, retries = 2): Promise<T> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -127,7 +128,7 @@ export const callApi = async (endpoint: string, payload: Record<string, unknown>
         clearTimeout(timeout);
         if (retries > 0 && !(err instanceof Error && err.name === 'AbortError')) {
             await new Promise(res => setTimeout(res, 1000 * (3 - retries)));
-            return callApi(endpoint, payload, userId, headers, retries - 1);
+            return callApi<T>(endpoint, payload, userId, headers, retries - 1);
         }
         if (err instanceof Error && err.name === 'AbortError') {
             throw new Error('Przekroczono czas oczekiwania na odpowiedź AI (30s). Spróbuj ponownie.');
@@ -171,13 +172,13 @@ export const callApi = async (endpoint: string, payload: Record<string, unknown>
     clearQuotaDepleted();
 
     if (contentType?.includes('application/json')) {
-        const parsed = JSON.parse(bodyText);
+        const parsed = JSON.parse(bodyText) as T;
         applyCreditsFromResponse(parsed, response.headers);
         return parsed;
     }
 
     applyCreditsFromResponse(null, response.headers);
-    return bodyText;
+    return bodyText as T;
 };
 
 /**
