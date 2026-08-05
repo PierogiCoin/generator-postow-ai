@@ -16,7 +16,7 @@ import { CalendarIcon } from './icons/CalendarIcon';
 import {
     History, RefreshCw, Wifi, Plus, Send, Zap,
     ArrowRight, Utensils, Scissors, Rocket, ShoppingCart, Dumbbell, Shirt, BookOpen, Wallet,
-    TrendingUp, CalendarDays, Clock
+    TrendingUp, CalendarDays, Clock, FilePlus, CalendarPlus, PenLine, Link as SocialLinkIcon
 } from 'lucide-react';
 import { LivePulse } from './LivePulse';
 import { recordActivity, getStreakData } from '../services/streakService';
@@ -72,27 +72,55 @@ import { useDataStore } from '../stores/dataStore';
 
 const StatCard: React.FC<{
     icon: React.ComponentType<{ className?: string }>,
+    emptyIcon: React.ComponentType<{ className?: string }>,
     label: string,
     value: number | string,
     trend?: string,
-}> = ({ icon: Icon, label, value, trend }) => (
-    <div className="flex flex-col justify-between p-6 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl hover:border-emerald-500/30 transition-all duration-300 shadow-xl group">
-        <div className="flex items-center justify-between">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center border border-white/10 bg-white/5 text-emerald-400 group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                <Icon className="w-6 h-6" />
+    emptyLabel: string,
+    emptyCtaLabel: string,
+    onEmptyCta: () => void,
+}> = ({ icon: Icon, emptyIcon: EmptyIcon, label, value, trend, emptyLabel, emptyCtaLabel, onEmptyCta }) => {
+    const isEmpty = value === 0;
+    return (
+        <div className={`flex flex-col justify-between p-6 rounded-3xl border backdrop-blur-xl shadow-xl transition-all duration-300 group ${
+            isEmpty
+                ? 'border-white/5 bg-white/[0.03] hover:border-white/10'
+                : 'border-white/10 bg-white/5 hover:border-emerald-500/30'
+        }`}>
+            <div className="flex items-center justify-between">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-transform duration-300 shadow-inner ${
+                    isEmpty
+                        ? 'border-white/5 bg-white/[0.03] text-emerald-400/50'
+                        : 'border-white/10 bg-white/5 text-emerald-400 group-hover:scale-110'
+                }`}>
+                    {isEmpty ? <EmptyIcon className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
+                </div>
+                {!isEmpty && trend && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        {trend}
+                    </span>
+                )}
             </div>
-            {trend && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    {trend}
-                </span>
+            {isEmpty ? (
+                <div className="mt-6">
+                    <p className="text-sm font-semibold text-slate-400">{emptyLabel}</p>
+                    <button
+                        type="button"
+                        onClick={onEmptyCta}
+                        className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
+                    >
+                        {emptyCtaLabel} <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            ) : (
+                <div className="mt-6">
+                    <p className="font-display text-4xl font-black text-white tracking-tight">{value}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400 mt-2">{label}</p>
+                </div>
             )}
         </div>
-        <div className="mt-6">
-            <p className="font-display text-4xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400 mt-2">{label}</p>
-        </div>
-    </div>
-);
+    );
+};
 
 // Map pack IDs to Lucide icons
 const PACK_LUCIDE_ICONS: Record<string, React.ElementType> = {
@@ -494,7 +522,7 @@ const SocialMediaSection: React.FC = () => {
 
             <div className="flex items-center justify-between mb-8 relative z-10">
                 <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{t('dashboard.social.title', 'Social Intelligence')}</h3>
+                    <h3 className="text-xl font-bold text-white tracking-tight">Social Intelligence</h3>
                     <div className="flex items-center gap-2 mt-1">
                         <div className={`w-1.5 h-1.5 rounded-full ${
                           connections.length > 0 && autoPublishOn
@@ -530,17 +558,20 @@ const SocialMediaSection: React.FC = () => {
             </div>
 
             {connections.length === 0 ? (
-                <div className="text-center py-10 bg-slate-50/50 dark:bg-slate-950/20 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-white/5 relative z-10">
-                    <div className="w-16 h-16 bg-white dark:bg-white/5 border border-slate-200/50 dark:border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow">
-                        <Wifi className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                <div className="text-center py-10 bg-white/[0.03] rounded-3xl border border-dashed border-white/10 relative z-10">
+                    <div className="w-14 h-14 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Wifi className="w-7 h-7 text-emerald-400/60" />
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-1">Brak połączeń</h4>
-                    <p className="text-[11px] text-slate-400 max-w-[200px] mx-auto mb-4">Połącz konta, aby AI mogło publikować posty automatycznie.</p>
+                    <h4 className="text-sm font-bold text-white mb-2">Nie masz jeszcze połączonych kont</h4>
+                    <p className="text-[12px] text-slate-400 max-w-[220px] mx-auto mb-5 leading-relaxed">
+                        Połącz Instagram, Facebook lub LinkedIn, aby AI mogło analizować i publikować posty automatycznie.
+                    </p>
                     <button
                         onClick={() => setIsSocialConnectionsModalOpen(true)}
-                        className="px-5 py-2 bg-cyan-500 text-white text-xs font-bold uppercase tracking-widest rounded-xl hover:bg-cyan-600 transition shadow-md"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-emerald-500/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-300 transition-all"
                     >
-                        Konfiguruj Teraz
+                        <SocialLinkIcon className="w-3.5 h-3.5" />
+                        Połącz konto
                     </button>
                 </div>
             ) : (
@@ -797,21 +828,33 @@ export const DashboardView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
                 <StatCard
                     icon={RocketLaunchIcon}
-                    label={t('dashboard.stats.generations')}
+                    emptyIcon={FilePlus}
+                    label="Wygenerowane treści"
                     value={stats?.totalGenerations || 0}
                     trend={t('dashboard.stats.generationsTrend')}
+                    emptyLabel="Jeszcze nie wygenerowałeś żadnej treści"
+                    emptyCtaLabel="Stwórz pierwszy post"
+                    onEmptyCta={() => navigate('/generator')}
                 />
                 <StatCard
                     icon={CalendarIcon}
-                    label={t('dashboard.stats.scheduled')}
+                    emptyIcon={CalendarPlus}
+                    label="Zaplanowane posty"
                     value={scheduledThisWeek}
                     trend={t('dashboard.stats.scheduledTrend')}
+                    emptyLabel="Brak zaplanowanych postów w tym tygodniu"
+                    emptyCtaLabel="Zaplanuj post"
+                    onEmptyCta={() => navigate('/calendar')}
                 />
                 <StatCard
                     icon={ClipboardDocumentListIcon}
-                    label={t('dashboard.stats.drafts')}
+                    emptyIcon={PenLine}
+                    label="Aktywne wersje robocze"
                     value={drafts.length}
                     trend={t('dashboard.stats.draftsTrend')}
+                    emptyLabel="Nie masz jeszcze żadnych wersji roboczych"
+                    emptyCtaLabel="Generuj post"
+                    onEmptyCta={() => navigate('/generator')}
                 />
             </div>
 
