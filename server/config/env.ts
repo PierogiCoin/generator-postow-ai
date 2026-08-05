@@ -22,6 +22,8 @@ const envSchema = z
     FRONTEND_URL: z.string().optional(),
     PUBLIC_BACKEND_URL: z.string().optional(),
     OAUTH_STATE_SECRET: z.string().optional(),
+    UPSTASH_REDIS_REST_URL: z.string().optional(),
+    UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   })
   .refine((data) => Boolean(data.SUPABASE_URL || data.VITE_SUPABASE_URL), {
     message: 'SUPABASE_URL or VITE_SUPABASE_URL is required',
@@ -44,6 +46,8 @@ export type Env = {
   FRONTEND_URL?: string;
   PUBLIC_BACKEND_URL?: string;
   OAUTH_STATE_SECRET?: string;
+  UPSTASH_REDIS_REST_URL?: string;
+  UPSTASH_REDIS_REST_TOKEN?: string;
 };
 
 let cachedEnv: Env | null = null;

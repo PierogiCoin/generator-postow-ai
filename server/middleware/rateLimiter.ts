@@ -1,11 +1,21 @@
 import rateLimit, { ipKeyGenerator, RateLimitExceededEventHandler } from 'express-rate-limit';
-import type { Request } from 'express';
+import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import { Redis } from '@upstash/redis';
+import { Ratelimit } from '@upstash/ratelimit';
 import { logRateLimit } from '../logger.js';
+import { loadEnv } from '../config/env.js';
 
-/**
- * Klucz limitu: zweryfikowany user z JWT (req.user) albo IP.
- * Nigdy nie ufamy nagłówkom klienta (x-user-id / x-user-tier).
- */
+const env = loadEnv();
+const hasUpstash = Boolean(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+
+let upstashRedis: Redis | null = null;
+if (hasUpstash) {
+  upstashRedis = new Redis({
+    url: env.UPSTASH_REDIS_REST_URL!,
+    token: env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+}
+
 const rateLimitKeyGenerator = (req: Request): string => {
   const userId = req.user?.id;
   if (userId) return `user:${userId}`;
@@ -17,44 +27,82 @@ const rateLimitHandler: RateLimitExceededEventHandler = (req, res, _next, option
   res.status(options.statusCode || 429).json({ message: options.message || 'Too many requests' });
 };
 
-export const generalLimiter = rateLimit({
+function createAdaptiveLimiter(options: {
+  windowMs: number;
+  max: number;
+  message: string;
+  prefix: string;
+}): RequestHandler {
+  const fallbackLimiter = rateLimit({
+    windowMs: options.windowMs,
+    max: options.max,
+    message: options.message,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: rateLimitHandler,
+    keyGenerator: rateLimitKeyGenerator,
+  });
+
+  if (!upstashRedis) {
+    return fallbackLimiter;
+  }
+
+  const windowSeconds = Math.ceil(options.windowMs / 1000);
+  const upstashRatelimit = new Ratelimit({
+    redis: upstashRedis,
+    limiter: Ratelimit.slidingWindow(options.max, `${windowSeconds} s`),
+    prefix: `@upstash/ratelimit/${options.prefix}`,
+    analytics: true,
+  });
+
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const identifier = rateLimitKeyGenerator(req);
+      const { success, limit, remaining, reset } = await upstashRatelimit.limit(identifier);
+
+      res.setHeader('X-RateLimit-Limit', limit);
+      res.setHeader('X-RateLimit-Remaining', remaining);
+      res.setHeader('X-RateLimit-Reset', reset);
+
+      if (!success) {
+        logRateLimit(req.path, req.ip || 'unknown', req.user?.id);
+        res.status(429).json({ message: options.message });
+        return;
+      }
+
+      next();
+    } catch {
+      // Fallback do in-memory w razie awarii połączenia Upstash
+      fallbackLimiter(req, res, next);
+    }
+  };
+}
+
+export const generalLimiter = createAdaptiveLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100,
   message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: rateLimitHandler,
-  keyGenerator: rateLimitKeyGenerator,
+  prefix: 'general',
 });
 
-export const expensiveLimiter = rateLimit({
+export const expensiveLimiter = createAdaptiveLimiter({
   windowMs: 60 * 60 * 1000,
   max: 20,
   message: 'Generation limit reached. Please wait before creating more content.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: rateLimitHandler,
-  keyGenerator: rateLimitKeyGenerator,
-  // Tier z nagłówka klienta był spoofowalny — limit dotyczy wszystkich;
-  // dostęp premium kontroluje creditGate + plan w DB.
+  prefix: 'expensive',
 });
 
-export const textLimiter = rateLimit({
+export const textLimiter = createAdaptiveLimiter({
   windowMs: 5 * 60 * 1000,
   max: 50,
   message: 'Too many text generation requests. Please slow down.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: rateLimitHandler,
-  keyGenerator: rateLimitKeyGenerator,
+  prefix: 'text',
 });
 
-export const streamLimiter = rateLimit({
+export const streamLimiter = createAdaptiveLimiter({
   windowMs: 5 * 60 * 1000,
   max: 20,
   message: 'Too many streaming requests. Please slow down.',
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: rateLimitHandler,
-  keyGenerator: rateLimitKeyGenerator,
+  prefix: 'stream',
 });
+
