@@ -5,11 +5,29 @@
 
 import React from 'react';
 
-export type HomeAnchor = 'problem' | 'solution' | 'methods' | 'branze' | 'how-it-works' | 'features' | 'use-cases' | 'faq';
+export type HomeAnchor = 'demo' | 'jak-to-dziala' | 'dlaczego-my' | 'branze' | 'how-it-works' | 'features' | 'use-cases' | 'faq';
 
 // ============================================================
 // Hooks
 // ============================================================
+
+export const useScrollPosition = () => {
+  const [scrollState, setScrollState] = React.useState({ scrollY: 0, progress: 0 });
+
+  React.useEffect(() => {
+    const onScroll = () => {
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollY / docHeight) * 100 : 0;
+      setScrollState({ scrollY, progress });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return scrollState;
+};
 
 export const usePrefersReducedMotion = () => {
   const [reduced, setReduced] = React.useState(false);

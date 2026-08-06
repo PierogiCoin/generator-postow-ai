@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useUIStore } from '../stores/uiStore';
 import { useTranslation } from 'react-i18next';
+import {
+  ArrowRight,
+  MousePointerClick,
+  Sparkles,
+  PenLine,
+  CalendarCheck,
+  Target,
+  Rocket,
+  Bot,
+  ShieldCheck,
+} from 'lucide-react';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { MenuIcon } from './icons/MenuIcon';
@@ -14,8 +25,11 @@ import {
   useSEO,
   scrollToAnchor,
   Reveal,
+  useScrollPosition,
 } from './homeViewUtils';
 import { IndustryFunnelHero } from './IndustryFunnelHero';
+import { RoiCalculator } from './home/RoiCalculator';
+import { LiveSocialProofToasts } from './home/LiveSocialProofToasts';
 import type { IndustryPackId } from '../utils/industryPacks';
 
 interface HomeViewProps {}
@@ -24,18 +38,7 @@ const primaryCtaClass =
   'rounded-lg px-8 py-3.5 !bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white font-semibold shadow-none focus:!ring-[var(--hero-accent)]';
 
 const ScrollProgressBar: React.FC = () => {
-  const [progress, setProgress] = React.useState(0);
-
-  React.useEffect(() => {
-    const onScroll = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
-    };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const { progress } = useScrollPosition();
 
   return (
     <div className="fixed top-0 left-0 right-0 h-0.5 z-[60] pointer-events-none">
@@ -50,11 +53,13 @@ const ScrollProgressBar: React.FC = () => {
 const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricing: () => void; isLoggedIn: boolean }> = ({ onSignup, onLogin, onPricing, isLoggedIn }) => {
   const { t } = useTranslation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { scrollY } = useScrollPosition();
+  const scrolled = scrollY > 20;
+
   const items = [
-    { label: t('home.journey.nav_problem'), id: 'problem' },
-    { label: t('home.journey.nav_solution'), id: 'solution' },
-    { label: t('home.journey.nav_methods'), id: 'methods' },
-    { label: t('home.journey.nav_industries'), id: 'branze' },
+    { label: t('home.journey.nav_how_it_works', 'Jak to działa'), id: 'jak-to-dziala' },
+    { label: t('home.journey.nav_why_us', 'Dlaczego my'), id: 'dlaczego-my' },
+    { label: t('home.journey.nav_industries', 'Branże'), id: 'branze' },
   ];
 
   const handleNavClick = (id: string) => {
@@ -64,14 +69,18 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
 
   return (
     <nav
-      className="sticky top-0 z-40 border-b border-white/5 bg-[#07090c]/80 backdrop-blur-md"
+      className={`sticky top-0 z-40 transition-all duration-300 ${
+        scrolled
+          ? 'border-b border-sky-500/20 bg-[#07090c]/90 backdrop-blur-xl shadow-lg shadow-sky-500/5'
+          : 'border-b border-white/5 bg-[#07090c]/80 backdrop-blur-md'
+      }`}
       aria-label={t('home.nav.ariaLabel')}
     >
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-3">
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="font-display text-sm font-bold tracking-tight text-white shrink-0"
+          className="font-display text-sm font-bold tracking-tight text-white shrink-0 hover:opacity-90 transition-opacity"
         >
           {t('home.hero.brand')}
         </button>
@@ -118,19 +127,19 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
             <MenuIcon className="w-5 h-5" />
           </button>
           <ModernButton
-          variant="primary"
-          size="sm"
-          onClick={onSignup}
-          className="!bg-[var(--hero-accent)] ![background-image:none] text-white text-xs font-semibold rounded-lg px-3 py-2 shrink-0"
-        >
-          {t(isLoggedIn ? 'home.journey.nav_app' : 'home.journey.nav_signup')}
+            variant="primary"
+            size="sm"
+            onClick={onSignup}
+            className="!bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white text-xs font-bold rounded-xl px-3.5 py-2 shrink-0 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+          >
+            {t(isLoggedIn ? 'home.journey.nav_app' : 'home.journey.nav_signup_boost', 'Odbierz darmowe kredyty ⚡')}
           </ModernButton>
         </div>
       </div>
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="sm:hidden border-t border-white/5 bg-[#07090c]/95 backdrop-blur-md">
+        <div className="sm:hidden border-t border-white/5 bg-[#07090c]/95 backdrop-blur-xl animate-fade-in">
           <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col gap-1">
             {items.map((item) => (
               <button
@@ -169,6 +178,99 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
   );
 };
 
+const PLATFORM_PREVIEWS = {
+  linkedin: {
+    badge: '💼 LinkedIn Post',
+    formatting: 'Profesjonalna struktura, podział na sekcje & CTA biznesowe',
+    content: (topic: string) => `💼 ${topic}\n\nTworzenie wartościowych treści na LinkedIn nie musi zajmować 4 godzin dziennie.\n\nOto 3 kroki do automatyzacji procesu publikacji:\n\n1️⃣ Wygeneruj ekspercki post i grafikę w 30 sekund\n2️⃣ Dostosuj ton do głosu Twojej marki (Brand Voice)\n3️⃣ Zaplanuj automatyczną publikację na cały tydzień\n\nJak u Was wygląda planowanie treści? Dajcie znać w komentarzu! 👇`,
+    hashtags: '#Marketing #SocialMedia #B2B #Automation #AI',
+  },
+  instagram: {
+    badge: '📸 Instagram Caption',
+    formatting: 'Wizualny styl, nawiasy z punktami & angażujący zestaw hashtagów',
+    content: (topic: string) => `✨ ${topic} ✨\n\nOto jak oszczędzić 10+ godzin tygodniowo na tworzeniu postów! 🚀\n\n- ⚡ Wpis i karuzela gotowa w 30s\n- 🎯 Zestaw wiralowych hashtagów z AI\n- 🎨 Automatyczny dobór estetyki wizualnej\n\nZapisz ten post na później i wypróbuj darmowe kredyty w bio! 📲`,
+    hashtags: '#InstagramGrowth #ContentCreator #AIStyle #InstaTips',
+  },
+  tiktok: {
+    badge: '🎵 TikTok Script & Caption',
+    formatting: 'Wiralowy HAK w pierwszych 3 sekundach + scenariusz wideo',
+    content: (topic: string) => `🎬 [HOOK wideo 0-3s]: "Stwórzmy post na cały tydzień w 30 sekund!"\n\n💡 Opis: ${topic}\n\nChcesz tworzyć virale bez spędzania całych dni przed ekranem? Algorytm AI generuje gotowe skrypty i podpisy w mgnieniu oka! 🔥`,
+    hashtags: '#TikTokTips #ViralHack #AICreator #GrowthHack',
+  },
+};
+
+const HERO_DEMO_TOPICS = [
+  '3 sposoby na automatyzację publikacji w Social Media w 2026',
+  'Jak budować zaangażowaną społeczność wokół marki bez budżetu',
+];
+
+const HeroLiveDemoWidget: React.FC = () => {
+  const { t } = useTranslation();
+  const [activePlatform, setActivePlatform] = useState<'linkedin' | 'instagram' | 'tiktok'>('linkedin');
+  const [sampleIdx, setSampleIdx] = useState(0);
+
+  const currentTopic = HERO_DEMO_TOPICS[sampleIdx];
+  const platformData = PLATFORM_PREVIEWS[activePlatform];
+
+  return (
+    <div className="max-w-2xl mx-auto rounded-3xl bg-white/[0.03] border border-white/10 p-4 sm:p-6 backdrop-blur-2xl shadow-2xl text-left space-y-4">
+      <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+            {t('home.demo.title', 'Podgląd Na Żywo (Demo AI)')}
+          </span>
+        </div>
+        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10" role="tablist">
+          {(['linkedin', 'instagram', 'tiktok'] as const).map((platform) => (
+            <button
+              key={platform}
+              type="button"
+              role="tab"
+              aria-selected={activePlatform === platform}
+              aria-label={`Pokaż podgląd dla ${platform}`}
+              onClick={() => setActivePlatform(platform)}
+              className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${
+                activePlatform === platform
+                  ? 'bg-[var(--hero-accent)] text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {platform}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
+          <span className="font-semibold text-sky-400 truncate max-w-xs sm:max-w-md">
+            {platformData.badge}
+          </span>
+          <button
+            type="button"
+            onClick={() => setSampleIdx((prev) => (prev + 1) % HERO_DEMO_TOPICS.length)}
+            className="text-xs text-emerald-400 hover:underline font-bold transition-all"
+          >
+            {t('home.demo.change_topic', 'Zmień przykład 🔄')}
+          </button>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-xs sm:text-sm text-slate-200 whitespace-pre-line leading-relaxed font-sans shadow-inner space-y-2">
+          <p>{platformData.content(currentTopic)}</p>
+          <div className="pt-2 border-t border-white/5 text-sky-400/90 font-medium text-xs">
+            {platformData.hashtags}
+          </div>
+        </div>
+
+        <div className="text-[11px] text-slate-400 italic text-right">
+          ⚡ {platformData.formatting}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HeroSection: React.FC<{
   reducedMotion: boolean;
   isLoggedIn: boolean;
@@ -181,7 +283,6 @@ const HeroSection: React.FC<{
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
       <div className="absolute inset-0 home-grid-bg opacity-40 pointer-events-none" aria-hidden="true" />
 
-      {/* Ambient background glow and grid */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#050706] via-[#0a1210]/90 to-transparent" />
         <div
@@ -189,176 +290,197 @@ const HeroSection: React.FC<{
         />
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col justify-center max-w-4xl mx-auto px-4 pt-16 pb-28 text-center">
-        <p
-          className={`font-display text-5xl sm:text-6xl md:text-8xl font-extrabold tracking-tight text-white ${reducedMotion ? '' : 'animate-home-rise'}`}
-        >
-          {t('home.hero.brand')}
-        </p>
-        <div
-          className={`mx-auto mt-5 h-px w-20 bg-[var(--hero-accent)] ${reducedMotion ? '' : 'animate-home-line'}`}
-          aria-hidden="true"
-        />
-        <h1
-          className={`mt-7 text-xl sm:text-2xl md:text-3xl font-medium text-slate-200 tracking-tight leading-snug max-w-2xl mx-auto ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '120ms' }}
-        >
-          {t('home.journey.hero_title')}
-        </h1>
-        <p
-          className={`mt-4 max-w-lg mx-auto text-base md:text-lg text-slate-400 leading-relaxed ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '220ms' }}
-        >
-          {t('home.journey.hero_subtitle')}
-        </p>
-        <div
-          className={`mt-10 flex flex-col sm:flex-row justify-center items-center gap-3 ${reducedMotion ? '' : 'animate-home-rise'}`}
-          style={reducedMotion ? undefined : { animationDelay: '320ms' }}
-        >
-          <ModernButton variant="primary" size="lg" onClick={onStart} className={primaryCtaClass}>
-            {t(isLoggedIn ? 'home.journey.hero_cta_logged_in' : 'home.journey.hero_cta')}
-          </ModernButton>
-          <ModernButton
-            variant="outline"
-            size="lg"
-            onClick={() => scrollToAnchor('problem', reducedMotion)}
-            className="rounded-lg px-8 py-3.5 border-white/20 text-slate-200 bg-transparent hover:bg-white/5 hover:border-white/35"
-          >
-            {t('home.journey.hero_secondary')}
-          </ModernButton>
-        </div>
+      <div className="relative z-10 flex-1 flex items-center max-w-7xl mx-auto px-4 pt-24 pb-16 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center w-full">
+          <div className="text-center lg:text-left">
+            <h1
+              className={`text-5xl sm:text-6xl font-bold tracking-tight leading-tight ${reducedMotion ? '' : 'animate-home-rise'}`}
+            >
+              <span className="bg-gradient-to-b from-white to-white/80 bg-clip-text text-transparent">
+                Generuj posty na social media w 30 sekund
+              </span>
+            </h1>
+            <p
+              className={`mt-5 text-xl text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed ${reducedMotion ? '' : 'animate-home-rise'}`}
+              style={reducedMotion ? undefined : { animationDelay: '120ms' }}
+            >
+              AI napisze, zaprojektuje grafikę i zaplanuje publikację — dopasowane do Twojej branży
+            </p>
+            <div
+              className={`mt-8 flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-3 ${reducedMotion ? '' : 'animate-home-rise'}`}
+              style={reducedMotion ? undefined : { animationDelay: '220ms' }}
+            >
+              <ModernButton
+                variant="primary"
+                size="lg"
+                onClick={onStart}
+                className="rounded-xl px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+              >
+                {t(isLoggedIn ? 'home.journey.hero_cta_logged_in' : 'home.journey.hero_cta', 'Wypróbuj za darmo')}
+                <ArrowRight className="w-5 h-5" />
+              </ModernButton>
+              <ModernButton
+                variant="outline"
+                size="lg"
+                onClick={() => scrollToAnchor('demo', reducedMotion)}
+                className="rounded-xl px-8 py-3.5 border-white/20 text-slate-200 bg-transparent hover:bg-white/5 hover:border-emerald-500/50"
+              >
+                Zobacz demo w akcji
+              </ModernButton>
+            </div>
 
-        {/* Trust Badges */}
-        <div className="mt-8 flex flex-wrap justify-center items-center gap-5 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">⚡</span> {t('home.journey.trust_signup')}
-          </span>
-          <span className="hidden sm:inline text-slate-700">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">💳</span> {t('home.journey.trust_no_card')}
-          </span>
-          <span className="hidden sm:inline text-slate-700">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">🎁</span> {t('home.journey.trust_credits')}
-          </span>
+            <div
+              className={`mt-6 flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-slate-500 ${reducedMotion ? '' : 'animate-home-rise'}`}
+              style={reducedMotion ? undefined : { animationDelay: '320ms' }}
+            >
+              <span>⚡ 10 000+ postów</span>
+              <span>🏢 50+ branż</span>
+              <span>📱 5 platform</span>
+              <span>⭐ 4.9/5</span>
+            </div>
+          </div>
+
+          <div
+            id="demo"
+            className={`${reducedMotion ? '' : 'animate-home-rise'}`}
+            style={reducedMotion ? undefined : { animationDelay: '240ms' }}
+          >
+            <p className="mb-3 text-sm text-slate-300 flex items-center gap-2">
+              <span className="text-base">👁️</span> Zobacz, jak AI pisze posty na żywo
+            </p>
+            <HeroLiveDemoWidget />
+          </div>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => scrollToAnchor('problem', reducedMotion)}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 text-slate-500 hover:text-[var(--hero-accent)] transition-colors"
-        aria-label={t('home.journey.hero_secondary')}
-      >
-        <ChevronDownIcon className={`w-6 h-6 ${reducedMotion ? '' : 'animate-home-float'}`} />
-      </button>
     </section>
   );
 };
 
-const ProblemSection: React.FC = () => {
+const HowItWorksSection: React.FC = () => {
   const { t } = useTranslation();
 
-  const comparisons = [
+  const steps = [
     {
-      before: t('home.journey.compare_1_before'),
-      after: t('home.journey.compare_1_after'),
+      icon: MousePointerClick,
+      title: 'Wybierz branżę',
+      desc: '50+ gotowych pakietów: gastronomia, beauty, SaaS, e-commerce i więcej',
     },
     {
-      before: t('home.journey.compare_2_before'),
-      after: t('home.journey.compare_2_after'),
+      icon: Sparkles,
+      title: 'AI generuje content',
+      desc: 'Post, grafika, hashtagi i warianty A/B — wszystko w 30 sekund',
     },
     {
-      before: t('home.journey.compare_3_before'),
-      after: t('home.journey.compare_3_after'),
+      icon: PenLine,
+      title: 'Zatwierdź lub popraw',
+      desc: 'Edytuj w wizualnym edytorze, dodaj swój brand voice',
+    },
+    {
+      icon: CalendarCheck,
+      title: 'Publikuj lub zaplanuj',
+      desc: 'Wyślij od razu lub zaplanuj na najlepszą godzinę',
     },
   ];
 
   return (
-    <section id="problem" className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white">
-      <div className="max-w-5xl mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto">
-          <span className="inline-block px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold uppercase tracking-widest mb-3">
-            {t('home.journey.problem_kicker')}
+    <section id="jak-to-dziala" className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
+            {t('home.journey.how_kicker', 'Jak to działa')}
           </span>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-            {t('home.journey.problem_title')}
+            Od pomysłu do posta w 4 krokach
           </h2>
-          <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed">
-            {t('home.journey.problem_subtitle')}
-          </p>
         </div>
 
-        {/* Before vs After Comparison Grid */}
-        <div className="mt-14 space-y-4">
-          {comparisons.map((item, idx) => (
-            <div
-              key={idx}
-              className="grid grid-cols-1 md:grid-cols-2 rounded-2xl overflow-hidden border border-white/10 shadow-xl"
-            >
-              {/* BEFORE (Stary sposób) */}
-              <div className="p-6 md:p-8 bg-red-950/20 border-b md:border-b-0 md:border-r border-white/10 flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-red-500/20 text-red-400 font-bold flex items-center justify-center shrink-0 text-sm">
-                  ✕
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {steps.map((step, i) => {
+            const Icon = step.icon;
+            return (
+              <div
+                key={step.title}
+                className="relative p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+                  <Icon className="w-6 h-6" />
                 </div>
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/90 block mb-1">
-                    {t('home.journey.compare_before_label')}
-                  </span>
-                  <p className="text-slate-300 text-base md:text-lg font-medium leading-snug">
-                    {item.before}
-                  </p>
-                </div>
+                <span className="absolute top-5 right-5 font-display text-4xl font-extrabold text-white/5 leading-none select-none">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <h3 className="text-lg font-bold text-white">{step.title}</h3>
+                <p className="mt-2 text-sm text-slate-400 leading-relaxed">{step.desc}</p>
               </div>
-
-              {/* AFTER (Nowy sposób z AI Content Pro) */}
-              <div className="p-6 md:p-8 bg-emerald-950/25 flex items-start gap-4">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center shrink-0 text-sm">
-                  ✓
-                </div>
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block mb-1">
-                    {t('home.journey.compare_after_label')}
-                  </span>
-                  <p className="text-white text-base md:text-lg font-semibold leading-snug">
-                    {item.after}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>
   );
 };
 
-const SolutionSection: React.FC<{ onContinue: () => void; isLoggedIn: boolean }> = ({
-  onContinue,
-  isLoggedIn,
-}) => {
+const WhyAICPSection: React.FC = () => {
   const { t } = useTranslation();
 
+  const benefits = [
+    {
+      icon: Target,
+      emoji: '🎯',
+      title: 'Dopasowane do branży',
+      desc: 'AI wie, że restauracja potrzebuje "menu dnia", a SaaS "case study". Nie generyczne bełkoty.',
+    },
+    {
+      icon: Rocket,
+      emoji: '🚀',
+      title: 'Multi-platform',
+      desc: 'Jeden post, warianty na LinkedIn, Instagram, TikTok, Facebook i X.',
+    },
+    {
+      icon: Bot,
+      emoji: '🤖',
+      title: 'Automatyzacja',
+      desc: 'RSS → post, produkt → post, planowanie kolejki, auto-publikacja.',
+    },
+    {
+      icon: ShieldCheck,
+      emoji: '🛡️',
+      title: 'Jakość bez śmieci',
+      desc: 'Anti-slop system, scoring treści, brand voice memory.',
+    },
+  ];
+
   return (
-    <section id="solution" className="scroll-mt-24 relative home-hero-wash text-white py-20 md:py-28 overflow-hidden">
+    <section id="dlaczego-my" className="scroll-mt-24 relative home-hero-wash text-white py-20 md:py-28 overflow-hidden">
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
-      <div className="relative z-10 max-w-3xl mx-auto px-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hero-accent)]">
-          {t('home.journey.solution_kicker')}
-        </p>
-        <h2 className="mt-3 font-display text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
-          {t('home.journey.solution_title')}
-        </h2>
-        <p className="mt-5 text-base md:text-lg text-slate-300 leading-relaxed max-w-2xl">
-          {t('home.journey.solution_subtitle')}
-        </p>
-        <p className="mt-8 text-sm md:text-base text-slate-400 leading-relaxed max-w-xl border-l-2 border-[var(--hero-accent)] pl-4">
-          {t('home.journey.solution_promise')}
-        </p>
-        <div className="mt-10">
-          <ModernButton variant="primary" size="lg" onClick={onContinue} className={primaryCtaClass}>
-            {t(isLoggedIn ? 'home.journey.solution_cta_logged_in' : 'home.journey.solution_cta')}
-          </ModernButton>
+      <div className="relative z-10 max-w-6xl mx-auto px-4">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
+            {t('home.journey.why_kicker', 'Dlaczego AI Content Pro?')}
+          </span>
+          <h2 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
+            Social media, które przynoszą klientów
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {benefits.map((b) => {
+            const Icon = b.icon;
+            return (
+              <div
+                key={b.title}
+                className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-xl">{b.emoji}</span>
+                </div>
+                <h3 className="text-lg font-semibold text-white">{b.title}</h3>
+                <p className="mt-2 text-sm text-slate-400 leading-relaxed">{b.desc}</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -407,14 +529,50 @@ const MethodsSection: React.FC = () => {
 const ProofStrip: React.FC = () => {
   const { t } = useTranslation();
   return (
-    <section className="py-16 border-y border-slate-200/80 dark:border-white/5 bg-white/50 dark:bg-white/[0.02]">
-      <div className="max-w-3xl mx-auto px-4 text-center">
-        <p className="font-display text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-snug tracking-tight">
-          „{t('home.journey.proof_quote')}”
-        </p>
-        <p className="mt-4 text-sm text-slate-500">
-          {t('home.journey.proof_author')} · {t('home.journey.proof_role')}
-        </p>
+    <section className="py-20 border-y border-slate-200/80 dark:border-white/5 bg-white/50 dark:bg-white/[0.02] backdrop-blur-md">
+      <div className="max-w-5xl mx-auto px-4 space-y-12">
+        {/* Metric Badges */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+          <div className="p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
+            <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-display flex items-center justify-center gap-1.5">
+              <span>4.9</span>
+              <span className="text-amber-400 text-2xl">★</span>
+            </div>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+              {t('home.journey.proof_rating_label', 'Średnia ocena z 10,000+ wpisów')}
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
+            <div className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-display">
+              12h / tydz.
+            </div>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+              {t('home.journey.proof_time_saved', 'Zaoszczędzone na pisanie postów')}
+            </p>
+          </div>
+          <div className="p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
+            <div className="text-3xl sm:text-4xl font-extrabold text-sky-400 font-display">
+              +300%
+            </div>
+            <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+              {t('home.journey.proof_engagement', 'Wyższe zaangażowanie odbiorców')}
+            </p>
+          </div>
+        </div>
+
+        {/* Featured Testimonial Quote */}
+        <div className="max-w-3xl mx-auto text-center p-8 rounded-3xl bg-slate-900/60 border border-white/10 shadow-xl space-y-4">
+          <p className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-relaxed tracking-tight">
+            „{t('home.journey.proof_quote')}”
+          </p>
+          <div className="text-xs sm:text-sm text-slate-400 font-semibold flex items-center justify-center gap-2">
+            <span className="text-emerald-400">✓ Weryfikowany Twórca</span>
+            <span>·</span>
+            <span>{t('home.journey.proof_author')}</span>
+            <span>·</span>
+            <span className="text-slate-500">{t('home.journey.proof_role')}</span>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -426,20 +584,20 @@ const FAQSection: React.FC = () => {
 
   const faqs = [
     {
-      q: t('home.journey.faq_1_q'),
-      a: t('home.journey.faq_1_a'),
+      q: t('home.journey.faq_1_q', 'Czy treści wygenerowane przez AI są unikalne i bezpieczne?'),
+      a: t('home.journey.faq_1_a', 'Tak! Każda treść jest generowana od nowa i dopasowywana do specyfiki Twojej branży. Zapewniamy 100% autorskie formuły bez ryzyka plagiatu.'),
     },
     {
-      q: t('home.journey.faq_2_q'),
-      a: t('home.journey.faq_2_a'),
+      q: t('home.journey.faq_2_q', 'Czy muszę podawać kartę kredytową przy rejestracji?'),
+      a: t('home.journey.faq_2_a', 'Nie! Rejestracja jest całkowicie darmowa i nie wymaga podawania danych karty. Otrzymasz darmowe kredyty na start do przetestowania pełnych możliwości aplikacji.'),
     },
     {
-      q: t('home.journey.faq_3_q'),
-      a: t('home.journey.faq_3_a'),
+      q: t('home.journey.faq_3_q', 'Jak AI dopasowuje się do unikalnego głosu mojej marki (Brand Voice)?'),
+      a: t('home.journey.faq_3_a', 'Możesz zdefiniować ton wypowiedzi, słowa kluczowe oraz styl marki w ustawieniach. Silnik AI zapamiętuje te preferencje dla każdego kolejnego posta.'),
     },
     {
-      q: t('home.journey.faq_4_q'),
-      a: t('home.journey.faq_4_a'),
+      q: t('home.journey.faq_4_q', 'Czy mogę automatycznie planować publikację w Social Media?'),
+      a: t('home.journey.faq_4_a', 'Tak, AI Content Pro posiada wbudowany kalendarz oraz interfejs do bezpośredniej publikacji na platformach LinkedIn, Instagram, Facebook i TikTok.'),
     },
   ];
 
@@ -447,11 +605,11 @@ const FAQSection: React.FC = () => {
     <section className="py-20 md:py-28 bg-[var(--hero-surface)] border-t border-white/5">
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
-            {t('home.journey.faq_kicker')}
+          <span className="inline-block px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
+            {t('home.journey.faq_kicker', 'Często Zadawane Pytania')}
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('home.journey.faq_title')}
+            {t('home.journey.faq_title', 'Wszystko, co musisz wiedzieć przed rozpoczęciem')}
           </h2>
         </div>
 
@@ -461,7 +619,7 @@ const FAQSection: React.FC = () => {
             return (
               <div
                 key={idx}
-                className="rounded-xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] overflow-hidden transition-colors"
+                className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] overflow-hidden transition-colors"
               >
                 <button
                   type="button"
@@ -549,11 +707,15 @@ export const HomeView: React.FC<HomeViewProps> = () => {
   const { t } = useTranslation();
 
   useSEO({
-    title: `${t('home.hero.brand')} — ${t('home.journey.hero_title')}`,
-    description: t('home.journey.hero_subtitle'),
+    title: `${t('home.hero.brand')} — Generuj posty na social media w 30 sekund`,
+    description: 'AI napisze, zaprojektuje grafikę i zaplanuje publikację — dopasowane do Twojej branży.',
   });
 
-  const isLoggedIn = Boolean(user);
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const isLoggedIn = false;
 
   const openSignupOrApp = () => {
     if (user) navigate('/dashboard');
@@ -564,35 +726,22 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     openSignupOrApp();
   };
 
-  const startJourney = () => {
-    if (user) navigate('/dashboard');
-    else scrollToAnchor('problem', reducedMotion);
-  };
-
   const openPricing = () => {
     setIsPricingModalOpen(true);
-  };
-
-  const goToIndustries = () => {
-    scrollToAnchor('branze', reducedMotion);
   };
 
   return (
     <div className="relative pb-0">
       <ScrollProgressBar />
       <LandingNav onSignup={openSignupOrApp} onLogin={() => setAuthModal('login')} onPricing={openPricing} isLoggedIn={isLoggedIn} />
-      <HeroSection reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} onStart={startJourney} />
+      <HeroSection reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} onStart={openSignupOrApp} />
 
       <Reveal reducedMotion={reducedMotion}>
-        <ProblemSection />
+        <HowItWorksSection />
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
-        <SolutionSection onContinue={goToIndustries} isLoggedIn={isLoggedIn} />
-      </Reveal>
-
-      <Reveal reducedMotion={reducedMotion}>
-        <MethodsSection />
+        <WhyAICPSection />
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
@@ -600,14 +749,14 @@ export const HomeView: React.FC<HomeViewProps> = () => {
           <IndustryFunnelHero
             reducedMotion={reducedMotion}
             isLoggedIn={isLoggedIn}
-            userId={user?.id}
+            userId={undefined}
             onContinue={handleFunnelContinue}
           />
         </div>
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
-        <ProofStrip />
+        <RoiCalculator onStart={openSignupOrApp} />
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
@@ -617,6 +766,9 @@ export const HomeView: React.FC<HomeViewProps> = () => {
       <Reveal reducedMotion={reducedMotion}>
         <FinalCTASection onNavigateToApp={openSignupOrApp} isLoggedIn={isLoggedIn} />
       </Reveal>
+
+      {/* Floating Social Proof Activity Toast */}
+      <LiveSocialProofToasts />
     </div>
   );
 };
