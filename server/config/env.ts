@@ -25,6 +25,7 @@ const envSchema = z
     UPSTASH_REDIS_REST_URL: z.string().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   })
+  .passthrough()
   .refine((data) => Boolean(data.SUPABASE_URL || data.VITE_SUPABASE_URL), {
     message: 'SUPABASE_URL or VITE_SUPABASE_URL is required',
   });
@@ -48,6 +49,7 @@ export type Env = {
   OAUTH_STATE_SECRET?: string;
   UPSTASH_REDIS_REST_URL?: string;
   UPSTASH_REDIS_REST_TOKEN?: string;
+  [key: string]: string | number | undefined;
 };
 
 let cachedEnv: Env | null = null;

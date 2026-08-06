@@ -1,6 +1,6 @@
 import express from 'express';
 import { applyCors } from './config/cors.js';
-import { generalLimiter } from './middleware/rateLimiter.js';
+import { generalLimiter, checkPublicEndpointRateLimit } from './middleware/rateLimiter.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { createHealthRouter } from './routes/health.js';
 import { createTemplatesRouter } from './routes/templates.js';
@@ -80,7 +80,7 @@ export function createApp(): express.Application {
     stripeWebhookHandler
   );
 
-  app.use(express.json({ limit: '50mb' }));
+  app.use(express.json({ limit: '10mb' }));
   app.use(generalLimiter);
 
   app.get('/', (req, res) => {
@@ -93,22 +93,22 @@ export function createApp(): express.Application {
   });
 
   app.use(createHealthRouter());
-  app.use('/api/payments', paymentsRouter);
-  app.use('/api/templates', createTemplatesRouter());
-  app.use(createSocialRouter());
-  app.use(createBrandVoiceRouter());
+  app.use('/api/payments', checkPublicEndpointRateLimit('publicApi'), paymentsRouter);
+  app.use('/api/templates', checkPublicEndpointRateLimit('publicApi'), createTemplatesRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createSocialRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createBrandVoiceRouter());
   app.use(createGenerationRouter());
-  app.use('/api/costs', createCostsRouter());
-  app.use(createScoringRouter());
-  app.use(createIntelligenceRouter());
-  app.use(createVideoRouter());
-  app.use(createMiscRouter());
-  app.use(createContentFetchRouter());
-  app.use(createBrandMemoryRouter());
-  app.use('/api/email', emailRouter);
-  app.use('/api/referral', referralRouter);
-  app.use('/api/teams', teamsRouter);
-  app.use('/api/evergreen', evergreenRouter);
+  app.use('/api/costs', checkPublicEndpointRateLimit('publicApi'), createCostsRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createScoringRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createIntelligenceRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createVideoRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createMiscRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createContentFetchRouter());
+  app.use(checkPublicEndpointRateLimit('publicApi'), createBrandMemoryRouter());
+  app.use('/api/email', checkPublicEndpointRateLimit('publicApi'), emailRouter);
+  app.use('/api/referral', checkPublicEndpointRateLimit('publicApi'), referralRouter);
+  app.use('/api/teams', checkPublicEndpointRateLimit('publicApi'), teamsRouter);
+  app.use('/api/evergreen', checkPublicEndpointRateLimit('publicApi'), evergreenRouter);
 
   app.use(errorHandler);
 

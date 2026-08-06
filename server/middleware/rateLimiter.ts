@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 import { logRateLimit } from '../logger.js';
 import { loadEnv } from '../config/env.js';
+import { checkRateLimit, createRateLimitResponse, createRedisFailureResponse } from '../lib/rateLimit.js';
 
 const env = loadEnv();
 const hasUpstash = Boolean(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
@@ -106,3 +107,43 @@ export const streamLimiter = createAdaptiveLimiter({
   prefix: 'stream',
 });
 
+export const CRON_PATHS = new Set([
+  '/api/seo-robot/cron',
+  '/api/funnel/cron',
+  '/api/abandoned-cart/send-reminders',
+]);
+
+export function checkPublicEndpointRateLimit(configKey: string): RequestHandler {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    if (CRON_PATHS.has(req.path)) {
+      next();
+      return;
+    }
+
+    const rawIp = req.ip || (Array.isArray(req.headers['x-forwarded-for']) ? req.headers['x-forwarded-for'][0] : req.headers['x-forwarded-for']) || 'unknown';
+    const identifier = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : String(rawIp);
+
+    try {
+      const result = await checkRateLimit(identifier, configKey);
+
+      res.setHeader('X-RateLimit-Limit', result.limit);
+      res.setHeader('X-RateLimit-Remaining', Math.max(0, result.remaining));
+      res.setHeader('X-RateLimit-Reset', result.reset);
+
+      if (result.isServiceUnavailable) {
+        createRedisFailureResponse(res);
+        return;
+      }
+
+      if (!result.success) {
+        logRateLimit(req.path, req.ip || 'unknown', req.user?.id);
+        createRateLimitResponse(res, result.reset);
+        return;
+      }
+
+      next();
+    } catch {
+      res.status(503).json({ success: false, code: 'RATE_LIMIT_SERVICE_UNAVAILABLE' });
+    }
+  };
+}
