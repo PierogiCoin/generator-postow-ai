@@ -29,7 +29,8 @@ import {
 } from './homeViewUtils';
 import { IndustryFunnelHero } from './IndustryFunnelHero';
 import { RoiCalculator } from './home/RoiCalculator';
-import { LiveSocialProofToasts } from './home/LiveSocialProofToasts';
+import { PricingSection } from './home/PricingSection';
+import { LiveSocialProofToasts, InlineProofToast } from './home/LiveSocialProofToasts';
 import type { IndustryPackId } from '../utils/industryPacks';
 
 interface HomeViewProps {}
@@ -204,10 +205,11 @@ const HERO_DEMO_TOPICS = [
   'Jak budować zaangażowaną społeczność wokół marki bez budżetu',
 ];
 
-const HeroLiveDemoWidget: React.FC = () => {
+const HeroLiveDemoWidget: React.FC<{ onGenerate: (topic: string) => void }> = ({ onGenerate }) => {
   const { t } = useTranslation();
   const [activePlatform, setActivePlatform] = useState<'linkedin' | 'instagram' | 'tiktok'>('linkedin');
   const [sampleIdx, setSampleIdx] = useState(0);
+  const [demoTopic, setDemoTopic] = useState('');
 
   const currentTopic = HERO_DEMO_TOPICS[sampleIdx];
   const platformData = PLATFORM_PREVIEWS[activePlatform];
@@ -266,6 +268,23 @@ const HeroLiveDemoWidget: React.FC = () => {
         <div className="text-[11px] text-slate-400 italic text-right">
           ⚡ {platformData.formatting}
         </div>
+
+        <div className="pt-3 border-t border-white/10 space-y-2">
+          <input
+            type="text"
+            value={demoTopic}
+            onChange={(e) => setDemoTopic(e.target.value)}
+            placeholder="Wpisz temat np. 'Nowa oferta w salonie beauty'"
+            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+          />
+          <button
+            type="button"
+            onClick={() => onGenerate(demoTopic.trim() || currentTopic)}
+            className="mt-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-6 py-2 rounded-full transition-colors active:scale-95"
+          >
+            Wygeneruj post na żywo →
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -275,7 +294,8 @@ const HeroSection: React.FC<{
   reducedMotion: boolean;
   isLoggedIn: boolean;
   onStart: () => void;
-}> = ({ reducedMotion, isLoggedIn, onStart }) => {
+  onGenerateDemo: (topic: string) => void;
+}> = ({ reducedMotion, isLoggedIn, onStart, onGenerateDemo }) => {
   const { t } = useTranslation();
 
   return (
@@ -348,7 +368,11 @@ const HeroSection: React.FC<{
             <p className="mb-3 text-sm text-slate-300 flex items-center gap-2">
               <span className="text-base">👁️</span> Zobacz, jak AI pisze posty na żywo
             </p>
-            <HeroLiveDemoWidget />
+            <HeroLiveDemoWidget onGenerate={onGenerateDemo} />
+            <InlineProofToast
+              text="Ania z Warszawy wygenerowała podobny post dla kawiarni"
+              className="mt-3 max-w-2xl mx-auto"
+            />
           </div>
         </div>
       </div>
@@ -579,25 +603,32 @@ const ProofStrip: React.FC = () => {
 };
 
 const FAQSection: React.FC = () => {
-  const { t } = useTranslation();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
     {
-      q: t('home.journey.faq_1_q', 'Czy treści wygenerowane przez AI są unikalne i bezpieczne?'),
-      a: t('home.journey.faq_1_a', 'Tak! Każda treść jest generowana od nowa i dopasowywana do specyfiki Twojej branży. Zapewniamy 100% autorskie formuły bez ryzyka plagiatu.'),
+      q: 'Czy treści wygenerowane przez AI są unikalne i bezpieczne?',
+      a: 'Tak! Każda treść jest generowana od nowa i dopasowywana do specyfiki Twojej branży. Zapewniamy 100% autorskie formuły bez ryzyka plagiatu.',
     },
     {
-      q: t('home.journey.faq_2_q', 'Czy muszę podawać kartę kredytową przy rejestracji?'),
-      a: t('home.journey.faq_2_a', 'Nie! Rejestracja jest całkowicie darmowa i nie wymaga podawania danych karty. Otrzymasz darmowe kredyty na start do przetestowania pełnych możliwości aplikacji.'),
+      q: 'Czy muszę podawać kartę kredytową przy rejestracji?',
+      a: 'Nie! Rejestracja jest całkowicie darmowa i nie wymaga podawania danych karty. Otrzymasz darmowe kredyty na start do przetestowania pełnych możliwości aplikacji.',
     },
     {
-      q: t('home.journey.faq_3_q', 'Jak AI dopasowuje się do unikalnego głosu mojej marki (Brand Voice)?'),
-      a: t('home.journey.faq_3_a', 'Możesz zdefiniować ton wypowiedzi, słowa kluczowe oraz styl marki w ustawieniach. Silnik AI zapamiętuje te preferencje dla każdego kolejnego posta.'),
+      q: 'Jak AI dopasowuje się do unikalnego głosu mojej marki (Brand Voice)?',
+      a: 'Możesz zdefiniować ton wypowiedzi, słowa kluczowe oraz styl marki w ustawieniach. Silnik AI zapamiętuje te preferencje dla każdego kolejnego posta.',
     },
     {
-      q: t('home.journey.faq_4_q', 'Czy mogę automatycznie planować publikację w Social Media?'),
-      a: t('home.journey.faq_4_a', 'Tak, AI Content Pro posiada wbudowany kalendarz oraz interfejs do bezpośredniej publikacji na platformach LinkedIn, Instagram, Facebook i TikTok.'),
+      q: 'Czy mogę automatycznie planować publikację w Social Media?',
+      a: 'Tak, AI Content Pro posiada wbudowany kalendarz oraz interfejs do bezpośredniej publikacji na platformach LinkedIn, Instagram, Facebook i TikTok.',
+    },
+    {
+      q: 'Czy potrzebuję karty kredytowej, żeby wypróbować plan Pro?',
+      a: 'Nie. Plan Pro możesz wypróbować przez 7 dni za darmo — kartę podajesz dopiero, jeśli zdecydujesz się zostać po okresie próbnym.',
+    },
+    {
+      q: 'Czy mogę anulować subskrypcję w dowolnym momencie?',
+      a: 'Tak. Subskrypcję anulujesz jednym kliknięciem w ustawieniach konta — bez okresu wypowiedzenia i dodatkowych opłat.',
     },
   ];
 
@@ -606,10 +637,10 @@ const FAQSection: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="inline-block px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
-            {t('home.journey.faq_kicker', 'Często Zadawane Pytania')}
+            Często Zadawane Pytania
           </span>
           <h2 className="font-display text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            {t('home.journey.faq_title', 'Wszystko, co musisz wiedzieć przed rozpoczęciem')}
+            Wszystko, co musisz wiedzieć przed rozpoczęciem
           </h2>
         </div>
 
@@ -730,11 +761,35 @@ export const HomeView: React.FC<HomeViewProps> = () => {
     setIsPricingModalOpen(true);
   };
 
+  const handleDemoGenerate = (topic: string) => {
+    if (user) {
+      navigate(`/generator?topic=${encodeURIComponent(topic)}`);
+      return;
+    }
+    try {
+      localStorage.setItem('aicp_prefill_topic', topic);
+    } catch {
+      // ignore storage errors (e.g. private mode)
+    }
+    setAuthModal('signup');
+  };
+
   return (
     <div className="relative pb-0">
       <ScrollProgressBar />
       <LandingNav onSignup={openSignupOrApp} onLogin={() => setAuthModal('login')} onPricing={openPricing} isLoggedIn={isLoggedIn} />
-      <HeroSection reducedMotion={reducedMotion} isLoggedIn={isLoggedIn} onStart={openSignupOrApp} />
+
+      {/* Urgency banner */}
+      <div className="bg-emerald-500/10 border-b border-emerald-500/20 text-emerald-300 text-xs sm:text-sm font-semibold text-center py-2 px-4">
+        🎁 Zarejestruj się do niedzieli i odbierz 20 dodatkowych kredytów na start
+      </div>
+
+      <HeroSection
+        reducedMotion={reducedMotion}
+        isLoggedIn={isLoggedIn}
+        onStart={openSignupOrApp}
+        onGenerateDemo={handleDemoGenerate}
+      />
 
       <Reveal reducedMotion={reducedMotion}>
         <HowItWorksSection />
@@ -757,6 +812,14 @@ export const HomeView: React.FC<HomeViewProps> = () => {
 
       <Reveal reducedMotion={reducedMotion}>
         <RoiCalculator onStart={openSignupOrApp} />
+      </Reveal>
+
+      <Reveal reducedMotion={reducedMotion}>
+        <PricingSection
+          onStartFree={openSignupOrApp}
+          onStartPro={openSignupOrApp}
+          onContactSales={openPricing}
+        />
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>

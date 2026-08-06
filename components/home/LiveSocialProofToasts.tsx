@@ -8,6 +8,15 @@ const TOASTS = [
   { id: 5, text: 'Zosia z Poznania założyła konto i wygenerowała pierwszy post w 45 sekund' },
 ];
 
+export const InlineProofToast: React.FC<{ text: string; className?: string }> = ({ text, className = '' }) => (
+  <div
+    className={`p-3 rounded-xl bg-black/40 backdrop-blur border border-white/10 text-white text-xs flex items-center gap-2 ${className}`}
+  >
+    <span className="text-emerald-400 text-sm">⚡</span>
+    <span className="leading-snug">{text}</span>
+  </div>
+);
+
 export const LiveSocialProofToasts: React.FC = () => {
   const [visible, setVisible] = useState(false);
 
