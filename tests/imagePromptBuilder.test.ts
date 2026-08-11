@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Platform, VisualStyle } from '../types';
+import { Platform, VisualStyle } from '@/types';
 import {
   resolveUseMascot,
   buildImageGenerationInput,
-} from '../services/imagePromptBuilder';
-import type { BrandVoiceData } from '../types';
+} from '@/services/imagePromptBuilder';
+import type { BrandVoiceData } from '@/types';
 
 const generateJson = vi.fn();
 const generateImages = vi.fn();
 
-vi.mock('../services/apiClient', () => ({
+vi.mock('@/services/apiClient', () => ({
   generateJson: (...args: unknown[]) => generateJson(...args),
 }));
 
-vi.mock('../services/mediaService', () => ({
+vi.mock('@/services/mediaService', () => ({
   generateImages: (...args: unknown[]) => generateImages(...args),
 }));
 

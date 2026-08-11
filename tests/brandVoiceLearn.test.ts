@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ToneArchetype } from '../types';
+import { ToneArchetype } from '@/types';
 import {
   computeBrandVoiceCompleteness,
   learnedPayloadToSettings,
   mapToneToArchetype,
   mergeLearnedIntoProfile,
-} from '../utils/brandVoiceLearn';
+} from '@/utils/brandVoiceLearn';
 
 describe('brandVoiceLearn', () => {
   it('maps witty tone to entertainer archetype', () => {

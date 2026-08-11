@@ -3,10 +3,10 @@ import {
   hasLiveMetrics,
   enrichHistoryWithLiveMetrics,
   aggregateAnalyticsKpis,
-} from '../services/analyticsService';
-import type { CampaignHistoryItem } from '../types';
-import { GenerationType, Platform, Tone, ContentType, VisualStyle, ContentLanguage } from '../types';
-import type { SocialPost } from '../types/socialPublishing';
+} from '@/services/analyticsService';
+import type { CampaignHistoryItem } from '@/types';
+import { GenerationType, Platform, Tone, ContentType, VisualStyle, ContentLanguage } from '@/types';
+import type { SocialPost } from '@/types/socialPublishing';
 
 function makeDraft(
   partial: Partial<Omit<CampaignHistoryItem, 'result'>> & { result?: Partial<CampaignHistoryItem['result']> } & { id: string; topic: string },
@@ -205,7 +205,7 @@ describe('analytics analysis cache', () => {
       saveAnalyticsCache,
       loadAnalyticsCache,
       clearAnalyticsCache,
-    } = await import('../services/analyticsService');
+    } = await import('@/services/analyticsService');
 
     saveAnalyticsCache({
       userId: 'u1',
@@ -229,11 +229,11 @@ describe('analytics analysis cache', () => {
 describe('fetchAIAnalysis fallback', () => {
   it('przy błędzie Gemini zwraca unavailable bez fake tipów', async () => {
     vi.resetModules();
-    vi.doMock('../services/apiClient', () => ({
+    vi.doMock('@/services/apiClient', () => ({
       generateJson: vi.fn().mockRejectedValue(new Error('gemini down')),
     }));
 
-    const { fetchAIAnalysis } = await import('../services/analyticsService');
+    const { fetchAIAnalysis } = await import('@/services/analyticsService');
     const result = await fetchAIAnalysis([], 'u1', []);
     expect(result.unavailable).toBe(true);
     expect(result.insights).toEqual([]);

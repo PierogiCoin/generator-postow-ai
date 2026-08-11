@@ -3,8 +3,8 @@ import {
   analyzeContentInventory,
   buildContentInventory,
   dedupePlanAgainstInventory,
-} from '../services/contentInventoryService';
-import { GenerationType, Platform } from '../types';
+} from '@/services/contentInventoryService';
+import { GenerationType, Platform } from '@/types';
 
 describe('contentInventoryService', () => {
   it('aggregates history and scheduled posts', () => {

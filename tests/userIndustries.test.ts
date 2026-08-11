@@ -15,7 +15,7 @@ vi.stubGlobal('localStorage', {
   },
 });
 
-vi.mock('../services/supabaseClient', () => ({
+vi.mock('@/services/supabaseClient', () => ({
   getSupabase: () => ({
     from: () => ({
       update: () => ({
@@ -33,7 +33,7 @@ import {
   setPendingIndustryIds,
   setUserIndustryIds,
   clearPendingIndustryIds,
-} from '../utils/userIndustries';
+} from '@/utils/userIndustries';
 
 describe('userIndustries', () => {
   beforeEach(() => {

@@ -6,9 +6,9 @@ import {
   getAllIndustryPacks,
   applySubNicheToPack,
   getGastroSubNiches,
-} from '../utils/industryPacks';
-import { buildFirstPostTopic, mapOnboardingToFormData } from '../utils/onboarding';
-import { Platform, Tone } from '../types';
+} from '@/utils/industryPacks';
+import { buildFirstPostTopic, mapOnboardingToFormData } from '@/utils/onboarding';
+import { Platform, Tone } from '@/types';
 import { matchIndustryPack as matchServerPack, getTemplatesByCategory } from '../server/contentTemplates';
 
 describe('matchIndustryPack', () => {

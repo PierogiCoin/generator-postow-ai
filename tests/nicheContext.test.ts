@@ -4,8 +4,8 @@ import {
   formatNicheUserPromptLines,
   nicheStorageLabel,
   resolveNicheContext,
-} from '../utils/nicheContext';
-import { matchIndustryPack } from '../utils/industryPacks';
+} from '@/utils/nicheContext';
+import { matchIndustryPack } from '@/utils/industryPacks';
 
 describe('nicheContext', () => {
   it('resolves niche from audience and attaches pack', () => {

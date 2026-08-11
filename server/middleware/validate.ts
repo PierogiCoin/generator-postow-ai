@@ -210,6 +210,10 @@ export const templatePlatformParamSchema = z.object({
   platform: z.string().min(1).max(50),
 });
 
+export const fetchUrlSchema = z.object({
+  url: z.string().url().min(5).max(2000),
+});
+
 export function validateRequest(schema: z.ZodSchema) {
   return (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req.body ?? {});

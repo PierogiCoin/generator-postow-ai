@@ -20,7 +20,7 @@ describe('analytics service', () => {
   });
 
   it('AnalyticsEvents has expected keys', async () => {
-    const { AnalyticsEvents } = await import('../services/analytics');
+    const { AnalyticsEvents } = await import('@/services/analytics');
     expect(AnalyticsEvents.SIGNUP).toBe('user_signed_up');
     expect(AnalyticsEvents.LOGIN).toBe('user_logged_in');
     expect(AnalyticsEvents.PRICING_VIEWED).toBeDefined();
@@ -28,17 +28,17 @@ describe('analytics service', () => {
   });
 
   it('track calls without throwing (dev mode)', async () => {
-    const { analytics } = await import('../services/analytics');
+    const { analytics } = await import('@/services/analytics');
     await expect(analytics.track('test_event', { foo: 'bar' })).resolves.not.toThrow();
   });
 
   it('identify calls without throwing (dev mode)', async () => {
-    const { analytics } = await import('../services/analytics');
+    const { analytics } = await import('@/services/analytics');
     await expect(analytics.identify('user-123', { plan: 'free' })).resolves.not.toThrow();
   });
 
   it('reset calls without throwing', async () => {
-    const { analytics } = await import('../services/analytics');
+    const { analytics } = await import('@/services/analytics');
     await expect(analytics.reset()).resolves.not.toThrow();
   });
 });

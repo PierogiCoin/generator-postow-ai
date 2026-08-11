@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import logger from '../logger.js';
 import { creditGate } from '../middleware/credits.js';
-import { getAuthUserId } from '../middleware/supabaseAuth.js';
+import { getAuthUserId, requireSupabaseAuth } from '../middleware/supabaseAuth.js';
 import { validateRequest } from '../middleware/validate.js';
 import { textLimiter } from '../middleware/rateLimiter.js';
 import { runGroundedJsonGeneration } from '../lib/intelligenceEngine.js';
@@ -104,6 +104,7 @@ export function createIntelligenceRouter(): Router {
 
   router.post(
     '/api/intelligence/news',
+    requireSupabaseAuth,
     textLimiter,
     ...creditGate('sentimentAnalysis'),
     validateRequest(newsSchema),
@@ -170,6 +171,7 @@ Zwróć WYŁĄCZNIE JSON:
 
   router.post(
     '/api/intelligence/trends',
+    requireSupabaseAuth,
     textLimiter,
     ...creditGate('sentimentAnalysis'),
     validateRequest(trendsSchema),
@@ -243,6 +245,7 @@ JSON:
 
   router.post(
     '/api/intelligence/competitor',
+    requireSupabaseAuth,
     textLimiter,
     ...creditGate('brandVoiceAnalysis'),
     validateRequest(competitorSchema),
@@ -320,6 +323,7 @@ weekday: 0=Pon … 6=Ndz. density 1=niska aktywność, 10=peak konkurencji.`;
 
   router.post(
     '/api/intelligence/competitor-batch',
+    requireSupabaseAuth,
     textLimiter,
     ...creditGate('brandVoiceAnalysis', (req) => {
       const n = Math.max(1, Math.min(8, Array.isArray(req.body?.handles) ? req.body.handles.length : 1));
@@ -391,6 +395,7 @@ JSON:
 
   router.post(
     '/api/intelligence/schedule-gaps',
+    requireSupabaseAuth,
     textLimiter,
     ...creditGate('contentOptimization'),
     validateRequest(scheduleGapsSchema),

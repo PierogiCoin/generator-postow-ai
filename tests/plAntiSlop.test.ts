@@ -3,7 +3,7 @@ import {
   findBannedPhrases,
   hasBannedPhrases,
   buildAntiSlopBlock,
-} from '../prompts/plAntiSlop';
+} from '@/prompts/plAntiSlop';
 
 describe('plAntiSlop', () => {
   it('detects banned PL phrases', () => {

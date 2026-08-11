@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { Platform } from '../types';
-import type { TrackedCompetitor } from '../services/competitorService';
+import { Platform } from '@/types';
+import type { TrackedCompetitor } from '@/services/competitorService';
 import {
   buildCompetitorPromptBlock,
   buildLearnedFromCompetitors,
   mergeCompetitorIntelIntoProfile,
-} from '../utils/competitorBrandVoice';
+} from '@/utils/competitorBrandVoice';
 
 const mockCompetitor: TrackedCompetitor = {
   id: '1',

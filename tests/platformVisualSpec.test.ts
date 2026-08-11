@@ -4,8 +4,8 @@ import {
   resolveAspectRatioForPlatform,
   buildPlatformImagePrompt,
   isAspectRatioAllowedForPlatform,
-} from '../utils/platformVisualSpec';
-import { Platform, VisualStyle } from '../types';
+} from '@/utils/platformVisualSpec';
+import { Platform, VisualStyle } from '@/types';
 
 describe('platformVisualSpec', () => {
   it('returns Instagram square default', () => {

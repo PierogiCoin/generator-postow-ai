@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireSupabaseAuth, getAuthUserId } from '../middleware/supabaseAuth.js';
+import { validateRequest, fetchUrlSchema } from '../middleware/validate.js';
 import { expensiveLimiter } from '../middleware/rateLimiter.js';
 import logger from '../logger.js';
 import { assertSafeUrl } from '../lib/safeUrl.js';
@@ -103,13 +104,11 @@ export function createContentFetchRouter(): Router {
     '/api/content/fetch-url',
     requireSupabaseAuth,
     expensiveLimiter,
+    validateRequest(fetchUrlSchema),
     async (req, res) => {
       try {
         getAuthUserId(req);
-        const urlRaw = String(req.body?.url || '').trim();
-        if (!urlRaw) {
-          return res.status(400).json({ message: 'Brak URL' });
-        }
+        const urlRaw = (req.body.url as string).trim();
 
         assertSafeUrl(urlRaw);
 

@@ -1,0 +1,534 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { SparklesIcon } from './icons/SparklesIcon';
+import { BrandMarkIcon } from './icons/BrandMarkIcon';
+import { ThemeToggle } from './ThemeToggle';
+import { UserMenu } from './UserMenu';
+import { TeamSwitcher } from './TeamSwitcher';
+import { useAuth } from '../contexts/AuthContext';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { UserPlan } from '../types';
+import { MenuIcon } from './icons/MenuIcon';
+import { XMarkIcon } from './icons/XMarkIcon';
+import { ChevronDownIcon } from './icons/ChevronDownIcon';
+import { UserIcon } from './icons/UserIcon';
+import { APP_NAV_ITEMS, CREATE_NAV_ITEMS, planMeets, type AppNavItem, type CreateNavItem } from '@/config/navConfig';
+
+interface HeaderProps {
+    isCalendarEnabled: boolean;
+    onUpgradeClick: () => void;
+    onLoginClick: () => void;
+    onSignUpClick: () => void;
+    notificationSystem: React.ReactNode;
+}
+
+type ResolvedNavItem = AppNavItem & {
+    disabled: boolean;
+    title: string;
+};
+
+const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string; disabled?: boolean }> = React.memo(({
+    to,
+    children,
+    title,
+    disabled,
+}) => (
+    <NavLink
+        to={to}
+        title={title}
+        end={to === '/dashboard'}
+        className={({ isActive }) =>
+            `relative flex items-center gap-2 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 ${
+                isActive
+                    ? 'bg-gradient-to-r from-[var(--hero-accent)] to-emerald-500 text-white shadow-md shadow-emerald-500/25 ring-1 ring-white/20'
+                    : 'text-slate-400 hover:text-white hover:bg-white/[0.07] border border-transparent'
+            } ${disabled ? 'opacity-35 cursor-not-allowed pointer-events-none' : ''}`
+        }
+    >
+        {children}
+    </NavLink>
+));
+
+const BottomNavItem: React.FC<{
+    to: string;
+    icon: React.ComponentType<{ className?: string }>;
+    label: string;
+}> = React.memo(({ to, icon: Icon, label }) => (
+    <NavLink
+        to={to}
+        end={to === '/dashboard'}
+        className={({ isActive }) =>
+            `flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-all duration-300 relative ${
+                isActive
+                    ? 'text-emerald-400 font-extrabold scale-105'
+                    : 'text-slate-400 hover:text-white'
+            }`
+        }
+    >
+        <Icon className="w-5 h-5" />
+        <span className="text-[10px] font-bold tracking-tight uppercase">{label}</span>
+    </NavLink>
+));
+
+const BottomNavBar: React.FC<{
+    items: ResolvedNavItem[];
+    onOpenCreateMenu: () => void;
+    onOpenMoreMenu: () => void;
+    isCreateMenuOpen?: boolean;
+    isMoreMenuOpen?: boolean;
+}> = React.memo(({
+    items,
+    onOpenCreateMenu,
+    onOpenMoreMenu,
+    isCreateMenuOpen = false,
+    isMoreMenuOpen = false,
+}) => {
+    const { t } = useTranslation();
+    const dashboard = items.find((i) => i.id === 'dashboard');
+    const calendar = items.find((i) => i.id === 'calendar');
+    const generator = items.find((i) => i.id === 'generator');
+
+    return (
+        <div className="sm:hidden fixed bottom-3 left-0 right-0 z-40 px-4 pointer-events-none">
+            <nav
+                className="pointer-events-auto grid grid-cols-5 items-center gap-1 w-full max-w-md mx-auto rounded-3xl border border-white/20 bg-slate-950/90 dark:bg-[#07101b]/95 backdrop-blur-2xl px-2 py-2 shadow-2xl shadow-emerald-950/30"
+                aria-label={t('header.nav.ariaLabel')}
+            >
+                {dashboard && <BottomNavItem to={dashboard.to} icon={dashboard.icon} label={t(dashboard.labelKey)} />}
+                {calendar && <BottomNavItem to={calendar.to} icon={calendar.icon} label={t(calendar.labelKey)} />}
+                <div className="flex items-center justify-center -mt-6">
+                    <button
+                        type="button"
+                        onClick={onOpenCreateMenu}
+                        aria-haspopup="dialog"
+                        aria-expanded={isCreateMenuOpen}
+                        className="w-14 h-14 rounded-2xl text-white flex items-center justify-center active:scale-95 transition-all duration-300 border-4 border-slate-950 dark:border-[#07101b] bg-gradient-to-tr from-[var(--hero-accent)] via-emerald-500 to-teal-400 hover:brightness-110 shadow-xl shadow-emerald-500/40 hover:scale-105"
+                        aria-label={t('header.nav.create')}
+                    >
+                        <SparklesIcon className="w-7 h-7 animate-pulse" />
+                    </button>
+                </div>
+                {generator && <BottomNavItem to={generator.to} icon={generator.icon} label={t(generator.labelKey)} />}
+                <button
+                    type="button"
+                    onClick={onOpenMoreMenu}
+                    aria-haspopup="dialog"
+                    aria-expanded={isMoreMenuOpen}
+                    className="flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] text-slate-400 hover:text-white transition-colors duration-200"
+                >
+                    <MenuIcon className="w-5 h-5" />
+                    <span className="text-[10px] font-extrabold tracking-tight uppercase">{t('header.nav.more')}</span>
+                </button>
+            </nav>
+        </div>
+    );
+});
+
+const MobileCreateMenu: React.FC<{ createNavItems: CreateNavItem[], onClose: () => void }> = React.memo(({ createNavItems, onClose }) => {
+    const { t } = useTranslation();
+    return (
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-[60] sm:hidden animate-fade-in" onClick={onClose}>
+            <div className="absolute bottom-28 left-1/2 -translate-x-1/2 w-[92%] max-w-sm bg-gradient-to-br from-slate-900/95 to-slate-800/95 rounded-[3rem] border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] p-6 animate-slide-in backdrop-blur-2xl">
+                <div className="grid grid-cols-2 gap-3">
+                    {createNavItems.map(({ id, to, labelKey, icon: Icon, state }, i) => (
+                        <NavLink
+                            key={id}
+                            to={to}
+                            state={state}
+                            onClick={onClose}
+                            className="group flex flex-col items-center justify-center gap-3 p-4 bg-gradient-to-br from-white/[0.08] to-white/[0.02] rounded-2xl border border-white/[0.08] hover:border-white/[0.15] transition-all duration-300 hover:scale-105 active:scale-95 animate-fade-in-up relative overflow-hidden"
+                            style={{ animationDelay: `${i * 0.08}s`, animationFillMode: 'both' }}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 to-blue-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                            <div className="relative z-10 w-12 h-12 bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-purple-500/25 rotate-6 hover:rotate-0 transition-all duration-300 group-hover:shadow-xl group-hover:shadow-purple-500/40">
+                                <Icon className="w-6 h-6 transition-transform duration-300 group-hover:scale-110" />
+                            </div>
+                            <span className="relative z-10 font-bold text-xs text-center uppercase tracking-tight text-slate-200 group-hover:text-white transition-colors duration-300">{t(labelKey)}</span>
+                        </NavLink>
+                    ))}
+                </div>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-full mt-6 py-3 text-sm font-bold text-slate-400 hover:text-white bg-gradient-to-r from-white/5 to-transparent rounded-xl transition-all duration-300 hover:bg-white/10 border border-white/5 hover:border-white/10"
+                >
+                    {t('common.close')}
+                </button>
+            </div>
+        </div>
+    );
+});
+
+export const Header: React.FC<HeaderProps> = ({
+    isCalendarEnabled,
+    onUpgradeClick,
+    onLoginClick,
+    onSignUpClick,
+    notificationSystem,
+}) => {
+    const { user, logout, setCurrentTeamId } = useAuth();
+    const { t } = useTranslation();
+    const location = useLocation();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
+    const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+    const moreMenuRef = useRef<HTMLDivElement>(null);
+    const mobileMenuRef = useRef<HTMLDivElement>(null);
+
+    const userPlan = user?.plan || UserPlan.Free;
+
+    const resolvedItems = useMemo<ResolvedNavItem[]>(() => {
+        return APP_NAV_ITEMS.map((item) => {
+            const planLocked = item.minPlan ? !planMeets(userPlan, item.minPlan) : false;
+            const gatedLocked = item.gated ? !isCalendarEnabled : false;
+            const disabled = planLocked || gatedLocked;
+            const titleKey = disabled ? item.disabledTooltipKey : item.enabledTooltipKey;
+            return { ...item, disabled, title: titleKey ? t(titleKey) : t(item.labelKey) };
+        });
+    }, [isCalendarEnabled, userPlan, t]);
+
+    const primaryItems = useMemo(() => resolvedItems.filter((i) => i.section === 'main'), [resolvedItems]);
+    const moreItems = useMemo(() => resolvedItems.filter((i) => i.section !== 'main'), [resolvedItems]);
+    const moreSections = useMemo(() => [
+        { key: 'strategy', labelKey: 'header.nav.sectionStrategy', items: moreItems.filter((i) => i.section === 'strategy') },
+        { key: 'tools', labelKey: 'header.nav.sectionTools', items: moreItems.filter((i) => i.section === 'tools') },
+    ], [moreItems]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+                setIsMoreMenuOpen(false);
+            }
+        };
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsMoreMenuOpen(false);
+                setIsMobileCreateMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (isMobileMenuOpen && mobileMenuRef.current) {
+            const focusableElements = mobileMenuRef.current.querySelectorAll(
+                'a[href]:not([disabled]), button:not([disabled]), textarea:not([disabled]), input[type="text"]:not([disabled]), input[type="radio"]:not([disabled]), input[type="checkbox"]:not([disabled]), select:not([disabled])'
+            );
+            const firstElement = focusableElements[0] as HTMLElement;
+            const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+            const handleKeyDown = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') {
+                    setIsMobileMenuOpen(false);
+                }
+                if (e.key === 'Tab') {
+                    if (e.shiftKey) { // Shift+Tab
+                        if (document.activeElement === firstElement) {
+                            lastElement.focus();
+                            e.preventDefault();
+                        }
+                    } else { // Tab
+                        if (document.activeElement === lastElement) {
+                            firstElement.focus();
+                            e.preventDefault();
+                        }
+                    }
+                }
+            };
+
+            document.addEventListener('keydown', handleKeyDown);
+            firstElement?.focus();
+
+            return () => document.removeEventListener('keydown', handleKeyDown);
+        }
+    }, [isMobileMenuOpen]);
+
+    return (
+        <>
+            <header className="sticky top-0 z-[50] border-b border-white/10 bg-[#060b18]/85 backdrop-blur-2xl shadow-lg shadow-sky-500/5 transition-all duration-300">
+                <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-3 lg:gap-5 shrink-0">
+                        <NavLink to={user ? "/dashboard" : "/"} className="flex items-center gap-2.5 group shrink-0" aria-label={t('header.homeAriaLabel')}>
+                            <div
+                                className="rounded-xl p-2 group-hover:scale-105 transition-all duration-300 shrink-0 shadow-md shadow-emerald-500/20"
+                                style={{ backgroundColor: 'var(--hero-navy)' }}
+                            >
+                                <BrandMarkIcon className="w-5 h-5 text-[var(--hero-accent)]" />
+                            </div>
+                            <h1 className="hidden md:block font-display text-base lg:text-lg font-extrabold text-white tracking-tight group-hover:text-emerald-400 transition-colors duration-300 whitespace-nowrap">
+                                {t('header.title')}
+                            </h1>
+                        </NavLink>
+                        {user && <div className="shrink-0 hidden sm:block"><TeamSwitcher user={user} onSwitchTeam={setCurrentTeamId} /></div>}
+                    </div>
+
+                    {user && (
+                        <nav
+                            className="hidden sm:flex items-center gap-1.5 p-1.5 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md shadow-inner"
+                            aria-label={t('header.nav.ariaLabel')}
+                        >
+                            {primaryItems.map(({ id, to, labelKey, icon: Icon, disabled, title }) => (
+                                <NavItem key={id} to={to} title={title} disabled={disabled}>
+                                    <Icon className="w-4 h-4 shrink-0 opacity-90" />
+                                    <span className="hidden lg:inline">{t(labelKey)}</span>
+                                </NavItem>
+                            ))}
+
+                            <div className="relative" ref={moreMenuRef}>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsMoreMenuOpen((v) => !v)}
+                                    aria-expanded={isMoreMenuOpen}
+                                    aria-haspopup="menu"
+                                    className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border ${
+                                        isMoreMenuOpen || moreItems.some((i) => location.pathname.startsWith(i.to))
+                                            ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] border-[var(--hero-accent)]/35 shadow-sm'
+                                            : 'text-slate-400 hover:text-white hover:bg-white/[0.07] border-transparent'
+                                    }`}
+                                >
+                                    <span className="hidden lg:inline">{t('header.nav.more')}</span>
+                                    <MenuIcon className="w-4 h-4 lg:hidden" />
+                                    <ChevronDownIcon className={`w-3.5 h-3.5 transition-transform duration-200 ${isMoreMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isMoreMenuOpen && (
+                                    <div
+                                        role="menu"
+                                        className="absolute top-full right-0 mt-3 w-[560px] rounded-3xl border border-white/15 bg-slate-950/95 dark:bg-[#071018]/95 backdrop-blur-2xl shadow-2xl z-50 p-6 animate-scale-in"
+                                    >
+                                        <div className="grid grid-cols-2 gap-5">
+                                            {moreSections.map(({ key, labelKey, items }) => (
+                                                <div key={key} className="space-y-2.5">
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 block px-2">
+                                                        {t(labelKey)}
+                                                    </span>
+                                                    {items.map(({ id, to, labelKey, icon: Icon, disabled, title }) => (
+                                                        <NavLink
+                                                            key={id}
+                                                            to={to}
+                                                            role="menuitem"
+                                                            title={disabled ? title : undefined}
+                                                            onClick={() => setIsMoreMenuOpen(false)}
+                                                            className={({ isActive }) =>
+                                                                `flex items-start gap-3 p-3 rounded-2xl transition-all ${
+                                                                    isActive
+                                                                        ? 'bg-[var(--hero-accent-soft)] text-emerald-400 font-bold border border-emerald-500/30'
+                                                                        : 'text-slate-200 hover:bg-white/[0.06] border border-transparent'
+                                                                } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                            }
+                                                        >
+                                                            <div className="p-2 rounded-xl bg-white/5 text-[var(--hero-accent)] shrink-0 border border-white/10">
+                                                                <Icon className="w-4 h-4" />
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-xs font-bold leading-none text-white">{t(labelKey)}</div>
+                                                                <div className="text-[11px] text-slate-400 mt-1 font-medium">{t(`header.nav.desc${id.charAt(0).toUpperCase() + id.slice(1)}`)}</div>
+                                                            </div>
+                                                        </NavLink>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="w-px h-6 bg-white/10 mx-1" aria-hidden />
+
+                            <NavLink
+                                to="/generator"
+                                className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all text-white bg-gradient-to-r from-[var(--hero-accent)] to-emerald-500 hover:brightness-110 hover:scale-105 active:scale-95 shadow-md shadow-emerald-500/25 shrink-0 whitespace-nowrap"
+                            >
+                                <SparklesIcon className="w-4 h-4 shrink-0 animate-pulse" />
+                                <span>{t('header.nav.create')}</span>
+                            </NavLink>
+                        </nav>
+                    )}
+
+                    <div className="flex items-center gap-4">
+                        <div className="hidden sm:flex items-center gap-4">
+                            <LanguageSwitcher />
+                            <ThemeToggle />
+                            {user && notificationSystem}
+                        </div>
+                        {user ? (
+                            <>
+                                {typeof user.credits === 'number' && (
+                                    <button
+                                        type="button"
+                                        onClick={onUpgradeClick}
+                                        className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-extrabold border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:scale-105 active:scale-95 transition-all shadow-sm shadow-emerald-500/10 group"
+                                        title={t('header.creditsTooltip')}
+                                    >
+                                        <SparklesIcon className="w-4 h-4 text-emerald-400 animate-pulse group-hover:rotate-12 transition-transform" />
+                                        <span>{user.credits.toLocaleString('pl-PL')}</span>
+                                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-black uppercase tracking-wider ml-0.5">
+                                            + Doładuj
+                                        </span>
+                                    </button>
+                                )}
+                                <UserMenu user={user} onLogout={logout} />
+                            </>
+                        ) : (
+                            <>
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={onLoginClick}
+                                        className="px-5 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 rounded-lg border border-slate-200 dark:border-white/15 hover:bg-slate-100/80 dark:hover:bg-white/5 transition-all duration-200"
+                                    >
+                                        {t('header.login')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={onSignUpClick}
+                                        className="flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white rounded-lg hover:brightness-110 transition-all duration-200"
+                                        style={{ backgroundColor: 'var(--hero-accent)' }}
+                                    >
+                                        {t('header.signup')}
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={onSignUpClick}
+                                    className="sm:hidden flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white rounded-lg active:scale-95 transition-all duration-200 hover:brightness-110"
+                                    style={{ backgroundColor: 'var(--hero-accent)' }}
+                                >
+                                    {t('header.signup')}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsMobileMenuOpen(true)}
+                                    className="sm:hidden p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200/80 dark:border-white/10 transition-colors duration-200"
+                                    aria-label={t('home.nav.openMenu')}
+                                >
+                                    <MenuIcon className="w-6 h-6" />
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </header>
+
+            {/* Mobile "More" Menu Drawer */}
+            {isMobileMenuOpen && (
+                <div
+                    className="fixed inset-0 z-[100] sm:hidden"
+                    ref={mobileMenuRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="mobile-menu-heading"
+                >
+                    <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-md animate-fade-in" onClick={() => setIsMobileMenuOpen(false)}></div>
+                    <div className={`absolute top-0 right-0 h-full w-4/5 max-w-sm bg-white dark:bg-[#0a1220] p-8 transition-transform duration-500 ease-out border-l border-slate-200 dark:border-white/10 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
+                        <div>
+                            <div className="flex justify-between items-center mb-10">
+                                <h2 id="mobile-menu-heading" className="font-display text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                                    {t('header.nav.menu')}
+                                </h2>
+                                <button type="button" onClick={() => setIsMobileMenuOpen(false)} className="p-2 bg-slate-100 dark:bg-white/5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                                    <XMarkIcon className="w-6 h-6" />
+                                </button>
+                            </div>
+                            <nav className="flex flex-col gap-2 overflow-y-auto custom-scrollbar">
+                                {user ? (
+                                    <>
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mb-1">
+                                            {t('header.nav.sectionMain')}
+                                        </p>
+                                        {primaryItems.map(({ id, to, labelKey, icon: Icon, disabled }) => (
+                                            <NavLink
+                                                key={id}
+                                                to={to}
+                                                end={to === '/dashboard'}
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+                                                        isActive
+                                                            ? 'bg-[var(--hero-accent)] text-white'
+                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                    } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                }
+                                            >
+                                                <Icon className="w-5 h-5 shrink-0" />
+                                                {t(labelKey)}
+                                            </NavLink>
+                                        ))}
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 px-1 mt-4 mb-1">
+                                            {t('header.nav.sectionMore')}
+                                        </p>
+                                        {moreItems.map(({ id, to, labelKey, icon: Icon, disabled }) => (
+                                            <NavLink
+                                                key={id}
+                                                to={to}
+                                                onClick={() => setIsMobileMenuOpen(false)}
+                                                className={({ isActive }) =>
+                                                    `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+                                                        isActive
+                                                            ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
+                                                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                    } ${disabled ? 'opacity-35 pointer-events-none' : ''}`
+                                                }
+                                            >
+                                                <Icon className="w-5 h-5 shrink-0" />
+                                                {t(labelKey)}
+                                            </NavLink>
+                                        ))}
+                                        <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+                                        <NavLink
+                                            to="/account"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className={({ isActive }) =>
+                                                `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
+                                                    isActive
+                                                        ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
+                                                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+                                                }`
+                                            }
+                                        >
+                                            <UserIcon className="w-5 h-5 shrink-0" />
+                                            {t('userMenu.myAccount')}
+                                        </NavLink>
+                                        <div className="my-4 border-t border-slate-200 dark:border-slate-800" />
+                                        <TeamSwitcher user={user} onSwitchTeam={(id) => { setCurrentTeamId(id); setIsMobileMenuOpen(false); }} />
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col gap-4">
+                                        <button type="button" onClick={() => { onLoginClick(); setIsMobileMenuOpen(false); }} className="w-full py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 rounded-2xl transition-colors duration-200 hover:bg-slate-200 dark:hover:bg-slate-700">
+                                            {t('header.login')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { onSignUpClick(); setIsMobileMenuOpen(false); }}
+                                            className="w-full flex items-center justify-center gap-3 py-4 text-base font-semibold text-white rounded-xl shadow-md hover:brightness-110 transition-all duration-200"
+                                            style={{ backgroundColor: 'var(--hero-accent)' }}
+                                        >
+                                            {t('header.signup')}
+                                        </button>
+                                    </div>
+                                )}
+                            </nav>
+                        </div>
+                        <div className="mt-auto pt-8 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-6">
+                            <LanguageSwitcher />
+                            <ThemeToggle />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Mobile "Create" menu */}
+            {isMobileCreateMenuOpen && <MobileCreateMenu createNavItems={CREATE_NAV_ITEMS} onClose={() => setIsMobileCreateMenuOpen(false)} />}
+
+            {/* Bottom Navigation Bar */}
+            {user && <BottomNavBar items={resolvedItems} onOpenCreateMenu={() => setIsMobileCreateMenuOpen(true)} onOpenMoreMenu={() => setIsMobileMenuOpen(true)} />}
+        </>
+    );
+};
+
+export default Header;

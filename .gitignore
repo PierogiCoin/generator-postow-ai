@@ -44,3 +44,5 @@ gen-lang-client-*.json
 server/gen-lang-client-*.json
 
 .local-backup/
+
+gen-lang-client-*.json

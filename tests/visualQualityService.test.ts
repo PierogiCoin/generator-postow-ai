@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Platform } from '../types';
+import { Platform } from '@/types';
 
 const callApi = vi.fn();
 const generateImages = vi.fn();
 
-vi.mock('../services/apiClient', () => ({
+vi.mock('@/services/apiClient', () => ({
   callApi: (...args: unknown[]) => callApi(...args),
 }));
 
-vi.mock('../services/mediaService', () => ({
+vi.mock('@/services/mediaService', () => ({
   generateImages: (...args: unknown[]) => generateImages(...args),
 }));
 
@@ -21,7 +21,7 @@ describe('visualQualityService', () => {
   it('zwraca score unavailable marker, gdy scoring endpoint jest niedostępny', async () => {
     callApi.mockRejectedValueOnce(new Error('Visual scoring unavailable'));
 
-    const { ensureImageQuality } = await import('../services/visualQualityService');
+    const { ensureImageQuality } = await import('@/services/visualQualityService');
 
     const result = await ensureImageQuality({
       imageResponse: {
@@ -71,7 +71,7 @@ describe('visualQualityService', () => {
     });
     generateImages.mockRejectedValueOnce(new Error('regen failed'));
 
-    const { ensureImageQuality } = await import('../services/visualQualityService');
+    const { ensureImageQuality } = await import('@/services/visualQualityService');
 
     const result = await ensureImageQuality({
       imageResponse: {
@@ -137,7 +137,7 @@ describe('visualQualityService', () => {
       generatedImages: [{ image: { mimeType: 'image/jpeg', imageBytes: 'new' } }],
     });
 
-    const { ensureImageQuality } = await import('../services/visualQualityService');
+    const { ensureImageQuality } = await import('@/services/visualQualityService');
 
     const result = await ensureImageQuality({
       imageResponse: {

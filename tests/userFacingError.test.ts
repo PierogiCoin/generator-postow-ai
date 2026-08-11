@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseUserFacingError } from '../utils/userFacingError';
+import { parseUserFacingError } from '@/utils/userFacingError';
 
 describe('parseUserFacingError', () => {
   it('maps technical fetch errors to network message', () => {

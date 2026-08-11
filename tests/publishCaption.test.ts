@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatPublishCaption, normalizeCtaUrl } from '../utils/publishCaption';
+import { formatPublishCaption, normalizeCtaUrl } from '@/utils/publishCaption';
 
 describe('publishCaption', () => {
   it('normalizes bare domains to https', () => {

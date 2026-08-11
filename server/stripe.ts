@@ -315,21 +315,60 @@ export async function deductCredits(
 }
 
 export async function addCredits(userId: string, amount: number, reason: string) {
-  const { data: profile, error: fetchError } = await supabase
-    .from('profiles')
-    .select('credits')
-    .eq('id', userId)
-    .maybeSingle();
+  // Atomowy credit via RPC (analogicznie jak debit_credits)
+  const { data: rpcBalance, error: rpcError } = await supabase.rpc('credit_credits', {
+    p_user_id: userId,
+    p_amount: amount,
+  });
 
-  if (fetchError || !profile) throw new Error('User not found');
+  let newBalance: number;
 
-  const newBalance = (profile.credits ?? 0) + amount;
-  const { error } = await supabase
-    .from('profiles')
-    .update({ credits: newBalance })
-    .eq('id', userId);
+  if (!rpcError && typeof rpcBalance === 'number') {
+    newBalance = rpcBalance;
+  } else {
+    // Fallback gdy RPC jeszcze nie wdrożone — CAS z retry
+    if (rpcError) {
+      logger.warn('[credits] credit_credits RPC unavailable, using fallback', rpcError);
+    }
 
-  if (error) throw error;
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (fetchError || !profile) throw new Error('User not found');
+
+    const previousBalance = profile.credits ?? 0;
+    newBalance = previousBalance + amount;
+
+    const { data: updated, error } = await supabase
+      .from('profiles')
+      .update({ credits: newBalance })
+      .eq('id', userId)
+      .eq('credits', previousBalance) // CAS — optimistic locking
+      .select('credits')
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!updated) {
+      // Conflict — retry once
+      const { data: retryProfile } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('id', userId)
+        .maybeSingle();
+      if (!retryProfile) throw new Error('User not found');
+      newBalance = (retryProfile.credits ?? 0) + amount;
+      const { error: retryError } = await supabase
+        .from('profiles')
+        .update({ credits: newBalance })
+        .eq('id', userId);
+      if (retryError) throw retryError;
+    } else {
+      newBalance = updated.credits as number;
+    }
+  }
 
   try {
     await supabase.from('credit_transactions').insert({
@@ -385,6 +424,22 @@ export async function checkCredits(userId: string, requiredAmount: number) {
 // ============================================
 
 export async function handleStripeWebhook(event: Stripe.Event) {
+  // Idempotentność webhooków — upewnij się, że ten sam event.id nie zostanie wykonany dwukrotnie
+  try {
+    const { data: existing } = await supabase
+      .from('stripe_events')
+      .select('id')
+      .eq('event_id', event.id)
+      .maybeSingle();
+
+    if (existing) {
+      logger.info('[Stripe] Event already processed (idempotent skip)', { eventId: event.id, type: event.type });
+      return;
+    }
+  } catch {
+    // Tabela stripe_events opcjonalna w prostych instalacjach — kontynuuj bezpiecznie
+  }
+
   switch (event.type) {
     case 'checkout.session.completed':
       await handleCheckoutComplete(event.data.object as Stripe.Checkout.Session);
@@ -409,6 +464,17 @@ export async function handleStripeWebhook(event: Stripe.Event) {
 
     default:
       logger.warn(`Unhandled Stripe event type: ${event.type}`);
+  }
+
+  // Zapisz przetworzony event dla zachowania idempotentności
+  try {
+    await supabase.from('stripe_events').insert({
+      event_id: event.id,
+      type: event.type,
+      processed_at: new Date().toISOString(),
+    });
+  } catch {
+    // Tabela opcjonalna
   }
 }
 

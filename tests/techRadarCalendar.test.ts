@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildTechNewsCalendarItems, nextWeekdayDates } from '../services/techRadarCalendar';
-import { Platform } from '../types';
+import { buildTechNewsCalendarItems, nextWeekdayDates } from '@/services/techRadarCalendar';
+import { Platform } from '@/types';
 
 describe('techRadarCalendar', () => {
   it('returns next weekdays skipping weekends', () => {

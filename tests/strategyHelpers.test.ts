@@ -3,8 +3,8 @@ import {
   frequencyToPlanSlots,
   isValidStrategicAuditReport,
   normalizeActionablePlan,
-} from '../utils/strategyHelpers';
-import { GenerationType, Platform } from '../types';
+} from '@/utils/strategyHelpers';
+import { GenerationType, Platform } from '@/types';
 
 describe('strategyHelpers', () => {
   it('maps frequency to slot counts', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { extractJson } from '../utils/extractJson';
+import { extractJson } from '@/utils/extractJson';
 
 describe('extractJson', () => {
   it('parsuje czysty obiekt JSON', () => {

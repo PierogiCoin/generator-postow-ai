@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useGenerationStore } from '../stores/generationStore';
-import type { GenerationResult } from '../types';
-import { GenerationType, Platform, Tone } from '../types';
+import { useGenerationStore } from '@/stores/generationStore';
+import type { GenerationResult } from '@/types';
+import { GenerationType, Platform, Tone } from '@/types';
 
 const sampleScore: NonNullable<GenerationResult['visualScore']> = {
   overall: 78,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { FormData, GenerationResult, ScheduledPost } from '../types';
+import type { FormData, GenerationResult, ScheduledPost } from '@/types';
 import {
   Platform,
   GenerationType,
@@ -9,13 +9,13 @@ import {
   AIModel,
   ContentLanguage,
   GenerationMode,
-} from '../types';
+} from '@/types';
 import {
   listPublishableScheduledPosts,
   postsInDateRange,
-} from '../services/bulkQueuePublisherService';
-import { buildInboxFromSocialPosts } from '../services/engagementInboxService';
-import type { SocialPost } from '../types/socialPublishing';
+} from '@/services/bulkQueuePublisherService';
+import { buildInboxFromSocialPosts } from '@/services/engagementInboxService';
+import type { SocialPost } from '@/types/socialPublishing';
 
 const baseForm: FormData = {
   topic: 'Test topic',

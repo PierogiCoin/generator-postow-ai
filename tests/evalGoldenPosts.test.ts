@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PL_BANNED_PHRASES } from '../prompts/plAntiSlop';
+import { PL_BANNED_PHRASES } from '@/prompts/plAntiSlop';
 
 interface GoldenPost {
   id: string;

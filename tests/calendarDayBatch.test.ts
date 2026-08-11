@@ -2,9 +2,9 @@ import { describe, it, expect } from 'vitest';
 import {
   hasScheduledCoverage,
   listSlotsNeedingGeneration,
-} from '../services/calendarDayBatchService';
-import type { IntelligentCalendarPlanItem, ScheduledPost } from '../types';
-import { Platform, GenerationType, Tone, ContentType, VisualStyle, AIModel, ContentLanguage } from '../types';
+} from '@/services/calendarDayBatchService';
+import type { IntelligentCalendarPlanItem, ScheduledPost } from '@/types';
+import { Platform, GenerationType, Tone, ContentType, VisualStyle, AIModel, ContentLanguage } from '@/types';
 
 const planItem: IntelligentCalendarPlanItem = {
   id: 'p1',

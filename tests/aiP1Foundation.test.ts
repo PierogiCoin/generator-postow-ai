@@ -4,8 +4,8 @@ import {
   getCeeEventsForYear,
   getCeeEventsInRange,
   formatCeeEventsForPrompt,
-} from '../services/ceeCalendar';
-import { tokenizeSimilarity } from '../utils/textSimilarity';
+} from '@/services/ceeCalendar';
+import { tokenizeSimilarity } from '@/utils/textSimilarity';
 import {
   applyCalibrationToScore,
   DEFAULT_AUTO_PUBLISH_MIN,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatCalendarNicheBlock } from '../services/calendarCadenceService';
-import golden from '../evals/golden-posts-pl.json';
+import { formatCalendarNicheBlock } from '@/services/calendarCadenceService';
+import golden from '@/evals/golden-posts-pl.json';
 
 describe('formatCalendarNicheBlock', () => {
   it('includes INDUSTRY_PACK for gastro niche', () => {

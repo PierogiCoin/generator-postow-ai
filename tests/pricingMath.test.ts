@@ -8,7 +8,7 @@ import {
   subscriptionCreditCostLadder,
   savingsVsRetailPercent,
   yearlyUsdFromMonthly,
-} from '../config/pricingMath';
+} from '@/config/pricingMath';
 
 describe('pricingMath — strategia sprzedaży', () => {
   it('każdy wyższy plan subskrypcji ma niższy koszt za kredyt', () => {

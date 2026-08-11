@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { Platform } from '../types';
+import { Platform } from '@/types';
 import {
   parseWeekContentPlan,
   parseFullContent,
   generateDefaultWeekPlan,
   type DailyPost,
-} from '../services/autoContentPipeline';
+} from '@/services/autoContentPipeline';
 
 const basePost: DailyPost = {
   day: 'Monday',

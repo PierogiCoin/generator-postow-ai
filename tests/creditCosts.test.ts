@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { estimateGenerationCredits, CREDIT_COSTS } from '../config/creditCosts';
-import { FormData, GenerationMode, GenerationType, Platform, Tone, ContentType, VisualStyle, AIModel, ContentLanguage } from '../types';
+import { estimateGenerationCredits, CREDIT_COSTS } from '@/config/creditCosts';
+import { FormData, GenerationMode, GenerationType, Platform, Tone, ContentType, VisualStyle, AIModel, ContentLanguage } from '@/types';
 
 const baseFormData = (): FormData => ({
   topic: 'test',

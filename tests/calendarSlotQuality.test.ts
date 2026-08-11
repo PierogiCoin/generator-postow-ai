@@ -2,19 +2,19 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   ensureCalendarSlotQuality,
   CALENDAR_SLOT_MIN_SCORE,
-} from '../services/calendarSlotQualityService';
-import type { GenerationResult, FormData } from '../types';
-import { Platform, GenerationType, Tone, ContentType, VisualStyle, AIModel, ContentLanguage } from '../types';
+} from '@/services/calendarSlotQualityService';
+import type { GenerationResult, FormData } from '@/types';
+import { Platform, GenerationType, Tone, ContentType, VisualStyle, AIModel, ContentLanguage } from '@/types';
 
-vi.mock('../services/contentScoringService', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../services/contentScoringService')>();
+vi.mock('@/services/contentScoringService', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/services/contentScoringService')>();
   return {
     ...actual,
     scorePostContent: vi.fn(),
   };
 });
 
-import { scorePostContent } from '../services/contentScoringService';
+import { scorePostContent } from '@/services/contentScoringService';
 
 const formData: FormData = {
   topic: 'Test',

@@ -3,10 +3,10 @@ import {
   suggestRepostDate,
   buildCalendarItemFromPostMortem,
   mergePostMortemIntoPlan,
-} from '../services/postMortemCalendarService';
-import type { PostMortemReport } from '../services/postMortemService';
-import { SocialPlatform } from '../types/socialPublishing';
-import { Platform } from '../types';
+} from '@/services/postMortemCalendarService';
+import type { PostMortemReport } from '@/services/postMortemService';
+import { SocialPlatform } from '@/types/socialPublishing';
+import { Platform } from '@/types';
 
 const sampleReport: PostMortemReport = {
   overallScore: 7,

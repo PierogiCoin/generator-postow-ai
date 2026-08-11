@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { buildVisualBrief } from '../services/visualBriefService';
-import { Platform } from '../types';
-import type { BrandVoiceData } from '../types';
+import { buildVisualBrief } from '@/services/visualBriefService';
+import { Platform } from '@/types';
+import type { BrandVoiceData } from '@/types';
 
 const generateJson = vi.fn();
 
-vi.mock('../services/apiClient', () => ({
+vi.mock('@/services/apiClient', () => ({
   generateJson: (...args: unknown[]) => generateJson(...args),
 }));
 

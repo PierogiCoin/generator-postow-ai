@@ -1,0 +1,24 @@
+=== 1. LIGHTHOUSE MOBILE ===
+Mobile Performance: 56.00000000000001
+Mobile Accessibility: 92
+LCP: 8.0 s
+INP: N/A
+CLS: 0.04
+
+=== 2. LIGHTHOUSE DESKTOP ===
+Desktop Performance: 89
+
+=== 3. TTFB (3 próby) ===
+Próba 1: time_starttransfer=0.835497s (TTFB), time_total=0.843286s
+Próba 2: time_starttransfer=1.913705s (TTFB), time_total=1.914135s
+Próba 3: time_starttransfer=2.076421s (TTFB), time_total=2.077159s
+
+=== 4. GOOGLEBOT CHECK ===
+<title>Generator Postów AI — Twórz viralowe posty social media z AI</title>
+
+=== 5. BUNDLE SIZE ===
+492K	dist/assets/index-Ds4_luuy.js
+360K	dist/assets/recharts-DxE3R-3E.js
+204K	dist/assets/react-vendor-BH4ZzNga.js
+120K	dist/assets/ResultCard-BBoT8mMy.js
+100K	dist/assets/supabase-B-tR46dS.js

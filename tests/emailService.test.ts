@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock apiClient
-vi.mock('../services/apiClient', () => ({
+vi.mock('@/services/apiClient', () => ({
   callApi: vi.fn(),
   getApiBaseUrl: vi.fn(() => 'http://localhost:3001'),
   getApiAuthHeaders: vi.fn(async () => ({ Authorization: 'Bearer test-token' })),
@@ -17,8 +17,8 @@ describe('emailService', () => {
   });
 
   it('triggerWelcome calls API without throwing', async () => {
-    const { callApi } = await import('../services/apiClient');
-    const { emailService } = await import('../services/emailService');
+    const { callApi } = await import('@/services/apiClient');
+    const { emailService } = await import('@/services/emailService');
 
     (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
@@ -27,8 +27,8 @@ describe('emailService', () => {
   });
 
   it('triggerLowCredits passes remaining and planName', async () => {
-    const { callApi } = await import('../services/apiClient');
-    const { emailService } = await import('../services/emailService');
+    const { callApi } = await import('@/services/apiClient');
+    const { emailService } = await import('@/services/emailService');
 
     (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
@@ -37,8 +37,8 @@ describe('emailService', () => {
   });
 
   it('triggerCreditsExhausted calls API', async () => {
-    const { callApi } = await import('../services/apiClient');
-    const { emailService } = await import('../services/emailService');
+    const { callApi } = await import('@/services/apiClient');
+    const { emailService } = await import('@/services/emailService');
 
     (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
@@ -47,8 +47,8 @@ describe('emailService', () => {
   });
 
   it('triggerTrialStarted passes trialDays', async () => {
-    const { callApi } = await import('../services/apiClient');
-    const { emailService } = await import('../services/emailService');
+    const { callApi } = await import('@/services/apiClient');
+    const { emailService } = await import('@/services/emailService');
 
     (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
@@ -57,8 +57,8 @@ describe('emailService', () => {
   });
 
   it('unsubscribe passes types array', async () => {
-    const { callApi } = await import('../services/apiClient');
-    const { emailService } = await import('../services/emailService');
+    const { callApi } = await import('@/services/apiClient');
+    const { emailService } = await import('@/services/emailService');
 
     (callApi as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({});
 
@@ -67,8 +67,8 @@ describe('emailService', () => {
   });
 
   it('all methods silently catch errors', async () => {
-    const { callApi } = await import('../services/apiClient');
-    const { emailService } = await import('../services/emailService');
+    const { callApi } = await import('@/services/apiClient');
+    const { emailService } = await import('@/services/emailService');
 
     (callApi as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error('Network error'));
 

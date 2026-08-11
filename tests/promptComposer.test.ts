@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { composeTextPrompt, composeImagePrompt } from '../services/promptBuilders';
-import { Platform, Tone, GenerationType, ContentType, ContentLanguage, VisualStyle, AIModel, CopywritingFramework } from '../types';
+import { composeTextPrompt, composeImagePrompt } from '@/services/promptBuilders';
+import { Platform, Tone, GenerationType, ContentType, ContentLanguage, VisualStyle, AIModel, CopywritingFramework } from '@/types';
 
-import type { FormData, BrandVoiceData } from '../types';
+import type { FormData, BrandVoiceData } from '@/types';
 
-vi.mock('../services/brandMemoryService', () => ({
+vi.mock('@/services/brandMemoryService', () => ({
   retrieveBrandMemoryContext: vi.fn().mockResolvedValue({
     chunks: [],
     promptBlock: '',

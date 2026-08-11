@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { mapWithConcurrency } from '../utils/mapWithConcurrency';
+import { mapWithConcurrency } from '@/utils/mapWithConcurrency';
 
 describe('mapWithConcurrency', () => {
   it('preserves order and respects concurrency', async () => {

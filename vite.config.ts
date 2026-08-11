@@ -3,6 +3,8 @@ import fs from 'fs';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
+import pluginCritical from 'rollup-plugin-critical';
+
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', 'VITE_');
     const devEnv = loadEnv(mode, '.', '');
@@ -55,6 +57,24 @@ export default defineConfig(({ mode }) => {
             fs.writeFileSync(path.join(outDir, 'build-id.json'), JSON.stringify(payload));
           },
         },
+        pluginCritical({
+          criticalUrl: 'dist',
+          criticalBase: 'dist',
+          criticalPages: [
+            { uri: '', template: 'index' },
+          ],
+          criticalConfig: {
+            inline: true,
+            dimensions: [
+              { width: 375, height: 667 },
+              { width: 1920, height: 1080 },
+            ],
+            assetPaths: ['dist/assets'],
+            target: {
+              css: 'dist/assets/critical.css',
+            },
+          },
+        }) as any,
       ],
       
       define: {
@@ -79,8 +99,8 @@ export default defineConfig(({ mode }) => {
                 if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
                   return 'recharts';
                 }
-                if (id.includes('node_modules/lucide-react')) {
-                  return 'lucide';
+                if (id.includes('node_modules/lucide-react') || id.includes('node_modules/framer-motion')) {
+                  return 'ui-vendor';
                 }
                 if (id.includes('node_modules/@google/genai') || id.includes('node_modules/@google/generative-ai')) {
                   return 'genai';
@@ -109,7 +129,7 @@ export default defineConfig(({ mode }) => {
 
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, './src'), // Poprawiono alias, by wskazywał na src
+          '@': path.resolve(__dirname, './src'),
         }
       }
     };

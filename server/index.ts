@@ -5,6 +5,11 @@ import logger from './logger.js';
 import { apiKey, luma, replicate } from './lib/clients.js';
 
 const env = loadEnv();
+
+if (process.env.NODE_ENV === 'production' && !env.UPSTASH_REDIS_REST_URL) {
+  console.error('⚠️  CRITICAL: UPSTASH_REDIS_REST_URL not set in production. Rate limiting is per-process only! Failing fast to prevent abuse.');
+  process.exit(1);
+}
 const app = createApp();
 const port = env.PORT;
 
