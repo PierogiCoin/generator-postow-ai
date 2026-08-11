@@ -62,5 +62,9 @@
     "typescript-eslint": "^8.66.0",
     "vitest": "^3.2.6",
     "zod": "^4.4.3"
+  },
+  "overrides": {
+    "react": "$react",
+    "react-dom": "$react-dom"
   }
 }
