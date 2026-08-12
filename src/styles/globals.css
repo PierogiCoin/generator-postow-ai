@@ -59,20 +59,39 @@
 
   .home-hero-wash {
     background:
-      radial-gradient(ellipse 70% 50% at 78% 18%, rgba(26, 174, 138, 0.28), transparent 55%),
-      radial-gradient(ellipse 55% 45% at 12% 88%, rgba(212, 168, 75, 0.14), transparent 50%),
-      linear-gradient(168deg, #07090c 0%, #0c1411 42%, #101a16 100%);
+      radial-gradient(ellipse 78% 52% at 82% 10%, rgba(26, 174, 138, 0.34), transparent 58%),
+      radial-gradient(ellipse 48% 42% at 6% 78%, rgba(196, 150, 58, 0.13), transparent 52%),
+      radial-gradient(ellipse 55% 35% at 48% 100%, rgba(26, 174, 138, 0.1), transparent 62%),
+      linear-gradient(172deg, #050706 0%, #0a1210 44%, #0e1814 100%);
   }
 
   .home-noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E");
     background-size: 180px 180px;
-    opacity: 0.07;
+    opacity: 0.055;
   }
 
   .landing-stream {
     background:
       linear-gradient(90deg, transparent, rgba(26, 174, 138, 0.55), transparent);
+  }
+
+  /* Below-fold landing blocks — skip paint until near viewport */
+  .landing-deferred {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 720px;
+  }
+
+  .landing-deferred-lg {
+    content-visibility: auto;
+    contain-intrinsic-size: auto none auto 960px;
+  }
+
+  @supports not (content-visibility: auto) {
+    .landing-deferred,
+    .landing-deferred-lg {
+      contain: layout style paint;
+    }
   }
 
   /* Dashboard layout — container queries + content-visibility */

@@ -22,7 +22,6 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { ChevronDownIcon } from '@/components/icons/ChevronDownIcon';
-import { SparklesIcon } from '@/components/icons/SparklesIcon';
 import { MenuIcon } from '@/components/icons/MenuIcon';
 import { ModernButton } from '@/components/ui';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
@@ -80,8 +79,8 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
     <nav
       className={`sticky top-0 z-40 transition-all duration-300 ${
         scrolled
-          ? 'border-b border-sky-500/20 bg-[#07090c]/90 backdrop-blur-xl shadow-lg shadow-sky-500/5'
-          : 'border-b border-white/5 bg-[#07090c]/80 backdrop-blur-md'
+          ? 'border-b border-[var(--hero-accent)]/25 bg-[#050706]/92 backdrop-blur-xl'
+          : 'border-b border-white/5 bg-[#050706]/75 backdrop-blur-md'
       }`}
       aria-label={t('home.nav.ariaLabel')}
     >
@@ -89,9 +88,9 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
         <button
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="font-display text-sm font-bold tracking-tight text-white shrink-0 hover:opacity-90 transition-opacity"
+          className="font-display text-base font-bold tracking-tight text-white shrink-0 hover:opacity-90 transition-opacity"
         >
-          {t('home.hero.brand')}
+          {t('home.hero.brand', 'AI Content Pro')}
         </button>
         <div className="hidden sm:flex items-center gap-1 overflow-x-auto">
           {items.map((item) => (
@@ -139,9 +138,9 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
             variant="primary"
             size="sm"
             onClick={onSignup}
-            className="!bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white text-xs font-bold rounded-xl px-3.5 py-2 shrink-0 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1.5"
+            className="!bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white text-xs font-bold rounded-lg px-3.5 py-2 shrink-0 active:scale-95 transition-all"
           >
-            {t(isLoggedIn ? 'home.journey.nav_app' : 'home.journey.nav_signup_boost', 'Odbierz darmowe kredyty ⚡')}
+            {t(isLoggedIn ? 'home.journey.nav_app' : 'home.journey.nav_signup_boost', 'Odbierz darmowe kredyty')}
           </ModernButton>
         </div>
       </div>
@@ -189,21 +188,24 @@ const LandingNav: React.FC<{ onSignup: () => void; onLogin: () => void; onPricin
 
 const PLATFORM_PREVIEWS = {
   linkedin: {
-    badge: '💼 LinkedIn Post',
-    formatting: 'Profesjonalna struktura, podział na sekcje & CTA biznesowe',
-    content: (topic: string) => `💼 ${topic}\n\nTworzenie wartościowych treści na LinkedIn nie musi zajmować 4 godzin dziennie.\n\nOto 3 kroki do automatyzacji procesu publikacji:\n\n1️⃣ Wygeneruj ekspercki post i grafikę w 30 sekund\n2️⃣ Dostosuj ton do głosu Twojej marki (Brand Voice)\n3️⃣ Zaplanuj automatyczną publikację na cały tydzień\n\nJak u Was wygląda planowanie treści? Dajcie znać w komentarzu! 👇`,
+    label: 'LinkedIn',
+    formatting: 'Profesjonalna struktura, sekcje i CTA biznesowe',
+    content: (topic: string) =>
+      `${topic}\n\nTworzenie wartościowych treści na LinkedIn nie musi zajmować 4 godzin dziennie.\n\nTrzy kroki do automatyzacji publikacji:\n\n1. Wygeneruj ekspercki post i grafikę w 30 sekund\n2. Dostosuj ton do głosu marki (Brand Voice)\n3. Zaplanuj publikację na cały tydzień\n\nJak u Was wygląda planowanie treści?`,
     hashtags: '#Marketing #SocialMedia #B2B #Automation #AI',
   },
   instagram: {
-    badge: '📸 Instagram Caption',
-    formatting: 'Wizualny styl, nawiasy z punktami & angażujący zestaw hashtagów',
-    content: (topic: string) => `✨ ${topic} ✨\n\nOto jak oszczędzić 10+ godzin tygodniowo na tworzeniu postów! 🚀\n\n- ⚡ Wpis i karuzela gotowa w 30s\n- 🎯 Zestaw wiralowych hashtagów z AI\n- 🎨 Automatyczny dobór estetyki wizualnej\n\nZapisz ten post na później i wypróbuj darmowe kredyty w bio! 📲`,
+    label: 'Instagram',
+    formatting: 'Krótki caption, punkty i zestaw hashtagów',
+    content: (topic: string) =>
+      `${topic}\n\nJak oszczędzić 10+ godzin tygodniowo na tworzeniu postów:\n\n• Wpis i karuzela gotowa w 30s\n• Hashtagi dobrane pod zasięg\n• Estetyka dopasowana do marki\n\nZapisz ten post i wypróbuj darmowe kredyty.`,
     hashtags: '#InstagramGrowth #ContentCreator #AIStyle #InstaTips',
   },
   tiktok: {
-    badge: '🎵 TikTok Script & Caption',
-    formatting: 'Wiralowy HAK w pierwszych 3 sekundach + scenariusz wideo',
-    content: (topic: string) => `🎬 [HOOK wideo 0-3s]: "Stwórzmy post na cały tydzień w 30 sekund!"\n\n💡 Opis: ${topic}\n\nChcesz tworzyć virale bez spędzania całych dni przed ekranem? Algorytm AI generuje gotowe skrypty i podpisy w mgnieniu oka! 🔥`,
+    label: 'TikTok',
+    formatting: 'Hak w pierwszych 3 sekundach + scenariusz',
+    content: (topic: string) =>
+      `[HOOK 0–3s]: „Stwórzmy post na cały tydzień w 30 sekund!”\n\nOpis: ${topic}\n\nAI generuje gotowe skrypty i podpisy — bez całych dni przed ekranem.`,
     hashtags: '#TikTokTips #ViralHack #AICreator #GrowthHack',
   },
 };
@@ -223,75 +225,85 @@ const HeroLiveDemoWidget: React.FC<{ onGenerate: (topic: string) => void }> = ({
   const platformData = PLATFORM_PREVIEWS[activePlatform];
 
   return (
-    <div className="max-w-2xl mx-auto rounded-3xl bg-white/[0.03] border border-white/10 p-4 sm:p-6 backdrop-blur-2xl shadow-2xl text-left space-y-4">
-      <div className="flex items-center justify-between border-b border-white/10 pb-3 flex-wrap gap-2">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-            {t('home.demo.title', 'Podgląd Na Żywo (Demo AI)')}
-          </span>
-        </div>
-        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl border border-white/10" role="tablist">
-          {(['linkedin', 'instagram', 'tiktok'] as const).map((platform) => (
-            <button
-              key={platform}
-              type="button"
-              role="tab"
-              aria-selected={activePlatform === platform}
-              aria-label={`Pokaż podgląd dla ${platform}`}
-              onClick={() => setActivePlatform(platform)}
-              className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition-all ${
-                activePlatform === platform
-                  ? 'bg-[var(--hero-accent)] text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {platform}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-slate-400 flex-wrap gap-2">
-          <span className="font-semibold text-sky-400 truncate max-w-xs sm:max-w-md">
-            {platformData.badge}
-          </span>
-          <button
-            type="button"
-            onClick={() => setSampleIdx((prev) => (prev + 1) % HERO_DEMO_TOPICS.length)}
-            className="text-xs text-emerald-400 hover:underline font-bold transition-all"
-          >
-            {t('home.demo.change_topic', 'Zmień przykład 🔄')}
-          </button>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-xs sm:text-sm text-slate-200 whitespace-pre-line leading-relaxed font-sans shadow-inner space-y-2">
-          <p>{platformData.content(currentTopic)}</p>
-          <div className="pt-2 border-t border-white/5 text-sky-400/90 font-medium text-xs">
-            {platformData.hashtags}
+    <div className="relative w-full max-w-xl mx-auto lg:mx-0 text-left">
+      <div
+        className="absolute -inset-px rounded-2xl opacity-70 pointer-events-none"
+        style={{
+          background:
+            'linear-gradient(145deg, rgba(26,174,138,0.45), transparent 42%, rgba(196,150,58,0.2))',
+        }}
+        aria-hidden="true"
+      />
+      <div className="relative rounded-2xl bg-[#0a1210]/95 border border-white/10 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3 border-b border-white/8">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="w-1.5 h-1.5 rounded-sm bg-[var(--hero-accent)] shrink-0" aria-hidden="true" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300 truncate">
+              {t('home.demo.title', 'Podgląd na żywo')}
+            </span>
+          </div>
+          <div className="flex items-center gap-0.5" role="tablist" aria-label="Platforma">
+            {(['linkedin', 'instagram', 'tiktok'] as const).map((platform) => (
+              <button
+                key={platform}
+                type="button"
+                role="tab"
+                aria-selected={activePlatform === platform}
+                aria-label={`Pokaż podgląd dla ${platform}`}
+                onClick={() => setActivePlatform(platform)}
+                className={`px-2.5 py-1 text-[11px] font-semibold capitalize transition-colors ${
+                  activePlatform === platform
+                    ? 'text-white border-b-2 border-[var(--hero-accent)]'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {PLATFORM_PREVIEWS[platform].label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-400 italic text-right">
-          ⚡ {platformData.formatting}
-        </div>
+        <div className="px-4 sm:px-5 py-4 space-y-4">
+          <div className="flex items-center justify-between gap-3 text-xs">
+            <span className="font-medium text-[var(--hero-accent)]">{platformData.label}</span>
+            <button
+              type="button"
+              onClick={() => setSampleIdx((prev) => (prev + 1) % HERO_DEMO_TOPICS.length)}
+              className="text-slate-400 hover:text-white transition-colors font-medium"
+            >
+              {t('home.demo.change_topic', 'Zmień przykład')}
+            </button>
+          </div>
 
-        <div className="pt-3 border-t border-white/10 space-y-2">
-          <input
-            type="text"
-            value={demoTopic}
-            onChange={(e) => setDemoTopic(e.target.value)}
-            placeholder="Wpisz temat np. 'Nowa oferta w salonie beauty'"
-            className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 w-full text-white text-sm placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
-          />
-          <button
-            type="button"
-            onClick={() => onGenerate(demoTopic.trim() || currentTopic)}
-            className="mt-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-6 py-2 rounded-full transition-colors active:scale-95"
-          >
-            Wygeneruj przykładowy post →
-          </button>
+          <div className="text-sm text-slate-200 whitespace-pre-line leading-relaxed">
+            <p>{platformData.content(currentTopic)}</p>
+            <p className="mt-3 pt-3 border-t border-white/8 text-[var(--hero-accent)]/90 text-xs font-medium">
+              {platformData.hashtags}
+            </p>
+          </div>
+
+          <p className="text-[11px] text-slate-500">{platformData.formatting}</p>
+
+          <div className="pt-1 space-y-2">
+            <label className="sr-only" htmlFor="hero-demo-topic">
+              Temat posta
+            </label>
+            <input
+              id="hero-demo-topic"
+              type="text"
+              value={demoTopic}
+              onChange={(e) => setDemoTopic(e.target.value)}
+              placeholder="Temat, np. Nowa oferta w salonie beauty"
+              className="bg-white/[0.04] border border-white/10 rounded-lg px-3.5 py-2.5 w-full text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[var(--hero-accent)]/50 focus:ring-1 focus:ring-[var(--hero-accent)]/25 transition-colors"
+            />
+            <button
+              type="button"
+              onClick={() => onGenerate(demoTopic.trim() || currentTopic)}
+              className="w-full sm:w-auto bg-[var(--hero-accent)] hover:brightness-110 text-white font-semibold px-5 py-2.5 rounded-lg transition-[filter,transform] active:scale-[0.98]"
+            >
+              Wygeneruj przykładowy post
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -318,7 +330,7 @@ const HeroSection: React.FC<{
         },
         (context) => {
           const prefersReduce = Boolean(context.conditions?.reduceMotion) || reducedMotion;
-          const rest = ['.hero-sub', '.hero-cta', '.hero-proof', '.hero-demo'];
+          const rest = ['.hero-brand', '.hero-sub', '.hero-cta', '.hero-demo'];
 
           if (prefersReduce) {
             gsap.set(['.hero-headline', ...rest], { autoAlpha: 1, y: 0 });
@@ -337,22 +349,26 @@ const HeroSection: React.FC<{
 
           gsap.set('.hero-headline', { autoAlpha: 1 });
           gsap.set(split.chars, { autoAlpha: 0, y: 28 });
-          gsap.set(rest, { autoAlpha: 0, y: 28 });
+          gsap.set(rest, { autoAlpha: 0, y: 24 });
 
           const tl = gsap.timeline({
             defaults: { ease: 'power2.out' },
           });
 
-          tl.to(split.chars, {
-            autoAlpha: 1,
-            y: 0,
-            duration: 0.45,
-            stagger: 0.018,
-          })
-            .to('.hero-sub', { autoAlpha: 1, y: 0, duration: 0.65 }, '-=0.25')
-            .to('.hero-cta', { autoAlpha: 1, y: 0, duration: 0.65 }, '-=0.4')
-            .to('.hero-proof', { autoAlpha: 1, y: 0, duration: 0.65 }, '-=0.35')
-            .to('.hero-demo', { autoAlpha: 1, y: 0, duration: 0.75 }, '-=0.45');
+          tl.to('.hero-brand', { autoAlpha: 1, y: 0, duration: 0.55 })
+            .to(
+              split.chars,
+              {
+                autoAlpha: 1,
+                y: 0,
+                duration: 0.45,
+                stagger: 0.018,
+              },
+              '-=0.2'
+            )
+            .to('.hero-sub', { autoAlpha: 1, y: 0, duration: 0.6 }, '-=0.25')
+            .to('.hero-cta', { autoAlpha: 1, y: 0, duration: 0.6 }, '-=0.4')
+            .to('.hero-demo', { autoAlpha: 1, y: 0, duration: 0.75 }, '-=0.4');
         }
       );
 
@@ -367,57 +383,56 @@ const HeroSection: React.FC<{
       className="relative min-h-[100svh] w-full home-hero-wash text-white overflow-hidden flex flex-col"
     >
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
-      <div className="absolute inset-0 home-grid-bg opacity-40 pointer-events-none" aria-hidden="true" />
+      <div className="absolute inset-0 home-grid-bg opacity-30 pointer-events-none" aria-hidden="true" />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#050706] via-[#0a1210]/90 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[62%] bg-gradient-to-t from-[#050706] via-[#0a1210]/85 to-transparent" />
         <div
-          className={`absolute left-1/2 -translate-x-1/2 bottom-[18%] w-[min(120vw,920px)] h-px landing-stream ${reducedMotion ? 'opacity-40' : 'animate-home-stream'}`}
+          className={`absolute left-1/2 -translate-x-1/2 bottom-[14%] w-[min(120vw,920px)] h-px landing-stream ${reducedMotion ? 'opacity-40' : 'animate-home-stream'}`}
         />
       </div>
 
-      <div className="relative z-10 flex-1 flex items-center max-w-7xl mx-auto px-4 pt-24 pb-16 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center w-full">
+      <div className="relative z-10 flex-1 flex items-center max-w-7xl mx-auto px-4 pt-20 pb-14 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
           <div className="text-center lg:text-left">
+            <p
+              className={`hero-brand font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white ${reducedMotion ? '' : 'opacity-0'}`}
+            >
+              {t('home.hero.brand', 'AI Content Pro')}
+            </p>
             <h1
-              className={`hero-headline text-5xl sm:text-6xl font-bold tracking-tight leading-tight text-white ${reducedMotion ? '' : 'opacity-0'}`}
+              className={`hero-headline mt-4 text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight leading-snug text-slate-100 max-w-xl mx-auto lg:mx-0 ${reducedMotion ? '' : 'opacity-0'}`}
             >
               Generuj posty na social media w 30 sekund
             </h1>
-            <p className={`hero-sub mt-5 text-xl text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed ${reducedMotion ? '' : 'opacity-0'}`}>
-              AI napisze, zaprojektuje grafikę i zaplanuje publikację — dopasowane do Twojej branży
+            <p
+              className={`hero-sub mt-4 text-base sm:text-lg text-slate-400 max-w-md mx-auto lg:mx-0 leading-relaxed ${reducedMotion ? '' : 'opacity-0'}`}
+            >
+              AI napisze, zaprojektuje grafikę i zaplanuje publikację — dopasowane do Twojej branży.
             </p>
-            <div className={`hero-cta mt-8 flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-3 ${reducedMotion ? '' : 'opacity-0'}`}>
+            <div
+              className={`hero-cta mt-8 flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-4 ${reducedMotion ? '' : 'opacity-0'}`}
+            >
               <ModernButton
                 variant="primary"
                 size="lg"
                 onClick={onStart}
-                className="rounded-xl px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-white font-semibold shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+                className="rounded-lg px-8 py-3.5 !bg-[var(--hero-accent)] ![background-image:none] hover:brightness-110 text-white font-semibold flex items-center gap-2"
               >
                 {t(isLoggedIn ? 'home.journey.hero_cta_logged_in' : 'home.journey.hero_cta', 'Wypróbuj za darmo')}
                 <ArrowRight className="w-5 h-5" />
               </ModernButton>
-              <ModernButton
-                variant="outline"
-                size="lg"
+              <button
+                type="button"
                 onClick={() => scrollToAnchor('demo', reducedMotion)}
-                className="rounded-xl px-8 py-3.5 border-white/20 text-slate-200 bg-transparent hover:bg-white/5 hover:border-emerald-500/50"
+                className="text-sm font-medium text-slate-400 hover:text-white transition-colors underline-offset-4 hover:underline"
               >
-                Zobacz demo w akcji
-              </ModernButton>
-            </div>
-
-            <div className={`hero-proof mt-6 flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-slate-500 ${reducedMotion ? '' : 'opacity-0'}`}>
-              <span>Bez karty na start</span>
-              <span>5 platform</span>
-              <span>Kalendarz publikacji</span>
+                Zobacz podgląd
+              </button>
             </div>
           </div>
 
-          <div id="demo" className={`hero-demo ${reducedMotion ? '' : 'opacity-0'}`}>
-            <p className="mb-3 text-sm text-slate-300 flex items-center gap-2">
-              <span className="text-base">👁️</span> Przykład: jak wygląda post z generatora
-            </p>
+          <div id="demo" className={`hero-demo scroll-mt-24 ${reducedMotion ? '' : 'opacity-0'}`}>
             <HeroLiveDemoWidget onGenerate={onGenerateDemo} />
           </div>
         </div>
@@ -492,32 +507,29 @@ const HowItWorksSection: React.FC = () => {
     <section
       ref={sectionRef}
       id="jak-to-dziala"
-      className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white"
+      className="landing-deferred scroll-mt-24 py-20 md:py-28 bg-[#050706] text-white"
     >
       <div className="max-w-6xl mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
+        <div className="max-w-2xl mb-14 text-center md:text-left mx-auto md:mx-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hero-accent)]">
             {t('home.journey.how_kicker', 'Jak to działa')}
-          </span>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
+          </p>
+          <h2 className="mt-3 font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
             Od pomysłu do posta w 4 krokach
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {steps.map((step, i) => {
             const Icon = step.icon;
             return (
-              <div
-                key={step.title}
-                className="how-step relative p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
-                  <Icon className="w-6 h-6" />
+              <div key={step.title} className="how-step relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <Icon className="w-5 h-5 text-[var(--hero-accent)]" aria-hidden="true" />
+                  <span className="font-display text-3xl font-extrabold text-white/10 leading-none select-none">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                 </div>
-                <span className="absolute top-5 right-5 font-display text-4xl font-extrabold text-white/5 leading-none select-none">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
                 <h3 className="text-lg font-bold text-white">{step.title}</h3>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">{step.desc}</p>
               </div>
@@ -535,57 +547,48 @@ const WhyAICPSection: React.FC = () => {
   const benefits = [
     {
       icon: Target,
-      emoji: '🎯',
       title: 'Dopasowane do branży',
-      desc: 'AI wie, że restauracja potrzebuje "menu dnia", a SaaS "case study". Nie generyczne bełkoty.',
+      desc: 'AI wie, że restauracja potrzebuje „menu dnia”, a SaaS „case study”. Nie generyczne bełkoty.',
     },
     {
       icon: Rocket,
-      emoji: '🚀',
       title: 'Multi-platform',
       desc: 'Jeden post, warianty na LinkedIn, Instagram, TikTok, Facebook i X.',
     },
     {
       icon: Bot,
-      emoji: '🤖',
       title: 'Automatyzacja',
       desc: 'RSS → post, produkt → post, planowanie kolejki, auto-publikacja.',
     },
     {
       icon: ShieldCheck,
-      emoji: '🛡️',
       title: 'Jakość bez śmieci',
       desc: 'Anti-slop system, scoring treści, brand voice memory.',
     },
   ];
 
   return (
-    <section id="dlaczego-my" className="scroll-mt-24 relative home-hero-wash text-white py-20 md:py-28 overflow-hidden">
+    <section
+      id="dlaczego-my"
+      className="landing-deferred scroll-mt-24 relative home-hero-wash text-white py-20 md:py-28 overflow-hidden"
+    >
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
       <div className="relative z-10 max-w-6xl mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-14">
-          <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
+        <div className="max-w-2xl mb-14 text-center md:text-left mx-auto md:mx-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hero-accent)]">
             {t('home.journey.why_kicker', 'Dlaczego AI Content Pro?')}
-          </span>
-          <h2 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
+          </p>
+          <h2 className="mt-3 font-display text-3xl md:text-5xl font-extrabold tracking-tight leading-[1.1]">
             Social media, które przynoszą klientów
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8">
           {benefits.map((b) => {
             const Icon = b.icon;
             return (
-              <div
-                key={b.title}
-                className="p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-xl">{b.emoji}</span>
-                </div>
+              <div key={b.title}>
+                <Icon className="w-5 h-5 text-[var(--hero-accent)] mb-4" aria-hidden="true" />
                 <h3 className="text-lg font-semibold text-white">{b.title}</h3>
                 <p className="mt-2 text-sm text-slate-400 leading-relaxed">{b.desc}</p>
               </div>
@@ -713,42 +716,39 @@ const FAQSection: React.FC = () => {
   ];
 
   return (
-    <section className="py-20 md:py-28 bg-[var(--hero-surface)] border-t border-white/5">
+    <section className="landing-deferred py-20 md:py-28 bg-[var(--hero-surface)] border-t border-white/5">
       <div className="max-w-4xl mx-auto px-4">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="inline-block px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
-            Często Zadawane Pytania
-          </span>
-          <h2 className="font-display text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        <div className="max-w-2xl mb-12 text-center md:text-left mx-auto md:mx-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--hero-accent)]">
+            FAQ
+          </p>
+          <h2 className="mt-3 font-display text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Wszystko, co musisz wiedzieć przed rozpoczęciem
           </h2>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-0 divide-y divide-slate-200/80 dark:divide-white/10 border-y border-slate-200/80 dark:border-white/10">
           {faqs.map((faq, idx) => {
             const isOpen = openIndex === idx;
             return (
-              <div
-                key={idx}
-                className="rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white/40 dark:bg-white/[0.03] overflow-hidden transition-colors"
-              >
+              <div key={idx}>
                 <button
                   type="button"
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
                   aria-expanded={isOpen}
                   aria-controls={`landing-faq-panel-${idx}`}
-                  className="w-full p-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 dark:text-white hover:text-[var(--hero-accent)] transition-colors"
+                  className="w-full py-5 text-left flex items-center justify-between gap-4 font-semibold text-slate-900 dark:text-white hover:text-[var(--hero-accent)] transition-colors"
                 >
                   <span className="text-base md:text-lg">{faq.q}</span>
                   <ChevronDownIcon
-                    className={`w-5 h-5 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--hero-accent)]' : 'text-slate-500'}`}
+                    className={`w-5 h-5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--hero-accent)]' : 'text-slate-500'}`}
                     aria-hidden="true"
                   />
                 </button>
                 <div
                   id={`landing-faq-panel-${idx}`}
                   hidden={!isOpen}
-                  className="px-5 pb-5 text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-white/5 pt-3"
+                  className="pb-5 text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed"
                 >
                   {faq.a}
                 </div>
@@ -768,15 +768,9 @@ const FinalCTASection: React.FC<{ onNavigateToApp: () => void; isLoggedIn: boole
   const { t } = useTranslation();
 
   return (
-    <section className="relative w-full home-hero-wash overflow-hidden">
+    <section className="landing-deferred relative w-full home-hero-wash overflow-hidden">
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
       <div className="relative z-10 max-w-3xl mx-auto px-4 py-24 md:py-32 text-center space-y-6">
-        <div
-          className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-2"
-          style={{ backgroundColor: 'var(--hero-accent-soft)' }}
-        >
-          <SparklesIcon className="w-7 h-7" style={{ color: 'var(--hero-accent)' }} />
-        </div>
         <h2 className="font-display text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
           {t('home.journey.final_title')}
         </h2>
@@ -789,20 +783,13 @@ const FinalCTASection: React.FC<{ onNavigateToApp: () => void; isLoggedIn: boole
           </ModernButton>
         </div>
 
-        {/* Trust Badges */}
-        <div className="pt-2 flex flex-wrap justify-center items-center gap-4 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">⚡</span> {t('home.journey.final_trust_access')}
-          </span>
-          <span className="hidden sm:inline text-slate-700">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">🔒</span> {t('home.journey.final_trust_security')}
-          </span>
-          <span className="hidden sm:inline text-slate-700">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-emerald-400">💳</span> {t('home.journey.final_trust_no_card')}
-          </span>
-        </div>
+        <p className="pt-2 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+          {t('home.journey.final_trust_access')}
+          {' · '}
+          {t('home.journey.final_trust_security')}
+          {' · '}
+          {t('home.journey.final_trust_no_card')}
+        </p>
 
         <p className="text-xs text-slate-500">{t('home.journey.final_note')}</p>
       </div>
@@ -876,7 +863,7 @@ export const HomeView: React.FC<HomeViewProps> = () => {
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
-        <div className="bg-[var(--hero-surface)]">
+        <div className="landing-deferred-lg bg-[var(--hero-surface)]">
           <IndustryFunnelHero
             reducedMotion={reducedMotion}
             isLoggedIn={isLoggedIn}
@@ -887,15 +874,19 @@ export const HomeView: React.FC<HomeViewProps> = () => {
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
-        <RoiCalculator onStart={openSignupOrApp} />
+        <div className="landing-deferred">
+          <RoiCalculator onStart={openSignupOrApp} />
+        </div>
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
-        <PricingSection
-          onStartFree={openSignupOrApp}
-          onStartPro={openSignupOrApp}
-          onContactSales={openPricing}
-        />
+        <div className="landing-deferred-lg">
+          <PricingSection
+            onStartFree={openSignupOrApp}
+            onStartPro={openSignupOrApp}
+            onContactSales={openPricing}
+          />
+        </div>
       </Reveal>
 
       <Reveal reducedMotion={reducedMotion}>
