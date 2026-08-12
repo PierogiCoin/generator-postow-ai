@@ -3,7 +3,7 @@
  * No-op when LANGFUSE_PUBLIC_KEY / LANGFUSE_SECRET_KEY are missing.
  */
 
-import logger from '../logger.js';
+import logger from '../logger';
 
 type TraceHandle = {
   end: (opts?: {

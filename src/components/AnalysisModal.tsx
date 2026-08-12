@@ -64,7 +64,7 @@ export const AnalysisModal: React.FC<AnalysisModalProps> = ({
         </div>
         
         <div className="p-6 overflow-y-auto space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid-auto-fit-lg">
                 <div>
                     <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2">{t('analysisModal.contentLabel')}</h3>
                     <div className="p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700 max-h-60 overflow-y-auto">

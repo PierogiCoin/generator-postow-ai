@@ -1,7 +1,7 @@
-import logger from '../logger.js';
-import { genAI, supabase } from './clients.js';
-import { computeEngagementSummary } from './socialHelpers.js';
-import { mergePostMortemIntoBrandVoice } from './brandVoiceSync.js';
+import logger from '../logger';
+import { genAI, supabase } from './clients';
+import { computeEngagementSummary } from './socialHelpers';
+import { mergePostMortemIntoBrandVoice } from './brandVoiceSync';
 
 export const POST_MORTEM_CUTOFF_HOURS = 48;
 export const POST_MORTEM_BATCH = 8;

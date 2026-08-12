@@ -1,6 +1,6 @@
 import { TwitterApi } from 'twitter-api-v2';
 import axios from 'axios';
-import logger from './logger.js';
+import logger from '../logger';
 
 // Type definitions for API responses
 interface LinkedInPost {
@@ -159,7 +159,7 @@ export class LinkedInPublisher {
     };
 
     if (imageUrl) {
-      postData.specificContent['com.linkedin.ugc.ShareContent'].media = [{
+      (postData.specificContent as any)['com.linkedin.ugc.ShareContent'].media = [{
         status: 'READY',
         description: {
           text: 'Shared from Social Media Manager'
@@ -218,7 +218,7 @@ export class LinkedInPublisher {
         });
         return (response.data.elements || []).map((post: LinkedInPost) => ({
           id: post.id,
-          content: post.specificContent['com.linkedin.ugc.ShareContent']?.shareCommentary?.text || '',
+          content: (post.specificContent as any)['com.linkedin.ugc.ShareContent']?.shareCommentary?.text || '',
           url: `https://www.linkedin.com/feed/update/${post.id}`,
           publishedAt: new Date(post.firstPublishedAt || Date.now())
         }));

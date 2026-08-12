@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import logger from './logger.js';
+import logger from './logger';
 
 // Cost tracking service
 export class CostTracker {

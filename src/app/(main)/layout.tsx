@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { AppVersionBanner } from '@/components/AppVersionBanner';
 import { GlobalModals } from '@/components/GlobalModals';
@@ -12,7 +12,11 @@ import { useAppHandlers } from '@/hooks/useAppHandlers';
 import { NotificationSystem } from '@/components/NotificationSystem';
 import { useConfirm } from '@/hooks/useConfirm';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { SocialConnection } from '@/types/socialPublishing';
+import { isOnboardingDone, type OnboardingData } from '@/utils/onboarding';
+import { DealPlanBadge } from '@/components/DealPlanBadge';
+import { UserPlan } from '@/types';
+import { useSocialConnectionsHandlers } from '@/hooks/useSocialConnectionsHandlers';
+import { useVideoStoryHandlers } from '@/hooks/useVideoStoryHandlers';
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -21,21 +25,26 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const creditGuard = useCreditGuard();
   const { confirm, confirmDialogProps } = useConfirm();
   const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification, confirm);
+  const social = useSocialConnectionsHandlers();
+  const videoStory = useVideoStoryHandlers();
 
-  // Mocking variables required by GlobalModals that were previously in App.tsx
-  const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
-  const [connectionForHistory, setConnectionForHistory] = useState<SocialConnection | null>(null);
-  const [isSocialHistoryOpen, setIsSocialHistoryOpen] = useState(false);
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
-  // Fallback handlers for social connections
-  const handleConnectSocial = async () => {};
-  const handleDisconnectSocial = async () => {};
-  const loadSocialConnections = async () => {};
-  const handleViewSocialHistory = (connection: SocialConnection) => {
-    setConnectionForHistory(connection);
-    setIsSocialHistoryOpen(true);
-  };
+  useEffect(() => {
+    if (!user) {
+      setShowOnboarding(false);
+      return;
+    }
+    setShowOnboarding(!isOnboardingDone(user.id));
+  }, [user]);
+
+  const handleOnboardingComplete = useCallback((_data: OnboardingData) => {
+    setShowOnboarding(false);
+  }, []);
+
+  const showDealBadge =
+    user && (user.plan === UserPlan.Lifetime || Boolean(user.dealSource));
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -61,27 +70,38 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         }
       />
 
+      {showDealBadge && (
+        <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-16 pb-0">
+          <DealPlanBadge
+            plan={user.plan}
+            dealSource={user.dealSource}
+            dealTier={user.dealTier}
+            compact
+          />
+        </div>
+      )}
+
       <main className="flex-grow mx-auto w-full max-w-7xl p-4 lg:p-8 pt-20 pb-20 sm:pb-4">
         {children}
       </main>
 
       <GlobalModals
         isHomePage={false}
-        showOnboarding={false}
+        showOnboarding={showOnboarding}
         safeRedirect={null}
         handlers={handlers}
-        handleOnboardingComplete={async () => {}}
-        generatedVideo={undefined}
-        handleGenerateVideoStory={async () => {}}
-        handleApplyVideoToPost={() => {}}
-        socialConnections={socialConnections}
-        handleConnectSocial={handleConnectSocial}
-        handleDisconnectSocial={handleDisconnectSocial}
-        loadSocialConnections={loadSocialConnections}
-        handleViewSocialHistory={handleViewSocialHistory}
-        isSocialHistoryOpen={isSocialHistoryOpen}
-        setIsSocialHistoryOpen={setIsSocialHistoryOpen}
-        connectionForHistory={connectionForHistory}
+        handleOnboardingComplete={handleOnboardingComplete}
+        generatedVideo={videoStory.generatedVideo}
+        handleGenerateVideoStory={videoStory.handleGenerateVideoStory}
+        handleApplyVideoToPost={videoStory.handleApplyVideoToPost}
+        socialConnections={social.socialConnections}
+        handleConnectSocial={social.handleConnectSocial}
+        handleDisconnectSocial={social.handleDisconnectSocial}
+        loadSocialConnections={social.loadSocialConnections}
+        handleViewSocialHistory={social.handleViewSocialHistory}
+        isSocialHistoryOpen={social.isSocialHistoryOpen}
+        setIsSocialHistoryOpen={social.setIsSocialHistoryOpen}
+        connectionForHistory={social.connectionForHistory}
         isKeyboardShortcutsOpen={isKeyboardShortcutsOpen}
         setIsKeyboardShortcutsOpen={setIsKeyboardShortcutsOpen}
       />

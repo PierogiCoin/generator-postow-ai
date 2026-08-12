@@ -5,11 +5,11 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import logger from './logger.js';
+import logger from './logger';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-import type { ContentScore } from '../shared/types/contentScore.js';
+import type { ContentScore } from '../src/shared/types/contentScore';
 
 export type { ContentScore };
 

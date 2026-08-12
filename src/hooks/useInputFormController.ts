@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { useAutoSave } from '../components/AutoSaveIndicator';
 import type { FormData, CustomTemplate, CampaignHistoryItem, FavoritePost, AudiencePersona } from '../types';
 import { Tone, Platform, VisualStyle, GenerationType, UserPlan, GenerationMode } from '../types';
@@ -410,7 +410,7 @@ export function useInputFormController({
     setIsAssistantModalOpen(false);
   };
 
-  const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise].includes(
+  const isBrandVoiceEnabled = [UserPlan.Creator, UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise, UserPlan.Lifetime].includes(
     userPlan
   );
   const showVisualStyle =

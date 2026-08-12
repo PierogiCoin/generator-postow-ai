@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import type { ScheduledPost } from '../types';
 import { SortKey, SortDirection } from '../types';
 import { TrashIcon } from './icons/TrashIcon';

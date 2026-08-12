@@ -2,13 +2,13 @@
  * Quality gate calibration from real social_posts.metrics.
  */
 
-import { supabase } from './clients.js';
-import logger from '../logger.js';
+import { supabase } from './clients';
+import logger from '../logger';
 import {
   DEFAULT_AUTO_PUBLISH_MIN,
   applyCalibrationToScore,
   type CalibrationResult,
-} from './qualityCalibrationCore.js';
+} from './qualityCalibrationCore';
 
 export {
   DEFAULT_AUTO_PUBLISH_MIN,

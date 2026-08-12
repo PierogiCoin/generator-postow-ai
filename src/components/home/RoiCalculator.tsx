@@ -1,5 +1,12 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 interface RoiCalculatorProps {
   onStart: () => void;
@@ -7,29 +14,109 @@ interface RoiCalculatorProps {
 
 export const RoiCalculator: React.FC<RoiCalculatorProps> = ({ onStart }) => {
   const { t } = useTranslation();
+  const sectionRef = useRef<HTMLElement>(null);
+  const hoursValueRef = useRef<HTMLSpanElement>(null);
+  const moneyValueRef = useRef<HTMLSpanElement>(null);
   const [postsPerWeek, setPostsPerWeek] = useState<number>(5);
 
-  // Calculations
-  const hoursPerPostManually = 1.5; // average 1.5 hours per post manually
-  const hoursWithAI = 0.1; // 6 minutes per post with AI
+  const hoursPerPostManually = 1.5;
+  const hoursWithAI = 0.1;
   const monthlyPosts = postsPerWeek * 4.3;
 
   const manualHoursMonthly = Math.round(monthlyPosts * hoursPerPostManually);
   const aiHoursMonthly = Math.round(monthlyPosts * hoursWithAI);
   const hoursSavedMonthly = Math.max(1, manualHoursMonthly - aiHoursMonthly);
 
-  const agencyCostPerPost = 150; // PLN per post from agency
+  const agencyCostPerPost = 150;
   const moneySavedMonthly = Math.round(monthlyPosts * agencyCostPerPost);
 
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          canAnimate: '(prefers-reduced-motion: no-preference)',
+        },
+        (context) => {
+          if (context.conditions?.reduceMotion) {
+            gsap.set('.roi-reveal', { autoAlpha: 1, y: 0 });
+            return;
+          }
+
+          gsap.from('.roi-reveal', {
+            autoAlpha: 0,
+            y: 32,
+            duration: 0.7,
+            ease: 'power2.out',
+            stagger: 0.12,
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top 72%',
+              toggleActions: 'play none none none',
+            },
+          });
+        }
+      );
+
+      return () => mm.revert();
+    },
+    { scope: sectionRef }
+  );
+
+  useGSAP(
+    () => {
+      const hoursEl = hoursValueRef.current;
+      const moneyEl = moneyValueRef.current;
+      if (!hoursEl || !moneyEl) return;
+
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduceMotion) {
+        hoursEl.textContent = String(hoursSavedMonthly);
+        moneyEl.textContent = moneySavedMonthly.toLocaleString('pl-PL');
+        return;
+      }
+
+      const hoursState = { value: Number(hoursEl.dataset.value || 0) };
+      const moneyState = { value: Number(moneyEl.dataset.value || 0) };
+
+      gsap.to(hoursState, {
+        value: hoursSavedMonthly,
+        duration: 0.55,
+        ease: 'power2.out',
+        onUpdate: () => {
+          const next = Math.round(hoursState.value);
+          hoursEl.textContent = String(next);
+          hoursEl.dataset.value = String(next);
+        },
+      });
+
+      gsap.to(moneyState, {
+        value: moneySavedMonthly,
+        duration: 0.55,
+        ease: 'power2.out',
+        onUpdate: () => {
+          const next = Math.round(moneyState.value);
+          moneyEl.textContent = next.toLocaleString('pl-PL');
+          moneyEl.dataset.value = String(next);
+        },
+      });
+    },
+    { dependencies: [hoursSavedMonthly, moneySavedMonthly], scope: sectionRef }
+  );
+
   return (
-    <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-b from-[#05070a] via-[#0b131d] to-[#05070a] border-y border-white/10 text-white">
+    <section
+      ref={sectionRef}
+      className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-b from-[#05070a] via-[#0b131d] to-[#05070a] border-y border-white/10 text-white"
+    >
       <div className="absolute inset-0 home-noise pointer-events-none opacity-30" />
-      
-      {/* Glow ambient background */}
+
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center space-y-10">
-        <div className="space-y-3 max-w-2xl mx-auto">
+        <div className="roi-reveal space-y-3 max-w-2xl mx-auto">
           <span className="px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-extrabold uppercase tracking-widest">
             {t('home.roi.kicker', '🧮 Kalkulator Oszczędności ROI')}
           </span>
@@ -45,8 +132,7 @@ export const RoiCalculator: React.FC<RoiCalculatorProps> = ({ onStart }) => {
           </p>
         </div>
 
-        {/* Interactive Slider Box */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/15 backdrop-blur-2xl shadow-2xl space-y-8 max-w-3xl mx-auto">
+        <div className="roi-reveal p-6 sm:p-8 rounded-3xl bg-white/[0.03] border border-white/15 backdrop-blur-2xl shadow-2xl space-y-8 max-w-3xl mx-auto">
           <div className="space-y-4">
             <div className="flex justify-between items-center text-sm font-bold">
               <span className="text-slate-300">
@@ -73,14 +159,16 @@ export const RoiCalculator: React.FC<RoiCalculatorProps> = ({ onStart }) => {
             </div>
           </div>
 
-          {/* Results Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
             <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/40 to-slate-900/60 border border-emerald-500/20 space-y-2">
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
                 <span>⏱️</span> {t('home.roi.hours_label', 'Zaoszczędzony czas')}
               </span>
               <div className="text-3xl sm:text-4xl font-extrabold text-white font-display">
-                ~{hoursSavedMonthly}h <span className="text-xs font-medium text-slate-400">/ miesiąc</span>
+                ~<span ref={hoursValueRef} data-value="0">
+                  0
+                </span>
+                h <span className="text-xs font-medium text-slate-400">/ miesiąc</span>
               </div>
               <p className="text-xs text-slate-400">
                 {t('home.roi.hours_desc', 'To tak, jakbyś zyskał dodatkowe {{days}} dni wolnego każdego miesiąca!', {
@@ -94,7 +182,10 @@ export const RoiCalculator: React.FC<RoiCalculatorProps> = ({ onStart }) => {
                 <span>💰</span> {t('home.roi.money_label', 'Wartość oszczędności')}
               </span>
               <div className="text-3xl sm:text-4xl font-extrabold text-white font-display">
-                ~{moneySavedMonthly.toLocaleString('pl-PL')} zł <span className="text-xs font-medium text-slate-400">/ miesiąc</span>
+                ~<span ref={moneyValueRef} data-value="0">
+                  0
+                </span>{' '}
+                zł <span className="text-xs font-medium text-slate-400">/ miesiąc</span>
               </div>
               <p className="text-xs text-slate-400">
                 {t('home.roi.money_desc', 'Tyle zapłaciłbyś agencji lub copywriterowi za wygenerowanie tej ilości wpisów.')}

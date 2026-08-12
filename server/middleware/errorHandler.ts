@@ -1,6 +1,3 @@
-import { Request, Response, NextFunction } from 'express';
-import logger from '../logger.js';
-
 export class AppError extends Error {
   constructor(
     public statusCode: number,
@@ -12,48 +9,3 @@ export class AppError extends Error {
   }
 }
 
-export const errorHandler = (
-  err: Error | AppError,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  logger.error('Unhandled error:', { message: err.message, stack: err.stack, statusCode: err instanceof AppError ? err.statusCode : 500 });
-
-  if (err instanceof AppError) {
-    return res.status(err.statusCode).json({
-      error: err.message,
-      code: err.statusCode,
-      statusCode: err.statusCode,
-      message: err.message,
-    });
-  }
-
-  // JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ error: 'Invalid token', code: 401, statusCode: 401, message: 'Invalid token' });
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({ error: 'Token expired', code: 401, statusCode: 401, message: 'Token expired' });
-  }
-
-  // Validation errors
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ error: err.message, code: 400, statusCode: 400, message: err.message });
-  }
-
-  // Default error
-  res.status(500).json({
-    error: 'Internal server error',
-    code: 500,
-    statusCode: 500,
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
-  });
-};
-
-export const asyncHandler = (fn: Function) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-};

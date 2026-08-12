@@ -338,7 +338,14 @@ export const useDataStore = create<DataState>()(
   setAuditError: (error) => set({ isAuditing: false, auditError: error }),
 }), {
   name: 'data-storage',
-  storage: createJSONStorage(() => localStorage),
+  storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : {
+    getItem: () => null,
+    setItem: () => {},
+    removeItem: () => {},
+    length: 0,
+    clear: () => {},
+    key: () => null,
+  })),
   partialize: (state) => ({ 
     activeBrandVoiceId: state.activeBrandVoiceId,
     audiencePersona: state.audiencePersona,

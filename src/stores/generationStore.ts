@@ -20,7 +20,14 @@ export const useGenerationStore = create<GenerationState>()(
     }),
     {
       name: 'generation-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => (typeof window !== 'undefined' ? localStorage : {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {},
+        length: 0,
+        clear: () => {},
+        key: () => null,
+      })),
       partialize: (state) => ({
         lastFormData: state.lastFormData,
         result: state.result,

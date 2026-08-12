@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import stripe, { handleStripeWebhook } from '../../../../server/stripe';
-import logger from '../../../../server/logger';
+import stripe, { handleStripeWebhook } from '@server/stripe';
+import logger from '@server/logger';
 
 export async function POST(req: NextRequest) {
   const sig = req.headers.get('stripe-signature');

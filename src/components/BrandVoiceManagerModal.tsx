@@ -279,7 +279,7 @@ const ProfileForm: React.FC<{
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid-auto-fit-lg">
                 <div className="space-y-6">
                     <div className="space-y-4">
                         <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Podstawowe Dane</label>
@@ -556,7 +556,7 @@ const ProfileForm: React.FC<{
                 <div className="space-y-4 md:col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Obrazy Referencyjne (AI gen-grafiki)</label>
                     <p className="text-[11px] text-slate-500 -mt-2">Wgraj zdjęcia produktów, stylu i lokalizacji — AI użyje ich jako wizualnego punktu odniesienia przy generowaniu grafik.</p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid-auto-fit-sm">
                         {([
                             { type: 'products' as const, field: 'productImages' as const, label: 'Produkty', icon: '📦', desc: 'Zdjęcia produktów do naśladowania' },
                             { type: 'styles' as const, field: 'styleImages' as const, label: 'Styl / mood', icon: '🎨', desc: 'Klimat, estetyka, kolory' },
@@ -609,7 +609,7 @@ const ProfileForm: React.FC<{
 
                 <div className="space-y-4 md:col-span-2">
                     <label className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Przykłady (Long-term Learn)</label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid-auto-fit-lg">
                         <div className="p-6 bg-green-50/50 dark:bg-green-900/10 rounded-3xl border border-green-100 dark:border-green-800/30">
                             <p className="text-xs font-extrabold text-green-700 dark:text-green-400 uppercase tracking-widest mb-4">Używaj takich sformułowań:</p>
                             <div className="space-y-3">
@@ -842,7 +842,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="grid-auto-fit-sm">
                                 <button
                                     onClick={() => setEditingProfile(emptyProfile)}
                                     className="p-8 text-white flex flex-col items-center justify-center gap-4 min-h-[180px] h-full hover:brightness-110 transition-all group" style={{ backgroundColor: 'var(--hero-accent)' }}
@@ -891,7 +891,7 @@ export const BrandVoiceManagerModal: React.FC<BrandVoiceManagerModalProps> = ({ 
 
                             <div className="space-y-4">
                                 <h4 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Aktywne Profile Głosowe</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid-auto-fit-lg">
                                     {profiles.length === 0 ? (
                                         <div className="col-span-full py-12 flex flex-col items-center gap-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border-2 border-dashed border-slate-200 dark:border-slate-800">
                                             <ArchiveBoxIcon className="w-12 h-12 text-slate-300" />

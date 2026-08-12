@@ -66,7 +66,7 @@ export const CalendarFillToolbar: React.FC<CalendarFillToolbarProps> = ({
         <ChevronDownIcon className={`w-5 h-5 shrink-0 text-slate-400 transition-transform sm:hidden ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
 
-      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4 ${isExpanded ? '' : 'hidden sm:grid'}`}>
+      <div className={`grid-auto-fit-sm mt-4 ${isExpanded ? '' : 'hidden sm:grid'}`}>
         <div className="space-y-1.5">
           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
             {t('calendar.cadence.label', 'Szablon cadence')}

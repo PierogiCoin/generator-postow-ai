@@ -41,7 +41,7 @@ export const BatchCompetitorSummary: React.FC<BatchCompetitorSummaryProps> = ({
         </p>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid-auto-fit-lg">
         {(batch.timingGaps?.length ?? 0) > 0 && (
           <div>
             <h3 className="text-xs font-black uppercase tracking-wider text-cyan-600 mb-2">

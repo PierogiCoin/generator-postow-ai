@@ -1,6 +1,6 @@
 import type Stripe from 'stripe';
-import { supabase } from '../supabase.js';
-import logger from '../logger.js';
+import { supabase } from '../supabase';
+import logger from '../logger';
 
 type StripeClient = {
   subscriptions: {

@@ -3,7 +3,7 @@
  * Style inline (dla zgodności z klientami email).
  */
 
-import { FRONTEND_URL } from './emailService.js';
+import { FRONTEND_URL } from './emailService';
 
 const baseStyles = `
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;

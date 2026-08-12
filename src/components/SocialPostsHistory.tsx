@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import {
     X, Heart, MessageCircle, Share2, Eye, TrendingUp,
     Loader2, ExternalLink, Image as ImageIcon, RefreshCw, BarChart2, Sparkles, ChevronDown, ChevronUp, Calendar

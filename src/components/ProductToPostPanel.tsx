@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationType, Platform, Tone } from '../types';
@@ -114,7 +114,7 @@ export const ProductToPostPanel: React.FC = () => {
             placeholder="Nazwa produktu *"
             className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/60 px-3 py-2.5 text-sm"
           />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid-auto-fit-lg">
             <input
               value={price}
               onChange={(e) => setPrice(e.target.value)}

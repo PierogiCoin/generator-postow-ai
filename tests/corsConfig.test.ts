@@ -16,7 +16,7 @@ function checkOrigin(
   origin: string | undefined,
   nodeEnv: string
 ): Promise<{ err: Error | null; allowed: boolean | undefined }> {
-  process.env.NODE_ENV = nodeEnv;
+  (process.env as any).NODE_ENV = nodeEnv;
   const options = getCorsOptions();
   const originFn = options.origin;
   if (typeof originFn !== 'function') {
@@ -30,11 +30,11 @@ function checkOrigin(
 }
 
 describe('getCorsOptions', () => {
-  const prev = process.env.NODE_ENV;
+  const prev = (process.env as any).NODE_ENV;
 
   afterEach(() => {
-    if (prev === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = prev;
+    if (prev === undefined) delete (process.env as any).NODE_ENV;
+    else (process.env as any).NODE_ENV = prev;
   });
 
   it('pozwala na allowlistę w production', async () => {

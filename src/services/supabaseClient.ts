@@ -9,18 +9,15 @@ const looksLikeHtml = (v?: string) =>
   typeof v === 'string' && v.trim().length > 0 && (/^\s*</.test(v) || v.includes('<!DOCTYPE') || v.includes('<html'));
 
 const resolveEnv = (): { url?: string; anonKey?: string } => {
-  // Bezpieczny odczyt: preferuj process.env (Railway/devcontainer), fallback na import.meta.env jeśli dostępne.
-  const nodeEnv: Record<string, string | undefined> = typeof process !== 'undefined' && process.env ? process.env : {};
-  let metaEnv: Record<string, string | undefined> | undefined;
-  
-  // 🟢 POPRAWIONA LINIA: Usuwamy (import as any)
-  try { metaEnv = import.meta.env; } catch { metaEnv = undefined; }
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    process.env.VITE_SUPABASE_URL;
 
-  const env: Record<string, string | undefined> = { ...nodeEnv, ...(metaEnv || {}) };
-
-  // 🟢 Sugerowany priorytet dla środowiska VITE/Railway
-  const url = env.VITE_SUPABASE_URL || env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const anonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
 
   if (looksLikeHtml(url) || looksLikeHtml(anonKey)) {
     throw new Error('Jedna ze zmiennych środowiskowych wygląda jak HTML (np. strona błędu). Sprawdź SUPABASE_URL i SUPABASE_ANON_KEY.');
@@ -62,15 +59,40 @@ const _initializeSupabase = async (): Promise<SupabaseClient> => {
   }
 };
 
+const MOCK_URL = 'https://placeholder.supabase.co';
+const MOCK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.placeholder';
+
+export const isSupabaseConfigured = (): boolean => {
+  try {
+    const { url, anonKey } = resolveEnv();
+    return Boolean(url && anonKey && validateUrl(url) && url !== MOCK_URL);
+  } catch {
+    return false;
+  }
+};
+
 export const initializeSupabase = (): Promise<SupabaseClient> => {
-  if (supabaseInstance) return Promise.resolve(supabaseInstance);
-  if (!supabasePromise) supabasePromise = _initializeSupabase();
-  return supabasePromise;
+  const client = getSupabase();
+  return Promise.resolve(client);
 };
 
 export const getSupabase = (): SupabaseClient => {
-  if (!supabaseInstance) {
-    throw new Error('Supabase client nie został zainicjalizowany. Wywołaj initializeSupabase() przy starcie aplikacji.');
+  if (supabaseInstance) return supabaseInstance;
+
+  try {
+    const { url: supabaseUrl, anonKey: supabaseAnonKey } = resolveEnv();
+    const validUrl = supabaseUrl && validateUrl(supabaseUrl) ? supabaseUrl : MOCK_URL;
+    const validKey = supabaseAnonKey || MOCK_KEY;
+
+    supabaseInstance = createClient(validUrl, validKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+    return supabaseInstance;
+  } catch {
+    return createClient(MOCK_URL, MOCK_KEY);
   }
-  return supabaseInstance;
 };

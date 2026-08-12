@@ -35,7 +35,7 @@ export const InputFormVisualSection: React.FC<InputFormVisualSectionProps> = ({
   const isPlatformSpecific = formData.visualStyle === VisualStyle.PlatformSpecific;
 
   return (
-            <div className="animate-fade-in grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="animate-fade-in grid-auto-fit-lg gap-10">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 mb-3 px-1">
                   <label htmlFor="visualStyle" className="block text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">{t('form.visualStyle.label')}</label>

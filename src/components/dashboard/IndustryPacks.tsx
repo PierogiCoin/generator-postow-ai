@@ -139,8 +139,8 @@ export const IndustryPacks: React.FC<{ niche: string; userId?: string | null }> 
 
       {userId && <UserIndustriesManager userId={userId} onChange={() => setNicheTick(n => n + 1)} />}
 
-      {/* Bento Grid — kafelki branżowe z glassmorphism */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* Bento Grid — intrinsic auto-fit */}
+      <div className="grid-auto-fit-md">
         {packs.slice(0, 8).map((pack) => {
           const isPrimary = matched?.id === pack.id;
           const LucideIcon = PACK_LUCIDE_ICONS[pack.id];

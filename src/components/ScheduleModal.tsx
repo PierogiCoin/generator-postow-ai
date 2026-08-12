@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { GenerationResult, FormData, ScheduledPost, Platform, GenerationType } from '../types';
 import { platformConfig } from '@/config/platformConfig';
 import { CalendarIcon } from './icons/CalendarIcon';
@@ -6,7 +6,6 @@ import { ClockIcon } from './icons/ClockIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { ModernButton } from './ui/ModernButton';
 import { XMarkIcon } from './icons/XMarkIcon';
-import { useEscapeClose } from '../hooks/useEscapeClose';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -46,7 +45,49 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>([]);
   const [selectedFormats, setSelectedFormats] = useState<GenerationType[]>([]);
   const [requireApproval, setRequireApproval] = useState(false);
-  useEscapeClose(isOpen, onClose);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    if (isOpen && !dialog.open) {
+      dialog.showModal();
+    } else if (!isOpen && dialog.open) {
+      dialog.close();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+
+    const handleClose = () => onClose();
+    dialog.addEventListener('close', handleClose);
+    return () => dialog.removeEventListener('close', handleClose);
+  }, [onClose]);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog || 'closedBy' in HTMLDialogElement.prototype) return;
+
+    const handleBackdropClick = (event: MouseEvent) => {
+      if (event.target !== dialog) return;
+
+      const rect = dialog.getBoundingClientRect();
+      const isOnDialogContent =
+        rect.top <= event.clientY &&
+        event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX &&
+        event.clientX <= rect.left + rect.width;
+
+      if (isOnDialogContent) return;
+      dialog.close();
+    };
+
+    dialog.addEventListener('click', handleBackdropClick);
+    return () => dialog.removeEventListener('click', handleBackdropClick);
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -107,8 +148,6 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     onConfirm(scheduleDateTime.getTime(), selectedPlatforms, selectedFormats, requireApproval);
   };
 
-  if (!isOpen) return null;
-
   const allPlatforms: Platform[] = Object.values(Platform);
   const allFormats: GenerationType[] = [
     GenerationType.PostWithImage,
@@ -120,18 +159,13 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     itemToSchedule?.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu';
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 animate-fade-in"
+    <dialog
+      ref={dialogRef}
+      closedby="any"
+      aria-labelledby="schedule-modal-title"
+      className="schedule-modal-dialog w-full max-w-xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col p-0 animate-fade-in"
       style={{ animationDuration: '0.2s' }}
-      onClick={onClose}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="schedule-modal-title"
-        className="w-full max-w-xl max-h-[92vh] sm:max-h-[90vh] overflow-y-auto bg-white dark:bg-[#0a1220] border border-slate-200 dark:border-white/10 rounded-t-2xl sm:rounded-lg shadow-xl flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
         <div
           className="sticky top-0 z-10 flex items-start justify-between gap-3 px-5 sm:px-6 pt-5 sm:pt-6 pb-4 bg-white dark:bg-[#0a1220] border-b border-slate-200 dark:border-white/10"
           style={{ boxShadow: 'inset 3px 0 0 0 var(--hero-accent)' }}
@@ -180,7 +214,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid-auto-fit-lg">
             <div>
               <label
                 htmlFor="schedule-date"
@@ -312,8 +346,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             Potwierdź harmonogram
           </ModernButton>
         </div>
-      </div>
-    </div>
+    </dialog>
   );
 };
 

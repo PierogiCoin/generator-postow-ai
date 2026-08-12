@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCredits } from '@/lib/api-utils';
-import { genAI } from '../../../../server/lib/clients';
-import { mapModel } from '../../../../server/lib/mapModel';
-import logger from '../../../../server/logger';
+import { genAI } from '@server/lib/clients';
+import { mapModel } from '@server/lib/mapModel';
+import logger from '@server/logger';
 
 export async function POST(req: NextRequest) {
   try {

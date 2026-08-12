@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/api-utils';
-import { getVideoJob } from '../../../../server/lib/videoJobs';
+import { getVideoJob } from '@server/lib/videoJobs';
 
 export async function GET(
   req: NextRequest,

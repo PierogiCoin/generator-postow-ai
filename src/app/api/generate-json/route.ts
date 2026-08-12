@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCredits } from '@/lib/api-utils';
-import { runTextGeneration, modelsWithFallback, sendGenerationError } from '../../../../server/routes/generation/helpers';
-import { mapModel } from '../../../../server/lib/mapModel';
-import { isGeminiQuotaError, geminiErrorMessage } from '../../../../server/lib/geminiErrors';
-import { startGenerationTrace } from '../../../../server/lib/langfuse';
-import logger from '../../../../server/logger';
+import { runTextGeneration, modelsWithFallback } from '@server/routes/generation/helpers';
+import { mapModel } from '@server/lib/mapModel';
+import { isGeminiQuotaError, geminiErrorMessage } from '@server/lib/geminiErrors';
+import { startGenerationTrace } from '@server/lib/langfuse';
+import logger from '@server/logger';
 
 export async function POST(req: NextRequest) {
   try {

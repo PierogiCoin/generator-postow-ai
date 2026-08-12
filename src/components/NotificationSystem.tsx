@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { useTranslation } from 'react-i18next';
 import type { Notification } from '../types';
 import type { Toast } from '../hooks/useNotifications';

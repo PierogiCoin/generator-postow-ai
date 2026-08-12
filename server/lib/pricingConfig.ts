@@ -1,5 +1,5 @@
-import type { PlanStripeKey } from '../../config/subscriptionPlans.js';
-import * as subscriptionPlansModule from '../../config/subscriptionPlans.js';
+import type { PlanStripeKey } from '../../src/config/subscriptionPlans';
+import * as subscriptionPlansModule from '../../src/config/subscriptionPlans';
 
 /** tsx/Node ESM: named exports may appear on `default` when loading cross-root .ts files */
 const subscriptionPlans =
@@ -52,7 +52,7 @@ export function buildSubscriptionsConfig() {
         ? 1
         : plan.stripeKey === 'creator'
           ? 3
-          : plan.stripeKey === 'pro'
+          : plan.stripeKey === 'pro' || plan.stripeKey === 'lifetime'
             ? 5
             : plan.stripeKey === 'agency' || plan.stripeKey === 'enterprise'
               ? -1

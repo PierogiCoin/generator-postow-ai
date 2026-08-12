@@ -1,8 +1,8 @@
-import logger from '../logger.js';
-import { processPostMortems } from '../lib/postMortem.js';
-import { startTwitterOAuthCleanup } from '../lib/twitterOAuthStore.js';
-import { startSchedulerJob } from './schedulerJob.js';
-import { processEmailQueue, checkInactiveUsers } from '../lib/emailQueueProcessor.js';
+import logger from '../logger';
+import { processPostMortems } from '../lib/postMortem';
+import { startTwitterOAuthCleanup } from '../lib/twitterOAuthStore';
+import { startSchedulerJob } from './schedulerJob';
+import { processEmailQueue, checkInactiveUsers } from '../lib/emailQueueProcessor';
 
 export function startBackgroundJobs(): void {
   startTwitterOAuthCleanup();

@@ -1,4 +1,4 @@
-import { resolveOAuthCallbackUrl } from '../lib/publicUrl.js';
+import { resolveOAuthCallbackUrl } from '../lib/publicUrl';
 
 export const linkedInConfig = {
   clientId: process.env.LINKEDIN_CLIENT_ID || '',

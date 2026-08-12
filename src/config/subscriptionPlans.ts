@@ -21,7 +21,8 @@ export type PlanStripeKey =
   | 'pro'
   | 'business'
   | 'agency'
-  | 'enterprise';
+  | 'enterprise'
+  | 'lifetime';
 
 export interface PlanFeatureRow {
   id: string;
@@ -265,9 +266,38 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
       apiAccess: false,
     },
   },
+  {
+    id: UserPlan.Lifetime,
+    stripeKey: 'lifetime',
+    name: 'Lifetime',
+    namePl: 'Lifetime',
+    ...withYearlyPricing(SUBSCRIPTION_PRICING.lifetime),
+    savingsPercent: 0,
+    descriptionPl: 'Jednorazowa opłata — dostęp Lifetime ≈ Pro (odnawialne kredyty miesięcznie).',
+    stripePriceEnv: 'STRIPE_LIFETIME_PRICE_ID',
+    stripePriceEnvYearly: null,
+    features: [
+      { id: 'credits', labelPl: 'Kredyty / mies.', limit: formatUsageLimit(SUBSCRIPTION_PRICING.lifetime.credits) },
+      { id: 'text', labelPl: 'Posty tekstowe', limit: formatUsageLimit(500) },
+      { id: 'image', labelPl: 'Obrazy AI', limit: formatUsageLimit(100) },
+      { id: 'video', labelPl: 'Wideo AI', limit: formatUsageLimit(10) },
+      { id: 'analytics', labelPl: 'Analityka i strategista AI' },
+      { id: 'brand', labelPl: 'Profile głosu marki', limit: '5' },
+    ],
+    usageLimits: { text: 500, image: 100, video: 10, campaign: 20 },
+    flags: {
+      scheduling: true,
+      analytics: true,
+      strategist: true,
+      brandVoices: 5,
+      apiAccess: false,
+    },
+  },
 ];
 
-export const PAID_SUBSCRIPTION_PLANS = SUBSCRIPTION_PLANS.filter((p) => p.priceUsd > 0);
+export const PAID_SUBSCRIPTION_PLANS = SUBSCRIPTION_PLANS.filter(
+  (p) => p.priceUsd > 0 && p.id !== UserPlan.Lifetime
+);
 
 export function getPlanByUserPlan(plan: UserPlan): SubscriptionPlanConfig {
   return SUBSCRIPTION_PLANS.find((p) => p.id === plan) ?? SUBSCRIPTION_PLANS[0];

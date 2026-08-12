@@ -1,4 +1,4 @@
-import { supabase } from './clients.js';
+import { supabase } from './clients';
 
 export type HeatmapCell = {
   weekday: number;

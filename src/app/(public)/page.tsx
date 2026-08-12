@@ -1,7 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useRouter, redirect } from 'next/navigation';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { SplitText } from 'gsap/SplitText';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useUIStore } from '@/stores/uiStore';
@@ -33,8 +37,9 @@ import {
 import { IndustryFunnelHero } from '@/components/IndustryFunnelHero';
 import { RoiCalculator } from '@/components/home/RoiCalculator';
 import { PricingSection } from '@/components/home/PricingSection';
-import { LiveSocialProofToasts, InlineProofToast } from '@/components/home/LiveSocialProofToasts';
 import type { IndustryPackId } from '@/utils/industryPacks';
+
+gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
 interface HomeViewProps {}
 
@@ -285,7 +290,7 @@ const HeroLiveDemoWidget: React.FC<{ onGenerate: (topic: string) => void }> = ({
             onClick={() => onGenerate(demoTopic.trim() || currentTopic)}
             className="mt-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-6 py-2 rounded-full transition-colors active:scale-95"
           >
-            Wygeneruj post na żywo →
+            Wygeneruj przykładowy post →
           </button>
         </div>
       </div>
@@ -300,9 +305,67 @@ const HeroSection: React.FC<{
   onGenerateDemo: (topic: string) => void;
 }> = ({ reducedMotion, isLoggedIn, onStart, onGenerateDemo }) => {
   const { t } = useTranslation();
+  const heroRef = useRef<HTMLElement>(null);
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          canAnimate: '(prefers-reduced-motion: no-preference)',
+        },
+        (context) => {
+          const prefersReduce = Boolean(context.conditions?.reduceMotion) || reducedMotion;
+          const rest = ['.hero-sub', '.hero-cta', '.hero-proof', '.hero-demo'];
+
+          if (prefersReduce) {
+            gsap.set(['.hero-headline', ...rest], { autoAlpha: 1, y: 0 });
+            return;
+          }
+
+          const headline = heroRef.current?.querySelector('.hero-headline');
+          if (!headline) return;
+
+          const split = SplitText.create(headline, {
+            type: 'words,chars',
+            aria: 'auto',
+            charsClass: 'hero-char',
+            wordsClass: 'hero-word',
+          });
+
+          gsap.set('.hero-headline', { autoAlpha: 1 });
+          gsap.set(split.chars, { autoAlpha: 0, y: 28 });
+          gsap.set(rest, { autoAlpha: 0, y: 28 });
+
+          const tl = gsap.timeline({
+            defaults: { ease: 'power2.out' },
+          });
+
+          tl.to(split.chars, {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.45,
+            stagger: 0.018,
+          })
+            .to('.hero-sub', { autoAlpha: 1, y: 0, duration: 0.65 }, '-=0.25')
+            .to('.hero-cta', { autoAlpha: 1, y: 0, duration: 0.65 }, '-=0.4')
+            .to('.hero-proof', { autoAlpha: 1, y: 0, duration: 0.65 }, '-=0.35')
+            .to('.hero-demo', { autoAlpha: 1, y: 0, duration: 0.75 }, '-=0.45');
+        }
+      );
+
+      return () => mm.revert();
+    },
+    { dependencies: [reducedMotion], scope: heroRef }
+  );
 
   return (
-    <section className="relative min-h-[100svh] w-full home-hero-wash text-white overflow-hidden flex flex-col">
+    <section
+      ref={heroRef}
+      className="relative min-h-[100svh] w-full home-hero-wash text-white overflow-hidden flex flex-col"
+    >
       <div className="absolute inset-0 home-noise pointer-events-none" aria-hidden="true" />
       <div className="absolute inset-0 home-grid-bg opacity-40 pointer-events-none" aria-hidden="true" />
 
@@ -317,22 +380,14 @@ const HeroSection: React.FC<{
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center w-full">
           <div className="text-center lg:text-left">
             <h1
-              className={`text-5xl sm:text-6xl font-bold tracking-tight leading-tight ${reducedMotion ? '' : 'animate-home-rise'}`}
+              className={`hero-headline text-5xl sm:text-6xl font-bold tracking-tight leading-tight text-white ${reducedMotion ? '' : 'opacity-0'}`}
             >
-              <span className="bg-gradient-to-b from-white to-white/80 bg-clip-text text-transparent">
-                Generuj posty na social media w 30 sekund
-              </span>
+              Generuj posty na social media w 30 sekund
             </h1>
-            <p
-              className={`mt-5 text-xl text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed ${reducedMotion ? '' : 'animate-home-rise'}`}
-              style={reducedMotion ? undefined : { animationDelay: '120ms' }}
-            >
+            <p className={`hero-sub mt-5 text-xl text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed ${reducedMotion ? '' : 'opacity-0'}`}>
               AI napisze, zaprojektuje grafikę i zaplanuje publikację — dopasowane do Twojej branży
             </p>
-            <div
-              className={`mt-8 flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-3 ${reducedMotion ? '' : 'animate-home-rise'}`}
-              style={reducedMotion ? undefined : { animationDelay: '220ms' }}
-            >
+            <div className={`hero-cta mt-8 flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-3 ${reducedMotion ? '' : 'opacity-0'}`}>
               <ModernButton
                 variant="primary"
                 size="lg"
@@ -352,30 +407,18 @@ const HeroSection: React.FC<{
               </ModernButton>
             </div>
 
-            <div
-              className={`mt-6 flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-slate-500 ${reducedMotion ? '' : 'animate-home-rise'}`}
-              style={reducedMotion ? undefined : { animationDelay: '320ms' }}
-            >
-              <span>⚡ 10 000+ postów</span>
-              <span>🏢 50+ branż</span>
-              <span>📱 5 platform</span>
-              <span>⭐ 4.9/5</span>
+            <div className={`hero-proof mt-6 flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-slate-500 ${reducedMotion ? '' : 'opacity-0'}`}>
+              <span>Bez karty na start</span>
+              <span>5 platform</span>
+              <span>Kalendarz publikacji</span>
             </div>
           </div>
 
-          <div
-            id="demo"
-            className={`${reducedMotion ? '' : 'animate-home-rise'}`}
-            style={reducedMotion ? undefined : { animationDelay: '240ms' }}
-          >
+          <div id="demo" className={`hero-demo ${reducedMotion ? '' : 'opacity-0'}`}>
             <p className="mb-3 text-sm text-slate-300 flex items-center gap-2">
-              <span className="text-base">👁️</span> Zobacz, jak AI pisze posty na żywo
+              <span className="text-base">👁️</span> Przykład: jak wygląda post z generatora
             </p>
             <HeroLiveDemoWidget onGenerate={onGenerateDemo} />
-            <InlineProofToast
-              text="Ania z Warszawy wygenerowała podobny post dla kawiarni"
-              className="mt-3 max-w-2xl mx-auto"
-            />
           </div>
         </div>
       </div>
@@ -385,6 +428,7 @@ const HeroSection: React.FC<{
 
 const HowItWorksSection: React.FC = () => {
   const { t } = useTranslation();
+  const sectionRef = useRef<HTMLElement>(null);
 
   const steps = [
     {
@@ -409,8 +453,47 @@ const HowItWorksSection: React.FC = () => {
     },
   ];
 
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          canAnimate: '(prefers-reduced-motion: no-preference)',
+        },
+        (context) => {
+          if (context.conditions?.reduceMotion) {
+            gsap.set('.how-step', { autoAlpha: 1, y: 0 });
+            return;
+          }
+
+          gsap.from('.how-step', {
+            autoAlpha: 0,
+            y: 36,
+            duration: 0.65,
+            ease: 'power2.out',
+            stagger: 0.12,
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top 75%',
+              toggleActions: 'play none none none',
+            },
+          });
+        }
+      );
+
+      return () => mm.revert();
+    },
+    { scope: sectionRef }
+  );
+
   return (
-    <section id="jak-to-dziala" className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white">
+    <section
+      ref={sectionRef}
+      id="jak-to-dziala"
+      className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white"
+    >
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center max-w-3xl mx-auto mb-14">
           <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-widest mb-3">
@@ -427,7 +510,7 @@ const HowItWorksSection: React.FC = () => {
             return (
               <div
                 key={step.title}
-                className="relative p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors"
+                className="how-step relative p-6 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-colors"
               >
                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
                   <Icon className="w-6 h-6" />
@@ -554,51 +637,45 @@ const MethodsSection: React.FC = () => {
 };
 
 const ProofStrip: React.FC = () => {
-  const { t } = useTranslation();
   return (
     <section className="py-20 border-y border-slate-200/80 dark:border-white/5 bg-white/50 dark:bg-white/[0.02] backdrop-blur-md">
       <div className="max-w-5xl mx-auto px-4 space-y-12">
-        {/* Metric Badges */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-          <div className="p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-display flex items-center justify-center gap-1.5">
-              <span>4.9</span>
-              <span className="text-amber-400 text-2xl">★</span>
+          <div className="proof-card p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
+            <div className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white font-display">
+              AI
             </div>
             <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
-              {t('home.journey.proof_rating_label', 'Średnia ocena z 10,000+ wpisów')}
+              Generowanie postów pod ton marki
             </p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
+          <div className="proof-card p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
             <div className="text-3xl sm:text-4xl font-extrabold text-emerald-400 font-display">
-              12h / tydz.
+              Kalendarz
             </div>
             <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
-              {t('home.journey.proof_time_saved', 'Zaoszczędzone na pisanie postów')}
+              Planuj publikacje z wyprzedzeniem
             </p>
           </div>
-          <div className="p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
-            <div className="text-3xl sm:text-4xl font-extrabold text-sky-400 font-display">
-              +300%
-            </div>
+          <div className="proof-card p-6 rounded-2xl bg-white/40 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/5 shadow-sm space-y-1">
+            <div className="text-3xl sm:text-4xl font-extrabold text-sky-400 font-display">5</div>
             <p className="text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
-              {t('home.journey.proof_engagement', 'Wyższe zaangażowanie odbiorców')}
+              Platformy: FB, IG, LinkedIn, TikTok, X
             </p>
           </div>
         </div>
 
-        {/* Featured Testimonial Quote */}
         <div className="max-w-3xl mx-auto text-center p-8 rounded-3xl bg-slate-900/60 border border-white/10 shadow-xl space-y-4">
-          <p className="font-display text-lg sm:text-xl font-bold text-slate-900 dark:text-white leading-relaxed tracking-tight">
-            „{t('home.journey.proof_quote')}”
+          <p className="font-display text-lg sm:text-xl font-bold text-white leading-relaxed tracking-tight">
+            Generuj, dopasuj do platformy i zaplanuj publikację — w jednym studio.
           </p>
-          <div className="text-xs sm:text-sm text-slate-400 font-semibold flex items-center justify-center gap-2">
-            <span className="text-emerald-400">✓ Weryfikowany Twórca</span>
-            <span>·</span>
-            <span>{t('home.journey.proof_author')}</span>
-            <span>·</span>
-            <span className="text-slate-500">{t('home.journey.proof_role')}</span>
-          </div>
+          <p className="text-sm text-slate-400">
+            Free bez karty. Lifetime Deal na{' '}
+            <a href="/deal" className="text-[var(--hero-accent)] underline underline-offset-2">
+              /deal
+            </a>
+            .
+          </p>
         </div>
       </div>
     </section>
@@ -623,11 +700,11 @@ const FAQSection: React.FC = () => {
     },
     {
       q: 'Czy mogę automatycznie planować publikację w Social Media?',
-      a: 'Tak, AI Content Pro posiada wbudowany kalendarz oraz interfejs do bezpośredniej publikacji na platformach LinkedIn, Instagram, Facebook i TikTok.',
+      a: 'Tak — masz wbudowany kalendarz i możesz zaplanować publikację. Połączenie kont (Facebook, Instagram, LinkedIn, TikTok, X) i publikacja bezpośrednia działają po skonfigurowaniu OAuth dla danej platformy w ustawieniach konta.',
     },
     {
       q: 'Czy potrzebuję karty kredytowej, żeby wypróbować plan Pro?',
-      a: 'Nie. Plan Pro możesz wypróbować przez 7 dni za darmo — kartę podajesz dopiero, jeśli zdecydujesz się zostać po okresie próbnym.',
+      a: 'Plan Free działa bez karty. Trial Pro (7 dni) wymaga karty w Stripe — po okresie próbnym subskrypcja się odnawia, możesz anulować w dowolnym momencie. Lifetime Deal kupisz jednorazowo na /deal.',
     },
     {
       q: 'Czy mogę anulować subskrypcję w dowolnym momencie?',
@@ -783,11 +860,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
       <ScrollProgressBar />
       <LandingNav onSignup={openSignupOrApp} onLogin={() => setAuthModal('login')} onPricing={openPricing} isLoggedIn={isLoggedIn} />
 
-      {/* Urgency banner */}
-      <div className="bg-emerald-500/10 border-b border-emerald-500/20 text-emerald-300 text-xs sm:text-sm font-semibold text-center py-2 px-4">
-        🎁 Zarejestruj się do niedzieli i odbierz 20 dodatkowych kredytów na start
-      </div>
-
       <HeroSection
         reducedMotion={reducedMotion}
         isLoggedIn={isLoggedIn}
@@ -833,9 +905,6 @@ export const HomeView: React.FC<HomeViewProps> = () => {
       <Reveal reducedMotion={reducedMotion}>
         <FinalCTASection onNavigateToApp={openSignupOrApp} isLoggedIn={isLoggedIn} />
       </Reveal>
-
-      {/* Floating Social Proof Activity Toast */}
-      <LiveSocialProofToasts />
     </div>
   );
 };

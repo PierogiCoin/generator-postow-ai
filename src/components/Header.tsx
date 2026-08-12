@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from "@/lib/router-compat";
+import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { SparklesIcon } from './icons/SparklesIcon';
 import { BrandMarkIcon } from './icons/BrandMarkIcon';
@@ -13,7 +14,7 @@ import { MenuIcon } from './icons/MenuIcon';
 import { XMarkIcon } from './icons/XMarkIcon';
 import { ChevronDownIcon } from './icons/ChevronDownIcon';
 import { UserIcon } from './icons/UserIcon';
-import { APP_NAV_ITEMS, CREATE_NAV_ITEMS, planMeets, type AppNavItem, type CreateNavItem } from '@/config/navConfig';
+import { APP_NAV_ITEMS, CREATE_NAV_ITEMS, planMeetsWithDeal, type AppNavItem, type CreateNavItem } from '@/config/navConfig';
 
 interface HeaderProps {
     isCalendarEnabled: boolean;
@@ -38,7 +39,7 @@ const NavItem: React.FC<{ to: string; children: React.ReactNode; title?: string;
         to={to}
         title={title}
         end={to === '/dashboard'}
-        className={({ isActive }) =>
+        className={({ isActive }: { isActive: boolean }) =>
             `relative flex items-center gap-2 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all duration-300 ${
                 isActive
                     ? 'bg-gradient-to-r from-[var(--hero-accent)] to-emerald-500 text-white shadow-md shadow-emerald-500/25 ring-1 ring-white/20'
@@ -58,7 +59,7 @@ const BottomNavItem: React.FC<{
     <NavLink
         to={to}
         end={to === '/dashboard'}
-        className={({ isActive }) =>
+        className={({ isActive }: { isActive: boolean }) =>
             `flex flex-col items-center justify-center gap-1 w-full h-full min-h-[44px] transition-all duration-300 relative ${
                 isActive
                     ? 'text-emerald-400 font-extrabold scale-105'
@@ -169,7 +170,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
     const { user, logout, setCurrentTeamId } = useAuth();
     const { t } = useTranslation();
-    const location = useLocation();
+    const pathname = usePathname();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isMobileCreateMenuOpen, setIsMobileCreateMenuOpen] = useState(false);
     const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
@@ -177,16 +178,17 @@ export const Header: React.FC<HeaderProps> = ({
     const mobileMenuRef = useRef<HTMLDivElement>(null);
 
     const userPlan = user?.plan || UserPlan.Free;
+    const dealTier = user?.dealTier ?? null;
 
     const resolvedItems = useMemo<ResolvedNavItem[]>(() => {
         return APP_NAV_ITEMS.map((item) => {
-            const planLocked = item.minPlan ? !planMeets(userPlan, item.minPlan) : false;
+            const planLocked = item.minPlan ? !planMeetsWithDeal(userPlan, item.minPlan, dealTier) : false;
             const gatedLocked = item.gated ? !isCalendarEnabled : false;
             const disabled = planLocked || gatedLocked;
             const titleKey = disabled ? item.disabledTooltipKey : item.enabledTooltipKey;
             return { ...item, disabled, title: titleKey ? t(titleKey) : t(item.labelKey) };
         });
-    }, [isCalendarEnabled, userPlan, t]);
+    }, [isCalendarEnabled, userPlan, dealTier, t]);
 
     const primaryItems = useMemo(() => resolvedItems.filter((i) => i.section === 'main'), [resolvedItems]);
     const moreItems = useMemo(() => resolvedItems.filter((i) => i.section !== 'main'), [resolvedItems]);
@@ -287,7 +289,7 @@ export const Header: React.FC<HeaderProps> = ({
                                     aria-expanded={isMoreMenuOpen}
                                     aria-haspopup="menu"
                                     className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border ${
-                                        isMoreMenuOpen || moreItems.some((i) => location.pathname.startsWith(i.to))
+                                        isMoreMenuOpen || moreItems.some((i) => pathname?.startsWith(i.to))
                                             ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)] border-[var(--hero-accent)]/35 shadow-sm'
                                             : 'text-slate-400 hover:text-white hover:bg-white/[0.07] border-transparent'
                                     }`}
@@ -314,7 +316,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                             role="menuitem"
                                                             title={disabled ? title : undefined}
                                                             onClick={() => setIsMoreMenuOpen(false)}
-                                                            className={({ isActive }) =>
+                                                            className={({ isActive }: { isActive: boolean }) =>
                                                                 `flex items-start gap-3 p-3 rounded-2xl transition-all ${
                                                                     isActive
                                                                         ? 'bg-[var(--hero-accent-soft)] text-emerald-400 font-bold border border-emerald-500/30'
@@ -447,7 +449,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 to={to}
                                                 end={to === '/dashboard'}
                                                 onClick={() => setIsMobileMenuOpen(false)}
-                                                className={({ isActive }) =>
+                                                className={({ isActive }: { isActive: boolean }) =>
                                                     `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                                                         isActive
                                                             ? 'bg-[var(--hero-accent)] text-white'
@@ -467,7 +469,7 @@ export const Header: React.FC<HeaderProps> = ({
                                                 key={id}
                                                 to={to}
                                                 onClick={() => setIsMobileMenuOpen(false)}
-                                                className={({ isActive }) =>
+                                                className={({ isActive }: { isActive: boolean }) =>
                                                     `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                                                         isActive
                                                             ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'
@@ -483,7 +485,7 @@ export const Header: React.FC<HeaderProps> = ({
                                         <NavLink
                                             to="/account"
                                             onClick={() => setIsMobileMenuOpen(false)}
-                                            className={({ isActive }) =>
+                                            className={({ isActive }: { isActive: boolean }) =>
                                                 `flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors ${
                                                     isActive
                                                         ? 'bg-[var(--hero-accent-soft)] text-[var(--hero-accent)]'

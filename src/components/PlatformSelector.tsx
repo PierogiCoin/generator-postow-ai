@@ -97,7 +97,7 @@ export const PlatformSelector: React.FC<PlatformSelectorProps> = ({ mode = 'sing
   }
 
   return (
-    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ${className || ''}`} role="group" aria-label="Wybierz platformy społecznościowe">
+    <div className={`grid-auto-fit-sm ${className || ''}`} role="group" aria-label="Wybierz platformy społecznościowe">
       {platformsToShow.map(platform => {
         const config = platformConfig[platform];
         const Icon = config.icon;

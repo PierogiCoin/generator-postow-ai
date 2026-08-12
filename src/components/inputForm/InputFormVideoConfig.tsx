@@ -28,7 +28,7 @@ export const InputFormVideoConfig: React.FC<InputFormVideoConfigProps> = ({
           Konfiguracja Wideo
         </h4>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid-auto-fit-lg">
         <div>
           <div className="flex items-center gap-2 mb-3">
             <label

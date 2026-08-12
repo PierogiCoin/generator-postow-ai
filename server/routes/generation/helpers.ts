@@ -1,13 +1,12 @@
-import type { Response } from 'express';
-import logger from '../../logger.js';
-import { genAI } from '../../lib/clients.js';
-import { retryWithBackoff, withTimeout } from '../../lib/retry.js';
+import logger from '../../logger';
+import { genAI } from '../../lib/clients';
+import { retryWithBackoff, withTimeout } from '../../lib/retry';
 import {
   isGeminiQuotaError,
   geminiErrorStatus,
   geminiErrorMessage,
-} from '../../lib/geminiErrors.js';
-import { enforceAntiSlopTextServer } from '../../lib/antiSlop.js';
+} from '../../lib/geminiErrors';
+import { enforceAntiSlopTextServer } from '../../lib/antiSlop';
 
 export async function runTextGeneration(
   modelName: string,
@@ -69,14 +68,4 @@ export function modelsWithFallback(modelName: string): string[] {
     return [modelName, 'gemini-2.5-flash', 'gemini-flash-lite-latest'];
   }
   return ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
-}
-
-export function sendGenerationError(res: Response, error: unknown): void {
-  const status = geminiErrorStatus(error);
-  const message = geminiErrorMessage(error);
-  logger.error('Generation error:', { status, message, details: String(error) });
-  res.status(status).json({
-    message,
-    code: isGeminiQuotaError(error) ? 'GEMINI_QUOTA_EXCEEDED' : undefined,
-  });
 }

@@ -1,5 +1,6 @@
 import type { ComponentType } from 'react';
 import { UserPlan, GenerationType } from '../types';
+import { resolveEffectivePlan } from './dealTiers';
 import { LayoutGridIcon } from '../components/icons/LayoutGridIcon';
 import { PostIcon } from '../components/icons/PostIcon';
 import { CalendarIcon } from '../components/icons/CalendarIcon';
@@ -41,13 +42,23 @@ export const PLAN_RANK: Record<UserPlan, number> = {
   [UserPlan.Free]: 0,
   [UserPlan.Creator]: 1,
   [UserPlan.Pro]: 2,
+  [UserPlan.Lifetime]: 2,
   [UserPlan.Business]: 3,
   [UserPlan.Agency]: 4,
   [UserPlan.Enterprise]: 5,
 };
 
 export function planMeets(userPlan: UserPlan, requiredPlan: UserPlan): boolean {
-  return PLAN_RANK[userPlan] >= PLAN_RANK[requiredPlan];
+  return (PLAN_RANK[userPlan] ?? 0) >= (PLAN_RANK[requiredPlan] ?? 0);
+}
+
+/** planMeets z uwzględnieniem deal_tier Lifetime (Tier2≈Business, Tier3≈Agency) */
+export function planMeetsWithDeal(
+  userPlan: UserPlan,
+  requiredPlan: UserPlan,
+  dealTier?: 1 | 2 | 3 | null
+): boolean {
+  return planMeets(resolveEffectivePlan(userPlan, dealTier), requiredPlan);
 }
 
 /**

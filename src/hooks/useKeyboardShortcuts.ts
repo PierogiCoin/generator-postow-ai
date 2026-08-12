@@ -1,5 +1,5 @@
 import { useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { useUIStore } from '../stores/uiStore';
 import { useGenerationStore } from '../stores/generationStore';
 

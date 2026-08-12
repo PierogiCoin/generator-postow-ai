@@ -2,8 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@supabase/supabase-js';
 import LumaAI from 'lumaai';
 import Replicate from 'replicate';
-import { initCostTracker, costTracker } from '../costTracking.js';
-import { loadEnv } from '../config/env.js';
+import { initCostTracker, costTracker } from '../costTracking';
+import { loadEnv } from '../config/env';
 
 const env = loadEnv();
 

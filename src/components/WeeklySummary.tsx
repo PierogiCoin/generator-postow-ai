@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { useTranslation } from 'react-i18next';
 import { useDataStore } from '../stores/dataStore';
 import { SparklesIcon } from './icons/SparklesIcon';

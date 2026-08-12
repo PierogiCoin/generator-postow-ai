@@ -1,5 +1,7 @@
 import React from 'react';
 import { Check, ShieldCheck, XCircle } from 'lucide-react';
+import { UserPlan } from '@/types';
+import { getPlanByUserPlan, formatUsageLimit } from '@/config/subscriptionPlans';
 
 interface PricingSectionProps {
   onStartFree: () => void;
@@ -7,49 +9,64 @@ interface PricingSectionProps {
   onContactSales: () => void;
 }
 
+const freePlan = getPlanByUserPlan(UserPlan.Free);
+const proPlan = getPlanByUserPlan(UserPlan.Pro);
+const agencyPlan = getPlanByUserPlan(UserPlan.Agency);
+
 const plans = [
   {
     id: 'free',
-    name: 'Darmowy',
+    name: freePlan.namePl,
     price: '0 zł',
     period: '',
-    description: '10 kredytów, podstawowe branże, 1 platforma.',
-    features: ['10 kredytów na start', 'Podstawowe branże', '1 platforma social media'],
+    description: freePlan.descriptionPl,
+    features: [
+      `${formatUsageLimit(freePlan.credits)} kredytów na start`,
+      'Podstawowe branże',
+      '1 platforma social media',
+    ],
     cta: 'Zacznij za darmo',
-    badge: null,
+    badge: null as string | null,
     highlighted: false,
   },
   {
     id: 'pro',
-    name: 'Pro',
-    price: '99 zł',
+    name: proPlan.namePl,
+    price: `${proPlan.pricePln} zł`,
     period: '/mc',
-    description: '100 kredytów/mc, wszystkie branże, 5 platform, auto-publikacja.',
+    description: proPlan.descriptionPl,
     features: [
-      '100 kredytów miesięcznie',
+      `${formatUsageLimit(proPlan.credits)} kredytów miesięcznie`,
       'Wszystkie branże',
       '5 platform social media',
-      'Auto-publikacja',
+      'Analityka i strategista AI',
     ],
-    cta: 'Wypróbuj 7 dni za darmo',
+    cta: 'Zobacz plany i zapłać',
     badge: 'Najpopularniejszy',
     highlighted: true,
-    proof: 'Kuba z Wrocławia generuje 30 postów miesięcznie',
   },
   {
     id: 'agency',
-    name: 'Agency',
-    price: 'Indywidualnie',
-    period: '',
-    description: '500 kredytów, multi-konta, priority support.',
-    features: ['500 kredytów miesięcznie', 'Multi-konta', 'Priorytetowe wsparcie'],
-    cta: 'Skontaktuj się',
+    name: agencyPlan.namePl,
+    price: `${agencyPlan.pricePln} zł`,
+    period: '/mc',
+    description: agencyPlan.descriptionPl,
+    features: [
+      `${formatUsageLimit(agencyPlan.credits)} kredytów miesięcznie`,
+      'Multi-konta i ∞ kampanii',
+      'Priorytetowe wsparcie',
+    ],
+    cta: 'Skontaktuj się / Agency',
     badge: null,
     highlighted: false,
   },
 ];
 
-export const PricingSection: React.FC<PricingSectionProps> = ({ onStartFree, onStartPro, onContactSales }) => {
+export const PricingSection: React.FC<PricingSectionProps> = ({
+  onStartFree,
+  onStartPro,
+  onContactSales,
+}) => {
   const handleCta = (id: string) => {
     if (id === 'free') onStartFree();
     else if (id === 'pro') onStartPro();
@@ -60,80 +77,85 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onStartFree, onS
     <section id="cennik" className="scroll-mt-24 py-20 md:py-28 bg-[#050911] text-white">
       <div className="max-w-6xl mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="inline-block px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest mb-3">
+          <p
+            className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: 'var(--hero-accent)' }}
+          >
             Cennik
-          </span>
-          <h2 className="font-display text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
-            Wybierz plan, który rośnie razem z Tobą
+          </p>
+          <h2 className="mt-3 font-display text-3xl md:text-4xl font-extrabold tracking-tight">
+            Prosty start — skaluj gdy rośniesz
           </h2>
+          <p className="mt-3 text-slate-400 text-sm md:text-base">
+            Free bez karty. Płatne plany przez Stripe. Lifetime Deal na osobnej stronie{' '}
+            <a href="/deal" className="underline decoration-[var(--hero-accent)] underline-offset-2 hover:text-white">
+              /deal
+            </a>
+            .
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`relative flex flex-col p-6 md:p-8 rounded-3xl border transition-all duration-300 ${
+              className={`relative flex flex-col rounded-2xl border p-6 md:p-8 ${
                 plan.highlighted
-                  ? 'border-emerald-500/50 bg-gradient-to-br from-emerald-500/[0.12] to-emerald-500/[0.03] shadow-[0_0_30px_rgba(16,185,129,0.15)] scale-[1.02]'
+                  ? 'border-[var(--hero-accent)] bg-[var(--hero-accent)]/10'
                   : 'border-white/10 bg-white/[0.03]'
               }`}
             >
               {plan.badge && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-emerald-500 text-black text-[11px] font-bold uppercase tracking-wider shadow-lg">
+                <span
+                  className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white rounded-full"
+                  style={{ backgroundColor: 'var(--hero-accent)' }}
+                >
                   {plan.badge}
                 </span>
               )}
-
-              <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold text-white">{plan.price}</span>
-                {plan.period && <span className="text-sm text-slate-400">{plan.period}</span>}
+              <h3 className="font-display text-xl font-extrabold">{plan.name}</h3>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-extrabold">{plan.price}</span>
+                {plan.period && <span className="text-slate-400 text-sm">{plan.period}</span>}
               </div>
-              <p className="mt-2 text-sm text-slate-400">{plan.description}</p>
-
+              <p className="mt-3 text-sm text-slate-400 min-h-[2.5rem]">{plan.description}</p>
               <ul className="mt-6 space-y-2.5 flex-1">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-sm text-slate-300">
-                    <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                    <span>{feature}</span>
+                {plan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-slate-200">
+                    <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--hero-accent)' }} />
+                    {f}
                   </li>
                 ))}
               </ul>
-
-              {plan.proof && (
-                <div className="mt-4 p-3 rounded-xl bg-black/40 backdrop-blur border border-white/10 text-xs text-slate-200 flex items-center gap-2">
-                  <span className="text-emerald-400">⚡</span>
-                  <span>{plan.proof}</span>
-                </div>
-              )}
-
               <button
                 type="button"
                 onClick={() => handleCta(plan.id)}
-                className={`mt-6 w-full px-6 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${
+                className={`mt-8 w-full min-h-[44px] rounded-lg text-sm font-semibold transition ${
                   plan.highlighted
-                    ? 'bg-emerald-500 hover:bg-emerald-400 text-black'
-                    : 'bg-white/10 hover:bg-white/15 text-white border border-white/10'
+                    ? 'text-white hover:brightness-110'
+                    : 'border border-white/15 text-white hover:bg-white/5'
                 }`}
+                style={plan.highlighted ? { backgroundColor: 'var(--hero-accent)' } : undefined}
               >
-                {plan.cta}
+                {String(plan.cta)}
               </button>
             </div>
           ))}
         </div>
 
-        <div className="mt-10 flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-xs text-slate-400">
-          <span className="flex items-center gap-1.5">
-            <Check className="w-3.5 h-3.5 text-emerald-400" /> Bez karty na start
+        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-slate-400">
+          <span className="inline-flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            Płatności Stripe · faktura VAT
           </span>
-          <span className="flex items-center gap-1.5">
-            <XCircle className="w-3.5 h-3.5 text-emerald-400" /> Anuluj w każdej chwili
-          </span>
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> SSL / Bezpieczne płatności Stripe
+          <span className="inline-flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-slate-500" />
+            Anuluj subskrypcję kiedy chcesz
           </span>
         </div>
       </div>
     </section>
   );
 };
+
+export default PricingSection;

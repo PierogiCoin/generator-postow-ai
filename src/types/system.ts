@@ -14,7 +14,9 @@ export enum UserPlan {
     Pro = "pro",
     Agency = "agency",
     Business = "business",
-    Enterprise = "enterprise"
+    Enterprise = "enterprise",
+    /** Lifetime Deal (własny / AppSumo) — bez subskrypcji */
+    Lifetime = "lifetime"
 }
 
 export enum NotificationType {

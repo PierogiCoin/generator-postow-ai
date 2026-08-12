@@ -41,6 +41,9 @@ export const metadata: Metadata = {
     description: 'Twórz angażujące posty na wszystkie platformy social media w sekundy. AI optymalizuje treść, generuje wideo i obrazy.',
     images: ['https://generatorpostow.ai/og-image.png'],
   },
+  icons: {
+    icon: '/favicon.svg',
+  },
   manifest: '/manifest.json',
 };
 
@@ -50,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pl" className={`${manrope.variable} ${syne.variable}`}>
+    <html lang="pl" className={`${manrope.variable} ${syne.variable}`} suppressHydrationWarning>
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context": "https://schema.org",
@@ -66,11 +69,6 @@ export default function RootLayout({
                 "@type": "Offer",
                 "price": "0",
                 "priceCurrency": "PLN"
-              },
-              "aggregateRating": {
-                "@type": "AggregateRating",
-                "ratingValue": "4.8",
-                "ratingCount": "127"
               }
             },
             {
@@ -86,7 +84,7 @@ export default function RootLayout({
           ]
         }) }} />
       </head>
-      <body className="bg-[#eceee9] dark:bg-[#07090c] text-slate-800 dark:text-slate-200 transition-colors duration-300 antialiased font-sans">
+      <body className="bg-[#eceee9] dark:bg-[#07090c] text-slate-800 dark:text-slate-200 transition-colors duration-300 antialiased font-sans" suppressHydrationWarning>
         <Providers>
           <div id="root">{children}</div>
         </Providers>

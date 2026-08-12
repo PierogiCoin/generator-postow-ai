@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCredits } from '@/lib/api-utils';
-import { modelsWithFallback, sendGenerationError } from '../../../../server/routes/generation/helpers';
-import { mapModel } from '../../../../server/lib/mapModel';
-import { isGeminiQuotaError, geminiErrorMessage } from '../../../../server/lib/geminiErrors';
-import { genAI } from '../../../../server/lib/clients';
-import { withTimeout } from '../../../../server/lib/retry';
-import logger from '../../../../server/logger';
+import { modelsWithFallback } from '@server/routes/generation/helpers';
+import { mapModel } from '@server/lib/mapModel';
+import { isGeminiQuotaError, geminiErrorMessage } from '@server/lib/geminiErrors';
+import { genAI } from '@server/lib/clients';
+import { withTimeout } from '@server/lib/retry';
+import logger from '@server/logger';
 
 export async function POST(req: NextRequest) {
   try {

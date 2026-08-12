@@ -15,9 +15,17 @@ export const USD_TO_PLN_DISPLAY = 4.2;
 
 /** Waluta rozliczenia Stripe (UI). Domyślnie pln — charge = Price ID w Stripe. */
 export function getStripeChargeCurrency(): 'pln' | 'usd' {
-  const raw = (typeof import.meta !== 'undefined'
-    && (import.meta as { env?: { VITE_STRIPE_CURRENCY?: string } }).env?.VITE_STRIPE_CURRENCY)
-    || 'pln';
+  const fromProcess =
+    typeof process !== 'undefined'
+      ? process.env.NEXT_PUBLIC_STRIPE_CURRENCY || process.env.VITE_STRIPE_CURRENCY
+      : undefined;
+  let fromImportMeta: string | undefined;
+  try {
+    fromImportMeta = (import.meta as { env?: { VITE_STRIPE_CURRENCY?: string } }).env?.VITE_STRIPE_CURRENCY;
+  } catch {
+    fromImportMeta = undefined;
+  }
+  const raw = fromProcess || fromImportMeta || 'pln';
   return raw.toLowerCase() === 'usd' ? 'usd' : 'pln';
 }
 
@@ -192,7 +200,7 @@ export function formatCreditPackPrice(pack: {
 
 /** Macierz subskrypcji — USD zgodne ze Stripe; kredyty pod strategię wartości */
 export const SUBSCRIPTION_PRICING: Record<
-  'free' | 'creator' | 'pro' | 'business' | 'agency' | 'enterprise',
+  'free' | 'creator' | 'pro' | 'business' | 'agency' | 'enterprise' | 'lifetime',
   TierPricing
 > = {
   free: { priceUsd: 0, pricePln: 0, credits: 150, estimatedPosts: 15 },
@@ -206,6 +214,8 @@ export const SUBSCRIPTION_PRICING: Record<
   agency: { priceUsd: 249, pricePln: charmPricePln(249), credits: 18000, estimatedPosts: 1800 },
   // Enterprise: najniższy $/kredyt + support
   enterprise: { priceUsd: 299, pricePln: charmPricePln(299), credits: 28000, estimatedPosts: 2800 },
+  // Lifetime Deal (one-time) — limity ≈ Pro; cena marketingowa w PLN
+  lifetime: { priceUsd: 119, pricePln: 499, credits: 1800, estimatedPosts: 180 },
 };
 
 /**

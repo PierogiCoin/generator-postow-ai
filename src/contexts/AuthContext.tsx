@@ -122,6 +122,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const profileCredits = profileData?.credits as number | undefined;
       const profileTeamId = profileData?.current_team_id as string | null | undefined;
       const planDefaults = getPlanByUserPlan(resolvedPlan);
+      const dealTierRaw = profileData?.deal_tier;
+      const dealTier =
+        dealTierRaw === 1 || dealTierRaw === 2 || dealTierRaw === 3
+          ? (dealTierRaw as 1 | 2 | 3)
+          : null;
+      const dealSourceRaw = profileData?.deal_source as string | undefined;
+      const dealSource =
+        dealSourceRaw === 'appsumo' || dealSourceRaw === 'own' ? dealSourceRaw : null;
 
       const combinedUser: User = {
         id: sbUser.id,
@@ -130,6 +138,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         plan: resolvedPlan,
         credits:
           typeof profileCredits === 'number' ? profileCredits : planDefaults.credits,
+        dealSource,
+        dealTier,
         teams: [],
         currentTeamId: profileTeamId || null
       };
@@ -324,15 +334,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, [supabase, setDataStoreState]);
 
+  const DB_MISSING_ERROR = 'Baza danych nie jest podłączona. Ustaw zmienne NEXT_PUBLIC_SUPABASE_URL i NEXT_PUBLIC_SUPABASE_ANON_KEY w panelu Vercel (Settings -> Environment Variables).';
+
   const login = async (email: string, pass: string) => {
-    if (!supabase) throw new Error('Database unavailable');
+    const { isSupabaseConfigured } = await import('../services/supabaseClient');
+    if (!isSupabaseConfigured() || !supabase) throw new Error(DB_MISSING_ERROR);
     const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
     if (error) throw error;
     analytics.track(AnalyticsEvents.LOGIN);
   };
 
   const signup = async (email: string, pass: string) => {
-    if (!supabase) throw new Error('Database unavailable');
+    const { isSupabaseConfigured } = await import('../services/supabaseClient');
+    if (!isSupabaseConfigured() || !supabase) throw new Error(DB_MISSING_ERROR);
     const { error } = await supabase.auth.signUp({
       email,
       password: pass,
@@ -345,7 +359,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const loginWithGoogle = async () => {
-    if (!supabase) throw new Error('Database unavailable');
+    const { isSupabaseConfigured } = await import('../services/supabaseClient');
+    if (!isSupabaseConfigured() || !supabase) throw new Error(DB_MISSING_ERROR);
     const redirectTo = `${window.location.origin}/`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

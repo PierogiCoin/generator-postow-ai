@@ -1,6 +1,6 @@
 import { TwitterApi } from 'twitter-api-v2';
 import axios from 'axios';
-import logger from './logger.js';
+import logger from '../logger';
 
 // Type definitions for API responses
 interface LinkedInPost {

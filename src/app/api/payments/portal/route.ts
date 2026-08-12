@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/api-utils';
-import { createPortalSession } from '../../../../server/stripe';
-import logger from '../../../../server/logger';
+import { createPortalSession } from '@server/stripe';
+import logger from '@server/logger';
 
 export async function POST(req: NextRequest) {
   try {

@@ -232,7 +232,7 @@ export const TemplateBrowserModal: React.FC<TemplateBrowserModalProps> = ({
 
         <div className="p-6 overflow-y-auto">
           {tab === 'industry' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid-auto-fit-sm">
               {orderedIndustry.map((pack) => (
                 <IndustryPackCard
                   key={pack.id}
@@ -243,7 +243,7 @@ export const TemplateBrowserModal: React.FC<TemplateBrowserModalProps> = ({
               ))}
             </div>
           ) : availableTemplates.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid-auto-fit-sm">
               {availableTemplates.map((template) => (
                 <TemplateCard
                   key={template.id}

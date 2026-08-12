@@ -1,13 +1,20 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
 import { ModalErrorBoundary } from './ErrorBoundary';
 import { useUIStore } from '../stores/uiStore';
 import { useGenerationStore } from '../stores/generationStore';
 import { useDataStore } from '../stores/dataStore';
 import { useAuth } from '../contexts/AuthContext';
+import { usePendingCheckout } from '../hooks/usePendingCheckout';
 import { SocialConnection, SocialPlatform } from '../types/socialPublishing';
 import type { VideoStoryStyle, VideoStoryProvider } from './VideoStoryModal';
 import type { OnboardingData } from '../utils/onboarding';
+import {
+  activateOnboardingGuide,
+  saveOnboardingPrefill,
+  setOnboardingPendingFirstGenerate,
+} from '../utils/onboarding';
 
 // Lazy-loaded modale
 const ScheduleModal = lazy(() => import('./ScheduleModal'));
@@ -84,6 +91,11 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const router = useRouter();
+  usePendingCheckout();
+
+  const isGeneratingVideoStory = useGenerationStore((s) => s.isGeneratingVideoStory);
+  const videoStoryProgress = useGenerationStore((s) => s.videoStoryProgress);
 
   // Zustand Store Selectors
   const {
@@ -117,11 +129,24 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({
 
   const { brandVoiceProfiles, activeBrandVoiceId, isLearningStyle, itemToSchedule } = useDataStore();
 
+  const wrapOnboardingComplete = useCallback(
+    (data: OnboardingData) => {
+      if (user?.id) {
+        saveOnboardingPrefill(user.id, data);
+        activateOnboardingGuide(user.id);
+        setOnboardingPendingFirstGenerate(user.id);
+      }
+      handleOnboardingComplete(data);
+      router.push('/generator');
+    },
+    [handleOnboardingComplete, router, user?.id]
+  );
+
   return (
     <>
       {showOnboarding && (
         <Suspense fallback={<ModalLoadingFallback />}>
-          <OnboardingWizard onComplete={handleOnboardingComplete} />
+          <OnboardingWizard onComplete={wrapOnboardingComplete} />
         </Suspense>
       )}
 
@@ -289,8 +314,8 @@ export const GlobalModals: React.FC<GlobalModalsProps> = ({
               onApplyToPost={handleApplyVideoToPost}
               post={videoStoryPost}
               onGenerate={handleGenerateVideoStory}
-              isGenerating={useGenerationStore.getState().isGeneratingVideoStory}
-              progressStatus={useGenerationStore.getState().videoStoryProgress}
+              isGenerating={isGeneratingVideoStory}
+              progressStatus={videoStoryProgress}
               generatedVideo={generatedVideo}
             />
           </ModalErrorBoundary>

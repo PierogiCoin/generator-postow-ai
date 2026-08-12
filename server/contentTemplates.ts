@@ -5,7 +5,7 @@ import {
   INDUSTRY_PACK_DEFS,
   resolveIndustryPackForNiche,
   type IndustryPackDef,
-} from '../shared/industryPacks.js';
+} from '../src/shared/industryPacks';
 
 export interface ContentTemplate {
   id: string;

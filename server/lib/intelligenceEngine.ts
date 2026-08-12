@@ -1,6 +1,6 @@
-import { genAI } from './clients.js';
-import { retryWithBackoff, withTimeout } from './retry.js';
-import logger from '../logger.js';
+import { genAI } from './clients';
+import { retryWithBackoff, withTimeout } from './retry';
+import logger from '../logger';
 
 const GROUNDED_MODEL = 'gemini-2.5-flash';
 

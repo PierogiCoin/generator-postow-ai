@@ -3,9 +3,9 @@
  * Uruchamiany co 10 minut. Sprawdza email_queue i wysyła zaplanowane emaile.
  */
 
-import logger from '../logger.js';
-import { supabase } from '../supabase.js';
-import { sendEmail } from './emailService.js';
+import logger from '../logger';
+import { supabase } from '../supabase';
+import { sendEmail } from './emailService';
 import {
   onboardingTipEmail,
   engagementBoostEmail,
@@ -14,7 +14,7 @@ import {
   trialEndingEmail,
   trialEndedEmail,
   upgradeNudgeEmail,
-} from './emailTemplates.js';
+} from './emailTemplates';
 
 const EMAIL_TEMPLATES: Record<string, (name: string, ...args: unknown[]) => string> = {
   onboarding_tip: (name) => onboardingTipEmail(name),

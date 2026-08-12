@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { SparklesIcon } from '../icons/SparklesIcon';
@@ -9,7 +9,6 @@ import { RocketLaunchIcon } from '../icons/RocketLaunchIcon';
 import { CalendarIcon } from '../icons/CalendarIcon';
 import { Send } from 'lucide-react';
 import { User } from '@/types';
-import { industryPackToFormPrefill } from '@/utils/industryPacks';
 import type { IndustryPack } from '@/utils/industryPacks';
 
 interface DashboardHeroProps {
@@ -21,23 +20,18 @@ interface DashboardHeroProps {
 export const DashboardHero: React.FC<DashboardHeroProps> = ({ user, streak, nichePack }) => {
   const router = useRouter();
   const { t } = useTranslation();
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   const quickPlaceholder = nichePack?.topicIdeas[0]
     ?? 'Np. 3 wskazówki na zwiększenie sprzedaży w restauracji...';
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    el.style.setProperty('--spot-x', `${e.clientX - rect.left}px`);
+    el.style.setProperty('--spot-y', `${e.clientY - rect.top}px`);
   };
 
   const navigateToGenerator = (topic: string) => {
-    // Note: In Next.js App Router, passing state via router is done via query params or a global store.
-    // For now, we can use query params or set the store directly.
-    // Assuming the generator page can read from local storage or query params:
     const params = new URLSearchParams();
     if (topic) params.set('topic', topic);
     if (nichePack) params.set('niche', nichePack.id);
@@ -47,19 +41,20 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ user, streak, nich
   return (
     <header
       onMouseMove={handleMouseMove}
-      className="relative py-12 md:py-16 px-6 md:px-12 rounded-3xl border border-white/10 bg-gradient-to-br from-[#071018]/90 via-[#0b1728]/90 to-[#0e2137]/90 text-white shadow-2xl overflow-hidden backdrop-blur-xl group"
+      className="relative py-10 md:py-14 px-6 md:px-12 rounded-3xl border border-white/10 bg-gradient-to-br from-[#071018]/90 via-[#0b1728]/90 to-[#0e2137]/90 text-white shadow-2xl overflow-hidden backdrop-blur-xl group"
+      style={{ '--spot-x': '50%', '--spot-y': '40%' } as React.CSSProperties}
     >
-      {/* Spotlight background effect */}
       <div
         className="pointer-events-none absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl"
         style={{
-          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(16, 185, 129, 0.15), transparent 80%)`,
+          background:
+            'radial-gradient(600px circle at var(--spot-x) var(--spot-y), rgba(16, 185, 129, 0.15), transparent 80%)',
         }}
         aria-hidden="true"
       />
       <div className="absolute inset-0 home-grid-bg opacity-20 pointer-events-none" aria-hidden="true" />
 
-      <div className="relative z-10 space-y-8 max-w-4xl mx-auto text-center md:text-left">
+      <div className="relative z-10 space-y-6 max-w-4xl mx-auto text-center md:text-left">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-sm backdrop-blur-md">
@@ -67,7 +62,10 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ user, streak, nich
               {t('dashboard.systemOnline', 'System Online')}
             </span>
             {streak.currentStreak > 0 && (
-              <span className="px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-extrabold flex items-center gap-1 shadow-sm backdrop-blur-md" title={t('dashboard.longestStreak', { count: streak.longestStreak })}>
+              <span
+                className="px-3.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-extrabold flex items-center gap-1 shadow-sm backdrop-blur-md"
+                title={t('dashboard.longestStreak', { count: streak.longestStreak })}
+              >
                 🔥 {t('dashboard.streakDays', { count: streak.currentStreak })}
               </span>
             )}
@@ -75,22 +73,22 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ user, streak, nich
         </div>
 
         <div>
-          <h1 className="font-display text-4xl md:text-6xl font-black tracking-tight leading-tight">
+          <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
             Witaj ponownie,{' '}
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 animate-gradient">
               {user.name.split(' ')[0]}
-            </span>!
+            </span>
+            !
           </h1>
           <p className="text-base text-slate-300 mt-3 max-w-2xl leading-relaxed">
             {nichePack
-              ? `Szybka ścieżka dla ${nichePack.name}: wybierz pomysł poniżej albo wpisz własny temat.`
-              : 'O czym ma być Twój dzisiejszy viralowy post? Wpisz temat poniżej i pozwól AI wykonać pracę.'}
+              ? `Szybka ścieżka dla ${nichePack.name}: wpisz temat i generuj.`
+              : 'Wpisz temat poniżej i pozwól AI wykonać pracę.'}
           </p>
         </div>
 
-        {/* Central Quick Prompt Input Bar */}
         <div className="p-3 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col sm:flex-row items-center gap-2 focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
-          <div className="flex-1 flex items-center gap-3 px-4 w-full">
+          <div className="flex-1 flex items-center gap-3 px-4 w-full min-w-0">
             <SparklesIcon className="w-5.5 h-5.5 text-emerald-400 shrink-0 animate-pulse" />
             <input
               type="text"
@@ -100,10 +98,9 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ user, streak, nich
                   navigateToGenerator(e.currentTarget.value.trim());
                 }
               }}
-              className="w-full bg-transparent text-white placeholder-slate-400 text-sm md:text-base font-medium focus:outline-none py-2.5"
+              className="w-full min-w-0 bg-transparent text-white placeholder-slate-400 text-sm md:text-base font-medium focus:outline-none py-2.5"
             />
           </div>
-          {/* Button z efektem Shimmer Glow */}
           <button
             type="button"
             onClick={(e) => {
@@ -119,8 +116,7 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({ user, streak, nich
           </button>
         </div>
 
-        {/* Quick Action Navigation Chips */}
-        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
           <button
             type="button"
             onClick={() => router.push('/calendar')}

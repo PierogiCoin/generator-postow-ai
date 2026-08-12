@@ -17,7 +17,7 @@ export const Achievements: React.FC = () => {
         <TrophyIcon className="w-6 h-6 text-yellow-500" />
         {t('achievements.title')}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid-auto-fit-sm">
         {allAchievementIds.map(id => {
           const achievement = achievementsConfig[id];
           const isUnlocked = unlockedAchievements.includes(id);

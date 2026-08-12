@@ -10,15 +10,15 @@ import {
   TikTokPublisher,
   YouTubePublisher,
   ThreadsPublisher,
-} from '../socialPublishing.js';
+} from '../socialPublishing';
 import {
   linkedInConfig,
   twitterConfig,
   tiktokConfig,
   youtubeConfig,
   threadsConfig,
-} from '../config/social.js';
-import { assertPlatformPublishRules, type PublishFormat } from './socialPublishGuards.js';
+} from '../config/social';
+import { assertPlatformPublishRules, type PublishFormat } from './socialPublishGuards';
 
 export type ConnectionRow = {
   id: string;

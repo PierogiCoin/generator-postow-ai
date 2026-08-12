@@ -1,5 +1,5 @@
-import { supabase } from './clients.js';
-import logger from '../logger.js';
+import { supabase } from './clients';
+import logger from '../logger';
 
 function extractPatterns(analysis: Record<string, unknown>): string[] {
   const out: string[] = [];

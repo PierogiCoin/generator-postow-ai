@@ -1,10 +1,10 @@
-import { genAI } from './clients.js';
+import { genAI } from './clients';
 import {
   findBannedPhrases,
   buildAntiSlopRewritePrompt,
   buildAntiSlopBlock,
-} from '../prompts/plAntiSlop.ts';
-import logger from '../logger.js';
+} from '../prompts/plAntiSlop';
+import logger from '../logger';
 
 export { buildAntiSlopBlock, findBannedPhrases };
 

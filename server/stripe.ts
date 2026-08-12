@@ -1,8 +1,8 @@
 import Stripe from 'stripe';
 import { supabase } from './supabase';
-import logger from './logger.js';
-import { buildCreditPacksConfig, buildSubscriptionsConfig } from './lib/pricingConfig.js';
-import { resolveUserIdFromInvoice } from './lib/stripeUserResolve.js';
+import logger from './logger';
+import { buildCreditPacksConfig, buildSubscriptionsConfig } from './lib/pricingConfig';
+import { resolveUserIdFromInvoice } from './lib/stripeUserResolve';
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
@@ -88,7 +88,8 @@ async function getBillingUser(userId: string) {
 export async function createCheckoutSession(
   userId: string,
   priceId: string,
-  mode: 'subscription' | 'payment' = 'subscription'
+  mode: 'subscription' | 'payment' = 'subscription',
+  extraMetadata: Record<string, string> = {}
 ) {
   const billingUser = await getBillingUser(userId);
   let customerId = billingUser.stripeCustomerId;
@@ -107,15 +108,20 @@ export async function createCheckoutSession(
   }
 
   const automaticTax = process.env.STRIPE_AUTOMATIC_TAX !== 'false';
+  const isLifetime = extraMetadata.type === 'lifetime';
 
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode,
     // payment_method_types pominięte — Stripe dobiera metody (card/BLIK/P24) wg waluty Price + lokalizacji
     line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${frontendUrl()}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${frontendUrl()}/pricing?canceled=1`,
-    metadata: { userId },
+    success_url: isLifetime
+      ? `${frontendUrl()}/dashboard?checkout=lifetime&session_id={CHECKOUT_SESSION_ID}`
+      : `${frontendUrl()}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: isLifetime
+      ? `${frontendUrl()}/deal?canceled=1`
+      : `${frontendUrl()}/pricing?canceled=1`,
+    metadata: { userId, ...extraMetadata },
     billing_address_collection: 'required',
     tax_id_collection: { enabled: true },
     customer_update: { address: 'auto', name: 'auto' },
@@ -133,7 +139,7 @@ export async function createCheckoutSession(
     await supabase.from('abandoned_checkouts').upsert({
       user_id: userId,
       session_id: session.id,
-      plan: mode === 'subscription' ? 'subscription' : 'credit_pack',
+      plan: isLifetime ? 'lifetime' : mode === 'subscription' ? 'subscription' : 'credit_pack',
       price_id: priceId,
       status: 'pending',
       created_at: new Date().toISOString(),
@@ -494,6 +500,29 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
   // Check if it's a subscription or credit pack
   if (session.mode === 'subscription') {
     // Handled by subscription.created webhook
+    return;
+  }
+
+  // Lifetime Deal (one-time payment)
+  const lifetimePriceId = PRICING.subscriptions.lifetime?.priceId;
+  const isLifetimeMeta = session.metadata?.type === 'lifetime';
+  const isLifetimePrice = Boolean(lifetimePriceId && priceId === lifetimePriceId);
+
+  if (isLifetimeMeta || isLifetimePrice) {
+    const { assignLifetimePlan } = await import('./deals');
+    const tierRaw = Number(session.metadata?.dealTier || '1');
+    const tier = (tierRaw === 2 || tierRaw === 3 ? tierRaw : 1) as 1 | 2 | 3;
+    const source = session.metadata?.dealSource === 'appsumo' ? 'appsumo' : 'own';
+    await assignLifetimePlan(userId, tier, source);
+    logger.info('[Stripe] Lifetime plan assigned', { userId, tier, source });
+    try {
+      await supabase
+        .from('abandoned_checkouts')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('session_id', session.id);
+    } catch {
+      // ignore
+    }
     return;
   }
 

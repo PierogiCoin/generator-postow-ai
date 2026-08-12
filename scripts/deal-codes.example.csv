@@ -1,0 +1,6 @@
+# Deal codes CSV example (AppSumo / own LTD)
+# code,tier,source,notes
+AS-DEMO-TIER1,1,appsumo,sample tier1
+AS-DEMO-TIER2,2,appsumo,sample tier2
+AS-DEMO-TIER3,3,appsumo,sample tier3
+LTD-OWN-SAMPLE,1,own,own lifetime sample

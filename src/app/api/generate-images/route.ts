@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 import { withCredits } from '@/lib/api-utils';
-import { supabase, costTracker } from '../../../../server/lib/clients';
-import { retryWithBackoff, withTimeout } from '../../../../server/lib/retry';
-import { COST_ESTIMATES } from '../../../../server/costTracking';
-import { isGeminiQuotaError, geminiErrorMessage } from '../../../../server/lib/geminiErrors';
+import { supabase, costTracker } from '@server/lib/clients';
+import { retryWithBackoff, withTimeout } from '@server/lib/retry';
+import { COST_ESTIMATES } from '@server/costTracking';
+import { isGeminiQuotaError, geminiErrorMessage } from '@server/lib/geminiErrors';
 import {
   generateTogetherImage,
   isTogetherConfigured,
   aspectRatioToPixels,
-} from '../../../../server/lib/togetherClient';
-import logger, { logCost, logAPICall } from '../../../../server/logger';
+} from '@server/lib/togetherClient';
+import logger, { logCost, logAPICall } from '@server/logger';
 
 function resolveEstimatedImageCost(provider: 'together' | 'imagen', quality: 'standard' | 'typography' | 'hd'): number {
   if (provider === 'together') {

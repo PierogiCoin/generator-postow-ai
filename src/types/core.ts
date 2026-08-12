@@ -20,6 +20,8 @@ export interface Team {
     members: TeamMember[];
 }
 
+export type DealSource = 'appsumo' | 'own';
+
 export interface User {
     id: string;
     name: string;
@@ -27,6 +29,10 @@ export interface User {
     plan: UserPlan;
     /** Saldo kredytów z profiles.credits */
     credits?: number;
+    /** Źródło Lifetime Deal */
+    dealSource?: DealSource | null;
+    /** Tier AppSumo / stack (1–3) */
+    dealTier?: 1 | 2 | 3 | null;
     teams?: Team[];
     currentTeamId?: string | null;
     teamId?: string | null;

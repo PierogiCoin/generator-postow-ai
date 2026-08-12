@@ -14,7 +14,8 @@ import { useAppHandlers } from '@/hooks/useAppHandlers';
 import { NotificationSystem } from '@/components/NotificationSystem';
 import { useConfirm } from '@/hooks/useConfirm';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { SocialConnection } from '@/types/socialPublishing';
+import { useSocialConnectionsHandlers } from '@/hooks/useSocialConnectionsHandlers';
+import { useVideoStoryHandlers } from '@/hooks/useVideoStoryHandlers';
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -23,12 +24,13 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   const creditGuard = useCreditGuard();
   const { confirm, confirmDialogProps } = useConfirm();
   const handlers = useAppHandlers(notificationSystem.addToast, notificationSystem.addNotification, confirm);
+  const social = useSocialConnectionsHandlers();
+  const videoStory = useVideoStoryHandlers();
   const pathname = usePathname();
   const isHomePage = pathname === '/' || pathname === '/pricing';
+  const isDealSurface = pathname === '/deal' || pathname === '/redeem';
+  const hideAppChrome = isHomePage || isDealSurface;
 
-  const [socialConnections, setSocialConnections] = useState<SocialConnection[]>([]);
-  const [connectionForHistory, setConnectionForHistory] = useState<SocialConnection | null>(null);
-  const [isSocialHistoryOpen, setIsSocialHistoryOpen] = useState(false);
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
 
   return (
@@ -37,7 +39,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <AppVersionBanner />
       {creditGuard.prompt}
 
-      {(!isHomePage || user) && (
+      {(!hideAppChrome || user) && !isDealSurface && (
         <Header
           onUpgradeClick={() => setIsPricingModalOpen(true)}
           onLoginClick={() => setAuthModal('login')}
@@ -57,7 +59,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         />
       )}
 
-      <main className={`flex-grow mx-auto w-full ${isHomePage ? 'max-w-none p-0 overflow-x-hidden' : 'max-w-7xl p-4 lg:p-8 pt-20 pb-20 sm:pb-4'}`}>
+      <main className={`flex-grow mx-auto w-full ${hideAppChrome ? 'max-w-none p-0 overflow-x-hidden' : 'max-w-7xl p-4 lg:p-8 pt-20 pb-20 sm:pb-4'}`}>
         {children}
       </main>
 
@@ -69,20 +71,17 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
         safeRedirect={null}
         handlers={handlers}
         handleOnboardingComplete={async () => {}}
-        generatedVideo={undefined}
-        handleGenerateVideoStory={async () => {}}
-        handleApplyVideoToPost={() => {}}
-        socialConnections={socialConnections}
-        handleConnectSocial={async () => {}}
-        handleDisconnectSocial={async () => {}}
-        loadSocialConnections={async () => {}}
-        handleViewSocialHistory={(connection) => {
-          setConnectionForHistory(connection);
-          setIsSocialHistoryOpen(true);
-        }}
-        isSocialHistoryOpen={isSocialHistoryOpen}
-        setIsSocialHistoryOpen={setIsSocialHistoryOpen}
-        connectionForHistory={connectionForHistory}
+        generatedVideo={videoStory.generatedVideo}
+        handleGenerateVideoStory={videoStory.handleGenerateVideoStory}
+        handleApplyVideoToPost={videoStory.handleApplyVideoToPost}
+        socialConnections={social.socialConnections}
+        handleConnectSocial={social.handleConnectSocial}
+        handleDisconnectSocial={social.handleDisconnectSocial}
+        loadSocialConnections={social.loadSocialConnections}
+        handleViewSocialHistory={social.handleViewSocialHistory}
+        isSocialHistoryOpen={social.isSocialHistoryOpen}
+        setIsSocialHistoryOpen={social.setIsSocialHistoryOpen}
+        connectionForHistory={social.connectionForHistory}
         isKeyboardShortcutsOpen={isKeyboardShortcutsOpen}
         setIsKeyboardShortcutsOpen={setIsKeyboardShortcutsOpen}
       />

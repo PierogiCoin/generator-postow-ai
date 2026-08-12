@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../server/supabase';
-import { checkCredits, deductCredits, PRICING } from '../../../server/stripe';
-import { AppError } from '../../../server/middleware/errorHandler';
+import { supabase } from '@server/supabase';
+import { checkCredits, deductCredits, PRICING } from '@server/stripe';
+import { AppError } from '@server/middleware/errorHandler';
 
 export async function getAuthUser(req: NextRequest) {
   const authHeader = req.headers.get('authorization');

@@ -166,6 +166,43 @@ create_pack credits_large "Generator Postów AI — Credits Large (2600)" 4999
 create_pack credits_mega "Generator Postów AI — Credits Mega (7000)" 9999
 
 echo ""
+echo "=== Lifetime Deal (one-time) ==="
+if [ "$CURRENCY" = "pln" ]; then LTD_AMT=49900; else LTD_AMT=11900; fi
+LTD_EXISTING=$(stripe products search --query "metadata['app']:'${APP_META}' AND metadata['plan_key']:'lifetime'" --limit 1 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['data'][0]['id'] if d.get('data') else '')" || true)
+if [[ -n "$LTD_EXISTING" ]]; then
+  LTD_PRODUCT="$LTD_EXISTING"
+  echo "↪ Lifetime produkt: $LTD_PRODUCT"
+else
+  LTD_PRODUCT=$(stripe products create \
+    -d "name=Generator Postów AI — Lifetime Deal" \
+    -d "metadata[app]=${APP_META}" \
+    -d "metadata[plan_key]=lifetime" \
+    -d "metadata[type]=lifetime" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+  echo "✓ Lifetime produkt: $LTD_PRODUCT"
+fi
+LTD_PRICE=$(stripe prices list --product "$LTD_PRODUCT" --active=true --limit 10 \
+  | python3 -c "import sys,json
+amt=int(sys.argv[1])
+for p in json.load(sys.stdin).get('data', []):
+  if not p.get('recurring') and p.get('unit_amount')==amt:
+    print(p['id']); break" "$LTD_AMT")
+if [[ -z "$LTD_PRICE" ]]; then
+  LTD_PRICE=$(stripe prices create \
+    -d "product=${LTD_PRODUCT}" \
+    -d "unit_amount=${LTD_AMT}" \
+    -d "currency=${CURRENCY}" \
+    -d "metadata[app]=${APP_META}" \
+    -d "metadata[plan_key]=lifetime" \
+    -d "metadata[type]=lifetime" \
+    | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])")
+  echo "  + cena Lifetime: $LTD_PRICE"
+else
+  echo "  ↪ cena Lifetime: $LTD_PRICE"
+fi
+echo "STRIPE_LIFETIME_PRICE_ID=${LTD_PRICE}" >> "$OUT_FILE"
+
+echo ""
 echo "=== Webhook ==="
 WEBHOOK_JSON=$(stripe webhook_endpoints list --limit 100)
 EXISTING_WE=$(echo "$WEBHOOK_JSON" | python3 -c "

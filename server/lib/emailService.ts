@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios';
-import logger from '../logger.js';
+import logger from '../logger';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@generatorpostow.ai';

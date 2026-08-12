@@ -1,13 +1,13 @@
-import logger from '../logger.js';
-import { supabase } from '../lib/clients.js';
-import { fetchTopSlots, nextOccurrenceForSlot, type Slot } from '../lib/schedulingAnalytics.js';
-import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption.js';
+import logger from '../logger';
+import { supabase } from '../lib/clients';
+import { fetchTopSlots, nextOccurrenceForSlot, type Slot } from '../lib/schedulingAnalytics';
+import { formatPublishCaption, normalizeCtaUrl } from '../lib/publishCaption';
 import {
   isApprovalBlockingPublish,
   normalizeSocialPlatform,
   type PublishFormat,
-} from '../lib/socialPublishGuards.js';
-import { publishToConnection } from '../lib/publishToConnection.js';
+} from '../lib/socialPublishGuards';
+import { publishToConnection } from '../lib/publishToConnection';
 
 let schedulerBlockedUntil: number | null = null;
 let isRunning = false;

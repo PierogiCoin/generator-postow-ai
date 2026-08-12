@@ -71,6 +71,24 @@ export function clearOnboardingPendingFirstGenerate(userId: string): void {
   localStorage.removeItem(`${PENDING_FIRST_GEN_PREFIX}${userId}`);
 }
 
+const PREFILL_KEY_PREFIX = 'onboarding_form_prefill_';
+
+export function saveOnboardingPrefill(userId: string, data: OnboardingData): void {
+  const prefill = mapOnboardingToFormData(data);
+  localStorage.setItem(`${PREFILL_KEY_PREFIX}${userId}`, JSON.stringify(prefill));
+}
+
+export function consumeOnboardingPrefill(userId: string): Partial<FormData> | null {
+  const raw = localStorage.getItem(`${PREFILL_KEY_PREFIX}${userId}`);
+  localStorage.removeItem(`${PREFILL_KEY_PREFIX}${userId}`);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as Partial<FormData>;
+  } catch {
+    return null;
+  }
+}
+
 export function mapOnboardingToFormData(data: OnboardingData): Partial<FormData> {
   const pack = matchIndustryPack(data.niche);
   const topic = data.firstPostTopic?.trim() || buildFirstPostTopic(data.niche, data.platform);

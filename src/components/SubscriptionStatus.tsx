@@ -19,6 +19,7 @@ const planNames: Record<UserPlan, string> = {
   [UserPlan.Agency]: 'Agency',
   [UserPlan.Business]: 'Business',
   [UserPlan.Enterprise]: 'Enterprise',
+  [UserPlan.Lifetime]: 'Lifetime',
 };
 
 export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
@@ -93,14 +94,18 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
         </p>
       </div>
 
-      {userPlan !== UserPlan.Enterprise && (
+      {(userPlan !== UserPlan.Enterprise) && (
         <button
           onClick={onUpgrade}
           className="w-full mt-6 min-h-[44px] flex items-center justify-center gap-2 text-white font-semibold py-2.5 px-4 rounded-lg hover:brightness-110 transition-all focus:outline-none focus:ring-2 focus:ring-[var(--hero-accent)]/40 touch-manipulation"
           style={{ backgroundColor: 'var(--hero-accent)' }}
         >
           <SparklesIcon className="w-5 h-5" />
-          {isFreePlan ? 'Ulepsz plan' : 'Zmień plan'}
+          {userPlan === UserPlan.Lifetime
+            ? 'Dokup kredyty'
+            : isFreePlan
+              ? 'Ulepsz plan'
+              : 'Zmień plan'}
         </button>
       )}
     </div>

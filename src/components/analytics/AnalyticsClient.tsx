@@ -1,0 +1,891 @@
+"use client";
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useRouter } from 'next/navigation';
+import type { CampaignHistoryItem, AIInsight, OptimalTime, PostPerformanceData } from '@/types';
+import type { SocialPost } from '@/types/socialPublishing';
+import { UserPlan, NotificationType, Platform } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDataStore } from '@/stores/dataStore';
+import { useUIStore } from '@/stores/uiStore';
+import { useNotifications } from '@/hooks/useNotifications';
+import * as analyticsService from '@/services/analyticsService';
+import {
+  aggregateAnalyticsKpis,
+  hasLiveMetrics,
+  loadAnalyticsCache,
+  saveAnalyticsCache,
+  type StrategySuggestion,
+} from '@/services/analyticsService';
+import { socialConnectionsService } from '@/services/socialConnectionsService';
+import { SparklesIcon } from '@/components/icons/SparklesIcon';
+import { Spinner } from '@/components/ui/LoadingStates';
+import { EyeIcon } from '@/components/icons/EyeIcon';
+import { HeartIcon } from '@/components/icons/HeartIcon';
+import { ChatBubbleIcon } from '@/components/icons/ChatBubbleIcon';
+import { ShareIcon } from '@/components/icons/ShareIcon';
+import { platformConfig } from '@/config/platformConfig';
+import { insightConfig } from '@/components/analyticsConstants';
+import { AlertTriangleIcon } from '@/components/icons/AlertTriangleIcon';
+import { SentimentDisplay } from '@/components/SentimentDisplay';
+import { SEOAnalysisDisplay } from '@/components/SEOAnalysisDisplay';
+import { ArrowUpIcon } from '@/components/icons/ArrowUpIcon';
+import { TrendingUpIcon } from '@/components/icons/TrendingUpIcon';
+import { AnalyticsChart } from '@/components/AnalyticsChart';
+import { LinkIcon as ExternalLinkIcon } from '@/components/icons/LinkIcon';
+import { LightbulbIcon } from '@/components/icons/LightbulbIcon';
+import { CalendarIcon } from '@/components/icons/CalendarIcon';
+import { RefreshCwIcon } from '@/components/icons/RefreshCwIcon';
+
+const SEOTrendChart: React.FC<{ data: CampaignHistoryItem[] }> = ({ data }) => {
+    const [activePoint, setActivePoint] = useState<CampaignHistoryItem | null>(null);
+    const chartData = data
+        .filter(item => item.seoAnalysis?.score)
+        .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (chartData.length < 2) {
+        return (
+            <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400 text-sm bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                Za mało danych do wygenerowania wykresu trendów SEO. Potrzebne są co najmniej 2 posty z analizą.
+            </div>
+        );
+    }
+
+    const PADDING = 40;
+    const CHART_WIDTH = 600;
+    const CHART_HEIGHT = 200;
+
+    const minTimestamp = chartData[0].timestamp;
+    const maxTimestamp = chartData[chartData.length - 1].timestamp;
+
+    const getX = (timestamp: number) => {
+        if (maxTimestamp === minTimestamp) return PADDING;
+        return PADDING + ((timestamp - minTimestamp) / (maxTimestamp - minTimestamp)) * (CHART_WIDTH - 2 * PADDING);
+    };
+
+    const getY = (score: number) => {
+        return CHART_HEIGHT - PADDING - ((score / 100) * (CHART_HEIGHT - 2 * PADDING));
+    };
+
+    const pathData = chartData
+        .map(item => `${getX(item.timestamp)},${getY(item.seoAnalysis!.score)}`)
+        .join(' L ');
+
+    return (
+        <div className="relative">
+            <svg viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`} className="w-full h-auto">
+                <defs>
+                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#8b5cf6" />
+                        <stop offset="100%" stopColor="#3b82f6" />
+                    </linearGradient>
+                    <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                    </linearGradient>
+                </defs>
+                {/* Y Axis Grid Lines */}
+                {[0, 25, 50, 75, 100].map(val => (
+                    <g key={val}>
+                        <line x1={PADDING} y1={getY(val)} x2={CHART_WIDTH - PADDING} y2={getY(val)} stroke="var(--grid-stroke)" strokeWidth="1" />
+                        <text x={PADDING - 10} y={getY(val) + 4} textAnchor="end" className="text-xs" fill="var(--text-secondary)">{val}</text>
+                    </g>
+                ))}
+                {/* X Axis Labels */}
+                {chartData.map((item, index) => (
+                    <text key={`xaxis-${index}`} x={getX(item.timestamp)} y={CHART_HEIGHT - PADDING + 15} textAnchor="middle" className="text-xs" fill="var(--text-secondary)">
+                        {new Date(item.timestamp).toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' })}
+                    </text>
+                ))}
+
+                {/* Area under the line */}
+                <path d={`M ${getX(minTimestamp)},${CHART_HEIGHT - PADDING} L ${pathData} L ${getX(maxTimestamp)},${CHART_HEIGHT - PADDING} Z`} fill="url(#areaGradient)" />
+
+                {/* The line itself */}
+                <path d={`M ${pathData}`} fill="none" stroke="url(#lineGradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                {/* Data points */}
+                {chartData.map((item, index) => (
+                    <circle
+                        key={`point-${index}`}
+                        cx={getX(item.timestamp)}
+                        cy={getY(item.seoAnalysis!.score)}
+                        r="5"
+                        fill="var(--tooltip-bg)"
+                        stroke="url(#lineGradient)"
+                        strokeWidth="3"
+                        onMouseEnter={() => setActivePoint(item)}
+                        onMouseLeave={() => setActivePoint(null)}
+                        className="cursor-pointer"
+                    />
+                ))}
+            </svg>
+            {activePoint && (
+                <div className="absolute p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg text-sm pointer-events-none" style={{
+                    top: `${getY(activePoint.seoAnalysis!.score) - 80}px`,
+                    left: `${getX(activePoint.timestamp)}px`,
+                    transform: 'translateX(-50%)',
+                    minWidth: '200px'
+                }}>
+                    <p className="font-bold text-gray-800 dark:text-white">Wynik SEO: {activePoint.seoAnalysis!.score}</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-xs truncate">{activePoint.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu'}</p>
+                    <p className="text-gray-400 text-xs mt-1">{new Date(activePoint.timestamp).toLocaleString()}</p>
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+const formatNumber = (num: number): string => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+    return num.toString();
+};
+
+const LockedState: React.FC<{ onUpgrade: () => void }> = ({ onUpgrade }) => (
+    <div className="text-center py-20 px-6 bg-white dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+        <AlertTriangleIcon className="w-16 h-16 mx-auto text-yellow-400 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Funkcja dostępna w planie Pro</h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+            Odblokuj zaawansowaną analitykę AI, aby otrzymywać spersonalizowane wskazówki i optymalizować swoją strategię contentową.
+        </p>
+        <button
+            onClick={onUpgrade}
+            className="mt-8 px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2 mx-auto"
+        >
+            <SparklesIcon className="w-5 h-5" />
+            Ulepsz do Pro
+        </button>
+    </div>
+);
+
+
+const EmptyState: React.FC<{
+    onRunAnalysis: () => void;
+    hasHistory: boolean;
+    hasLiveSocial: boolean;
+    onConnectSocial: () => void;
+}> = ({ onRunAnalysis, hasHistory, hasLiveSocial, onConnectSocial }) => (
+    <div className="text-center py-20 px-6 bg-white dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+        <SparklesIcon className="w-16 h-16 mx-auto text-blue-400 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Zaawansowana analityka AI</h2>
+        {hasHistory ? (
+            <>
+                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+                    {hasLiveSocial
+                        ? 'Połącz generowanie treści z rzeczywistymi wynikami. AI przeanalizuje wydajność Twoich postów i dostarczy wskazówki do strategii.'
+                        : 'Masz historię generowań, ale bez połączonego konta social metryki będą tylko szacowane. Połącz LinkedIn/IG/FB/TikTok, żeby zobaczyć wyniki live.'}
+                </p>
+                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    {!hasLiveSocial && (
+                        <button
+                            type="button"
+                            onClick={onConnectSocial}
+                            className="px-6 py-3 border border-blue-600 text-blue-600 dark:text-blue-400 font-bold rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                        >
+                            Połącz konto social
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={onRunAnalysis}
+                        className="px-6 py-3 bg-blue-600 text-white font-bold rounded-md hover:bg-blue-700 transition-all shadow-lg flex items-center gap-2"
+                    >
+                        <SparklesIcon className="w-5 h-5" />
+                        Uruchom analizę AI
+                    </button>
+                </div>
+            </>
+        ) : (
+            <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+                Wygeneruj najpierw kilka postów. Kiedy będziesz mieć historię, AI będzie mogła ją przeanalizować. Live metryki pojawią się po połączeniu kont social.
+            </p>
+        )}
+    </div>
+);
+
+const LoadingState: React.FC = () => (
+    <div className="text-center py-20 px-6 bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col items-center">
+        <Spinner size="lg" className="mb-4" />
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Analizowanie danych...</h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">AI przetwarza wydajność Twoich postów, aby znaleźć kluczowe trendy i sugestie.</p>
+    </div>
+);
+
+const transformData = (data: Record<string, number> | undefined) => {
+    if (!data) return [];
+    return Object.entries(data)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value);
+};
+
+type DraftAnalyticsPost = CampaignHistoryItem & { source: 'draft' };
+type LiveAnalyticsPost = SocialPost & { source: 'live' };
+type AnalyticsDisplayPost = DraftAnalyticsPost | LiveAnalyticsPost;
+
+const isLivePost = (post: AnalyticsDisplayPost): post is LiveAnalyticsPost => post.source === 'live';
+const isDraftPost = (post: AnalyticsDisplayPost): post is DraftAnalyticsPost => post.source === 'draft';
+
+const emptyMetrics = (): PostPerformanceData => ({ reach: 0, likes: 0, comments: 0, shares: 0 });
+
+const getPostTimestamp = (post: AnalyticsDisplayPost): number => {
+    if (isLivePost(post)) {
+        return new Date(post.publishedAt).getTime();
+    }
+    return post.timestamp;
+};
+
+const getPostMetrics = (post: AnalyticsDisplayPost): PostPerformanceData => {
+    if (isLivePost(post)) {
+        const m = post.metrics;
+        return {
+            reach: m?.reach ?? m?.impressions ?? m?.views ?? 0,
+            likes: m?.likes ?? 0,
+            comments: m?.comments ?? 0,
+            shares: m?.shares ?? 0,
+            metricsSource: hasLiveMetrics(m) ? 'live' : 'estimated',
+        };
+    }
+    return post.performance ?? emptyMetrics();
+};
+
+const getPostPlatform = (post: AnalyticsDisplayPost): string => {
+    if (isLivePost(post)) {
+        return post.platform || 'Facebook';
+    }
+    return post.formData?.platform || 'Facebook';
+};
+
+const getPostTitle = (post: AnalyticsDisplayPost): string => {
+    if (isLivePost(post)) {
+        return post.content.substring(0, 60) + (post.content.length > 60 ? '...' : '');
+    }
+    return post.formData?.topic?.replace(/<[^>]*>?/gm, '') || 'Bez tytułu';
+};
+
+const getPostContentForRecycle = (post: AnalyticsDisplayPost): string => {
+    if (isLivePost(post)) {
+        return post.content;
+    }
+    return post.result.postText;
+};
+
+export const AnalyticsView: React.FC = () => {
+    const { userPlan, user } = useAuth();
+    const { stats, history, learnedInsights, setLearnedInsights, setState } = useDataStore();
+    const { setIsPricingModalOpen, setIsSocialConnectionsModalOpen } = useUIStore();
+    const { addToast } = useNotifications();
+
+    const cacheUserId = user?.id || 'anonymous';
+
+    const [analyzedHistory, setAnalyzedHistory] = useState<CampaignHistoryItem[]>([]);
+    const [realHistory, setRealHistory] = useState<SocialPost[]>([]);
+    const [matchedSocialIds, setMatchedSocialIds] = useState<string[]>([]);
+    const [hasSocialConnections, setHasSocialConnections] = useState(false);
+    const [strategySuggestions, setStrategySuggestions] = useState<StrategySuggestion[]>([]);
+    const [isGeneratingStrategy, setIsGeneratingStrategy] = useState(false);
+    const [insights, setInsights] = useState<AIInsight[]>([]);
+    const [optimalTimes, setOptimalTimes] = useState<OptimalTime[]>([]);
+    const [analysisUnavailable, setAnalysisUnavailable] = useState(false);
+    const [analyzedAt, setAnalyzedAt] = useState<number | null>(null);
+    const [hasRestoredCache, setHasRestoredCache] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [isHydratingMetrics, setIsHydratingMetrics] = useState(false);
+    const [expandedPosts, setExpandedPosts] = useState<Set<string>>(new Set());
+    const { t } = useTranslation();
+    const router = useRouter();
+
+    const isAnalyticsEnabled = [UserPlan.Pro, UserPlan.Agency, UserPlan.Business, UserPlan.Enterprise, UserPlan.Lifetime].includes(userPlan);
+    const hasAnalysisSession = insights.length > 0 || analysisUnavailable;
+
+    const kpiSummary = useMemo(
+        () => aggregateAnalyticsKpis(analyzedHistory, realHistory, matchedSocialIds),
+        [analyzedHistory, realHistory, matchedSocialIds]
+    );
+
+    const filterDraftHistory = (items: CampaignHistoryItem[]) =>
+        items.filter((h) => {
+            const topic = (h.formData?.topic || '').trim().toLowerCase();
+            return topic !== '' && topic !== 'bez tytułu';
+        });
+
+    const hydrateMetrics = async (): Promise<{
+        historyWithPerformance: CampaignHistoryItem[];
+        realSocialHistory: SocialPost[];
+        matchedIds: string[];
+        liveMatched: number;
+        estimatedCount: number;
+    }> => {
+        let realSocialHistory: SocialPost[] = [];
+        if (user) {
+            try {
+                const connections = await socialConnectionsService.getConnections(user.id);
+                setHasSocialConnections(connections.length > 0);
+                const fetched = await socialConnectionsService.getAggregateHistory(user.id);
+                realSocialHistory = fetched.filter(
+                    (p) => p.content && p.content.trim() !== '' && !p.content.toLowerCase().includes('bez tytułu')
+                );
+            } catch {
+                setHasSocialConnections(false);
+                // tylko lokalna historia
+            }
+        } else {
+            setHasSocialConnections(false);
+        }
+
+        const filteredHistory = filterDraftHistory(history);
+        const { items: historyWithPerformance, liveMatched, estimatedCount, matchedSocialIds: matchedIds } =
+            analyticsService.enrichHistoryWithLiveMetrics(filteredHistory, realSocialHistory);
+
+        setAnalyzedHistory(historyWithPerformance);
+        setRealHistory(realSocialHistory);
+        setMatchedSocialIds(matchedIds);
+        setState({ history: historyWithPerformance });
+
+        return { historyWithPerformance, realSocialHistory, matchedIds, liveMatched, estimatedCount };
+    };
+
+    // Przywróć ostatnią analizę AI z localStorage
+    useEffect(() => {
+        if (!isAnalyticsEnabled) return;
+        const cached = loadAnalyticsCache(cacheUserId);
+        if (cached) {
+            setInsights(cached.insights);
+            setOptimalTimes(cached.optimalTimes);
+            setStrategySuggestions(cached.strategySuggestions);
+            setAnalysisUnavailable(cached.unavailable);
+            setAnalyzedAt(cached.analyzedAt);
+        }
+        setHasRestoredCache(true);
+    }, [cacheUserId, isAnalyticsEnabled]);
+
+    // Po cache — odśwież metryki bez ponownego wywołania AI
+    useEffect(() => {
+        if (!isAnalyticsEnabled || !hasRestoredCache) return;
+        const cached = loadAnalyticsCache(cacheUserId);
+        if (!cached || (cached.insights.length === 0 && !cached.unavailable)) return;
+
+        let cancelled = false;
+        (async () => {
+            setIsHydratingMetrics(true);
+            try {
+                await hydrateMetrics();
+            } finally {
+                if (!cancelled) setIsHydratingMetrics(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isAnalyticsEnabled, hasRestoredCache, cacheUserId]);
+
+    const handleRunAnalysis = async () => {
+        setIsAnalyzing(true);
+        try {
+            const { historyWithPerformance, realSocialHistory, liveMatched, estimatedCount } =
+                await hydrateMetrics();
+
+            const analysisResult = await analyticsService.fetchAIAnalysis(
+                historyWithPerformance,
+                cacheUserId,
+                realSocialHistory
+            );
+
+            const unavailable = Boolean(analysisResult.unavailable);
+            setAnalysisUnavailable(unavailable);
+            setInsights(analysisResult.insights);
+            setOptimalTimes(analysisResult.optimalTimes);
+
+            let suggestions: StrategySuggestion[] = [];
+            if (!unavailable) {
+                setIsGeneratingStrategy(true);
+                suggestions = await analyticsService.generateStrategySuggestions(
+                    analysisResult,
+                    cacheUserId,
+                    [...historyWithPerformance, ...realSocialHistory]
+                );
+            }
+            setStrategySuggestions(suggestions);
+            setIsGeneratingStrategy(false);
+
+            const now = Date.now();
+            setAnalyzedAt(now);
+            saveAnalyticsCache({
+                userId: cacheUserId,
+                analyzedAt: now,
+                insights: analysisResult.insights,
+                optimalTimes: analysisResult.optimalTimes,
+                strategySuggestions: suggestions,
+                unavailable,
+            });
+
+            if (unavailable) {
+                addToast('Analiza AI tymczasowo niedostępna. Spróbuj ponownie za chwilę.', NotificationType.Error);
+            } else if (realSocialHistory.length > 0) {
+                addToast(
+                    liveMatched > 0
+                        ? `Analiza: ${liveMatched} live, ${estimatedCount} szacowanych (z ${realSocialHistory.length} postów z kont).`
+                        : `Brak dopasowań live — ${estimatedCount} postów oznaczono jako szacowane.`,
+                    liveMatched > 0 ? NotificationType.Success : NotificationType.Info
+                );
+            } else if (historyWithPerformance.length > 0) {
+                addToast('Brak połączonych kont — metryki historii nie są danymi live.', NotificationType.Info);
+            }
+        } catch {
+            addToast(t('errors.analysis_failed'), NotificationType.Error);
+        } finally {
+            setIsAnalyzing(false);
+            setIsGeneratingStrategy(false);
+        }
+    };
+
+    const handleApplyInsights = (insightsToApply: AIInsight[]) => {
+        setLearnedInsights(insightsToApply);
+        addToast(t('insights.applied'), NotificationType.Success);
+    };
+
+    const handleCreateFromSuggestion = (s: { topic: string, platform: string }) => {
+        const queryParams = new URLSearchParams();
+        if (s.topic) queryParams.set('topic', s.topic);
+        if (s.platform) queryParams.set('platform', s.platform);
+        router.push(`/generator?${queryParams.toString()}`);
+        addToast("Przeniesiono do generatora z nowym tematem.", NotificationType.Success);
+    };
+
+    const handleRecyclePost = (content: string, platform: string) => {
+        const queryParams = new URLSearchParams();
+        queryParams.set('topic', `Odśwież ten post zachowując jego wartość: ${content.substring(0, 100)}...`);
+        queryParams.set('platform', platform);
+        // Note: repurposed content can be handled differently depending on the generator form
+        router.push(`/generator?${queryParams.toString()}`);
+        addToast("Przygotowano post do inteligentnego recyklingu.", NotificationType.Success);
+    };
+
+    const handleEnqueueEvergreen = async (content: string, platform: string) => {
+        try {
+            const { evergreenService } = await import('@/services/evergreenService');
+            await evergreenService.enqueue({
+                content,
+                platform,
+                recycleAfterDays: 30,
+            });
+            addToast('Dodano do kolejki evergreen (odświeżenie za ~30 dni).', NotificationType.Success);
+        } catch (e) {
+            addToast(
+                e instanceof Error ? e.message : 'Nie udało się dodać do evergreen',
+                NotificationType.Error
+            );
+        }
+    };
+
+    const handleClearInsights = () => {
+        setLearnedInsights(null);
+        addToast(t('insights.cleared'), NotificationType.Info);
+    };
+
+    const onUpgrade = () => setIsPricingModalOpen(true);
+
+    const toggleExpand = (postId: string) => {
+        setExpandedPosts(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(postId)) {
+                newSet.delete(postId);
+            } else {
+                newSet.add(postId);
+            }
+            return newSet;
+        });
+    };
+
+    if (!isAnalyticsEnabled) return <LockedState onUpgrade={onUpgrade} />;
+    if (!hasRestoredCache) return <LoadingState />;
+    if (isAnalyzing && !hasAnalysisSession) return <LoadingState />;
+    if (!hasAnalysisSession) {
+        return (
+            <EmptyState
+                onRunAnalysis={handleRunAnalysis}
+                hasHistory={history.length > 0}
+                hasLiveSocial={hasSocialConnections || realHistory.length > 0}
+                onConnectSocial={() => setIsSocialConnectionsModalOpen(true)}
+            />
+        );
+    }
+
+    const analyzedAtLabel = analyzedAt
+        ? new Date(analyzedAt).toLocaleString('pl-PL', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+          })
+        : null;
+
+    return (
+        <div className="page-shell">
+            <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <p
+                        className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                        style={{ color: 'var(--hero-accent)' }}
+                    >
+                        Metrics
+                    </p>
+                    <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                        Analityka
+                    </h1>
+                    {analyzedAtLabel && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Ostatnia analiza: {analyzedAtLabel}
+                            {isHydratingMetrics ? ' · odświeżanie metryk…' : ''}
+                        </p>
+                    )}
+                </div>
+                <button
+                    type="button"
+                    onClick={handleRunAnalysis}
+                    disabled={isAnalyzing}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg disabled:opacity-60 text-white text-sm font-semibold transition hover:brightness-110"
+                    style={{ backgroundColor: 'var(--hero-accent)' }}
+                >
+                    {isAnalyzing ? <Spinner size="sm" /> : <RefreshCwIcon className="w-4 h-4" />}
+                    {isAnalyzing ? 'Analizowanie…' : 'Odśwież analizę'}
+                </button>
+            </div>
+
+            {analysisUnavailable && (
+                <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 flex items-start gap-3">
+                    <AlertTriangleIcon className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <p className="font-semibold text-amber-900 dark:text-amber-100">Analiza AI niedostępna</p>
+                        <p className="text-sm text-amber-800 dark:text-amber-200/90 mt-1">
+                            Nie udało się pobrać wskazówek od modelu. Metryki Live poniżej są nadal aktualne — kliknij „Odśwież analizę”, aby spróbować ponownie.
+                        </p>
+                    </div>
+                </div>
+            )}
+
+            {!hasSocialConnections && realHistory.length === 0 && (
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                    <div>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">Brak metryk live</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                            Bez połączonego konta social liczby poniżej są szacunkami z generatora, nie wynikami z platform.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsSocialConnectionsModalOpen(true)}
+                        className="shrink-0 px-4 py-2 rounded-lg text-sm font-semibold text-white hover:brightness-110"
+                        style={{ backgroundColor: 'var(--hero-accent)' }}
+                    >
+                        Połącz konto
+                    </button>
+                </div>
+            )}
+
+            <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl content-auto-sm">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                    <TrendingUpIcon className="w-6 h-6 text-blue-500" />
+                    Trendy SEO w czasie
+                </h3>
+                <SEOTrendChart data={analyzedHistory} />
+            </div>
+
+            {stats && stats.totalGenerations > 0 && (
+                <div className="grid-auto-fit-lg content-auto">
+                    <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl min-w-0">
+                        <AnalyticsChart title="Wykorzystanie wg Platformy" data={transformData(stats.byPlatform)} fillColor="#3b82f6" />
+                    </div>
+                    <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl min-w-0">
+                        <AnalyticsChart title="Wykorzystanie wg Tonu" data={transformData(stats.byTone)} fillColor="#8b5cf6" />
+                    </div>
+                    <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl min-w-0 [grid-column:1/-1]">
+                        <AnalyticsChart title="Wykorzystanie wg Typu Treści" data={transformData(stats.byContentType)} fillColor="#10b981" />
+                    </div>
+                </div>
+            )}
+
+            <div className="page-work-grid page-work-grid-rail-first">
+                {/* Left Column: Insights & Times */}
+                <div className="space-y-8 content-auto-sm min-w-0">
+                    {/* Insights */}
+                    <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2 mb-4">
+                            <SparklesIcon className="w-6 h-6 text-blue-500" />
+                            Wskazówki od AI
+                        </h3>
+                        {analysisUnavailable ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                Brak wskazówek — analiza AI nie została zakończona. Użyj „Odśwież analizę”.
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {insights.map((insight, idx) => {
+                                    const config = insightConfig[insight.type];
+                                    const Icon = config.icon;
+                                    return (
+                                        <div key={`${insight.id}-${idx}`} className={`p-4 rounded-lg flex items-start gap-4 ${config.color}`}>
+                                            <Icon className={`w-6 h-6 flex-shrink-0 mt-0.5 ${config.iconColor}`} />
+                                            <p className="text-sm text-gray-700 dark:text-gray-300">{insight.text}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                        {!analysisUnavailable && insights.length > 0 && (
+                            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                {learnedInsights ? (
+                                    <div className="text-center p-3 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                                        <p className="text-sm font-semibold text-green-800 dark:text-green-200">{t('insights.active')}</p>
+                                        <button onClick={handleClearInsights} className="mt-2 text-xs text-green-700 dark:text-green-300 hover:underline">{t('insights.clear')}</button>
+                                    </div>
+                                ) : (
+                                    <button onClick={() => handleApplyInsights(insights)} className="w-full flex items-center justify-center gap-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 font-bold py-2.5 px-4 rounded-md hover:bg-blue-200 dark:hover:bg-blue-800 transition">
+                                        <SparklesIcon className="w-5 h-5" />
+                                        {t('insights.apply')}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Optimal Times */}
+                    <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Optymalne czasy publikacji</h3>
+                        {analysisUnavailable || optimalTimes.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {analysisUnavailable
+                                    ? 'Czasy publikacji niedostępne bez udanej analizy AI.'
+                                    : 'Brak wystarczających danych do wyznaczenia godzin.'}
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {optimalTimes.map((time, idx) => {
+                                    const config = platformConfig[time.platform];
+                                    const Icon = config ? config.icon : SparklesIcon;
+                                    return (
+                                        <div key={`${time.platform}-${idx}`} className="flex items-center gap-4 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                            <Icon className="w-8 h-8 text-gray-600 dark:text-gray-300" />
+                                            <div className="flex-grow">
+                                                <p className="font-semibold text-gray-800 dark:text-white">{config ? config.name : time.platform}</p>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{time.day}</p>
+                                            </div>
+                                            <p className="font-semibold text-blue-600 dark:text-blue-400 text-sm">{time.time}</p>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* AI Strategy Suggestions */}
+                    {(isGeneratingStrategy || strategySuggestions.length > 0) && (
+                        <div className="p-6 bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
+                                <LightbulbIcon className="w-6 h-6 text-amber-500" />
+                                Propozycje postów (Planowanie)
+                            </h3>
+                            {isGeneratingStrategy ? (
+                                <div className="space-y-4">
+                                    <div className="h-20 bg-white/50 dark:bg-slate-800/50 rounded-lg animate-pulse" />
+                                    <div className="h-20 bg-white/50 dark:bg-slate-800/50 rounded-lg animate-pulse" style={{ animationDelay: '200ms' }} />
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {strategySuggestions.map((s, i) => (
+                                        <div key={`strategy-${s.date}-${s.platform}`} className="p-4 bg-white dark:bg-slate-800 border border-blue-100 dark:border-blue-800 rounded-lg shadow-sm">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <CalendarIcon className="w-4 h-4 text-blue-500" />
+                                                    <span className="text-xs font-bold text-slate-500">{s.date}</span>
+                                                    <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 rounded text-[10px] uppercase font-black">{s.platform}</span>
+                                                </div>
+                                            </div>
+                                            <p className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{s.topic}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 italic mb-3">"{s.reason}"</p>
+                                            <button
+                                                onClick={() => handleCreateFromSuggestion(s)}
+                                                className="w-full py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded transition flex items-center justify-center gap-1"
+                                            >
+                                                <SparklesIcon className="w-3 h-3" />
+                                                Twórz post
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Column: Post Performance */}
+                <div className="p-6 bg-white dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl content-auto min-w-0">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Wyniki postów</h3>
+
+                    {/* Aggregated Summary — tylko Live, bez podwójnego liczenia */}
+                    <div className="mb-6 p-4 bg-cyan-500/5 dark:bg-cyan-500/10 border border-cyan-500/20 rounded-xl space-y-4">
+                        <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider">
+                            <span className="px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                Live {kpiSummary.liveCount}
+                            </span>
+                            <span className="px-2 py-1 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                Szacowane {kpiSummary.estimatedCount}
+                            </span>
+                            {kpiSummary.noDataCount > 0 && (
+                                <span className="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                    Brak danych {kpiSummary.noDataCount}
+                                </span>
+                            )}
+                            <span className="text-slate-500 dark:text-slate-400 font-medium normal-case tracking-normal">
+                                Sumy poniżej = tylko Live
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap justify-around gap-4 text-center">
+                            {[
+                                { label: 'Całkowity Zasięg', value: kpiSummary.reach },
+                                { label: 'Polubienia', value: kpiSummary.likes },
+                                { label: 'Komentarze', value: kpiSummary.comments },
+                                { label: 'Udostępnienia', value: kpiSummary.shares },
+                            ].map((stat) => (
+                                <div key={`stat-${stat.label}`}>
+                                    <p className="text-2xl font-black text-cyan-700 dark:text-cyan-300">{formatNumber(stat.value)}</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{stat.label}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 max-h-[calc(100vh-20rem)] overflow-y-auto pr-3">
+                        {([
+                            ...analyzedHistory.map(item => ({ ...item, source: 'draft' as const })),
+                            ...realHistory.map(item => ({ ...item, source: 'live' as const }))
+                        ] as AnalyticsDisplayPost[])
+                        .sort((a, b) => getPostTimestamp(b) - getPostTimestamp(a))
+                        .map((item, idx) => {
+                            const platform = getPostPlatform(item);
+                            const config = platformConfig[platform as Platform] || platformConfig[Platform.Facebook];
+                            const PlatformIcon = config.icon;
+                            const isExpanded = expandedPosts.has(item.id);
+                            const title = getPostTitle(item);
+                            const metrics = getPostMetrics(item);
+                            const dateString = new Date(getPostTimestamp(item)).toLocaleDateString();
+
+                            return (
+                                <div key={item.id || idx} className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900/50">
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-gray-800 dark:text-white truncate" title={title}>{title}</p>
+                                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                <PlatformIcon className="w-4 h-4" />
+                                                <span>{platform}</span>
+                                                <span className="text-gray-300 dark:text-gray-600">&bull;</span>
+                                                <span>{dateString}</span>
+                                                <span className="text-gray-300 dark:text-gray-600">&bull;</span>
+                                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${isLivePost(item) ? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'}`}>
+                                                    {isLivePost(item) ? 'Konto' : 'Szkic'}
+                                                </span>
+                                                {(() => {
+                                                  const source = isLivePost(item)
+                                                    ? (hasLiveMetrics(item.metrics) ? 'live' : 'nodata')
+                                                    : (item.performance?.metricsSource === 'live' ? 'live' : 'estimated');
+                                                  if (source === 'live') {
+                                                    return (
+                                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                                                        Live
+                                                      </span>
+                                                    );
+                                                  }
+                                                  if (source === 'nodata') {
+                                                    return (
+                                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                                        Brak danych
+                                                      </span>
+                                                    );
+                                                  }
+                                                  return (
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                                                      Szacowane
+                                                    </span>
+                                                  );
+                                                })()}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {isLivePost(item) && item.url && (
+                                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-400 transition" title="Otwórz post">
+                                                    <ExternalLinkIcon className="w-4 h-4" />
+                                                </a>
+                                            )}
+                                            <button
+                                                onClick={() => handleRecyclePost(getPostContentForRecycle(item), platform)}
+                                                className="p-1.5 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-lg text-blue-500 transition"
+                                                title="Inteligentny Recykling (teraz)"
+                                            >
+                                                <RefreshCwIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => void handleEnqueueEvergreen(getPostContentForRecycle(item), platform)}
+                                                className="p-1.5 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 rounded-lg text-emerald-600 transition text-[10px] font-black uppercase tracking-wider px-2"
+                                                title="Evergreen — automatyczny recycle za 30 dni"
+                                            >
+                                                EV
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid-auto-fit-sm gap-4 mt-4 text-center">
+                                        {[
+                                            { icon: EyeIcon, label: 'Zasięg', value: metrics.reach },
+                                            { icon: HeartIcon, label: 'Polubienia', value: metrics.likes },
+                                            { icon: ChatBubbleIcon, label: 'Komentarze', value: metrics.comments },
+                                            { icon: ShareIcon, label: 'Udostępnienia', value: metrics.shares },
+                                        ].map(({ icon: Icon, label, value }) => (
+                                            <div key={label}>
+                                                <Icon className="w-5 h-5 mx-auto text-gray-400 dark:text-gray-500 mb-1" />
+                                                <p className="text-lg font-bold text-gray-900 dark:text-white">{formatNumber(value)}</p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                                        {isDraftPost(item) ? (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleExpand(item.id)}
+                                                    className="text-sm font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-1"
+                                                >
+                                                    <span>{isExpanded ? 'Ukryj' : 'Pokaż'} analizę</span>
+                                                    <ArrowUpIcon className={`w-4 h-4 transition-transform duration-300 ${isExpanded ? 'rotate-0' : 'rotate-180'}`} />
+                                                </button>
+                                                {isExpanded && (
+                                                    <div className="mt-4 space-y-4 animate-fade-in">
+                                                        <SentimentDisplay result={item.sentimentAnalysis ?? null} isLoading={false} />
+                                                        <SEOAnalysisDisplay result={item.seoAnalysis ?? null} isLoading={false} />
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                Brak analizy SEO / sentiment — dostępna tylko dla szkiców z generatora.
+                                                {item.url ? ' Otwórz post zewnętrznym linkiem powyżej.' : ''}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default AnalyticsView;

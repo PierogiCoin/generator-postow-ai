@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import { useTranslation } from 'react-i18next';
 import { useDataStore } from '../stores/dataStore';
 import { ArrowRight, FilePlus, CalendarPlus, PenLine } from 'lucide-react';
@@ -19,27 +19,27 @@ const StatCard: React.FC<{
 }> = ({ icon: Icon, emptyIcon: EmptyIcon, label, value, trend, emptyLabel, emptyCtaLabel, onEmptyCta }) => {
     const isEmpty = value === 0;
     return (
-        <div className={`flex flex-col justify-between p-6 rounded-3xl border backdrop-blur-xl shadow-xl transition-all duration-300 group ${
+        <div className={`cq-inline flex flex-col justify-between p-5 sm:p-6 rounded-3xl border backdrop-blur-xl shadow-xl transition-all duration-300 group min-w-0 ${
             isEmpty
                 ? 'border-white/5 bg-white/[0.03] hover:border-white/10'
                 : 'border-white/10 bg-white/5 hover:border-emerald-500/30'
         }`}>
-            <div className="flex items-center justify-between">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-transform duration-300 shadow-inner ${
+            <div className="flex items-center justify-between gap-2">
+                <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center border transition-transform duration-300 shadow-inner shrink-0 ${
                     isEmpty
                         ? 'border-white/5 bg-white/[0.03] text-emerald-400/50'
                         : 'border-white/10 bg-white/5 text-emerald-400 group-hover:scale-110'
                 }`}>
-                    {isEmpty ? <EmptyIcon className="w-6 h-6" /> : <Icon className="w-6 h-6" />}
+                    {isEmpty ? <EmptyIcon className="w-5 h-5 sm:w-6 sm:h-6" /> : <Icon className="w-5 h-5 sm:w-6 sm:h-6" />}
                 </div>
                 {!isEmpty && trend && (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span className="stat-card-trend items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                         {trend}
                     </span>
                 )}
             </div>
             {isEmpty ? (
-                <div className="mt-6">
+                <div className="mt-5 sm:mt-6">
                     <p className="text-sm font-semibold text-slate-400">{emptyLabel}</p>
                     <button
                         type="button"
@@ -50,8 +50,8 @@ const StatCard: React.FC<{
                     </button>
                 </div>
             ) : (
-                <div className="mt-6">
-                    <p className="font-display text-4xl font-black text-white tracking-tight">{value}</p>
+                <div className="mt-5 sm:mt-6 min-w-0">
+                    <p className="font-display text-3xl sm:text-4xl font-black text-white tracking-tight tabular-nums">{value}</p>
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400 mt-2">{label}</p>
                 </div>
             )}
@@ -68,7 +68,7 @@ export const StatsGrid: React.FC = () => {
     const scheduledThisWeek = scheduledPosts.filter(p => p.scheduleTimestamp <= oneWeekFromNow).length;
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
+        <div className="grid-auto-fit-sm md:gap-5">
             <StatCard
                 icon={RocketLaunchIcon}
                 emptyIcon={FilePlus}

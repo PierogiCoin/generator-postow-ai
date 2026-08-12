@@ -5,6 +5,7 @@ import { analytics, AnalyticsEvents } from './analytics';
 
 export const PENDING_CHECKOUT_PLAN_KEY = 'pendingCheckoutPlan';
 export const PENDING_CHECKOUT_INTERVAL_KEY = 'pendingCheckoutInterval';
+export const PENDING_LIFETIME_CHECKOUT_KEY = 'pendingLifetimeCheckout';
 
 export type CheckoutInterval = 'month' | 'year';
 
@@ -26,6 +27,16 @@ export function setPendingCheckoutPlan(
 ): void {
   sessionStorage.setItem(PENDING_CHECKOUT_PLAN_KEY, plan);
   sessionStorage.setItem(PENDING_CHECKOUT_INTERVAL_KEY, interval);
+}
+
+export function setPendingLifetimeCheckout(): void {
+  sessionStorage.setItem(PENDING_LIFETIME_CHECKOUT_KEY, '1');
+}
+
+export function consumePendingLifetimeCheckout(): boolean {
+  const raw = sessionStorage.getItem(PENDING_LIFETIME_CHECKOUT_KEY);
+  sessionStorage.removeItem(PENDING_LIFETIME_CHECKOUT_KEY);
+  return raw === '1';
 }
 
 export function consumePendingCheckoutPlan(): UserPlan | null {
@@ -138,6 +149,67 @@ export async function redirectToCreditPackCheckout(packId: string): Promise<void
     analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, { packId, type: 'credit_pack', reason: 'error' });
     throw err;
   }
+}
+
+export async function createLifetimeCheckout(tier: 1 | 2 | 3 = 1): Promise<string> {
+  const token = await getAccessToken();
+
+  const response = await fetch(`${getApiBaseUrl()}/api/payments/checkout/lifetime`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: 'include',
+    body: JSON.stringify({ tier }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Błąd lifetime checkout (${response.status})`);
+  }
+
+  if (!data.url) {
+    throw new Error('Stripe nie zwrócił adresu płatności.');
+  }
+
+  return data.url as string;
+}
+
+export async function redirectToLifetimeCheckout(tier: 1 | 2 | 3 = 1): Promise<void> {
+  analytics.track(AnalyticsEvents.CHECKOUT_STARTED, { type: 'lifetime', tier });
+  try {
+    const url = await createLifetimeCheckout(tier);
+    window.location.assign(url);
+  } catch (err) {
+    analytics.track(AnalyticsEvents.CHECKOUT_CANCELED, { type: 'lifetime', reason: 'error' });
+    throw err;
+  }
+}
+
+export async function redeemDealCode(code: string): Promise<{
+  tier: number;
+  source: string;
+  credits: number;
+  plan: string;
+}> {
+  const token = await getAccessToken();
+  const response = await fetch(`${getApiBaseUrl()}/api/deals/redeem`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    credentials: 'include',
+    body: JSON.stringify({ code }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || `Błąd redeem (${response.status})`);
+  }
+  return data;
 }
 
 export async function createTrialCheckout(plan: UserPlan, trialDays: number = 7): Promise<string> {

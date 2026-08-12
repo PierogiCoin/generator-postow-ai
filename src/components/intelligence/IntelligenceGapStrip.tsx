@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from "@/lib/router-compat";
 import type { GapSlotResult } from '../../services/intelligenceService';
 import { SparklesIcon } from '../icons/SparklesIcon';
 import { TrendingUpIcon } from '../icons/TrendingUpIcon';

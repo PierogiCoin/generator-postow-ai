@@ -1,5 +1,5 @@
-import logger from '../logger.js';
-import { isGeminiQuotaError } from './geminiErrors.js';
+import logger from '../logger';
+import { isGeminiQuotaError } from './geminiErrors';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

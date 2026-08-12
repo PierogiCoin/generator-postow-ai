@@ -39,6 +39,12 @@ supabase/.temp/
 AGENTS.md
 .devinrules
 
+# Next.js
+.next/
+dist/
+tsconfig.tsbuildinfo
+next-env.d.ts
+
 # Google Cloud Service Account credentials
 gen-lang-client-*.json
 server/gen-lang-client-*.json

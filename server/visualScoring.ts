@@ -3,8 +3,8 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import logger from './logger.js';
-import { VISUAL_QA_MIN_SCORE } from '../shared/config/generationConfig.js';
+import logger from './logger';
+import { VISUAL_QA_MIN_SCORE } from '../src/shared/config/generationConfig';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 

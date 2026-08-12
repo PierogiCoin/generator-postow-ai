@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCredits } from '@/lib/api-utils';
-import { genAI } from '../../../../server/lib/clients';
-import { retryWithBackoff, withTimeout } from '../../../../server/lib/retry';
-import logger from '../../../../server/logger';
+import { genAI } from '@server/lib/clients';
+import { retryWithBackoff, withTimeout } from '@server/lib/retry';
+import logger from '@server/logger';
 
 const PLATFORM_CHAR_LIMITS: Record<string, number> = {
   Facebook: 63206,

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PRICING } from '../../../../server/stripe';
+import { PRICING } from '@server/stripe';
 
 export async function GET() {
   return NextResponse.json({

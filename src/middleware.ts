@@ -56,7 +56,7 @@ export async function middleware(request: NextRequest) {
   // Next.js middleware doesn't easily decode Supabase JWT without the library,
   // so for rate limiting, IP is the safest fallback if auth header isn't parsed.
   // In a full implementation, we'd use @supabase/ssr here.
-  const ip = request.ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1';
+  const ip = (request as any).ip ?? request.headers.get('x-forwarded-for') ?? '127.0.0.1';
   
   // For now, use IP for rate limiting
   const identifier = `ip:${ip}`;

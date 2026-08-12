@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCredits } from '@/lib/api-utils';
-import { genAI } from '../../../../server/lib/clients';
+import { genAI } from '@server/lib/clients';
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,12 +1,12 @@
-import { supabase } from './supabase.js';
+import { supabase } from './supabase';
 import {
     FacebookPublisher,
     InstagramPublisher,
     LinkedInPublisher,
     TwitterPublisher,
     TikTokPublisher
-} from './socialPublishing.js';
-import logger from './logger.js';
+} from './socialPublishing';
+import logger from './logger';
 
 const twitterConfig = {
     appKey: process.env.TWITTER_APP_KEY || '',
@@ -80,7 +80,7 @@ export async function syncUserSocialPosts(userId: string) {
         // 2. Process each connection
         for (const conn of connections) {
             try {
-                let posts: Array<{ id: string; content: string; url: string; publishedAt: Date; [key: string]: unknown }> = [];
+                let posts: any[] = [];
 
                 // Fetch from platform API
                 switch (conn.platform) {

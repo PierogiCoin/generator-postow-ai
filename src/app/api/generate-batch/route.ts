@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withCredits } from '@/lib/api-utils';
-import { runTextGeneration } from '../../../../server/routes/generation/helpers';
-import { getTemplatesByPlatform } from '../../../../server/contentTemplates';
-import { COST_ESTIMATES } from '../../../../server/costTracking';
-import { buildAntiSlopBlock } from '../../../../server/prompts/plAntiSlop.ts';
-import logger, { logCost } from '../../../../server/logger';
+import { runTextGeneration } from '@server/routes/generation/helpers';
+import { getTemplatesByPlatform } from '@server/contentTemplates';
+import { COST_ESTIMATES } from '@server/costTracking';
+import { buildAntiSlopBlock } from '@server/prompts/plAntiSlop';
+import logger, { logCost } from '@server/logger';
 
 export async function POST(req: NextRequest) {
   try {

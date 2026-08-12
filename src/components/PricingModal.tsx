@@ -408,7 +408,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           </div>
         )}
 
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
+        <div className="mt-10 grid-auto-fit-sm items-stretch">
           {displayPlans.map((plan) => (
             <PlanCard
               key={plan.stripeKey}
@@ -547,7 +547,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             </span>
           </button>
           {showCredits && (
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
+            <div className="mt-4 grid-auto-fit-sm items-start">
               {CREDIT_PACKS.map((pack) => {
                 const packPrice = formatCreditPackPrice(pack);
                 return (

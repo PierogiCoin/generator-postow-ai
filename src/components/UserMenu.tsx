@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "@/lib/router-compat";
 import type { User } from '../types';
 import { UserIcon } from './icons/UserIcon';
 import { LogOutIcon } from './icons/LogOutIcon';

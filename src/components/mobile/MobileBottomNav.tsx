@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from "@/lib/router-compat";
 import { useMobile, useHaptic } from '../../hooks/useMobile';
 
 interface NavItem {

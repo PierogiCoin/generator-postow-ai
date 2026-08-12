@@ -3,7 +3,14 @@
  * w celu zmniejszenia rozmiaru głównego pliku.
  */
 
+'use client';
+
 import React from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 export type HomeAnchor = 'demo' | 'jak-to-dziala' | 'dlaczego-my' | 'branze' | 'how-it-works' | 'features' | 'use-cases' | 'faq';
 
@@ -124,17 +131,49 @@ export const Reveal: React.FC<{
   className?: string;
   reducedMotion: boolean;
 }> = ({ children, className = '', reducedMotion }) => {
-  const { ref, isInView } = useInViewOnce<HTMLDivElement>({ rootMargin: '120px 0px' });
+  const ref = React.useRef<HTMLDivElement>(null);
 
-  if (reducedMotion) {
-    return <div className={className}>{children}</div>;
-  }
+  useGSAP(
+    () => {
+      const el = ref.current;
+      if (!el) return;
+
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          canAnimate: '(prefers-reduced-motion: no-preference)',
+        },
+        (context) => {
+          const prefersReduce = Boolean(context.conditions?.reduceMotion) || reducedMotion;
+
+          if (prefersReduce) {
+            gsap.set(el, { autoAlpha: 1, y: 0 });
+            return;
+          }
+
+          gsap.from(el, {
+            autoAlpha: 0,
+            y: 28,
+            duration: 0.75,
+            ease: 'power2.out',
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              toggleActions: 'play none none none',
+            },
+          });
+        }
+      );
+
+      return () => mm.revert();
+    },
+    { dependencies: [reducedMotion], scope: ref }
+  );
 
   return (
-    <div
-      ref={ref}
-      className={`${className} ${isInView ? 'animate-slide-in' : 'opacity-0 translate-y-4'}`}
-    >
+    <div ref={ref} className={className}>
       {children}
     </div>
   );

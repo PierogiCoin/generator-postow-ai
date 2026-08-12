@@ -10,13 +10,15 @@ const DISMISS_KEY = 'app_version_banner_dismissed';
 export const AppVersionBanner: React.FC = () => {
   const { t } = useTranslation();
   const [remote, setRemote] = useState<RemoteBuildInfo | null>(null);
-  const [dismissedId, setDismissedId] = useState<string | null>(() => {
+  const [dismissedId, setDismissedId] = useState<string | null>(null);
+
+  useEffect(() => {
     try {
-      return sessionStorage.getItem(DISMISS_KEY);
+      setDismissedId(sessionStorage.getItem(DISMISS_KEY));
     } catch {
-      return null;
+      // ignore
     }
-  });
+  }, []);
 
   useEffect(() => {
     const check = async () => {

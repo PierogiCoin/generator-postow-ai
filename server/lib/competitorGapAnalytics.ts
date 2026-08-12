@@ -1,4 +1,4 @@
-import type { HeatmapCell } from './schedulingAnalytics.js';
+import type { HeatmapCell } from './schedulingAnalytics';
 
 export type HourlyDensity = {
   weekday: number; // 0=Mon … 6=Sun (jak heatmapa social)

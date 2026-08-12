@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useRef } from 'react';
+import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import { MultiVariantPost, NotificationType } from '../types';
 import { useNotifications } from '../hooks/useNotifications';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 import { ClipboardIcon } from './icons/ClipboardIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
+
+gsap.registerPlugin(useGSAP);
 
 interface MultiVariantResultProps {
   variants: MultiVariantPost[];
@@ -33,6 +39,37 @@ export const MultiVariantResult: React.FC<MultiVariantResultProps> = ({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { addToast } = useNotifications();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const variantsKey = variants.map((v) => v.variant).join('|');
+
+  useGSAP(
+    () => {
+      const mm = gsap.matchMedia();
+
+      mm.add(
+        {
+          reduceMotion: '(prefers-reduced-motion: reduce)',
+          canAnimate: '(prefers-reduced-motion: no-preference)',
+        },
+        (context) => {
+          if (context.conditions?.reduceMotion) {
+            gsap.set('.mv-header, .mv-card', { autoAlpha: 1, y: 0 });
+            return;
+          }
+
+          const tl = gsap.timeline({ defaults: { ease: 'power2.out' } });
+          tl.from('.mv-header', { autoAlpha: 0, y: 16, duration: 0.45 }).from(
+            '.mv-card',
+            { autoAlpha: 0, y: 24, duration: 0.5, stagger: 0.1 },
+            '-=0.2'
+          );
+        }
+      );
+
+      return () => mm.revert();
+    },
+    { scope: rootRef, dependencies: [variantsKey] }
+  );
 
   const handleCopy = async (text: string, id: string) => {
     try {
@@ -54,9 +91,9 @@ export const MultiVariantResult: React.FC<MultiVariantResultProps> = ({
   }
 
   return (
-    <div className="space-y-4">
+    <div ref={rootRef} className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      <div className="mv-header flex items-center gap-3 mb-6">
         <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
           <SparklesIcon className="w-5 h-5 text-white" />
         </div>
@@ -81,7 +118,7 @@ export const MultiVariantResult: React.FC<MultiVariantResultProps> = ({
           return (
             <div
               key={variant.variant}
-              className={`relative border-2 rounded-2xl overflow-hidden transition-all duration-300 ${
+              className={`mv-card relative border-2 rounded-2xl overflow-hidden transition-all duration-300 ${
                 isSelected
                   ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/10'
                   : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'

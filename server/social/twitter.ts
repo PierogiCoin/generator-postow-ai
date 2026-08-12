@@ -1,6 +1,6 @@
 import { TwitterApi } from 'twitter-api-v2';
 import axios from 'axios';
-import logger from './logger.js';
+import logger from '../logger';
 
 // Type definitions for API responses
 interface LinkedInPost {
@@ -171,7 +171,7 @@ export class TwitterPublisher {
         'tweet.fields': ['created_at', 'text', 'public_metrics']
       });
 
-      return (response.data.data || []).map((tweet: TwitterPost) => ({
+      return (response.data.data || []).map((tweet: any) => ({
         id: tweet.id,
         content: tweet.text,
         url: `https://twitter.com/i/web/status/${tweet.id}`,

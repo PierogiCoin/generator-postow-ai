@@ -1,5 +1,5 @@
-import logger from '../logger.js';
-import { supabase } from '../lib/clients.js';
+import logger from '../logger';
+import { supabase } from '../lib/clients';
 import {
   LinkedInPublisher,
   TwitterPublisher,
@@ -8,7 +8,7 @@ import {
   TikTokPublisher,
   YouTubePublisher,
   ThreadsPublisher,
-} from '../socialPublishing.js';
+} from '../socialPublishing';
 import {
   linkedInConfig,
   twitterConfig,
@@ -16,10 +16,10 @@ import {
   tiktokConfig,
   youtubeConfig,
   threadsConfig,
-} from '../config/social.js';
-import { consumeTwitterOAuthContext } from '../lib/twitterOAuthStore.js';
-import { verifyOAuthState } from '../lib/oauthState.js';
-import { resolveFrontendUrl, resolveOAuthCallbackUrl } from '../lib/publicUrl.js';
+} from '../config/social';
+import { consumeTwitterOAuthContext } from '../lib/twitterOAuthStore';
+import { verifyOAuthState } from '../lib/oauthState';
+import { resolveFrontendUrl, resolveOAuthCallbackUrl } from '../lib/publicUrl';
 
 export type OAuthCallbackParams = {
   code?: string;
